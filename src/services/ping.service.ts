@@ -1,7 +1,8 @@
 import { connectDB } from "../db/mongo";
 import { Ping } from "../types/ping.type";
+import { PINGS_COLLECTION } from "../config/collections";
 
-const COLLECTION = "pings";
+const COLLECTION = PINGS_COLLECTION;
 
 export const createPing = async (data: Ping) => {
   const db = await connectDB();

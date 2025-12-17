@@ -30,3 +30,13 @@ export const getUserByEmail = async (email: string) => {
   const db = await connectDB();
   return db.collection(COLLECTION).findOne({ email: email.toLowerCase() });
 };
+
+export const updateUserPassword = async (
+  email: string,
+  passwordHash: string
+) => {
+  const db = await connectDB();
+  return db
+    .collection(COLLECTION)
+    .updateOne({ email: email.toLowerCase() }, { $set: { passwordHash } });
+};

@@ -25,3 +25,12 @@ export const signRefreshToken = (
 export const verifyToken = (token: string) => {
   return jwt.verify(token, SECRET) as AccessTokenPayload;
 };
+
+export const signEmailToken = (
+  payload: Omit<AccessTokenPayload, "iat" | "exp">,
+  expiresIn = "1d"
+) => {
+  return jwt.sign({ ...payload, type: "email" } as object, SECRET, {
+    expiresIn,
+  });
+};
