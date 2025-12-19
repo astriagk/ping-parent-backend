@@ -3,6 +3,8 @@ export const COLLECTIONS = {
   PINGS: "pings",
   ROLES: "roles",
   PASSWORD_RESETS: "password_resets",
+  PHONE_REGISTRATIONS: "phone_registrations",
+  PHONE_LOGINS: "phone_logins",
 };
 
 export const USERS_COLLECTION = COLLECTIONS.USERS;
