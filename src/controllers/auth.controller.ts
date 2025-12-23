@@ -308,55 +308,7 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
 
 // Step 3: Complete registration with other details (no password needed)
 export const completeRegistration = async (req: Request, res: Response) => {
-  const { phone, email, firstName, lastName, address, role } = req.body || {};
-
-  if (!phone || !email || !firstName || !lastName) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.MISSING_REQUIRED_FIELDS });
-  }
-
-  const normalizedPhone = normalizePhone(phone);
-  if (!normalizedPhone) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
-  }
-
-  if (!validateEmail(email)) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_EMAIL });
-  }
-
-  // Verify that phone OTP was verified
-  const {
-    isPhoneVerified,
-    getUserByPhone,
-    deletePhoneOtpRecords,
-  } = require("../services/auth.service");
-  const phoneVerified = await isPhoneVerified(normalizedPhone);
-  if (!phoneVerified) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_NOT_VERIFIED });
-  }
-
-  // Check if phone already registered
-  const existingPhone = await getUserByPhone(normalizedPhone);
-  if (existingPhone) {
-    return res
-      .status(409)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_ALREADY_REGISTERED });
-  }
-
-  // Check if email already registered
-  const existingEmail = await getUserByEmail(email);
-  if (existingEmail) {
-    return res
-      .status(409)
-      .json({ success: false, error: ERROR_MESSAGES.EMAIL_ALREADY_IN_USE });
-  }
+  const { firstName, lastName, role } = req.body || {};
 
   // Validate role
   let allowed: string[] = [];
@@ -380,9 +332,6 @@ export const completeRegistration = async (req: Request, res: Response) => {
   const newUser = {
     firstName,
     lastName,
-    email: email.toLowerCase(),
-    phone: normalizedPhone,
-    address: address || undefined,
     role: selectedRole,
     emailVerified: false,
     phoneVerified: true,
@@ -392,13 +341,10 @@ export const completeRegistration = async (req: Request, res: Response) => {
   const result = await createUser(newUser as any);
   const userId = result.insertedId ? result.insertedId.toString() : undefined;
 
-  // Clean up OTP records
-  await deletePhoneOtpRecords(normalizedPhone);
-
   // Sign access token
   const token = signAccessToken({
-    userId: userId || email,
-    email,
+    userId: userId || "",
+    email: "",
     role: selectedRole,
   });
 
@@ -408,10 +354,8 @@ export const completeRegistration = async (req: Request, res: Response) => {
       token,
       user: {
         id: userId,
-        email: email.toLowerCase(),
         firstName,
         lastName,
-        phone: normalizedPhone,
         role: selectedRole,
         emailVerified: false,
         phoneVerified: true,
@@ -422,10 +366,9 @@ export const completeRegistration = async (req: Request, res: Response) => {
 };
 
 export const register = async (req: Request, res: Response) => {
-  const { email, password, firstName, lastName, phone, address, role } =
-    req.body || {};
+  const { email, password, firstName, lastName, phone, role } = req.body || {};
 
-  if (!email || !password || !firstName || !lastName || !phone) {
+  if (!email || !password) {
     return res
       .status(400)
       .json({ success: false, error: ERROR_MESSAGES.MISSING_REQUIRED_FIELDS });
@@ -489,7 +432,6 @@ export const register = async (req: Request, res: Response) => {
     email: email.toLowerCase(),
     passwordHash,
     phone: normalizedPhone,
-    address: address || undefined,
     role: selectedRole,
     emailVerified: false,
     verificationToken,

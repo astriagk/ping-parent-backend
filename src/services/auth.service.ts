@@ -48,8 +48,7 @@ export const getUserByPhone = async (phone: string) => {
 
 import { COLLECTIONS } from "../config/collections";
 
-const PHONE_REG_COLLECTION =
-  COLLECTIONS.PHONE_REGISTRATIONS || "phone_registrations";
+const PHONE_REG_COLLECTION = COLLECTIONS.USERS;
 
 export const createPhoneOtp = async (
   phone: string,
@@ -85,6 +84,9 @@ export const verifyPhoneOtp = async (phone: string, otp: string) => {
     .collection(PHONE_REG_COLLECTION)
     .updateOne({ _id: row._id }, { $set: { verified: true, verifiedAt: now } });
 
+  // Delete OTP records after successful verification
+  await deletePhoneOtpRecords(phone);
+
   return true;
 };
 
@@ -102,8 +104,8 @@ export const deletePhoneOtpRecords = async (phone: string) => {
   await db.collection(PHONE_REG_COLLECTION).deleteMany({ phone });
 };
 
-// Login OTP functions - using separate collection for better tracking
-const PHONE_LOGIN_COLLECTION = "phone_logins";
+// Login OTP functions - using USERS collection for tracking
+const PHONE_LOGIN_COLLECTION = COLLECTIONS.USERS;
 
 export const createLoginOtp = async (
   phone: string,
