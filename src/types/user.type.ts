@@ -13,6 +13,7 @@ export interface User {
   email: string;
   passwordHash?: string;
   phone?: string;
+  profileImageUrl?: string;
   address?: Address;
   role?: string;
   emailVerified?: boolean;

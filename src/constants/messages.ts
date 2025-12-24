@@ -38,6 +38,40 @@ export const ERROR_MESSAGES = {
   MISSING_RESET_TOKEN_OR_PASSWORD: "Missing resetToken or newPassword",
   INVALID_RESET_TOKEN: "Invalid or expired reset token",
 
+  // Parent/Profile Errors
+  USER_NOT_AUTHENTICATED: "User not authenticated",
+  PARENT_PROFILE_NOT_FOUND: "Parent profile not found",
+  PARENT_PROFILE_NOT_FOUND_OR_NO_CHANGES: "Parent profile not found or no changes made",
+  NO_UPDATES_PROVIDED: "No updates provided",
+
+  // Student Errors
+  STUDENT_ID_REQUIRED: "Student ID is required",
+  STUDENT_NOT_FOUND: "Student not found",
+  STUDENT_NOT_FOUND_OR_NOT_BELONG: "Student not found or does not belong to this parent",
+
+  // Trip Errors
+  TRIP_ID_REQUIRED: "Trip ID is required",
+  TRIP_NOT_FOUND_OR_NOT_BELONG: "Trip not found or does not belong to this parent",
+  LIVE_LOCATION_NOT_AVAILABLE: "Live location not available for this trip",
+
+  // Address Errors
+  ADDRESS_FIELDS_REQUIRED: "Street, city, state, and zipCode are required",
+  ADDRESS_NOT_FOUND: "Address not found",
+
+  // Fetch Errors
+  FAILED_TO_FETCH_PARENT_PROFILE: "Failed to fetch parent profile",
+  FAILED_TO_FETCH_STUDENTS: "Failed to fetch students",
+  FAILED_TO_FETCH_STUDENT_DETAILS: "Failed to fetch student details",
+  FAILED_TO_FETCH_TODAY_TRIPS: "Failed to fetch today's trips",
+  FAILED_TO_FETCH_NOTIFICATIONS: "Failed to fetch notifications",
+  FAILED_TO_FETCH_TRIP_LIVE_LOCATION: "Failed to fetch trip live location",
+  FAILED_TO_FETCH_ADDRESS: "Failed to fetch address",
+
+  // Update Errors
+  FAILED_TO_UPDATE_PARENT_PROFILE: "Failed to update parent profile",
+  FAILED_TO_UPDATE_ADDRESS: "Failed to update address",
+  FAILED_TO_CREATE_CALL_PARENT_REQUEST: "Failed to create call parent request",
+
   // Server Errors
   SERVER_ERROR: "Server error",
 };
@@ -56,6 +90,9 @@ export const SUCCESS_MESSAGES = {
   PASSWORD_RESET_SUCCESS:
     "Password reset successful. You can now login with your new password.",
   LOGGED_OUT_SUCCESSFULLY: "Logged out successfully",
+  PROFILE_UPDATED_SUCCESSFULLY: "Profile updated successfully",
+  ADDRESS_UPDATED_SUCCESSFULLY: "Address updated successfully",
+  CALL_REQUEST_CREATED_SUCCESSFULLY: "Call request created successfully",
 };
 
 // Error Codes

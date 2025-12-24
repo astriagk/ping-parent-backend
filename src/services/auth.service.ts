@@ -46,10 +46,6 @@ export const getUserByPhone = async (phone: string) => {
   return db.collection(COLLECTION).findOne({ phone });
 };
 
-import { COLLECTIONS } from "../config/collections";
-
-const PHONE_REG_COLLECTION = COLLECTIONS.USERS;
-
 export const createPhoneOtp = async (
   phone: string,
   otp: string,
@@ -64,14 +60,14 @@ export const createPhoneOtp = async (
     verified: false,
     createdAt: now,
   };
-  const res = await db.collection(PHONE_REG_COLLECTION).insertOne(doc);
+  const res = await db.collection(USERS_COLLECTION).insertOne(doc);
   return res.insertedId;
 };
 
 export const verifyPhoneOtp = async (phone: string, otp: string) => {
   const db = await connectDB();
   const now = new Date();
-  const row = await db.collection(PHONE_REG_COLLECTION).findOne({
+  const row = await db.collection(USERS_COLLECTION).findOne({
     phone,
     otp,
     verified: false,
@@ -81,7 +77,7 @@ export const verifyPhoneOtp = async (phone: string, otp: string) => {
   if (!row) return false;
 
   await db
-    .collection(PHONE_REG_COLLECTION)
+    .collection(USERS_COLLECTION)
     .updateOne({ _id: row._id }, { $set: { verified: true, verifiedAt: now } });
 
   return true;
@@ -89,7 +85,7 @@ export const verifyPhoneOtp = async (phone: string, otp: string) => {
 
 export const isPhoneVerified = async (phone: string) => {
   const db = await connectDB();
-  const row = await db.collection(PHONE_REG_COLLECTION).findOne({
+  const row = await db.collection(USERS_COLLECTION).findOne({
     phone,
     verified: true,
   });
@@ -98,46 +94,43 @@ export const isPhoneVerified = async (phone: string) => {
 
 export const deletePhoneOtpRecords = async (phone: string) => {
   const db = await connectDB();
-  await db.collection(PHONE_REG_COLLECTION).deleteMany({ phone });
+  await db.collection(USERS_COLLECTION).deleteMany({ phone });
 };
 
 // Login OTP functions - using USERS collection for tracking
-const PHONE_LOGIN_COLLECTION = COLLECTIONS.USERS;
 
-export const createLoginOtp = async (
+export const updateLoginOtp = async (
   phone: string,
   otp: string,
   ttlMinutes = 10
 ) => {
   const db = await connectDB();
   const now = new Date();
-  const doc = {
-    phone,
-    otp,
-    otpExpiresAt: new Date(now.getTime() + ttlMinutes * 60 * 1000),
-    used: false,
-    createdAt: now,
+  const update = {
+    $set: {
+      otp,
+      otpExpiresAt: new Date(now.getTime() + ttlMinutes * 60 * 1000),
+      updatedAt: now,
+    },
   };
-  const res = await db.collection(PHONE_LOGIN_COLLECTION).insertOne(doc);
-  return res.insertedId;
+  const res = await db
+    .collection(USERS_COLLECTION)
+    .updateOne({ phone }, update);
+  return res.modifiedCount > 0;
 };
 
 export const verifyLoginOtp = async (phone: string, otp: string) => {
   const db = await connectDB();
   const now = new Date();
-  const row = await db.collection(PHONE_LOGIN_COLLECTION).findOne({
+  const row = await db.collection(USERS_COLLECTION).findOne({
     phone,
     otp,
-    used: false,
     otpExpiresAt: { $gt: now },
   });
 
-  if (!row) return false;
+  console.log(row);
 
-  // Mark OTP as used
-  await db
-    .collection(PHONE_LOGIN_COLLECTION)
-    .updateOne({ _id: row._id }, { $set: { used: true, usedAt: now } });
+  if (!row) return false;
 
   return true;
 };

@@ -35,8 +35,6 @@ export const updateParentProfile = async (
     const { _id, passwordHash, verificationToken, ...sanitizedUpdates } =
       updates;
 
-    console.log(userId);
-
     // Only allow ObjectId as _id
     if (!ObjectId.isValid(userId)) {
       return false;
@@ -47,8 +45,6 @@ export const updateParentProfile = async (
     const result = await db.collection(USERS_COLLECTION).updateOne(query, {
       $set: { ...sanitizedUpdates, updatedAt: new Date() },
     });
-
-    console.log(result);
 
     return result.modifiedCount > 0;
   } catch (error) {
