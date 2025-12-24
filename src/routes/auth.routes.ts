@@ -12,6 +12,7 @@ import {
   completeRegistration,
   sendLoginOtp,
   verifyLoginOtp,
+  logout,
 } from "../controllers/auth.controller";
 import { loginRateLimiter } from "../middleware/rateLimit";
 
@@ -33,5 +34,6 @@ router.post("/auth/forgot-password", forgotPassword);
 router.post("/auth/verify-otp", verifyOtp);
 router.post("/auth/reset-password", resetPassword);
 router.get("/auth/verify-token", verifyAuthToken);
+router.post("/auth/logout", logout);
 
 export default router;

@@ -16,6 +16,7 @@ export interface User {
   address?: Address;
   role?: string;
   emailVerified?: boolean;
+  phoneVerified?: boolean;
   verificationToken?: string;
   createdAt: Date;
 }

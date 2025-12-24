@@ -8,6 +8,6 @@ export const getAllRoles = async (): Promise<string[]> => {
   const rows = await db.collection(COLLECTION).find().toArray();
   // Expect documents like { name: 'parent' }
   return rows
-    .map((r: any) => (r.name ? String(r.name) : String(r)))
+    .map((r: any) => (r.code ? String(r.code) : String(r)))
     .filter(Boolean);
 };

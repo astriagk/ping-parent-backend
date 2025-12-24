@@ -55,6 +55,7 @@ export const SUCCESS_MESSAGES = {
     "If an account exists with this email, you will receive a password reset code.",
   PASSWORD_RESET_SUCCESS:
     "Password reset successful. You can now login with your new password.",
+  LOGGED_OUT_SUCCESSFULLY: "Logged out successfully",
 };
 
 // Error Codes

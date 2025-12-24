@@ -84,9 +84,6 @@ export const verifyPhoneOtp = async (phone: string, otp: string) => {
     .collection(PHONE_REG_COLLECTION)
     .updateOne({ _id: row._id }, { $set: { verified: true, verifiedAt: now } });
 
-  // Delete OTP records after successful verification
-  await deletePhoneOtpRecords(phone);
-
   return true;
 };
 
