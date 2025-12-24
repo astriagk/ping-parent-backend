@@ -7,8 +7,9 @@ import {
   getUserByPhone,
   verifyPhoneOtp as verifyOtpService,
   updateUserPassword,
-  createLoginOtp,
   createPhoneOtp,
+  updateLoginOtp,
+  verifyLoginOtp as verifyLoginOtpService,
 } from "../services/auth.service";
 import jwt from "jsonwebtoken";
 import { getAllRoles } from "../services/role.service";
@@ -145,6 +146,8 @@ export const sendLoginOtp = async (req: Request, res: Response) => {
   }
 
   const user = await getUserByPhone(normalizedPhone);
+
+  // If user doesn't exist, return error
   if (!user) {
     return res
       .status(404)
@@ -155,7 +158,7 @@ export const sendLoginOtp = async (req: Request, res: Response) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   // Save OTP to database
-  await createLoginOtp(normalizedPhone, otp, 10);
+  await updateLoginOtp(normalizedPhone, otp, 10);
 
   // TODO: Send OTP via SMS service (Twilio, AWS SNS, etc.)
   console.log(`Login OTP for ${normalizedPhone}: ${otp}`);
@@ -185,7 +188,7 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
       .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
   }
 
-  const verified = await verifyOtpService(normalizedPhone, otp);
+  const verified = await verifyLoginOtpService(normalizedPhone, otp);
 
   if (!verified) {
     return res
