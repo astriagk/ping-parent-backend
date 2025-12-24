@@ -1,7 +1,7 @@
 import express, { Request, Response, NextFunction } from "express";
 import pingRoutes from "./routes/ping.routes";
-import userRoutes from "./routes/user.routes";
 import authRoutes from "./routes/auth.routes";
+import parentRoutes from "./routes/parent.routes";
 
 const app = express();
 
@@ -14,7 +14,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.use("/api", pingRoutes);
-app.use("/api", userRoutes);
 app.use("/api", authRoutes);
+app.use("/api", parentRoutes);
 
 export default app;

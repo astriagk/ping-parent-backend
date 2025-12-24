@@ -1,8 +1,9 @@
 import { connectDB } from "../db/mongo";
 import { User } from "../types/user.type";
 import { ObjectId } from "mongodb";
+import { USERS_COLLECTION } from "../config/collections";
 
-const COLLECTION = "users";
+const COLLECTION = USERS_COLLECTION;
 
 export const createUser = async (data: User) => {
   const db = await connectDB();
@@ -23,4 +24,9 @@ export const getUserById = async (id: string) => {
 
   // Fallback: query by string _id (some projects store string IDs).
   return db.collection(COLLECTION).findOne({ _id: id } as any);
+};
+
+export const getUserByEmail = async (email: string) => {
+  const db = await connectDB();
+  return db.collection(COLLECTION).findOne({ email: email.toLowerCase() });
 };
