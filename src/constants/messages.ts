@@ -49,6 +49,25 @@ export const ERROR_MESSAGES = {
     FAILED_TO_FETCH_ADDRESS: "Failed to fetch address",
     FAILED_TO_UPDATE_ADDRESS: "Failed to update address",
   },
+  DRIVER: {
+    USER_NOT_AUTHENTICATED: "User not authenticated",
+    DRIVER_PROFILE_NOT_FOUND: "Driver profile not found",
+    NO_UPDATES_PROVIDED: "No updates provided",
+    REQUIRED_FIELDS_MISSING: "Required fields are missing",
+    INVALID_VEHICLE_TYPE: "Vehicle type must be van, auto, or bus",
+    INVALID_VEHICLE_CAPACITY: "Vehicle capacity must be a positive number",
+    INVALID_COORDINATES:
+      "Latitude and longitude are required and must be valid numbers",
+    FAILED_TO_FETCH_DRIVER_PROFILE: "Failed to fetch driver profile",
+    FAILED_TO_UPDATE_DRIVER_PROFILE: "Failed to update driver profile",
+    FAILED_TO_CREATE_DRIVER_PROFILE: "Failed to create driver profile",
+    ADDRESS_NOT_FOUND: "Driver address not found",
+    FAILED_TO_FETCH_ADDRESS: "Failed to fetch driver address",
+    FAILED_TO_UPDATE_ADDRESS: "Failed to update driver address",
+    DOCUMENTS_NOT_FOUND: "Driver documents not found",
+    FAILED_TO_FETCH_DOCUMENTS: "Failed to fetch driver documents",
+    FAILED_TO_UPDATE_DOCUMENTS: "Failed to update driver documents",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -76,6 +95,12 @@ export const SUCCESS_MESSAGES = {
   },
   ADDRESS: {
     ADDRESS_UPDATED_SUCCESSFULLY: "Address updated successfully",
+  },
+  DRIVER: {
+    PROFILE_UPDATED_SUCCESSFULLY: "Driver profile updated successfully",
+    PROFILE_CREATED_SUCCESSFULLY: "Driver profile created successfully",
+    ADDRESS_UPDATED_SUCCESSFULLY: "Driver address updated successfully",
+    DOCUMENTS_UPDATED_SUCCESSFULLY: "Driver documents updated successfully",
   },
 };
 

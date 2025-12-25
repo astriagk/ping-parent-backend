@@ -69,15 +69,6 @@ Table drivers {
   name varchar(100) [not null]
   email varchar(100)
   photo_url varchar(255)
-  home_address varchar(255) [note: 'Driver starting point address']
-  home_latitude decimal(10,8) [note: 'Driver starting point latitude']
-  home_longitude decimal(11,8) [note: 'Driver starting point longitude']
-  driving_license_number varchar(50) [not null]
-  driving_license_photo_url varchar(255)
-  vehicle_license_number varchar(50) [not null]
-  vehicle_license_photo_url varchar(255)
-  insurance_number varchar(50)
-  insurance_photo_url varchar(255)
   vehicle_type enum [not null, note: 'van, auto, bus']
   vehicle_number varchar(20) [not null]
   vehicle_capacity int [not null]
@@ -97,10 +88,50 @@ Table drivers {
     vehicle_type
     is_available
     driver_unique_id
-    (home_latitude, home_longitude)
   }
   
-  Note: 'Driver starts from home_address. Route dynamically calculated based on student addresses and school location.'
+  Note: 'Driver profile. Documents and addresses are in separate tables.'
+}
+
+Table driver_addresses {
+  address_id varchar(36) [pk]
+  driver_id varchar(36) [not null, ref: > drivers.driver_id]
+  address_line1 varchar(255) [not null]
+  address_line2 varchar(255)
+  city varchar(100) [not null]
+  state varchar(100) [not null]
+  pincode varchar(10)
+  latitude decimal(10,8) [not null]
+  longitude decimal(11,8) [not null]
+  is_primary boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+  
+  indexes {
+    driver_id
+    (latitude, longitude)
+  }
+  
+  Note: 'Driver can have multiple addresses, but usually one primary (home).' 
+}
+
+Table driver_documents {
+  document_id varchar(36) [pk]
+  driver_id varchar(36) [not null, ref: > drivers.driver_id]
+  driving_license_number varchar(50) [not null]
+  driving_license_photo_url varchar(255)
+  vehicle_license_number varchar(50) [not null]
+  vehicle_license_photo_url varchar(255)
+  insurance_number varchar(50)
+  insurance_photo_url varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+  
+  indexes {
+    driver_id
+  }
+  
+  Note: 'Stores driver document details. Can be extended for document history.'
 }
 
 Table schools {

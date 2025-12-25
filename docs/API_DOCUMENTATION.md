@@ -22,6 +22,11 @@ Complete API reference with request payloads, response formats, and error messag
   - [Update Profile](#update-parent-profile)
   - [Get Address](#get-parent-address)
   - [Update Address](#update-parent-address)
+- [Driver Endpoints](#driver-endpoints)
+  - [Get Driver Profile](#get-driver-profile)
+  - [Create Driver Profile](#create-driver-profile)
+  - [Update Driver Profile](#update-driver-profile)
+  - [Upload/Update Driver Documents](#uploadupdate-driver-documents)
 
 ---
 
@@ -36,11 +41,13 @@ Retrieves list of available user roles.
 **Authentication**: Not required
 
 **Request**:
+
 ```http
 GET /api/auth/roles
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -50,11 +57,12 @@ GET /api/auth/roles
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 500 | `"Failed to fetch roles"` |
+| Status | Error Message             |
+| ------ | ------------------------- |
+| 500    | `"Failed to fetch roles"` |
 
 **Example**:
+
 ```json
 {
   "success": false,
@@ -73,6 +81,7 @@ Register a new user with email and password.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "email": "parent@example.com",
@@ -85,16 +94,19 @@ Register a new user with email and password.
 ```
 
 **Required Fields**:
+
 - `email` (string): Valid email address
 - `password` (string): Min 8 characters, must include uppercase, lowercase, and number
 - `phone` (string): Valid phone number
 
 **Optional Fields**:
+
 - `firstName` (string)
 - `lastName` (string)
 - `role` (string): Defaults to "parent" if not provided
 
 **Success Response** (201):
+
 ```json
 {
   "success": true,
@@ -115,17 +127,18 @@ Register a new user with email and password.
 
 **Error Responses**:
 
-| Status | Error Code | Error Message |
-|--------|-----------|--------------|
-| 400 | - | `"Missing required fields"` |
-| 400 | - | `"Invalid email"` |
-| 400 | - | `"Password must be at least 8 characters and include uppercase, lowercase and a number"` |
-| 400 | - | `"Invalid phone number"` |
-| 400 | - | `"Invalid role"` |
-| 409 | - | `"Email already in use"` |
-| 500 | - | `"Unable to validate role"` |
+| Status | Error Code | Error Message                                                                            |
+| ------ | ---------- | ---------------------------------------------------------------------------------------- |
+| 400    | -          | `"Missing required fields"`                                                              |
+| 400    | -          | `"Invalid email"`                                                                        |
+| 400    | -          | `"Password must be at least 8 characters and include uppercase, lowercase and a number"` |
+| 400    | -          | `"Invalid phone number"`                                                                 |
+| 400    | -          | `"Invalid role"`                                                                         |
+| 409    | -          | `"Email already in use"`                                                                 |
+| 500    | -          | `"Unable to validate role"`                                                              |
 
 **Example Error**:
+
 ```json
 {
   "success": false,
@@ -146,6 +159,7 @@ Send OTP to phone number for registration.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "phone": "+1234567890"
@@ -153,6 +167,7 @@ Send OTP to phone number for registration.
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -160,15 +175,16 @@ Send OTP to phone number for registration.
   "otp": "123456"
 }
 ```
+
 > Note: `otp` field is only included in development mode
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Phone number is required"` |
-| 400 | `"Invalid phone number"` |
-| 409 | `"Phone number already registered"` |
+| Status | Error Message                       |
+| ------ | ----------------------------------- |
+| 400    | `"Phone number is required"`        |
+| 400    | `"Invalid phone number"`            |
+| 409    | `"Phone number already registered"` |
 
 ---
 
@@ -181,14 +197,17 @@ Verify the OTP sent to phone number.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "phone": "+1234567890",
-  "otp": "123456"
+  "otp": "123456",
+  "role": "parent | driver"
 }
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -201,12 +220,12 @@ Verify the OTP sent to phone number.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Phone number and OTP are required"` |
-| 400 | `"Invalid phone number"` |
-| 400 | `"Invalid or expired OTP"` |
-| 404 | `"Email or password is incorrect"` |
+| Status | Error Message                         |
+| ------ | ------------------------------------- |
+| 400    | `"Phone number and OTP are required"` |
+| 400    | `"Invalid phone number"`              |
+| 400    | `"Invalid or expired OTP"`            |
+| 404    | `"Email or password is incorrect"`    |
 
 ---
 
@@ -219,11 +238,13 @@ Complete registration with user details (requires token from Step 2).
 **Authentication**: Required (Bearer token from Step 2)
 
 **Request Headers**:
+
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Request Payload**:
+
 ```json
 {
   "firstName": "John",
@@ -233,11 +254,13 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Optional Fields**:
+
 - `firstName` (string)
 - `lastName` (string)
 - `role` (string): Defaults to "parent"
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -258,12 +281,12 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Invalid role"` |
-| 401 | `"Missing Authorization header"` |
-| 404 | `"User not found"` |
-| 500 | `"Unable to validate role"` |
+| Status | Error Message                    |
+| ------ | -------------------------------- |
+| 400    | `"Invalid role"`                 |
+| 401    | `"Missing Authorization header"` |
+| 404    | `"User not found"`               |
+| 500    | `"Unable to validate role"`      |
 
 ---
 
@@ -278,6 +301,7 @@ Send OTP to registered phone number for login.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "phone": "+1234567890"
@@ -285,6 +309,7 @@ Send OTP to registered phone number for login.
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -292,15 +317,16 @@ Send OTP to registered phone number for login.
   "otp": "123456"
 }
 ```
+
 > Note: `otp` field is only included in development mode
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Phone number is required"` |
-| 400 | `"Invalid phone number"` |
-| 404 | `"Phone number not registered"` |
+| Status | Error Message                   |
+| ------ | ------------------------------- |
+| 400    | `"Phone number is required"`    |
+| 400    | `"Invalid phone number"`        |
+| 404    | `"Phone number not registered"` |
 
 ---
 
@@ -313,6 +339,7 @@ Verify OTP and complete login.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "phone": "+1234567890",
@@ -321,6 +348,7 @@ Verify OTP and complete login.
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -341,12 +369,12 @@ Verify OTP and complete login.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Phone number and OTP are required for login"` |
-| 400 | `"Invalid phone number"` |
-| 400 | `"Invalid or expired OTP"` |
-| 404 | `"User not found"` |
+| Status | Error Message                                   |
+| ------ | ----------------------------------------------- |
+| 400    | `"Phone number and OTP are required for login"` |
+| 400    | `"Invalid phone number"`                        |
+| 400    | `"Invalid or expired OTP"`                      |
+| 404    | `"User not found"`                              |
 
 ---
 
@@ -361,6 +389,7 @@ Login with email and password.
 **Rate Limiting**: Yes (protects against brute-force attacks)
 
 **Request Payload**:
+
 ```json
 {
   "email": "parent@example.com",
@@ -369,6 +398,7 @@ Login with email and password.
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -388,13 +418,14 @@ Login with email and password.
 
 **Error Responses**:
 
-| Status | Error Code | Error Message |
-|--------|-----------|--------------|
-| 400 | - | `"Missing email or password"` |
-| 400 | - | `"Invalid email"` |
-| 401 | `INVALID_CREDENTIALS` | `"Email or password is incorrect"` |
+| Status | Error Code            | Error Message                      |
+| ------ | --------------------- | ---------------------------------- |
+| 400    | -                     | `"Missing email or password"`      |
+| 400    | -                     | `"Invalid email"`                  |
+| 401    | `INVALID_CREDENTIALS` | `"Email or password is incorrect"` |
 
 **Example Error**:
+
 ```json
 {
   "success": false,
@@ -418,6 +449,7 @@ Request OTP for password reset.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "email": "parent@example.com"
@@ -425,6 +457,7 @@ Request OTP for password reset.
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -436,9 +469,9 @@ Request OTP for password reset.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 500 | `"Server error"` |
+| Status | Error Message    |
+| ------ | ---------------- |
+| 500    | `"Server error"` |
 
 ---
 
@@ -451,6 +484,7 @@ Verify the OTP sent to email.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "email": "parent@example.com",
@@ -459,6 +493,7 @@ Verify the OTP sent to email.
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -470,11 +505,11 @@ Verify the OTP sent to email.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Missing email or otp"` |
-| 400 | `"Invalid or expired OTP"` |
-| 500 | `"Server error"` |
+| Status | Error Message              |
+| ------ | -------------------------- |
+| 400    | `"Missing email or otp"`   |
+| 400    | `"Invalid or expired OTP"` |
+| 500    | `"Server error"`           |
 
 ---
 
@@ -487,6 +522,7 @@ Reset password using the reset token from Step 2.
 **Authentication**: Not required
 
 **Request Payload**:
+
 ```json
 {
   "resetToken": "a1b2c3d4e5f6...",
@@ -495,10 +531,12 @@ Reset password using the reset token from Step 2.
 ```
 
 **Required Fields**:
+
 - `resetToken` (string): Token from verify-otp response
 - `newPassword` (string): Min 8 characters, must include uppercase, lowercase, and number
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -508,12 +546,12 @@ Reset password using the reset token from Step 2.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Missing resetToken or newPassword"` |
-| 400 | `"Password does not meet requirements"` |
-| 400 | `"Invalid or expired reset token"` |
-| 500 | `"Server error"` |
+| Status | Error Message                           |
+| ------ | --------------------------------------- |
+| 400    | `"Missing resetToken or newPassword"`   |
+| 400    | `"Password does not meet requirements"` |
+| 400    | `"Invalid or expired reset token"`      |
+| 500    | `"Server error"`                        |
 
 ---
 
@@ -526,16 +564,19 @@ Verify if the current JWT token is valid.
 **Authentication**: Required
 
 **Request Headers**:
+
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Optional Headers** (for token refresh):
+
 ```http
 x-refresh-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -549,6 +590,7 @@ x-refresh-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Success Response with Token Refresh** (200):
+
 ```json
 {
   "success": true,
@@ -564,14 +606,14 @@ x-refresh-token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 401 | `"Missing Authorization header"` |
-| 401 | `"Malformed Authorization header"` |
-| 401 | `"User not found"` |
-| 401 | `"Token expired"` |
-| 401 | `"Invalid token"` |
-| 401 | `"Invalid refresh token"` |
+| Status | Error Message                      |
+| ------ | ---------------------------------- |
+| 401    | `"Missing Authorization header"`   |
+| 401    | `"Malformed Authorization header"` |
+| 401    | `"User not found"`                 |
+| 401    | `"Token expired"`                  |
+| 401    | `"Invalid token"`                  |
+| 401    | `"Invalid refresh token"`          |
 
 ---
 
@@ -584,11 +626,13 @@ Logout the current user.
 **Authentication**: Required
 
 **Request Headers**:
+
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -598,9 +642,9 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 500 | `"Server error"` |
+| Status | Error Message    |
+| ------ | ---------------- |
+| 500    | `"Server error"` |
 
 ---
 
@@ -609,6 +653,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 All parent endpoints require authentication via JWT token in the `Authorization` header.
 
 **Request Headers**:
+
 ```http
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
@@ -624,12 +669,14 @@ Retrieve the authenticated parent's profile.
 **Authentication**: Required (Parent role)
 
 **Request**:
+
 ```http
 GET /api/parent/profile
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -652,11 +699,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 401 | `"User not authenticated"` |
-| 404 | `"Parent profile not found"` |
-| 500 | `"Failed to fetch parent profile"` |
+| Status | Error Message                      |
+| ------ | ---------------------------------- |
+| 401    | `"User not authenticated"`         |
+| 404    | `"Parent profile not found"`       |
+| 500    | `"Failed to fetch parent profile"` |
 
 ---
 
@@ -669,6 +716,7 @@ Update the authenticated parent's profile information.
 **Authentication**: Required (Parent role)
 
 **Request Payload**:
+
 ```json
 {
   "firstName": "Jane",
@@ -679,6 +727,7 @@ Update the authenticated parent's profile information.
 ```
 
 **Updatable Fields**:
+
 - `firstName` (string)
 - `lastName` (string)
 - `email` (string): Valid email address
@@ -688,6 +737,7 @@ Update the authenticated parent's profile information.
 > Note: You can update any combination of fields. All fields are optional.
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -709,12 +759,12 @@ Update the authenticated parent's profile information.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"No updates provided"` |
-| 401 | `"User not authenticated"` |
-| 404 | `"Parent profile not found or no changes made"` |
-| 500 | `"Failed to update parent profile"` |
+| Status | Error Message                                   |
+| ------ | ----------------------------------------------- |
+| 400    | `"No updates provided"`                         |
+| 401    | `"User not authenticated"`                      |
+| 404    | `"Parent profile not found or no changes made"` |
+| 500    | `"Failed to update parent profile"`             |
 
 ---
 
@@ -727,12 +777,14 @@ Retrieve the authenticated parent's address.
 **Authentication**: Required (Parent role)
 
 **Request**:
+
 ```http
 GET /api/parent/address
 Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -755,11 +807,11 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 401 | `"User not authenticated"` |
-| 404 | `"Address not found"` |
-| 500 | `"Failed to fetch address"` |
+| Status | Error Message               |
+| ------ | --------------------------- |
+| 401    | `"User not authenticated"`  |
+| 404    | `"Address not found"`       |
+| 500    | `"Failed to fetch address"` |
 
 ---
 
@@ -772,6 +824,7 @@ Update or create the authenticated parent's address.
 **Authentication**: Required (Parent role)
 
 **Request Payload**:
+
 ```json
 {
   "street": "456 Oak Avenue",
@@ -786,17 +839,20 @@ Update or create the authenticated parent's address.
 ```
 
 **Required Fields**:
+
 - `street` (string)
 - `city` (string)
 - `state` (string)
 - `zipCode` (string)
 
 **Optional Fields**:
+
 - `coordinates` (object):
   - `lat` (number): Latitude
   - `lng` (number): Longitude
 
 **Success Response** (200):
+
 ```json
 {
   "success": true,
@@ -820,11 +876,522 @@ Update or create the authenticated parent's address.
 
 **Error Responses**:
 
-| Status | Error Message |
-|--------|--------------|
-| 400 | `"Street, city, state, and zipCode are required"` |
-| 401 | `"User not authenticated"` |
-| 500 | `"Failed to update address"` |
+| Status | Error Message                                     |
+| ------ | ------------------------------------------------- |
+| 400    | `"Street, city, state, and zipCode are required"` |
+| 401    | `"User not authenticated"`                        |
+| 500    | `"Failed to update address"`                      |
+
+---
+
+## Driver Endpoints
+
+All driver endpoints require authentication via JWT token with driver role in the `Authorization` header.
+
+**Request Headers**:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+> **Note**: Driver data is now normalized across three separate tables:
+> - `drivers`: Basic profile and vehicle information
+> - `driver_addresses`: Driver home address (separate table)
+> - `driver_documents`: License and insurance documents (separate table)
+
+---
+
+### Get Driver Profile
+
+Retrieve the authenticated driver's profile (basic information and vehicle details only).
+
+**Endpoint**: `GET /api/driver/profile`
+
+**Authentication**: Required (Driver role)
+
+**Request**:
+
+```http
+GET /api/driver/profile
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "driver_id": "507f1f77bcf86cd799439011",
+    "user_id": "507f1f77bcf86cd799439012",
+    "driver_unique_id": "DRV12345",
+    "name": "John Driver",
+    "email": "driver@example.com",
+    "photo_url": "https://example.com/photo.jpg",
+    "vehicle_type": "van",
+    "vehicle_number": "ABC-1234",
+    "vehicle_capacity": 6,
+    "current_student_count": 3,
+    "approval_status": "approved",
+    "is_available": true,
+    "rating": 4.75,
+    "total_trips": 142,
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-20T14:45:00.000Z",
+    "user": {
+      "phone_number": "+1234567890",
+      "user_type": "driver",
+      "is_active": true,
+      "fcm_token": "fcm_token_here",
+      "last_login": "2024-01-20T14:45:00.000Z"
+    }
+  }
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 401    | `"User not authenticated"`               |
+| 403    | `"Access denied. Driver role required."` |
+| 404    | `"Driver profile not found"`             |
+| 500    | `"Failed to fetch driver profile"`       |
+
+---
+
+### Create Driver Profile
+
+Create a new driver profile (typically during registration). Only creates basic profile - use separate endpoints for address and documents.
+
+**Endpoint**: `POST /api/driver/profile`
+
+**Authentication**: Required (Driver role)
+
+**Request Payload**:
+
+```json
+{
+  "name": "John Driver",
+  "email": "driver@example.com",
+  "photo_url": "https://example.com/photo.jpg",
+  "vehicle_type": "van",
+  "vehicle_number": "ABC-1234",
+  "vehicle_capacity": 6,
+  "is_available": true
+}
+```
+
+**Required Fields**:
+
+- `name` (string): Driver's full name
+- `vehicle_type` (string): Must be one of: `"van"`, `"auto"`, `"bus"`
+- `vehicle_number` (string): Vehicle plate number
+- `vehicle_capacity` (number): Number of students the vehicle can carry (must be > 0)
+
+**Optional Fields**:
+
+- `email` (string): Driver's email address
+- `photo_url` (string): URL to driver's photo
+- `is_available` (boolean): Driver availability status (defaults to `true`)
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "driver_id": "507f1f77bcf86cd799439011",
+    "user_id": "507f1f77bcf86cd799439012",
+    "driver_unique_id": "DRV12345",
+    "name": "John Driver",
+    "email": "driver@example.com",
+    "photo_url": "https://example.com/photo.jpg",
+    "vehicle_type": "van",
+    "vehicle_number": "ABC-1234",
+    "vehicle_capacity": 6,
+    "current_student_count": 0,
+    "approval_status": "pending",
+    "is_available": true,
+    "rating": 0.0,
+    "total_trips": 0,
+    "created_at": "2024-01-20T14:45:00.000Z",
+    "updated_at": "2024-01-20T14:45:00.000Z"
+  },
+  "message": "Driver profile created successfully"
+}
+```
+
+> Note: A unique `driver_unique_id` (format: DRVxxxxx) is automatically generated for parent search functionality
+
+**Error Responses**:
+
+| Status | Error Message                                  |
+| ------ | ---------------------------------------------- |
+| 400    | `"Required fields are missing"`                |
+| 400    | `"Vehicle type must be van, auto, or bus"`     |
+| 400    | `"Vehicle capacity must be a positive number"` |
+| 401    | `"User not authenticated"`                     |
+| 403    | `"Access denied. Driver role required."`       |
+| 500    | `"Failed to create driver profile"`            |
+
+---
+
+### Update Driver Profile
+
+Update the authenticated driver's profile information.
+
+**Endpoint**: `PUT /api/driver/profile`
+
+**Authentication**: Required (Driver role)
+
+**Request Payload**:
+
+```json
+{
+  "name": "John Updated Driver",
+  "email": "newemail@example.com",
+  "photo_url": "https://example.com/new-photo.jpg",
+  "vehicle_type": "bus",
+  "vehicle_number": "XYZ-5678",
+  "vehicle_capacity": 12,
+  "is_available": false
+}
+```
+
+**Updatable Fields**:
+
+- `name` (string)
+- `email` (string)
+- `photo_url` (string)
+- `vehicle_type` (string): Must be `"van"`, `"auto"`, or `"bus"`
+- `vehicle_number` (string)
+- `vehicle_capacity` (number): Must be > 0
+- `is_available` (boolean)
+
+> Note: You can update any combination of fields. All fields are optional.
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "driver_id": "507f1f77bcf86cd799439011",
+    "user_id": "507f1f77bcf86cd799439012",
+    "driver_unique_id": "DRV12345",
+    "name": "John Updated Driver",
+    "email": "newemail@example.com",
+    "photo_url": "https://example.com/new-photo.jpg",
+    "vehicle_type": "bus",
+    "vehicle_number": "XYZ-5678",
+    "vehicle_capacity": 12,
+    "is_available": false,
+    "updated_at": "2024-01-21T09:15:00.000Z"
+  },
+  "message": "Driver profile updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                  |
+| ------ | ---------------------------------------------- |
+| 400    | `"No updates provided"`                        |
+| 400    | `"Vehicle type must be van, auto, or bus"`     |
+| 400    | `"Vehicle capacity must be a positive number"` |
+| 401    | `"User not authenticated"`                     |
+| 403    | `"Access denied. Driver role required."`       |
+| 404    | `"Driver profile not found"`                   |
+| 500    | `"Failed to update driver profile"`            |
+
+---
+
+### Get Driver Address
+
+Retrieve the authenticated driver's primary home address.
+
+**Endpoint**: `GET /api/driver/address`
+
+**Authentication**: Required (Driver role)
+
+**Request**:
+
+```http
+GET /api/driver/address
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "address_id": "507f1f77bcf86cd799439013",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "address_line1": "123 Main St",
+    "address_line2": "Apt 4B",
+    "city": "Springfield",
+    "state": "Illinois",
+    "pincode": "62701",
+    "latitude": 39.7817,
+    "longitude": -89.6501,
+    "is_primary": true,
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-20T14:45:00.000Z"
+  }
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 401    | `"User not authenticated"`               |
+| 403    | `"Access denied. Driver role required."` |
+| 404    | `"Driver address not found"`             |
+| 500    | `"Failed to fetch driver address"`       |
+
+---
+
+### Create/Update Driver Address
+
+Create or update the authenticated driver's primary home address (upsert operation).
+
+**Endpoint**: `POST /api/driver/address`
+
+**Authentication**: Required (Driver role)
+
+**Request Payload**:
+
+```json
+{
+  "address_line1": "456 Oak Avenue",
+  "address_line2": "Suite 200",
+  "city": "Chicago",
+  "state": "Illinois",
+  "pincode": "60601",
+  "latitude": 41.8781,
+  "longitude": -87.6298,
+  "is_primary": true
+}
+```
+
+**Required Fields**:
+
+- `address_line1` (string): Primary address line
+- `city` (string): City name
+- `state` (string): State name
+- `latitude` (number): Latitude coordinate
+- `longitude` (number): Longitude coordinate
+
+**Optional Fields**:
+
+- `address_line2` (string): Secondary address line (apartment, suite, etc.)
+- `pincode` (string): Postal/ZIP code
+- `is_primary` (boolean): Whether this is the primary address (defaults to `true`)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "address_id": "507f1f77bcf86cd799439013",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "address_line1": "456 Oak Avenue",
+    "address_line2": "Suite 200",
+    "city": "Chicago",
+    "state": "Illinois",
+    "pincode": "60601",
+    "latitude": 41.8781,
+    "longitude": -87.6298,
+    "is_primary": true,
+    "updated_at": "2024-01-21T11:20:00.000Z"
+  },
+  "message": "Driver address updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                              |
+| ------ | -------------------------------------------------------------------------- |
+| 400    | `"Required fields are missing"`                                            |
+| 400    | `"Latitude and longitude are required and must be valid numbers"`          |
+| 401    | `"User not authenticated"`                                                 |
+| 403    | `"Access denied. Driver role required."`                                   |
+| 500    | `"Failed to update driver address"`                                        |
+
+---
+
+### Get Driver Documents
+
+Retrieve the authenticated driver's license and insurance documents.
+
+**Endpoint**: `GET /api/driver/documents`
+
+**Authentication**: Required (Driver role)
+
+**Request**:
+
+```http
+GET /api/driver/documents
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "document_id": "507f1f77bcf86cd799439014",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "driving_license_number": "DL123456789",
+    "driving_license_photo_url": "https://example.com/dl.jpg",
+    "vehicle_license_number": "VL987654321",
+    "vehicle_license_photo_url": "https://example.com/vl.jpg",
+    "insurance_number": "INS123456",
+    "insurance_photo_url": "https://example.com/ins.jpg",
+    "created_at": "2024-01-15T10:30:00.000Z",
+    "updated_at": "2024-01-20T14:45:00.000Z"
+  }
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 401    | `"User not authenticated"`               |
+| 403    | `"Access denied. Driver role required."` |
+| 404    | `"Driver documents not found"`           |
+| 500    | `"Failed to fetch driver documents"`     |
+
+---
+
+### Create/Update Driver Documents (Full)
+
+Create or fully update driver and vehicle documents (upsert operation).
+
+**Endpoint**: `POST /api/driver/documents`
+
+**Authentication**: Required (Driver role)
+
+**Request Payload**:
+
+```json
+{
+  "driving_license_number": "DL987654321",
+  "driving_license_photo_url": "https://example.com/new-dl.jpg",
+  "vehicle_license_number": "VL123456789",
+  "vehicle_license_photo_url": "https://example.com/new-vl.jpg",
+  "insurance_number": "INS987654",
+  "insurance_photo_url": "https://example.com/new-ins.jpg"
+}
+```
+
+**Required Fields**:
+
+- `driving_license_number` (string): Driving license number
+- `vehicle_license_number` (string): Vehicle registration number
+
+**Optional Fields**:
+
+- `driving_license_photo_url` (string): URL to driving license photo
+- `vehicle_license_photo_url` (string): URL to vehicle license photo
+- `insurance_number` (string): Insurance policy number
+- `insurance_photo_url` (string): URL to insurance document photo
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "document_id": "507f1f77bcf86cd799439014",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "driving_license_number": "DL987654321",
+    "driving_license_photo_url": "https://example.com/new-dl.jpg",
+    "vehicle_license_number": "VL123456789",
+    "vehicle_license_photo_url": "https://example.com/new-vl.jpg",
+    "insurance_number": "INS987654",
+    "insurance_photo_url": "https://example.com/new-ins.jpg",
+    "updated_at": "2024-01-21T10:30:00.000Z"
+  },
+  "message": "Driver documents updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 400    | `"Required fields are missing"`          |
+| 401    | `"User not authenticated"`               |
+| 403    | `"Access denied. Driver role required."` |
+| 500    | `"Failed to update driver documents"`    |
+
+---
+
+### Update Driver Documents (Partial)
+
+Partially update specific driver document fields.
+
+**Endpoint**: `PUT /api/driver/documents`
+
+**Authentication**: Required (Driver role)
+
+**Request Payload**:
+
+```json
+{
+  "driving_license_photo_url": "https://example.com/updated-dl.jpg",
+  "insurance_number": "INS999888"
+}
+```
+
+**Updatable Fields**:
+
+- `driving_license_number` (string)
+- `driving_license_photo_url` (string)
+- `vehicle_license_number` (string)
+- `vehicle_license_photo_url` (string)
+- `insurance_number` (string)
+- `insurance_photo_url` (string)
+
+> Note: You can update any combination of document fields. All fields are optional.
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "document_id": "507f1f77bcf86cd799439014",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "driving_license_number": "DL987654321",
+    "driving_license_photo_url": "https://example.com/updated-dl.jpg",
+    "vehicle_license_number": "VL123456789",
+    "vehicle_license_photo_url": "https://example.com/new-vl.jpg",
+    "insurance_number": "INS999888",
+    "insurance_photo_url": "https://example.com/new-ins.jpg",
+    "updated_at": "2024-01-21T12:15:00.000Z"
+  },
+  "message": "Driver documents updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 400    | `"No updates provided"`                  |
+| 401    | `"User not authenticated"`               |
+| 403    | `"Access denied. Driver role required."` |
+| 500    | `"Failed to update driver documents"`    |
 
 ---
 
@@ -855,15 +1422,15 @@ Some errors include an error code:
 
 ## HTTP Status Codes
 
-| Status Code | Description |
-|------------|-------------|
-| 200 | OK - Request successful |
-| 201 | Created - Resource created successfully |
-| 400 | Bad Request - Invalid request payload or parameters |
-| 401 | Unauthorized - Authentication required or failed |
-| 404 | Not Found - Resource not found |
-| 409 | Conflict - Resource already exists |
-| 500 | Internal Server Error - Server error occurred |
+| Status Code | Description                                         |
+| ----------- | --------------------------------------------------- |
+| 200         | OK - Request successful                             |
+| 201         | Created - Resource created successfully             |
+| 400         | Bad Request - Invalid request payload or parameters |
+| 401         | Unauthorized - Authentication required or failed    |
+| 404         | Not Found - Resource not found                      |
+| 409         | Conflict - Resource already exists                  |
+| 500         | Internal Server Error - Server error occurred       |
 
 ---
 
@@ -876,6 +1443,7 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 Tokens are obtained through:
+
 - Traditional login (`/api/auth/login`)
 - Phone-based login (`/api/auth/login/verify-otp`)
 - Registration endpoints

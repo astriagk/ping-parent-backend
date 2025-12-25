@@ -231,7 +231,7 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
 // Phone-based Registration (3 steps)
 // Step 1: Send OTP to phone number
 export const sendPhoneOtp = async (req: Request, res: Response) => {
-  const { phone } = req.body || {};
+  const { phone, role } = req.body || {};
 
   if (!phone) {
     return res
@@ -274,7 +274,7 @@ export const sendPhoneOtp = async (req: Request, res: Response) => {
 
 // Step 2: Verify OTP
 export const verifyPhoneOtp = async (req: Request, res: Response) => {
-  const { phone, otp } = req.body || {};
+  const { phone, otp, role } = req.body || {};
 
   if (!phone || !otp) {
     return res.status(400).json({
@@ -308,7 +308,7 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
     isNewUser = true;
     const newUserData = {
       phone_number: normalizedPhone,
-      user_type: "parent" as "parent" | "driver",
+      user_type: role || ("parent" as "parent" | "driver"),
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),
