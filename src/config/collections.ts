@@ -1,5 +1,6 @@
 export const COLLECTIONS = {
   USERS: "users",
+  OTP_VERIFICATION: "otp_verification",
   PINGS: "pings",
   ROLES: "roles",
   PASSWORD_RESETS: "password_resets",
@@ -10,6 +11,7 @@ export const COLLECTIONS = {
 };
 
 export const USERS_COLLECTION = COLLECTIONS.USERS;
+export const OTP_VERIFICATION_COLLECTION = COLLECTIONS.OTP_VERIFICATION;
 export const PINGS_COLLECTION = COLLECTIONS.PINGS;
 export const STUDENTS_COLLECTION = COLLECTIONS.STUDENTS;
 export const TRIPS_COLLECTION = COLLECTIONS.TRIPS;
