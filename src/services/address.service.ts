@@ -10,7 +10,7 @@ import { ParentAddress, ParentAddressInput } from "@models/index";
  */
 export const upsertAddressByUserId = async (
   userId: string,
-  address: ParentAddressInput
+  address: ParentAddressInput,
 ): Promise<boolean> => {
   try {
     const db = await connectDB();
@@ -42,7 +42,7 @@ export const upsertAddressByUserId = async (
             longitude: address.longitude,
             updated_at: new Date(),
           },
-        }
+        },
       );
 
     // If no existing address found, create a new one
@@ -69,7 +69,7 @@ export const upsertAddressByUserId = async (
     }
 
     return updateResult.modifiedCount > 0;
-  } catch (error) {
+  } catch {
     return false;
   }
 };
@@ -78,7 +78,7 @@ export const upsertAddressByUserId = async (
  * Get primary address by user_id (finds parent first, then gets address)
  */
 export const getAddressByUserId = async (
-  userId: string
+  userId: string,
 ): Promise<ParentAddress | null> => {
   try {
     const db = await connectDB();
@@ -100,7 +100,7 @@ export const getAddressByUserId = async (
       .findOne({ parent_id: parentId, is_primary: true });
 
     return address as ParentAddress | null;
-  } catch (error) {
+  } catch {
     return null;
   }
 };

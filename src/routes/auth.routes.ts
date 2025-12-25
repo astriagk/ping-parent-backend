@@ -1,4 +1,3 @@
-import { Router } from "express";
 import {
   verifyAuthToken,
   register,
@@ -14,6 +13,7 @@ import {
   logout,
 } from "@controllers/auth.controller";
 import { loginRateLimiter } from "@middleware/rateLimit";
+import { Router } from "express";
 
 const router = Router();
 

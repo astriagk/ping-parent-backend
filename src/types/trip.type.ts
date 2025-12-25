@@ -6,7 +6,12 @@ export interface Trip {
   school_id: string;
   trip_type: "pickup" | "drop";
   trip_date: Date;
-  trip_status?: "scheduled" | "started" | "in_progress" | "completed" | "cancelled";
+  trip_status?:
+    | "scheduled"
+    | "started"
+    | "in_progress"
+    | "completed"
+    | "cancelled";
   start_time?: Date;
   end_time?: Date;
   total_distance?: number;

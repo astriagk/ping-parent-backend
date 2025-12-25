@@ -1,10 +1,10 @@
-import { connectDB } from "@db/mongo";
-import { User } from "@models/index";
-import { ObjectId } from "mongodb";
 import {
   USERS_COLLECTION,
   OTP_VERIFICATION_COLLECTION,
 } from "@config/collections";
+import { connectDB } from "@db/mongo";
+import { User } from "@models/index";
+import { ObjectId } from "mongodb";
 
 const COLLECTION = USERS_COLLECTION;
 
@@ -28,7 +28,7 @@ export const getUserByEmail = async (email: string) => {
 
 export const updateUserPassword = async (
   email: string,
-  passwordHash: string
+  passwordHash: string,
 ) => {
   const db = await connectDB();
   return db
@@ -44,7 +44,7 @@ export const getUserByPhone = async (phone: string) => {
 export const createPhoneOtp = async (
   phone: string,
   otp: string,
-  ttlMinutes = 10
+  ttlMinutes = 10,
 ) => {
   const db = await connectDB();
   const now = new Date();

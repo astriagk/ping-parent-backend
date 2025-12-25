@@ -1,5 +1,5 @@
-import { connectDB } from "@db/mongo";
 import { USERS_COLLECTION, PARENTS_COLLECTION } from "@config/collections";
+import { connectDB } from "@db/mongo";
 import { Parent, User } from "@models/index";
 import { ObjectId } from "mongodb";
 
@@ -8,7 +8,7 @@ import { ObjectId } from "mongodb";
  * Returns combined data from users and parents tables
  */
 export const getParentProfile = async (
-  userId: string
+  userId: string,
 ): Promise<(Parent & { user?: User }) | null> => {
   const db = await connectDB();
 
@@ -50,7 +50,7 @@ export const getParentProfile = async (
  */
 export const updateParentProfile = async (
   userId: string,
-  updates: Partial<Parent>
+  updates: Partial<Parent>,
 ): Promise<boolean> => {
   try {
     const db = await connectDB();
@@ -63,7 +63,7 @@ export const updateParentProfile = async (
       { user_id: userId },
       {
         $set: { ...sanitizedUpdates, updated_at: new Date() },
-      }
+      },
     );
 
     return result.modifiedCount > 0;
@@ -78,7 +78,7 @@ export const updateParentProfile = async (
  */
 export const createParentProfile = async (
   userId: string,
-  parentData: Partial<Parent>
+  parentData: Partial<Parent>,
 ): Promise<boolean> => {
   try {
     const db = await connectDB();

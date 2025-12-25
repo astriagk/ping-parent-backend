@@ -1,4 +1,9 @@
-import { Request, Response } from "express";
+import {
+  ERROR_MESSAGES,
+  SUCCESS_MESSAGES,
+  ERROR_CODES,
+} from "@constants/messages";
+import { recordFailedLogin } from "@middleware/rateLimit";
 import {
   getUserById,
   createUser,
@@ -12,14 +17,6 @@ import {
   verifyOtpAndCreateResetToken,
   consumeResetToken,
 } from "@services/index";
-import jwt from "jsonwebtoken";
-import bcrypt from "bcryptjs";
-import {
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  ERROR_CODES,
-} from "@constants/messages";
-import { recordFailedLogin } from "@middleware/rateLimit";
 import {
   verifyToken,
   signAccessToken,
@@ -30,6 +27,9 @@ import {
   sendPasswordResetOTP,
   sendVerificationEmail,
 } from "@utils/index";
+import bcrypt from "bcryptjs";
+import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
 
 export const verifyAuthToken = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
@@ -73,7 +73,7 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
         try {
           const refreshPayload = jwt.verify(
             refresh,
-            process.env.JWT_SECRET || "dev-secret"
+            process.env.JWT_SECRET || "dev-secret",
           ) as any;
           if (refreshPayload?.userId) {
             // issue new access token
@@ -94,7 +94,7 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
               },
             });
           }
-        } catch (e) {
+        } catch {
           return res.status(401).json({
             success: false,
             error: ERROR_MESSAGES.AUTH.INVALID_REFRESH_TOKEN,
@@ -117,7 +117,7 @@ export const roles = async (_req: Request, res: Response) => {
   try {
     const allowed = await getAllRoles();
     return res.json({ success: true, data: allowed });
-  } catch (e) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.AUTH.FAILED_TO_FETCH_ROLES,
@@ -394,7 +394,7 @@ export const register = async (req: Request, res: Response) => {
   let allowed: string[] = [];
   try {
     allowed = await getAllRoles();
-  } catch (e) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.AUTH.UNABLE_TO_VALIDATE_ROLE,
@@ -549,7 +549,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
       success: true,
       message: SUCCESS_MESSAGES.AUTH.PASSWORD_RESET_EMAIL_SENT,
     });
-  } catch (e) {
+  } catch {
     return res
       .status(500)
       .json({ success: false, error: ERROR_MESSAGES.AUTH.SERVER_ERROR });
@@ -559,25 +559,21 @@ export const forgotPassword = async (req: Request, res: Response) => {
 export const verifyOtp = async (req: Request, res: Response) => {
   const { email, otp } = req.body || {};
   if (!email || !otp || !validateEmail(email) || typeof otp !== "string") {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: ERROR_MESSAGES.AUTH.MISSING_EMAIL_OR_OTP,
-      });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MISSING_EMAIL_OR_OTP,
+    });
   }
 
   try {
     const resetToken = await verifyOtpAndCreateResetToken(email, otp);
     if (!resetToken)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
-        });
+      return res.status(400).json({
+        success: false,
+        error: ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
+      });
     return res.json({ success: true, data: { resetToken } });
-  } catch (e) {
+  } catch {
     return res
       .status(500)
       .json({ success: false, error: ERROR_MESSAGES.AUTH.SERVER_ERROR });
@@ -594,23 +590,19 @@ export const resetPassword = async (req: Request, res: Response) => {
   }
 
   if (!validatePassword(newPassword)) {
-    return res
-      .status(400)
-      .json({
-        success: false,
-        error: ERROR_MESSAGES.AUTH.PASSWORD_REQUIREMENTS,
-      });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.PASSWORD_REQUIREMENTS,
+    });
   }
 
   try {
     const email = await consumeResetToken(resetToken);
     if (!email)
-      return res
-        .status(400)
-        .json({
-          success: false,
-          error: ERROR_MESSAGES.AUTH.INVALID_RESET_TOKEN,
-        });
+      return res.status(400).json({
+        success: false,
+        error: ERROR_MESSAGES.AUTH.INVALID_RESET_TOKEN,
+      });
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await updateUserPassword(email, passwordHash);
@@ -619,7 +611,7 @@ export const resetPassword = async (req: Request, res: Response) => {
       success: true,
       message: SUCCESS_MESSAGES.AUTH.PASSWORD_RESET_SUCCESS,
     });
-  } catch (e) {
+  } catch {
     return res
       .status(500)
       .json({ success: false, error: ERROR_MESSAGES.AUTH.SERVER_ERROR });
@@ -632,7 +624,7 @@ export const logout = async (req: Request, res: Response) => {
       success: true,
       message: SUCCESS_MESSAGES.AUTH.LOGGED_OUT_SUCCESSFULLY,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.AUTH.SERVER_ERROR,

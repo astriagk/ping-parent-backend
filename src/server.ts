@@ -1,5 +1,8 @@
 import dotenv from "dotenv";
+import { createServer } from "http";
 import path from "path";
+
+import app from "./app";
 
 const NODE_ENV = process.env.NODE_ENV || "dev";
 
@@ -9,9 +12,6 @@ dotenv.config({
 
 console.log("ENV:", NODE_ENV);
 console.log("MONGO_URI:", process.env.MONGO_URI);
-
-import app from "./app";
-import { createServer } from "http";
 
 const PORT = Number(process.env.PORT) || 3000;
 const HOST = "0.0.0.0"; // Bind to all network interfaces

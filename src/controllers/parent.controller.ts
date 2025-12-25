@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants/messages";
 import {
   getParentProfile,
   updateParentProfile,
@@ -6,7 +6,7 @@ import {
   upsertAddressByUserId,
   getAddressByUserId,
 } from "@services/index";
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants/messages";
+import { Request, Response } from "express";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;
@@ -47,7 +47,7 @@ export const getProfile = async (req: Request, res: Response) => {
         user: profile.user,
       },
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.PARENT.FAILED_TO_FETCH_PARENT_PROFILE,
@@ -116,7 +116,7 @@ export const updateProfile = async (req: Request, res: Response) => {
       data: formatParentProfileResponse(updatedProfile),
       message: SUCCESS_MESSAGES.PARENT.PROFILE_UPDATED_SUCCESSFULLY,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
@@ -193,7 +193,7 @@ export const updateAddress = async (req: Request, res: Response) => {
       data: updatedAddress,
       message: SUCCESS_MESSAGES.ADDRESS.ADDRESS_UPDATED_SUCCESSFULLY,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
@@ -224,7 +224,7 @@ export const getAddress = async (req: Request, res: Response) => {
       success: true,
       data: address,
     });
-  } catch (error) {
+  } catch {
     return res.status(500).json({
       success: false,
       error: ERROR_MESSAGES.ADDRESS.FAILED_TO_FETCH_ADDRESS,

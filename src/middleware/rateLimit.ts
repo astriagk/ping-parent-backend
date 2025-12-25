@@ -10,7 +10,7 @@ const MAX_ATTEMPTS = 5;
 export const loginRateLimiter = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ) => {
   const key = (req.body?.email || req.ip || "anon").toString().toLowerCase();
   const now = Date.now();
@@ -30,12 +30,10 @@ export const loginRateLimiter = (
   if (entry.count >= MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((WINDOW_MS - (now - entry.firstSeen)) / 1000);
     res.setHeader("Retry-After", String(retryAfter));
-    return res
-      .status(429)
-      .json({
-        success: false,
-        error: "Too many login attempts. Try again later.",
-      });
+    return res.status(429).json({
+      success: false,
+      error: "Too many login attempts. Try again later.",
+    });
   }
 
   return next();
