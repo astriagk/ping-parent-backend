@@ -8,8 +8,6 @@ import {
   verifyPhoneOtp as verifyOtpService,
   updateUserPassword,
   createPhoneOtp,
-  updateLoginOtp,
-  verifyLoginOtp as verifyLoginOtpService,
 } from "../services/auth.service";
 import jwt from "jsonwebtoken";
 import { getAllRoles } from "../services/role.service";
@@ -20,7 +18,7 @@ import {
   normalizePhone,
 } from "../utils/validation";
 import { sendVerificationEmail } from "../utils/email";
-import { loginRateLimiter, recordFailedLogin } from "../middleware/rateLimit";
+import { recordFailedLogin } from "../middleware/rateLimit";
 import { sendPasswordResetOTP } from "../utils/email";
 import {
   createOtpForEmail,
@@ -158,7 +156,7 @@ export const sendLoginOtp = async (req: Request, res: Response) => {
   const otp = Math.floor(100000 + Math.random() * 900000).toString();
 
   // Save OTP to database
-  await updateLoginOtp(normalizedPhone, otp, 10);
+  await createPhoneOtp(normalizedPhone, otp, 10);
 
   // TODO: Send OTP via SMS service (Twilio, AWS SNS, etc.)
   console.log(`Login OTP for ${normalizedPhone}: ${otp}`);
@@ -188,7 +186,7 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
       .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
   }
 
-  const verified = await verifyLoginOtpService(normalizedPhone, otp);
+  const verified = await verifyOtpService(normalizedPhone, otp);
 
   if (!verified) {
     return res
@@ -207,7 +205,7 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
   const token = signAccessToken({
     userId: user._id ? String(user._id) : user.email,
     email: user.email,
-    role: user.role || "parent",
+    role: user.user_type || user.role || "parent",
   });
 
   return res.json({
@@ -219,8 +217,8 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
         email: user.email,
         firstName: user.firstName,
         lastName: user.lastName,
-        role: user.role || "parent",
-        phone: user.phone,
+        role: user.user_type || user.role || "parent",
+        phone: user.phone_number || user.phone,
       },
     },
     message: SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
@@ -297,32 +295,59 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
 
   // Check if user already exists with this phone
   let user = await getUserByPhone(normalizedPhone);
+  let isNewUser = false;
 
   if (!user) {
-    return res.status(404).json({
-      success: false,
-      message: ERROR_MESSAGES.INVALID_CREDENTIALS,
-    });
+    // Create new user with phone number
+    isNewUser = true;
+    const newUserData = {
+      phone_number: normalizedPhone,
+      user_type: "parent" as "parent" | "driver",
+      is_active: true,
+      created_at: new Date(),
+      updated_at: new Date(),
+    };
+
+    await createUser(newUserData as any);
+
+    // Fetch the newly created user
+    user = await getUserByPhone(normalizedPhone);
+
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: ERROR_MESSAGES.INVALID_CREDENTIALS,
+      });
+    }
   }
 
-  // User exists, generate token
+  // Generate token
   const token = signAccessToken({
     userId: user._id ? String(user._id) : normalizedPhone,
-    role: user.role || "parent",
+    role: user.user_type || user.role || "parent",
   });
 
   return res.json({
     success: true,
-    message: SUCCESS_MESSAGES.PHONE_VERIFIED,
+    message: isNewUser
+      ? SUCCESS_MESSAGES.PHONE_VERIFIED
+      : SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+    isNewUser,
     data: {
       token,
+      user: {
+        id: user._id ? String(user._id) : undefined,
+        phone: user.phone_number || user.phone,
+        userType: user.user_type || user.role || "parent",
+        isActive: user.is_active !== undefined ? user.is_active : true,
+      },
     },
   });
 };
 
 // Step 3: Complete registration with other details (no password needed)
 export const completeRegistration = async (req: Request, res: Response) => {
-  const { firstName, lastName, role } = req.body || {};
+  const { user_type } = req.body || {};
 
   // Validate role
   let allowed: string[] = [];
@@ -335,7 +360,7 @@ export const completeRegistration = async (req: Request, res: Response) => {
       .json({ success: false, error: ERROR_MESSAGES.UNABLE_TO_VALIDATE_ROLE });
   }
 
-  const selectedRole = role ? role : "parent";
+  const selectedRole = user_type ? user_type : "parent";
   if (!allowed.includes(selectedRole)) {
     return res
       .status(400)
@@ -361,9 +386,7 @@ export const completeRegistration = async (req: Request, res: Response) => {
   if (userId) {
     // Update existing user record
     const updated = await updateParentProfile(userId, {
-      firstName,
-      lastName,
-      role: selectedRole,
+      user_type: selectedRole,
     });
 
     if (!updated) {
@@ -385,9 +408,7 @@ export const completeRegistration = async (req: Request, res: Response) => {
         token,
         user: {
           id: userId,
-          firstName,
-          lastName,
-          role: selectedRole,
+          user_type: selectedRole,
           emailVerified: false,
           phoneVerified: true,
         },

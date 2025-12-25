@@ -32,8 +32,7 @@ export const updateParentProfile = async (
     const db = await connectDB();
 
     // Remove sensitive fields
-    const { _id, passwordHash, verificationToken, ...sanitizedUpdates } =
-      updates;
+    const { _id, ...sanitizedUpdates } = updates;
 
     // Only allow ObjectId as _id
     if (!ObjectId.isValid(userId)) {
@@ -43,7 +42,7 @@ export const updateParentProfile = async (
     const query = { _id: new ObjectId(userId) };
 
     const result = await db.collection(USERS_COLLECTION).updateOne(query, {
-      $set: { ...sanitizedUpdates, updatedAt: new Date() },
+      $set: { ...sanitizedUpdates, updated_at: new Date() },
     });
 
     return result.modifiedCount > 0;

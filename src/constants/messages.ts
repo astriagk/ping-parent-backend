@@ -19,7 +19,7 @@ export const ERROR_MESSAGES = {
   PHONE_ALREADY_REGISTERED: "Phone number already registered",
   PHONE_AND_OTP_REQUIRED: "Phone number and OTP are required",
   INVALID_OR_EXPIRED_OTP: "Invalid or expired OTP",
-  PHONE_NOT_VERIFIED: "Phone number not verified. Please verify OTP first.",
+  // PHONE_NOT_VERIFIED: "Phone number not verified. Please verify OTP first.",
   PHONE_NOT_REGISTERED: "Phone number not registered",
   PHONE_LOGIN_OTP_REQUIRED: "Phone number and OTP are required for login",
 
@@ -41,18 +41,9 @@ export const ERROR_MESSAGES = {
   // Parent/Profile Errors
   USER_NOT_AUTHENTICATED: "User not authenticated",
   PARENT_PROFILE_NOT_FOUND: "Parent profile not found",
-  PARENT_PROFILE_NOT_FOUND_OR_NO_CHANGES: "Parent profile not found or no changes made",
+  PARENT_PROFILE_NOT_FOUND_OR_NO_CHANGES:
+    "Parent profile not found or no changes made",
   NO_UPDATES_PROVIDED: "No updates provided",
-
-  // Student Errors
-  STUDENT_ID_REQUIRED: "Student ID is required",
-  STUDENT_NOT_FOUND: "Student not found",
-  STUDENT_NOT_FOUND_OR_NOT_BELONG: "Student not found or does not belong to this parent",
-
-  // Trip Errors
-  TRIP_ID_REQUIRED: "Trip ID is required",
-  TRIP_NOT_FOUND_OR_NOT_BELONG: "Trip not found or does not belong to this parent",
-  LIVE_LOCATION_NOT_AVAILABLE: "Live location not available for this trip",
 
   // Address Errors
   ADDRESS_FIELDS_REQUIRED: "Street, city, state, and zipCode are required",
@@ -60,17 +51,11 @@ export const ERROR_MESSAGES = {
 
   // Fetch Errors
   FAILED_TO_FETCH_PARENT_PROFILE: "Failed to fetch parent profile",
-  FAILED_TO_FETCH_STUDENTS: "Failed to fetch students",
-  FAILED_TO_FETCH_STUDENT_DETAILS: "Failed to fetch student details",
-  FAILED_TO_FETCH_TODAY_TRIPS: "Failed to fetch today's trips",
-  FAILED_TO_FETCH_NOTIFICATIONS: "Failed to fetch notifications",
-  FAILED_TO_FETCH_TRIP_LIVE_LOCATION: "Failed to fetch trip live location",
   FAILED_TO_FETCH_ADDRESS: "Failed to fetch address",
 
   // Update Errors
   FAILED_TO_UPDATE_PARENT_PROFILE: "Failed to update parent profile",
   FAILED_TO_UPDATE_ADDRESS: "Failed to update address",
-  FAILED_TO_CREATE_CALL_PARENT_REQUEST: "Failed to create call parent request",
 
   // Server Errors
   SERVER_ERROR: "Server error",
@@ -92,7 +77,6 @@ export const SUCCESS_MESSAGES = {
   LOGGED_OUT_SUCCESSFULLY: "Logged out successfully",
   PROFILE_UPDATED_SUCCESSFULLY: "Profile updated successfully",
   ADDRESS_UPDATED_SUCCESSFULLY: "Address updated successfully",
-  CALL_REQUEST_CREATED_SUCCESSFULLY: "Call request created successfully",
 };
 
 // Error Codes

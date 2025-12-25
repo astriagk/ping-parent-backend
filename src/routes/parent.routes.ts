@@ -5,7 +5,7 @@ import {
   updateAddress,
   getAddress,
 } from "../controllers/parent.controller";
-import { verifyParentToken, verifyToken_Middleware } from "../middleware/auth";
+import { verifyParentToken } from "../middleware/auth";
 
 const router = Router();
 

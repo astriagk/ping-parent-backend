@@ -1,10 +1,22 @@
 import { ADDRESSES_COLLECTION } from "../config/collections";
 import { connectDB } from "../db/mongo";
-import { Address } from "../types/address.type";
+import { ParentAddress } from "../types/parent.type";
+
+// Legacy address interface for backward compatibility
+interface LegacyAddress {
+  userId: string;
+  street: string;
+  city: string;
+  state: string;
+  zipCode: string;
+  coordinates?: { lat: number; lng: number };
+  createdAt?: Date;
+  updatedAt?: Date;
+}
 
 export const upsertAddressByUserId = async (
   userId: string,
-  address: Omit<Address, "userId" | "createdAt" | "updatedAt">
+  address: Omit<LegacyAddress, "userId" | "createdAt" | "updatedAt">
 ): Promise<boolean> => {
   const db = await connectDB();
   const query = { userId };
@@ -20,9 +32,9 @@ export const upsertAddressByUserId = async (
 
 export const getAddressByUserId = async (
   userId: string
-): Promise<Address | null> => {
+): Promise<LegacyAddress | null> => {
   const db = await connectDB();
   const query = { userId };
   const address = await db.collection(ADDRESSES_COLLECTION).findOne(query);
-  return address as Address | null;
+  return address as LegacyAddress | null;
 };
