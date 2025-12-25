@@ -1,6 +1,6 @@
+import authRoutes from "@routes/auth.routes";
+import parentRoutes from "@routes/parent.routes";
 import express, { Request, Response, NextFunction } from "express";
-import authRoutes from "./routes/auth.routes";
-import parentRoutes from "./routes/parent.routes";
 
 const app = express();
 

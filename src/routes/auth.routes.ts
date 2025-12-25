@@ -9,12 +9,11 @@ import {
   resetPassword,
   sendPhoneOtp,
   verifyPhoneOtp,
-  completeRegistration,
   sendLoginOtp,
   verifyLoginOtp,
   logout,
-} from "../controllers/auth.controller";
-import { loginRateLimiter } from "../middleware/rateLimit";
+} from "@controllers/auth.controller";
+import { loginRateLimiter } from "@middleware/rateLimit";
 
 const router = Router();
 
@@ -24,7 +23,6 @@ router.post("/auth/register", register);
 // New phone-based registration (3 steps, no password)
 router.post("/auth/register/send-otp", sendPhoneOtp);
 router.post("/auth/register/verify-otp", verifyPhoneOtp);
-router.post("/auth/register/complete", completeRegistration);
 // Phone-based login (2 steps, OTP-based)
 router.post("/auth/login/send-otp", sendLoginOtp);
 router.post("/auth/login/verify-otp", verifyLoginOtp);

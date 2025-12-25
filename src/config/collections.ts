@@ -1,17 +1,23 @@
 export const COLLECTIONS = {
   USERS: "users",
   OTP_VERIFICATION: "otp_verification",
+  PARENTS: "parents",
+  PARENT_ADDRESSES: "parent_addresses",
+  DRIVERS: "drivers",
   PINGS: "pings",
   ROLES: "roles",
   PASSWORD_RESETS: "password_resets",
   STUDENTS: "students",
   TRIPS: "trips",
   NOTIFICATIONS: "notifications",
-  ADDRESSES: "addresses",
+  ADDRESSES: "addresses", // Legacy - for backward compatibility
 };
 
 export const USERS_COLLECTION = COLLECTIONS.USERS;
 export const OTP_VERIFICATION_COLLECTION = COLLECTIONS.OTP_VERIFICATION;
+export const PARENTS_COLLECTION = COLLECTIONS.PARENTS;
+export const PARENT_ADDRESSES_COLLECTION = COLLECTIONS.PARENT_ADDRESSES;
+export const DRIVERS_COLLECTION = COLLECTIONS.DRIVERS;
 export const PINGS_COLLECTION = COLLECTIONS.PINGS;
 export const STUDENTS_COLLECTION = COLLECTIONS.STUDENTS;
 export const TRIPS_COLLECTION = COLLECTIONS.TRIPS;

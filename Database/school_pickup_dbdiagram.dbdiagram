@@ -2,7 +2,7 @@
   "version": "1.0.0",
   "darkMode": true,
   "gridEnabling": false,
-  "detailLevel": "Tables",
+  "detailLevel": "All",
   "tablePositions": [],
   "tableGroupCollapseStates": [],
   "stickyNoteLayouts": [],

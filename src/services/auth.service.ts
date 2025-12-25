@@ -1,10 +1,10 @@
-import { connectDB } from "../db/mongo";
-import { User } from "../types/user.type";
+import { connectDB } from "@db/mongo";
+import { User } from "@models/index";
 import { ObjectId } from "mongodb";
 import {
   USERS_COLLECTION,
   OTP_VERIFICATION_COLLECTION,
-} from "../config/collections";
+} from "@config/collections";
 
 const COLLECTION = USERS_COLLECTION;
 
@@ -75,4 +75,3 @@ export const verifyPhoneOtp = async (phone: string, otp: string) => {
 
   return true;
 };
-

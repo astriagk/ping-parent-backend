@@ -26,3 +26,9 @@ export interface ParentAddress {
   created_at?: Date;
   updated_at?: Date;
 }
+
+// Reusable type for address input (omits auto-generated/internal fields)
+export type ParentAddressInput = Omit<
+  ParentAddress,
+  "_id" | "address_id" | "parent_id" | "created_at" | "updated_at"
+>;
