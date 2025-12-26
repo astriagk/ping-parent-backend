@@ -1,50 +1,47 @@
-import { Request, Response } from "express";
-import { verifyToken, signAccessToken, signEmailToken } from "../utils/jwt";
-import {
-  getUserById,
-  createUser,
-  getUserByEmail,
-  getUserByPhone,
-  verifyPhoneOtp as verifyOtpService,
-  updateUserPassword,
-  createPhoneOtp,
-} from "../services/auth.service";
-import jwt from "jsonwebtoken";
-import { getAllRoles } from "../services/role.service";
 import bcrypt from "bcryptjs";
+import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+
+import { ERROR_CODES, ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
+import { recordFailedLogin } from "@middleware/rateLimit";
 import {
+  consumeResetToken,
+  createOtpForEmail,
+  createPhoneOtp,
+  createUser,
+  getAllRoles,
+  getUserByEmail,
+  getUserById,
+  getUserByPhone,
+  updateUserPassword,
+  verifyOtpAndCreateResetToken,
+  verifyPhoneOtp as verifyOtpService,
+} from "@services";
+import {
+  normalizePhone,
+  sendPasswordResetOTP,
+  sendVerificationEmail,
+  signAccessToken,
+  signEmailToken,
   validateEmail,
   validatePassword,
-  normalizePhone,
-} from "../utils/validation";
-import { sendVerificationEmail } from "../utils/email";
-import { recordFailedLogin } from "../middleware/rateLimit";
-import { sendPasswordResetOTP } from "../utils/email";
-import {
-  createOtpForEmail,
-  verifyOtpAndCreateResetToken,
-  consumeResetToken,
-} from "../services/passwordReset.service";
-import {
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  ERROR_CODES,
-} from "../constants/messages";
-import { updateParentProfile } from "../services/parent.service";
+  verifyToken,
+} from "@utils";
 
 export const verifyAuthToken = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
   if (!authHeader) {
     return res
       .status(401)
-      .json({ success: false, error: ERROR_MESSAGES.MISSING_AUTH_HEADER });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER });
   }
 
   const token = authHeader.split(" ")[1];
   if (!token) {
-    return res
-      .status(401)
-      .json({ success: false, error: ERROR_MESSAGES.MALFORMED_AUTH_HEADER });
+    return res.status(401).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MALFORMED_AUTH_HEADER,
+    });
   }
 
   try {
@@ -53,7 +50,7 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
     if (!user) {
       return res
         .status(401)
-        .json({ success: false, error: ERROR_MESSAGES.USER_NOT_FOUND });
+        .json({ success: false, error: ERROR_MESSAGES.AUTH.USER_NOT_FOUND });
     }
 
     return res.json({
@@ -73,7 +70,7 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
         try {
           const refreshPayload = jwt.verify(
             refresh,
-            process.env.JWT_SECRET || "dev-secret"
+            process.env.JWT_SECRET || "dev-secret",
           ) as any;
           if (refreshPayload?.userId) {
             // issue new access token
@@ -94,22 +91,22 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
               },
             });
           }
-        } catch (e) {
+        } catch {
           return res.status(401).json({
             success: false,
-            error: ERROR_MESSAGES.INVALID_REFRESH_TOKEN,
+            error: ERROR_MESSAGES.AUTH.INVALID_REFRESH_TOKEN,
           });
         }
       }
 
       return res
         .status(401)
-        .json({ success: false, error: ERROR_MESSAGES.TOKEN_EXPIRED });
+        .json({ success: false, error: ERROR_MESSAGES.AUTH.TOKEN_EXPIRED });
     }
 
     return res
       .status(401)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_TOKEN });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.INVALID_TOKEN });
   }
 };
 
@@ -117,11 +114,11 @@ export const roles = async (_req: Request, res: Response) => {
   try {
     const allowed = await getAllRoles();
     return res.json({ success: true, data: allowed });
-  } catch (e) {
-    console.error("Error fetching roles", e);
-    return res
-      .status(500)
-      .json({ success: false, error: ERROR_MESSAGES.FAILED_TO_FETCH_ROLES });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.FAILED_TO_FETCH_ROLES,
+    });
   }
 };
 
@@ -133,23 +130,24 @@ export const sendLoginOtp = async (req: Request, res: Response) => {
   if (!phone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_REQUIRED });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.PHONE_REQUIRED });
   }
 
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.INVALID_PHONE });
   }
 
   const user = await getUserByPhone(normalizedPhone);
 
   // If user doesn't exist, return error
   if (!user) {
-    return res
-      .status(404)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_NOT_REGISTERED });
+    return res.status(404).json({
+      success: false,
+      error: ERROR_MESSAGES.PHONE.PHONE_NOT_REGISTERED,
+    });
   }
 
   // Generate 6-digit OTP
@@ -163,9 +161,9 @@ export const sendLoginOtp = async (req: Request, res: Response) => {
 
   return res.json({
     success: true,
-    message: SUCCESS_MESSAGES.LOGIN_OTP_SENT,
+    message: SUCCESS_MESSAGES.PHONE.LOGIN_OTP_SENT,
     // Remove in production - only for development
-    ...(process.env.NODE_ENV === "development" && { otp }),
+    ...(process.env.NODE_ENV === "dev" && { otp }),
   });
 };
 
@@ -174,24 +172,26 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
   const { phone, otp } = req.body || {};
 
   if (!phone || !otp) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_LOGIN_OTP_REQUIRED });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.PHONE.PHONE_LOGIN_OTP_REQUIRED,
+    });
   }
 
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.INVALID_PHONE });
   }
 
   const verified = await verifyOtpService(normalizedPhone, otp);
 
   if (!verified) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_OR_EXPIRED_OTP });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
+    });
   }
 
   // Get user and generate token
@@ -199,7 +199,7 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
   if (!user) {
     return res
       .status(404)
-      .json({ success: false, error: ERROR_MESSAGES.USER_NOT_FOUND });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.USER_NOT_FOUND });
   }
 
   const token = signAccessToken({
@@ -221,34 +221,35 @@ export const verifyLoginOtp = async (req: Request, res: Response) => {
         phone: user.phone_number || user.phone,
       },
     },
-    message: SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+    message: SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL,
   });
 };
 
 // Phone-based Registration (3 steps)
 // Step 1: Send OTP to phone number
 export const sendPhoneOtp = async (req: Request, res: Response) => {
-  const { phone } = req.body || {};
+  const { phone, role } = req.body || {};
 
   if (!phone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_REQUIRED });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.PHONE_REQUIRED });
   }
 
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.INVALID_PHONE });
   }
 
   // Check if phone already registered
   const existing = await getUserByPhone(normalizedPhone);
   if (existing) {
-    return res
-      .status(409)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_ALREADY_REGISTERED });
+    return res.status(409).json({
+      success: false,
+      error: ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
+    });
   }
 
   // Generate 6-digit OTP
@@ -262,35 +263,37 @@ export const sendPhoneOtp = async (req: Request, res: Response) => {
 
   return res.json({
     success: true,
-    message: SUCCESS_MESSAGES.OTP_SENT,
+    message: SUCCESS_MESSAGES.PHONE.OTP_SENT,
     // Remove in production - only for development
-    ...(process.env.NODE_ENV === "development" && { otp }),
+    ...(process.env.NODE_ENV === "dev" && { otp }),
   });
 };
 
 // Step 2: Verify OTP
 export const verifyPhoneOtp = async (req: Request, res: Response) => {
-  const { phone, otp } = req.body || {};
+  const { phone, otp, role } = req.body || {};
 
   if (!phone || !otp) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.PHONE_AND_OTP_REQUIRED });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.PHONE.PHONE_AND_OTP_REQUIRED,
+    });
   }
 
   const normalizedPhone = normalizePhone(phone);
   if (!normalizedPhone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.INVALID_PHONE });
   }
 
   const verified = await verifyOtpService(normalizedPhone, otp);
 
   if (!verified) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_OR_EXPIRED_OTP });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
+    });
   }
 
   // Check if user already exists with this phone
@@ -302,7 +305,7 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
     isNewUser = true;
     const newUserData = {
       phone_number: normalizedPhone,
-      user_type: "parent" as "parent" | "driver",
+      user_type: role || ("parent" as "parent" | "driver"),
       is_active: true,
       created_at: new Date(),
       updated_at: new Date(),
@@ -316,7 +319,7 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(404).json({
         success: false,
-        message: ERROR_MESSAGES.INVALID_CREDENTIALS,
+        message: ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
       });
     }
   }
@@ -330,8 +333,8 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
   return res.json({
     success: true,
     message: isNewUser
-      ? SUCCESS_MESSAGES.PHONE_VERIFIED
-      : SUCCESS_MESSAGES.LOGIN_SUCCESSFUL,
+      ? SUCCESS_MESSAGES.PHONE.PHONE_VERIFIED_SUCCESSFULLY
+      : SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL,
     isNewUser,
     data: {
       token,
@@ -345,98 +348,26 @@ export const verifyPhoneOtp = async (req: Request, res: Response) => {
   });
 };
 
-// Step 3: Complete registration with other details (no password needed)
-export const completeRegistration = async (req: Request, res: Response) => {
-  const { user_type } = req.body || {};
-
-  // Validate role
-  let allowed: string[] = [];
-  try {
-    allowed = await getAllRoles();
-  } catch (e) {
-    console.error("Error fetching roles for registration", e);
-    return res
-      .status(500)
-      .json({ success: false, error: ERROR_MESSAGES.UNABLE_TO_VALIDATE_ROLE });
-  }
-
-  const selectedRole = user_type ? user_type : "parent";
-  if (!allowed.includes(selectedRole)) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_ROLE });
-  }
-
-  // Get userId from auth header if present
-  let userId = undefined;
-  const authHeader = req.headers.authorization;
-  if (authHeader) {
-    try {
-      const token = authHeader.split(" ")[1];
-      const payload = verifyToken(token);
-      userId = payload.userId;
-    } catch (e) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.MISSING_AUTH_HEADER,
-      });
-    }
-  }
-
-  if (userId) {
-    // Update existing user record
-    const updated = await updateParentProfile(userId, {
-      user_type: selectedRole,
-    });
-
-    if (!updated) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.USER_NOT_FOUND,
-      });
-    }
-
-    // Sign access token
-    const token = signAccessToken({
-      userId: userId,
-      email: "",
-      role: selectedRole,
-    });
-    return res.status(200).json({
-      success: true,
-      data: {
-        token,
-        user: {
-          id: userId,
-          user_type: selectedRole,
-          emailVerified: false,
-          phoneVerified: true,
-        },
-      },
-      message: SUCCESS_MESSAGES.REGISTRATION_COMPLETED,
-    });
-  }
-};
-
 export const register = async (req: Request, res: Response) => {
   const { email, password, firstName, lastName, phone, role } = req.body || {};
 
   if (!email || !password) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.MISSING_REQUIRED_FIELDS });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MISSING_REQUIRED_FIELDS,
+    });
   }
 
   if (!validateEmail(email)) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_EMAIL });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.INVALID_EMAIL });
   }
 
   if (!validatePassword(password)) {
     return res.status(400).json({
       success: false,
-      error: ERROR_MESSAGES.INVALID_PASSWORD_FORMAT,
+      error: ERROR_MESSAGES.AUTH.INVALID_PASSWORD_FORMAT,
     });
   }
 
@@ -444,40 +375,41 @@ export const register = async (req: Request, res: Response) => {
   if (!normalizedPhone) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_PHONE });
+      .json({ success: false, error: ERROR_MESSAGES.PHONE.INVALID_PHONE });
   }
 
   // check duplicate
   const existing = await getUserByEmail(email);
   if (existing) {
-    return res
-      .status(409)
-      .json({ success: false, error: ERROR_MESSAGES.EMAIL_ALREADY_IN_USE });
+    return res.status(409).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.EMAIL_ALREADY_IN_USE,
+    });
   }
 
   // validate role (fetch allowed roles from DB)
   let allowed: string[] = [];
   try {
     allowed = await getAllRoles();
-  } catch (e) {
-    console.error("Error fetching roles for registration", e);
-    return res
-      .status(500)
-      .json({ success: false, error: ERROR_MESSAGES.UNABLE_TO_VALIDATE_ROLE });
+  } catch {
+    return res.status(500).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.UNABLE_TO_VALIDATE_ROLE,
+    });
   }
 
   const selectedRole = role ? String(role) : allowed[0] || "parent";
   if (!allowed.includes(selectedRole)) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_ROLE });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.INVALID_ROLE });
   }
 
   const passwordHash = await bcrypt.hash(password, 10);
 
   // create verification token
   const tempPayload = { userId: email, email, role: selectedRole };
-  const verificationToken = signEmailToken(tempPayload, "7d");
+  const verificationToken = signEmailToken(tempPayload);
 
   const newUser = {
     firstName,
@@ -521,36 +453,34 @@ export const register = async (req: Request, res: Response) => {
         emailVerified: false,
       },
     },
-    message: SUCCESS_MESSAGES.REGISTRATION_EMAIL_SENT,
+    message: SUCCESS_MESSAGES.AUTH.REGISTRATION_EMAIL_SENT,
   });
 };
 
 export const login = async (req: Request, res: Response) => {
   const { email, password } = req.body || {};
   const ip = req.ip;
-  console.log(email, password);
   if (!email || !password) {
     return res.status(400).json({
       success: false,
-      error: ERROR_MESSAGES.MISSING_EMAIL_OR_PASSWORD,
+      error: ERROR_MESSAGES.AUTH.MISSING_EMAIL_OR_PASSWORD,
     });
   }
 
   if (!validateEmail(email)) {
     return res
       .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.INVALID_EMAIL });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.INVALID_EMAIL });
   }
 
   const user = await getUserByEmail(email);
   if (!user || !user.passwordHash) {
     recordFailedLogin(email || ip);
-    console.warn(`Failed login attempt for ${email} from ${ip}`);
     return res.status(401).json({
       success: false,
       error: {
         code: ERROR_CODES.INVALID_CREDENTIALS,
-        message: ERROR_MESSAGES.INVALID_CREDENTIALS,
+        message: ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
       },
     });
   }
@@ -558,12 +488,11 @@ export const login = async (req: Request, res: Response) => {
   const match = await bcrypt.compare(password, user.passwordHash);
   if (!match) {
     recordFailedLogin(email || ip);
-    console.warn(`Failed login attempt for ${email} from ${ip}`);
     return res.status(401).json({
       success: false,
       error: {
         code: ERROR_CODES.INVALID_CREDENTIALS,
-        message: ERROR_MESSAGES.INVALID_CREDENTIALS,
+        message: ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
       },
     });
   }
@@ -595,7 +524,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
   if (!email || !validateEmail(email)) {
     return res.status(200).json({
       success: true,
-      message: SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
+      message: SUCCESS_MESSAGES.AUTH.PASSWORD_RESET_EMAIL_SENT,
     });
   }
 
@@ -605,7 +534,7 @@ export const forgotPassword = async (req: Request, res: Response) => {
     if (!user) {
       return res.status(200).json({
         success: true,
-        message: SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
+        message: SUCCESS_MESSAGES.AUTH.PASSWORD_RESET_EMAIL_SENT,
       });
     }
 
@@ -615,36 +544,36 @@ export const forgotPassword = async (req: Request, res: Response) => {
 
     return res.status(200).json({
       success: true,
-      message: SUCCESS_MESSAGES.PASSWORD_RESET_EMAIL_SENT,
+      message: SUCCESS_MESSAGES.AUTH.PASSWORD_RESET_EMAIL_SENT,
     });
-  } catch (e) {
-    console.error("forgotPassword error", e);
+  } catch {
     return res
       .status(500)
-      .json({ success: false, error: ERROR_MESSAGES.SERVER_ERROR });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.SERVER_ERROR });
   }
 };
 
 export const verifyOtp = async (req: Request, res: Response) => {
   const { email, otp } = req.body || {};
   if (!email || !otp || !validateEmail(email) || typeof otp !== "string") {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.MISSING_EMAIL_OR_OTP });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MISSING_EMAIL_OR_OTP,
+    });
   }
 
   try {
     const resetToken = await verifyOtpAndCreateResetToken(email, otp);
     if (!resetToken)
-      return res
-        .status(400)
-        .json({ success: false, error: ERROR_MESSAGES.INVALID_OR_EXPIRED_OTP });
+      return res.status(400).json({
+        success: false,
+        error: ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
+      });
     return res.json({ success: true, data: { resetToken } });
-  } catch (e) {
-    console.error("verifyOtp error", e);
+  } catch {
     return res
       .status(500)
-      .json({ success: false, error: ERROR_MESSAGES.SERVER_ERROR });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.SERVER_ERROR });
   }
 };
 
@@ -653,35 +582,36 @@ export const resetPassword = async (req: Request, res: Response) => {
   if (!resetToken || !newPassword) {
     return res.status(400).json({
       success: false,
-      error: ERROR_MESSAGES.MISSING_RESET_TOKEN_OR_PASSWORD,
+      error: ERROR_MESSAGES.AUTH.MISSING_RESET_TOKEN_OR_PASSWORD,
     });
   }
 
   if (!validatePassword(newPassword)) {
-    return res
-      .status(400)
-      .json({ success: false, error: ERROR_MESSAGES.PASSWORD_REQUIREMENTS });
+    return res.status(400).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.PASSWORD_REQUIREMENTS,
+    });
   }
 
   try {
     const email = await consumeResetToken(resetToken);
     if (!email)
-      return res
-        .status(400)
-        .json({ success: false, error: ERROR_MESSAGES.INVALID_RESET_TOKEN });
+      return res.status(400).json({
+        success: false,
+        error: ERROR_MESSAGES.AUTH.INVALID_RESET_TOKEN,
+      });
 
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await updateUserPassword(email, passwordHash);
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.PASSWORD_RESET_SUCCESS,
+      message: SUCCESS_MESSAGES.AUTH.PASSWORD_RESET_SUCCESS,
     });
-  } catch (e) {
-    console.error("resetPassword error", e);
+  } catch {
     return res
       .status(500)
-      .json({ success: false, error: ERROR_MESSAGES.SERVER_ERROR });
+      .json({ success: false, error: ERROR_MESSAGES.AUTH.SERVER_ERROR });
   }
 };
 
@@ -689,13 +619,12 @@ export const logout = async (req: Request, res: Response) => {
   try {
     return res.status(200).json({
       success: true,
-      message: SUCCESS_MESSAGES.LOGGED_OUT_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES.AUTH.LOGGED_OUT_SUCCESSFULLY,
     });
-  } catch (error) {
-    console.error("Logout error:", error);
+  } catch {
     return res.status(500).json({
       success: false,
-      error: ERROR_MESSAGES.SERVER_ERROR,
+      error: ERROR_MESSAGES.AUTH.SERVER_ERROR,
     });
   }
 };

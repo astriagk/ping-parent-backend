@@ -1,130 +1,189 @@
 import { Request, Response } from "express";
+
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
 import {
+  createParentProfile,
+  getAddressByUserId,
   getParentProfile,
   updateParentProfile,
-} from "../services/parent.service";
-import {
   upsertAddressByUserId,
-  getAddressByUserId,
-} from "../services/address.service";
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "../constants/messages";
+} from "@services";
+
+const getUserIdFromRequest = (req: Request): string | null => {
+  return req.user?.userId || null;
+};
+
+const formatParentProfileResponse = (profile: any) => ({
+  parent_id: profile.parent_id,
+  user_id: profile.user_id,
+  name: profile.name,
+  email: profile.email,
+  photo_url: profile.photo_url,
+  created_at: profile.created_at,
+  updated_at: profile.updated_at,
+});
 
 export const getProfile = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
-
+    const userId = getUserIdFromRequest(req);
     if (!userId) {
       return res.status(401).json({
         success: false,
-        error: ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
+        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       });
     }
 
     const profile = await getParentProfile(userId);
-
     if (!profile) {
       return res.status(404).json({
         success: false,
-        error: ERROR_MESSAGES.PARENT_PROFILE_NOT_FOUND,
+        error: ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
       });
     }
 
     return res.status(200).json({
       success: true,
-      data: profile,
+      data: {
+        ...formatParentProfileResponse(profile),
+        user: profile.user,
+      },
     });
-  } catch (error) {
-    console.error("Error fetching parent profile:", error);
+  } catch {
     return res.status(500).json({
       success: false,
-      error: ERROR_MESSAGES.FAILED_TO_FETCH_PARENT_PROFILE,
+      error: ERROR_MESSAGES.PARENT.FAILED_TO_FETCH_PARENT_PROFILE,
     });
   }
 };
 
 export const updateProfile = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
-    const updates = req.body;
-
+    const userId = getUserIdFromRequest(req);
     if (!userId) {
       return res.status(401).json({
         success: false,
-        error: ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
+        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       });
     }
 
-    if (!updates || Object.keys(updates).length === 0) {
+    const { name, email, photo_url } = req.body;
+    const updates: Partial<{ name: string; email: string; photo_url: string }> =
+      {};
+
+    if (name !== undefined) {
+      const trimmedName = String(name).trim();
+      if (trimmedName) updates.name = trimmedName;
+    }
+
+    if (email !== undefined) {
+      const trimmedEmail = String(email).trim();
+      if (trimmedEmail) updates.email = trimmedEmail;
+    }
+
+    if (photo_url !== undefined) {
+      const trimmedPhotoUrl = String(photo_url).trim();
+      if (trimmedPhotoUrl) updates.photo_url = trimmedPhotoUrl;
+    }
+
+    if (Object.keys(updates).length === 0) {
       return res.status(400).json({
         success: false,
-        error: ERROR_MESSAGES.NO_UPDATES_PROVIDED,
+        error: ERROR_MESSAGES.PARENT.NO_UPDATES_PROVIDED,
       });
     }
 
-    const updated = await updateParentProfile(userId, updates);
+    let updated = await updateParentProfile(userId, updates);
 
     if (!updated) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT_PROFILE_NOT_FOUND_OR_NO_CHANGES,
-      });
+      const created = await createParentProfile(userId, updates);
+      if (!created) {
+        return res.status(500).json({
+          success: false,
+          error: ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
+        });
+      }
     }
 
     const updatedProfile = await getParentProfile(userId);
+    if (!updatedProfile) {
+      return res.status(404).json({
+        success: false,
+        error: ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+      });
+    }
 
     return res.status(200).json({
       success: true,
-      data: updatedProfile,
-      message: SUCCESS_MESSAGES.PROFILE_UPDATED_SUCCESSFULLY,
+      data: formatParentProfileResponse(updatedProfile),
+      message: SUCCESS_MESSAGES.PARENT.PROFILE_UPDATED_SUCCESSFULLY,
     });
-  } catch (error) {
-    console.error("Error updating parent profile:", error);
+  } catch {
     return res.status(500).json({
       success: false,
-      error: ERROR_MESSAGES.FAILED_TO_UPDATE_PARENT_PROFILE,
+      error: ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
     });
   }
 };
 
 export const updateAddress = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
-    const { street, city, state, zipCode, coordinates } = req.body;
-
+    const userId = getUserIdFromRequest(req);
     if (!userId) {
       return res.status(401).json({
         success: false,
-        error: ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
+        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       });
     }
 
-    if (!street || !city || !state || !zipCode) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.ADDRESS_FIELDS_REQUIRED,
-      });
-    }
-
-    const addressData: any = {
-      street,
+    const {
+      address_line1,
+      address_line2,
       city,
       state,
-      zipCode,
-    };
+      pincode,
+      latitude,
+      longitude,
+      is_primary,
+    } = req.body;
 
-    if (coordinates && coordinates.lat && coordinates.lng) {
-      addressData.coordinates = {
-        lat: coordinates.lat,
-        lng: coordinates.lng,
-      };
+    const trimmedAddressLine1 = String(address_line1 || "").trim();
+    const trimmedCity = String(city || "").trim();
+    const trimmedState = String(state || "").trim();
+
+    if (!trimmedAddressLine1 || !trimmedCity || !trimmedState) {
+      return res.status(400).json({
+        success: false,
+        error: ERROR_MESSAGES.ADDRESS.ADDRESS_FIELDS_REQUIRED,
+      });
     }
+
+    const lat = parseFloat(latitude);
+    const lng = parseFloat(longitude);
+
+    if (isNaN(lat) || isNaN(lng)) {
+      return res.status(400).json({
+        success: false,
+        error: ERROR_MESSAGES.ADDRESS.ADDRESS_FIELDS_REQUIRED,
+      });
+    }
+
+    const addressData = {
+      address_line1: trimmedAddressLine1,
+      address_line2: address_line2 ? String(address_line2).trim() : undefined,
+      city: trimmedCity,
+      state: trimmedState,
+      pincode: pincode ? String(pincode).trim() : undefined,
+      latitude: lat,
+      longitude: lng,
+      is_primary: is_primary !== undefined ? Boolean(is_primary) : true,
+    };
 
     const updated = await upsertAddressByUserId(userId, addressData);
 
     if (!updated) {
       return res.status(500).json({
         success: false,
-        error: ERROR_MESSAGES.FAILED_TO_UPDATE_ADDRESS,
+        error: ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
       });
     }
 
@@ -133,25 +192,23 @@ export const updateAddress = async (req: Request, res: Response) => {
     return res.status(200).json({
       success: true,
       data: updatedAddress,
-      message: SUCCESS_MESSAGES.ADDRESS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES.ADDRESS.ADDRESS_UPDATED_SUCCESSFULLY,
     });
-  } catch (error) {
-    console.error("Error updating address:", error);
+  } catch {
     return res.status(500).json({
       success: false,
-      error: ERROR_MESSAGES.FAILED_TO_UPDATE_ADDRESS,
+      error: ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
     });
   }
 };
 
 export const getAddress = async (req: Request, res: Response) => {
   try {
-    const userId = req.user?.userId;
-
+    const userId = getUserIdFromRequest(req);
     if (!userId) {
       return res.status(401).json({
         success: false,
-        error: ERROR_MESSAGES.USER_NOT_AUTHENTICATED,
+        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       });
     }
 
@@ -160,7 +217,7 @@ export const getAddress = async (req: Request, res: Response) => {
     if (!address) {
       return res.status(404).json({
         success: false,
-        error: ERROR_MESSAGES.ADDRESS_NOT_FOUND,
+        error: ERROR_MESSAGES.ADDRESS.ADDRESS_NOT_FOUND,
       });
     }
 
@@ -168,11 +225,10 @@ export const getAddress = async (req: Request, res: Response) => {
       success: true,
       data: address,
     });
-  } catch (error) {
-    console.error("Error fetching address:", error);
+  } catch {
     return res.status(500).json({
       success: false,
-      error: ERROR_MESSAGES.FAILED_TO_FETCH_ADDRESS,
+      error: ERROR_MESSAGES.ADDRESS.FAILED_TO_FETCH_ADDRESS,
     });
   }
 };

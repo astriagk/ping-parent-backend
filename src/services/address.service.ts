@@ -1,40 +1,106 @@
-import { ADDRESSES_COLLECTION } from "../config/collections";
-import { connectDB } from "../db/mongo";
-import { ParentAddress } from "../types/parent.type";
+import {
+  PARENTS_COLLECTION,
+  PARENT_ADDRESSES_COLLECTION,
+} from "@config/collections";
+import { connectDB } from "@db/mongo";
+import { ParentAddress, ParentAddressInput } from "@models";
 
-// Legacy address interface for backward compatibility
-interface LegacyAddress {
-  userId: string;
-  street: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  coordinates?: { lat: number; lng: number };
-  createdAt?: Date;
-  updatedAt?: Date;
-}
-
+/**
+ * Upsert address by user_id (finds parent first, then updates/creates address)
+ */
 export const upsertAddressByUserId = async (
   userId: string,
-  address: Omit<LegacyAddress, "userId" | "createdAt" | "updatedAt">
+  address: ParentAddressInput,
 ): Promise<boolean> => {
-  const db = await connectDB();
-  const query = { userId };
-  const update = {
-    $set: { ...address, updatedAt: new Date() },
-    $setOnInsert: { userId, createdAt: new Date() },
-  };
-  const result = await db
-    .collection(ADDRESSES_COLLECTION)
-    .updateOne(query, update, { upsert: true });
-  return result.modifiedCount > 0 || result.upsertedCount > 0;
+  try {
+    const db = await connectDB();
+
+    // First, find the parent_id from the parents collection
+    const parent = await db
+      .collection(PARENTS_COLLECTION)
+      .findOne({ user_id: userId });
+
+    if (!parent) {
+      return false;
+    }
+
+    const parentId = String(parent._id);
+
+    // Try to update existing primary address first
+    const updateResult = await db
+      .collection(PARENT_ADDRESSES_COLLECTION)
+      .updateOne(
+        { parent_id: parentId, is_primary: true },
+        {
+          $set: {
+            address_line1: address.address_line1,
+            address_line2: address.address_line2,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            latitude: address.latitude,
+            longitude: address.longitude,
+            updated_at: new Date(),
+          },
+        },
+      );
+
+    // If no existing address found, create a new one
+    if (updateResult.matchedCount === 0) {
+      const newAddress = {
+        parent_id: parentId,
+        address_line1: address.address_line1,
+        address_line2: address.address_line2,
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+        latitude: address.latitude,
+        longitude: address.longitude,
+        is_primary:
+          address.is_primary !== undefined ? address.is_primary : true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      const insertResult = await db
+        .collection(PARENT_ADDRESSES_COLLECTION)
+        .insertOne(newAddress);
+      return !!insertResult.insertedId;
+    }
+
+    return updateResult.modifiedCount > 0;
+  } catch {
+    return false;
+  }
 };
 
+/**
+ * Get primary address by user_id (finds parent first, then gets address)
+ */
 export const getAddressByUserId = async (
-  userId: string
-): Promise<LegacyAddress | null> => {
-  const db = await connectDB();
-  const query = { userId };
-  const address = await db.collection(ADDRESSES_COLLECTION).findOne(query);
-  return address as LegacyAddress | null;
+  userId: string,
+): Promise<ParentAddress | null> => {
+  try {
+    const db = await connectDB();
+
+    // First, find the parent_id from the parents collection
+    const parent = await db
+      .collection(PARENTS_COLLECTION)
+      .findOne({ user_id: userId });
+
+    if (!parent) {
+      return null;
+    }
+
+    const parentId = String(parent._id);
+
+    // Get the primary address for this parent
+    const address = await db
+      .collection(PARENT_ADDRESSES_COLLECTION)
+      .findOne({ parent_id: parentId, is_primary: true });
+
+    return address as ParentAddress | null;
+  } catch {
+    return null;
+  }
 };

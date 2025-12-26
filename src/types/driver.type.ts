@@ -3,19 +3,10 @@ export interface Driver {
   _id?: any; // MongoDB internal ID
   driver_id?: string;
   user_id: string;
-  driver_unique_id: string;
+  driver_unique_id?: string;
   name: string;
   email?: string;
   photo_url?: string;
-  home_address?: string;
-  home_latitude?: number;
-  home_longitude?: number;
-  driving_license_number: string;
-  driving_license_photo_url?: string;
-  vehicle_license_number: string;
-  vehicle_license_photo_url?: string;
-  insurance_number?: string;
-  insurance_photo_url?: string;
   vehicle_type: "van" | "auto" | "bus";
   vehicle_number: string;
   vehicle_capacity: number;
@@ -30,3 +21,93 @@ export interface Driver {
   created_at?: Date;
   updated_at?: Date;
 }
+
+// Table: driver_addresses
+export interface DriverAddress {
+  _id?: any; // MongoDB internal ID
+  address_id?: string;
+  driver_id: string;
+  address_line1: string;
+  address_line2?: string;
+  city: string;
+  state: string;
+  pincode?: string;
+  latitude: number;
+  longitude: number;
+  is_primary?: boolean;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+// Table: driver_documents
+export interface DriverDocument {
+  _id?: any; // MongoDB internal ID
+  document_id?: string;
+  driver_id: string;
+  driving_license_number: string;
+  driving_license_photo_url?: string;
+  vehicle_license_number: string;
+  vehicle_license_photo_url?: string;
+  insurance_number?: string;
+  insurance_photo_url?: string;
+  created_at?: Date;
+  updated_at?: Date;
+}
+
+// Reusable type for driver input (omits auto-generated/internal fields)
+export type DriverInput = Omit<
+  Driver,
+  | "_id"
+  | "driver_id"
+  | "driver_unique_id"
+  | "current_student_count"
+  | "approval_status"
+  | "approved_by"
+  | "approved_at"
+  | "rating"
+  | "total_trips"
+  | "created_at"
+  | "updated_at"
+>;
+
+// Type for updating driver profile
+export type DriverProfileUpdate = Partial<
+  Pick<
+    Driver,
+    | "name"
+    | "email"
+    | "photo_url"
+    | "vehicle_type"
+    | "vehicle_number"
+    | "vehicle_capacity"
+    | "is_available"
+  >
+>;
+
+// Type for driver address input
+export type DriverAddressInput = Omit<
+  DriverAddress,
+  "_id" | "address_id" | "created_at" | "updated_at"
+>;
+
+// Type for updating driver address
+export type DriverAddressUpdate = Partial<
+  Omit<
+    DriverAddress,
+    "_id" | "address_id" | "driver_id" | "created_at" | "updated_at"
+  >
+>;
+
+// Type for driver document input
+export type DriverDocumentInput = Omit<
+  DriverDocument,
+  "_id" | "document_id" | "created_at" | "updated_at"
+>;
+
+// Type for uploading/updating documents
+export type DriverDocumentUpdate = Partial<
+  Omit<
+    DriverDocument,
+    "_id" | "document_id" | "driver_id" | "created_at" | "updated_at"
+  >
+>;

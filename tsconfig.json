@@ -7,6 +7,19 @@
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
-    "types": ["node", "jest"]
-  }
+    "types": ["node", "jest"],
+    "baseUrl": "./src",
+    "paths": {
+      "@services": ["services/index"],
+      "@controllers/*": ["controllers/*"],
+      "@utils": ["utils/index"],
+      "@constants": ["constants/index"],
+      "@config/*": ["config/*"],
+      "@middleware/*": ["middleware/*"],
+      "@models": ["types/index"],
+      "@routes/*": ["routes/*"],
+      "@db/*": ["db/*"]
+    }
+  },
+  "include": ["src"]
 }

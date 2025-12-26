@@ -1,5 +1,5 @@
-import { connectDB } from "../db/mongo";
-import { COLLECTIONS } from "../config/collections";
+import { COLLECTIONS } from "@config/collections";
+import { connectDB } from "@db/mongo";
 
 const COLLECTION = COLLECTIONS.ROLES || "roles";
 

@@ -1,6 +1,8 @@
-import express, { Request, Response, NextFunction } from "express";
-import authRoutes from "./routes/auth.routes";
-import parentRoutes from "./routes/parent.routes";
+import express, { NextFunction, Request, Response } from "express";
+
+import authRoutes from "@routes/auth.routes";
+import driverRoutes from "@routes/driver.routes";
+import parentRoutes from "@routes/parent.routes";
 
 const app = express();
 
@@ -13,6 +15,7 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
 });
 
 app.use("/api", authRoutes);
+app.use("/api", driverRoutes);
 app.use("/api", parentRoutes);
 
 export default app;
