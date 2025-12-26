@@ -1,4 +1,4 @@
-import { verifyToken, AccessTokenPayload } from "@utils/index";
+import { verifyToken, AccessTokenPayload } from "@utils";
 import { Request, Response, NextFunction } from "express";
 
 declare global {

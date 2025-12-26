@@ -3,7 +3,7 @@ import {
   PARENTS_COLLECTION,
 } from "@config/collections";
 import { connectDB } from "@db/mongo";
-import { ParentAddress, ParentAddressInput } from "@models/index";
+import { ParentAddress, ParentAddressInput } from "@models";
 
 /**
  * Upsert address by user_id (finds parent first, then updates/creates address)

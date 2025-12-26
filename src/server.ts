@@ -1,13 +1,14 @@
+import app from "./app";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import path from "path";
 
-import app from "./app";
-
 const NODE_ENV = process.env.NODE_ENV || "dev";
 
+// Load environment-specific configuration
+const envFile = `.env.${NODE_ENV}`;
 dotenv.config({
-  path: path.join(process.cwd(), "environment", ".env.dev"),
+  path: path.join(process.cwd(), "environment", envFile),
 });
 
 console.log("ENV:", NODE_ENV);

@@ -14,8 +14,8 @@ import {
   DriverDocumentUpdate,
   DriverInput,
   DriverProfileUpdate,
-} from "@models/index";
-import { User } from "@models/index";
+  User,
+} from "@models";
 import { ObjectId } from "mongodb";
 
 /**

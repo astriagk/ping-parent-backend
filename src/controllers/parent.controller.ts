@@ -1,11 +1,11 @@
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants/messages";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
 import {
   getParentProfile,
   updateParentProfile,
   createParentProfile,
   upsertAddressByUserId,
   getAddressByUserId,
-} from "@services/index";
+} from "@services";
 import { Request, Response } from "express";
 
 const getUserIdFromRequest = (req: Request): string | null => {

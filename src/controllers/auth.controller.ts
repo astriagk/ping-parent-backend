@@ -1,8 +1,4 @@
-import {
-  ERROR_MESSAGES,
-  SUCCESS_MESSAGES,
-  ERROR_CODES,
-} from "@constants/messages";
+import { ERROR_MESSAGES, SUCCESS_MESSAGES, ERROR_CODES } from "@constants";
 import { recordFailedLogin } from "@middleware/rateLimit";
 import {
   getUserById,
@@ -16,7 +12,7 @@ import {
   createOtpForEmail,
   verifyOtpAndCreateResetToken,
   consumeResetToken,
-} from "@services/index";
+} from "@services";
 import {
   verifyToken,
   signAccessToken,
@@ -26,7 +22,7 @@ import {
   normalizePhone,
   sendPasswordResetOTP,
   sendVerificationEmail,
-} from "@utils/index";
+} from "@utils";
 import bcrypt from "bcryptjs";
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
@@ -73,7 +69,7 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
         try {
           const refreshPayload = jwt.verify(
             refresh,
-            process.env.JWT_SECRET || "dev-secret",
+            process.env.JWT_SECRET || "dev-secret"
           ) as any;
           if (refreshPayload?.userId) {
             // issue new access token
@@ -166,7 +162,7 @@ export const sendLoginOtp = async (req: Request, res: Response) => {
     success: true,
     message: SUCCESS_MESSAGES.PHONE.LOGIN_OTP_SENT,
     // Remove in production - only for development
-    ...(process.env.NODE_ENV === "development" && { otp }),
+    ...(process.env.NODE_ENV === "dev" && { otp }),
   });
 };
 
@@ -268,7 +264,7 @@ export const sendPhoneOtp = async (req: Request, res: Response) => {
     success: true,
     message: SUCCESS_MESSAGES.PHONE.OTP_SENT,
     // Remove in production - only for development
-    ...(process.env.NODE_ENV === "development" && { otp }),
+    ...(process.env.NODE_ENV === "dev" && { otp }),
   });
 };
 
@@ -412,7 +408,7 @@ export const register = async (req: Request, res: Response) => {
 
   // create verification token
   const tempPayload = { userId: email, email, role: selectedRole };
-  const verificationToken = signEmailToken(tempPayload, "7d");
+  const verificationToken = signEmailToken(tempPayload);
 
   const newUser = {
     firstName,

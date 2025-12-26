@@ -10,15 +10,16 @@
     "types": ["node", "jest"],
     "baseUrl": "./src",
     "paths": {
-      "@services/*": ["services/*"],
+      "@services": ["services/index"],
       "@controllers/*": ["controllers/*"],
-      "@utils/*": ["utils/*"],
-      "@constants/*": ["constants/*"],
+      "@utils": ["utils/index"],
+      "@constants": ["constants/index"],
       "@config/*": ["config/*"],
       "@middleware/*": ["middleware/*"],
-      "@models/*": ["types/*"],
+      "@models": ["types/index"],
       "@routes/*": ["routes/*"],
       "@db/*": ["db/*"]
     }
-  }
+  },
+  "include": ["src"]
 }
