@@ -1,10 +1,11 @@
+import { ObjectId } from "mongodb";
+
 import {
-  USERS_COLLECTION,
   OTP_VERIFICATION_COLLECTION,
+  USERS_COLLECTION,
 } from "@config/collections";
 import { connectDB } from "@db/mongo";
 import { User } from "@models";
-import { ObjectId } from "mongodb";
 
 const COLLECTION = USERS_COLLECTION;
 

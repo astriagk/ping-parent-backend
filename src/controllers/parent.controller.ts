@@ -1,12 +1,13 @@
+import { Request, Response } from "express";
+
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
 import {
+  createParentProfile,
+  getAddressByUserId,
   getParentProfile,
   updateParentProfile,
-  createParentProfile,
   upsertAddressByUserId,
-  getAddressByUserId,
 } from "@services";
-import { Request, Response } from "express";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;

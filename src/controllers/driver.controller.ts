@@ -1,3 +1,5 @@
+import { Request, Response } from "express";
+
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
 import {
   createDriverProfile,
@@ -10,7 +12,6 @@ import {
   upsertDriverDocumentsByUserId,
 } from "@services";
 import { assignTrimmedFields } from "@utils";
-import { Request, Response } from "express";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;

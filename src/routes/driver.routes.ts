@@ -1,15 +1,16 @@
+import { Router } from "express";
+
 import {
-  getProfile,
-  createProfile,
-  updateProfile,
-  getAddress,
-  upsertAddress,
-  getDocuments,
   createDocuments,
+  createProfile,
+  getAddress,
+  getDocuments,
+  getProfile,
   updateDocuments,
+  updateProfile,
+  upsertAddress,
 } from "@controllers/driver.controller";
 import { verifyDriverToken } from "@middleware/auth";
-import { Router } from "express";
 
 const router = Router();
 

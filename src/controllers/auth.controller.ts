@@ -1,31 +1,32 @@
-import { ERROR_MESSAGES, SUCCESS_MESSAGES, ERROR_CODES } from "@constants";
+import bcrypt from "bcryptjs";
+import { Request, Response } from "express";
+import jwt from "jsonwebtoken";
+
+import { ERROR_CODES, ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
 import { recordFailedLogin } from "@middleware/rateLimit";
 import {
-  getUserById,
-  createUser,
-  getUserByEmail,
-  getUserByPhone,
-  verifyPhoneOtp as verifyOtpService,
-  updateUserPassword,
-  createPhoneOtp,
-  getAllRoles,
-  createOtpForEmail,
-  verifyOtpAndCreateResetToken,
   consumeResetToken,
+  createOtpForEmail,
+  createPhoneOtp,
+  createUser,
+  getAllRoles,
+  getUserByEmail,
+  getUserById,
+  getUserByPhone,
+  updateUserPassword,
+  verifyOtpAndCreateResetToken,
+  verifyPhoneOtp as verifyOtpService,
 } from "@services";
 import {
-  verifyToken,
+  normalizePhone,
+  sendPasswordResetOTP,
+  sendVerificationEmail,
   signAccessToken,
   signEmailToken,
   validateEmail,
   validatePassword,
-  normalizePhone,
-  sendPasswordResetOTP,
-  sendVerificationEmail,
+  verifyToken,
 } from "@utils";
-import bcrypt from "bcryptjs";
-import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 
 export const verifyAuthToken = async (req: Request, res: Response) => {
   const authHeader = req.headers.authorization;
@@ -69,7 +70,7 @@ export const verifyAuthToken = async (req: Request, res: Response) => {
         try {
           const refreshPayload = jwt.verify(
             refresh,
-            process.env.JWT_SECRET || "dev-secret"
+            process.env.JWT_SECRET || "dev-secret",
           ) as any;
           if (refreshPayload?.userId) {
             // issue new access token

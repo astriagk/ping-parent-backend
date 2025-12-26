@@ -9,7 +9,7 @@ export interface AccessTokenPayload extends JwtPayload {
 }
 
 export const signAccessToken = (
-  payload: Omit<AccessTokenPayload, "iat" | "exp">
+  payload: Omit<AccessTokenPayload, "iat" | "exp">,
 ) => {
   return jwt.sign(payload as object, SECRET, {
     expiresIn: process.env.JWT_EXPIRES_IN,
@@ -17,7 +17,7 @@ export const signAccessToken = (
 };
 
 export const signRefreshToken = (
-  payload: Omit<AccessTokenPayload, "iat" | "exp">
+  payload: Omit<AccessTokenPayload, "iat" | "exp">,
 ) => {
   return jwt.sign({ ...payload, type: "refresh" } as object, SECRET, {
     expiresIn: process.env.JWT_REFRESH_EXPIRES_IN,
@@ -29,7 +29,7 @@ export const verifyToken = (token: string) => {
 };
 
 export const signEmailToken = (
-  payload: Omit<AccessTokenPayload, "iat" | "exp">
+  payload: Omit<AccessTokenPayload, "iat" | "exp">,
 ) => {
   return jwt.sign({ ...payload, type: "email" } as object, SECRET, {
     expiresIn: process.env.JWT_EMAIL_EXPIRES_IN,

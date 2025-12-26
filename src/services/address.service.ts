@@ -1,6 +1,6 @@
 import {
-  PARENT_ADDRESSES_COLLECTION,
   PARENTS_COLLECTION,
+  PARENT_ADDRESSES_COLLECTION,
 } from "@config/collections";
 import { connectDB } from "@db/mongo";
 import { ParentAddress, ParentAddressInput } from "@models";

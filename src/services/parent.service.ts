@@ -1,7 +1,8 @@
-import { USERS_COLLECTION, PARENTS_COLLECTION } from "@config/collections";
+import { ObjectId } from "mongodb";
+
+import { PARENTS_COLLECTION, USERS_COLLECTION } from "@config/collections";
 import { connectDB } from "@db/mongo";
 import { Parent, User } from "@models";
-import { ObjectId } from "mongodb";
 
 /**
  * Get parent profile by user_id

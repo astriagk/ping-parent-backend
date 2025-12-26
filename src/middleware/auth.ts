@@ -1,11 +1,10 @@
-import { verifyToken, AccessTokenPayload } from "@utils";
-import { Request, Response, NextFunction } from "express";
+import { NextFunction, Request, Response } from "express";
 
-declare global {
-  namespace Express {
-    interface Request {
-      user?: AccessTokenPayload;
-    }
+import { AccessTokenPayload, verifyToken } from "@utils";
+
+declare module "express-serve-static-core" {
+  interface Request {
+    user?: AccessTokenPayload;
   }
 }
 

@@ -1,8 +1,10 @@
+import { ObjectId } from "mongodb";
+
 import {
-  USERS_COLLECTION,
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
+  USERS_COLLECTION,
 } from "@config/collections";
 import { connectDB } from "@db/mongo";
 import {
@@ -16,7 +18,6 @@ import {
   DriverProfileUpdate,
   User,
 } from "@models";
-import { ObjectId } from "mongodb";
 
 /**
  * Generate a unique driver ID (8-character alphanumeric)

@@ -1,7 +1,8 @@
-import app from "./app";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import path from "path";
+
+import app from "./app";
 
 const NODE_ENV = process.env.NODE_ENV || "dev";
 
@@ -22,5 +23,5 @@ const server = createServer(app);
 server.listen(PORT, HOST, () => {
   console.log(`🚀 Server running on http://${HOST}:${PORT}`);
   console.log(`🌱 Environment: ${NODE_ENV}`);
-  console.log(`📱 Accessible from network devices`);
+  console.log("📱 Accessible from network devices");
 });

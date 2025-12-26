@@ -1,19 +1,20 @@
+import { Router } from "express";
+
 import {
-  verifyAuthToken,
-  register,
+  forgotPassword,
   roles as getRoles,
   login,
-  forgotPassword,
-  verifyOtp,
-  resetPassword,
-  sendPhoneOtp,
-  verifyPhoneOtp,
-  sendLoginOtp,
-  verifyLoginOtp,
   logout,
+  register,
+  resetPassword,
+  sendLoginOtp,
+  sendPhoneOtp,
+  verifyAuthToken,
+  verifyLoginOtp,
+  verifyOtp,
+  verifyPhoneOtp,
 } from "@controllers/auth.controller";
 import { loginRateLimiter } from "@middleware/rateLimit";
-import { Router } from "express";
 
 const router = Router();
 

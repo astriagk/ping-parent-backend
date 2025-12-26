@@ -1,11 +1,12 @@
+import { Router } from "express";
+
 import {
-  getProfile,
-  updateProfile,
-  updateAddress,
   getAddress,
+  getProfile,
+  updateAddress,
+  updateProfile,
 } from "@controllers/parent.controller";
 import { verifyParentToken } from "@middleware/auth";
-import { Router } from "express";
 
 const router = Router();
 

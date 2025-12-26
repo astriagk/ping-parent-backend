@@ -1,6 +1,7 @@
+import crypto from "crypto";
+
 import { COLLECTIONS } from "@config/collections";
 import { connectDB } from "@db/mongo";
-import crypto from "crypto";
 
 const COLLECTION = COLLECTIONS.PASSWORD_RESETS || "password_resets";
 
