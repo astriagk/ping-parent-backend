@@ -11,7 +11,7 @@ class Logger {
     meta?: object,
   ): string {
     const timestamp = this.getTimestamp();
-    const metaStr = meta ? ` ${JSON.stringify(meta)}` : "";
+    const metaStr = meta ? `\n${JSON.stringify(meta, null, 2)}` : "";
     return `[${timestamp}] [${level.toUpperCase()}]: ${message}${metaStr}`;
   }
 

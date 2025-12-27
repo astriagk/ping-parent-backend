@@ -1,5 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
+import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
+
 type Entry = { count: number; firstSeen: number };
 
 const attempts: Map<string, Entry> = new Map();
@@ -30,9 +32,9 @@ export const loginRateLimiter = (
   if (entry.count >= MAX_ATTEMPTS) {
     const retryAfter = Math.ceil((WINDOW_MS - (now - entry.firstSeen)) / 1000);
     res.setHeader("Retry-After", String(retryAfter));
-    return res.status(429).json({
+    return res.status(HTTP_STATUS.TOO_MANY_REQUESTS).json({
       success: false,
-      error: "Too many login attempts. Try again later.",
+      error: ERROR_MESSAGES.COMMON.RATE_LIMIT_EXCEEDED,
     });
   }
 

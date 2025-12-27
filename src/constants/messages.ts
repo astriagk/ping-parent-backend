@@ -1,11 +1,26 @@
+export const SUCCESS_MESSAGES_COMMON = {
+  RESOURCE_CREATED: "Resource created successfully",
+};
+
 export const ERROR_MESSAGES = {
+  COMMON: {
+    UNAUTHORIZED: "Unauthorized",
+    FORBIDDEN: "Forbidden",
+    RESOURCE_NOT_FOUND: "Resource not found",
+    RESOURCE_ALREADY_EXISTS: "Resource already exists",
+    VALIDATION_ERROR: "Validation error",
+    INTERNAL_SERVER_ERROR: "Internal server error",
+    RATE_LIMIT_EXCEEDED: "Too many login attempts. Try again later.",
+  },
   AUTH: {
-    MISSING_AUTH_HEADER: "Missing Authorization header",
-    MALFORMED_AUTH_HEADER: "Malformed Authorization header",
+    MISSING_AUTH_HEADER: "Authorization header missing",
+    MALFORMED_AUTH_HEADER: "Token missing from authorization header",
     USER_NOT_FOUND: "User not found",
     INVALID_REFRESH_TOKEN: "Invalid refresh token",
     TOKEN_EXPIRED: "Token expired",
-    INVALID_TOKEN: "Invalid token",
+    INVALID_TOKEN: "Invalid or expired token",
+    PARENT_ROLE_REQUIRED: "Access denied. Parent role required.",
+    DRIVER_ROLE_REQUIRED: "Access denied. Driver role required.",
     FAILED_TO_FETCH_ROLES: "Failed to fetch roles",
     UNABLE_TO_VALIDATE_ROLE: "Unable to validate role",
     INVALID_ROLE: "Invalid role",

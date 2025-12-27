@@ -1,11 +1,17 @@
 import { Response } from "express";
 
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES_COMMON,
+} from "@constants";
+
 export class ApiResponse {
   static success(
     res: Response,
     data: unknown,
     message?: string,
-    statusCode = 200,
+    statusCode = HTTP_STATUS.OK,
   ) {
     return res.status(statusCode).json({
       success: true,
@@ -17,9 +23,9 @@ export class ApiResponse {
   static created(
     res: Response,
     data: unknown,
-    message = "Resource created successfully",
+    message = SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
   ) {
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       message,
       data,
@@ -27,13 +33,13 @@ export class ApiResponse {
   }
 
   static noContent(res: Response) {
-    return res.status(204).send();
+    return res.status(HTTP_STATUS.NO_CONTENT).send();
   }
 
   static error(
     res: Response,
     message: string,
-    statusCode = 500,
+    statusCode: number = HTTP_STATUS.INTERNAL_SERVER_ERROR,
     errors?: unknown,
   ) {
     return res.status(statusCode).json({
@@ -44,30 +50,47 @@ export class ApiResponse {
   }
 
   static badRequest(res: Response, message: string, errors?: unknown) {
-    return this.error(res, message, 400, errors);
+    return this.error(res, message, HTTP_STATUS.BAD_REQUEST, errors);
   }
 
-  static unauthorized(res: Response, message = "Unauthorized") {
-    return this.error(res, message, 401);
+  static unauthorized(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.UNAUTHORIZED,
+  ) {
+    return this.error(res, message, HTTP_STATUS.UNAUTHORIZED);
   }
 
-  static forbidden(res: Response, message = "Forbidden") {
-    return this.error(res, message, 403);
+  static forbidden(res: Response, message = ERROR_MESSAGES.COMMON.FORBIDDEN) {
+    return this.error(res, message, HTTP_STATUS.FORBIDDEN);
   }
 
-  static notFound(res: Response, message = "Resource not found") {
-    return this.error(res, message, 404);
+  static notFound(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.RESOURCE_NOT_FOUND,
+  ) {
+    return this.error(res, message, HTTP_STATUS.NOT_FOUND);
   }
 
-  static conflict(res: Response, message = "Resource already exists") {
-    return this.error(res, message, 409);
+  static conflict(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.RESOURCE_ALREADY_EXISTS,
+  ) {
+    return this.error(res, message, HTTP_STATUS.CONFLICT);
   }
 
   static validationError(res: Response, errors: unknown) {
-    return this.error(res, "Validation error", 422, errors);
+    return this.error(
+      res,
+      ERROR_MESSAGES.COMMON.VALIDATION_ERROR,
+      HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      errors,
+    );
   }
 
-  static internalError(res: Response, message = "Internal server error") {
-    return this.error(res, message, 500);
+  static internalError(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR,
+  ) {
+    return this.error(res, message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
   }
 }

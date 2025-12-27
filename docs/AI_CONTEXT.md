@@ -1,6 +1,7 @@
 # AI Context Documentation - Ping Parent Backend
 
 ## Overview
+
 This document provides comprehensive context for AI agents working on the Ping Parent backend project. It defines project structure, naming conventions, patterns, and implementation guidelines based on the existing auth module implementation.
 
 ### 📋 TL;DR - Quick Instructions for AI Agents
@@ -23,6 +24,7 @@ When asked to create a new feature (e.g., "Create a School module"):
 ### 🎯 Document Purpose
 
 This document serves as:
+
 - **Single source of truth** for code structure and patterns
 - **Implementation guide** with complete working examples
 - **Reference manual** for naming conventions and standards
@@ -31,6 +33,7 @@ This document serves as:
 ---
 
 ## Table of Contents
+
 1. [Database Schema Reference](#database-schema-reference)
 2. [Project Architecture](#project-architecture)
 3. [Naming Conventions](#naming-conventions)
@@ -163,11 +166,12 @@ export const COLLECTIONS = {
 
 ```typescript
 import { Router } from "express";
+
 import {
   controllerFunction1,
   controllerFunction2,
 } from "@controllers/{entity}.controller";
-import { validate, authMiddleware } from "@middlewares";
+import { authMiddleware, validate } from "@middlewares";
 import { validationSchema } from "@validations/{entity}.validation";
 
 const router = Router();
@@ -182,9 +186,20 @@ export default router;
 ```
 
 **Example (auth.routes.ts)**:
+
 ```typescript
-router.post("/register/send-otp", validate(sendOTPSchema), loginRateLimiter, sendPhoneOtp);
-router.post("/login/verify-otp", validate(verifyOTPSchema), loginRateLimiter, verifyLoginOtp);
+router.post(
+  "/register/send-otp",
+  validate(sendOTPSchema),
+  loginRateLimiter,
+  sendPhoneOtp,
+);
+router.post(
+  "/login/verify-otp",
+  validate(verifyOTPSchema),
+  loginRateLimiter,
+  verifyLoginOtp,
+);
 router.get("/verify-token", verifyAuthToken);
 ```
 
@@ -196,7 +211,8 @@ router.get("/verify-token", verifyAuthToken);
 
 ```typescript
 import { Request, Response } from "express";
-import { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
+
+import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import { serviceFunction } from "@services/{entity}.service";
 
@@ -207,7 +223,10 @@ export const controllerName = asyncHandler(
 
     // 2. Validate input (basic checks)
     if (!field1) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.ENTITY.FIELD_REQUIRED);
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.ENTITY.FIELD_REQUIRED,
+      );
     }
 
     // 3. Call service layer
@@ -219,35 +238,44 @@ export const controllerName = asyncHandler(
       data: result,
       message: SUCCESS_MESSAGES.ENTITY.ACTION_SUCCESSFUL,
     });
-  }
+  },
 );
 ```
 
 **Example (sendPhoneOtp from auth.controller.ts)**:
+
 ```typescript
-export const sendPhoneOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { phone } = req.body;
+export const sendPhoneOtp = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { phone } = req.body;
 
-  const normalizedPhone = normalizePhone(phone);
-  if (!normalizedPhone) {
-    throw new ApiError(HTTP_STATUS.BAD_REQUEST, ERROR_MESSAGES.PHONE.INVALID_PHONE);
-  }
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.INVALID_PHONE,
+      );
+    }
 
-  const existing = await getUserByPhone(normalizedPhone);
-  if (existing) {
-    throw new ApiError(HTTP_STATUS.CONFLICT, ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED);
-  }
+    const existing = await getUserByPhone(normalizedPhone);
+    if (existing) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
+      );
+    }
 
-  const otp = Math.floor(100000 + Math.random() * 900000).toString();
-  await createPhoneOtp(normalizedPhone, otp, 10);
+    const otp = Math.floor(100000 + Math.random() * 900000).toString();
+    await createPhoneOtp(normalizedPhone, otp, 10);
 
-  logger.info(`OTP for ${normalizedPhone}: ${otp}`);
+    logger.info(`OTP for ${normalizedPhone}: ${otp}`);
 
-  return res.json({
-    success: true,
-    message: SUCCESS_MESSAGES.PHONE.OTP_SENT,
-  });
-});
+    return res.json({
+      success: true,
+      message: SUCCESS_MESSAGES.PHONE.OTP_SENT,
+    });
+  },
+);
 ```
 
 ---
@@ -263,29 +291,40 @@ export const createEntity = async (data: EntityType) => {
   return await repository.create(data);
 };
 
-export const getEntityById = async (id: string): Promise<WithId<EntityType> | null> => {
+export const getEntityById = async (
+  id: string,
+): Promise<WithId<EntityType> | null> => {
   if (!ObjectId.isValid(id)) {
     return null;
   }
   return await repository.findById(id);
 };
 
-export const getEntityByField = async (field: string): Promise<WithId<EntityType> | null> => {
+export const getEntityByField = async (
+  field: string,
+): Promise<WithId<EntityType> | null> => {
   return await repository.findByField(field);
 };
 ```
 
 **Example (auth.service.ts)**:
+
 ```typescript
 export const createUser = async (data: User) => {
   return await userRepository.create(data);
 };
 
-export const getUserByPhone = async (phone: string): Promise<WithId<User> | null> => {
+export const getUserByPhone = async (
+  phone: string,
+): Promise<WithId<User> | null> => {
   return await userRepository.findByPhoneNumber(phone);
 };
 
-export const createPhoneOtp = async (phone: string, otp: string, ttlMinutes = 10) => {
+export const createPhoneOtp = async (
+  phone: string,
+  otp: string,
+  ttlMinutes = 10,
+) => {
   const db = await getDB();
   const now = new Date();
   const doc = {
@@ -308,8 +347,10 @@ export const createPhoneOtp = async (phone: string, otp: string, ttlMinutes = 10
 
 ```typescript
 import { WithId } from "mongodb";
+
 import { COLLECTION_NAME } from "@constants";
 import { EntityType } from "@types/{entity}.type";
+
 import { BaseRepository } from "./base.repository";
 
 export class EntityRepository extends BaseRepository<EntityType> {
@@ -330,6 +371,7 @@ export const entityRepository = new EntityRepository();
 ```
 
 **Example (auth.repository.ts)**:
+
 ```typescript
 export class UserRepository extends BaseRepository<User> {
   constructor() {
@@ -377,6 +419,7 @@ export interface Entity {
 ```
 
 **Example (auth.type.ts)**:
+
 ```typescript
 export type UserType = "parent" | "driver";
 
@@ -411,59 +454,52 @@ export interface OtpVerification {
 
 ```typescript
 import Joi from "joi";
+
 import { VALIDATION_MESSAGES } from "@constants";
 
 export const createEntitySchema = Joi.object({
-  field_name: Joi.string()
-    .min(3)
-    .max(100)
-    .required()
-    .messages({
-      "string.min": VALIDATION_MESSAGES.FIELD.MIN_LENGTH,
-      "any.required": VALIDATION_MESSAGES.FIELD.REQUIRED,
-    }),
-  enum_field: Joi.string()
-    .valid("value1", "value2")
-    .optional()
-    .messages({
-      "any.only": VALIDATION_MESSAGES.FIELD.INVALID_VALUE,
-    }),
+  field_name: Joi.string().min(3).max(100).required().messages({
+    "string.min": VALIDATION_MESSAGES.FIELD.MIN_LENGTH,
+    "any.required": VALIDATION_MESSAGES.FIELD.REQUIRED,
+  }),
+  enum_field: Joi.string().valid("value1", "value2").optional().messages({
+    "any.only": VALIDATION_MESSAGES.FIELD.INVALID_VALUE,
+  }),
 });
 ```
 
 **Example (auth.validation.ts)**:
+
 ```typescript
 export const sendOTPSchema = Joi.object({
   phone: Joi.string()
-    .pattern(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/)
+    .pattern(
+      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
+    )
     .required()
     .messages({
       "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
       "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
     }),
-  role: Joi.string()
-    .valid("parent", "driver")
-    .optional()
-    .messages({
-      "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
-    }),
+  role: Joi.string().valid("parent", "driver").optional().messages({
+    "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
+  }),
 });
 
 export const verifyOTPSchema = Joi.object({
   phone: Joi.string()
-    .pattern(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/)
+    .pattern(
+      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
+    )
     .required()
     .messages({
       "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
       "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
     }),
-  otp: Joi.string()
-    .length(6)
-    .required()
-    .messages({
-      "string.length": VALIDATION_MESSAGES.OTP.LENGTH,
-      "any.required": VALIDATION_MESSAGES.OTP.REQUIRED,
-    }),
+  otp: Joi.string().length(6).required().messages({
+    "string.length": VALIDATION_MESSAGES.OTP.LENGTH,
+    "any.required": VALIDATION_MESSAGES.OTP.REQUIRED,
+  }),
 });
 ```
 
@@ -474,6 +510,14 @@ export const verifyOTPSchema = Joi.object({
 ### Constants Structure
 
 All constants are centralized in `constants/` directory:
+
+**IMPORTANT: Reuse Existing Constants**
+
+- Before adding new constants, **ALWAYS check if similar constants already exist**
+- Search through `constants/messages.ts`, `constants/validationMessages.ts`, and other constant files
+- Reuse existing constants instead of creating duplicates (e.g., use `ERROR_MESSAGES.COMMON.UNAUTHORIZED` instead of creating a new "Unauthorized" message)
+- Group related constants together (e.g., all common error messages under `ERROR_MESSAGES.COMMON`)
+- Only create new constants when the existing ones don't fit your use case
 
 ```typescript
 // constants/httpStatus.ts
@@ -562,6 +606,7 @@ requiredEnvVars.forEach((envVar) => {
 // middlewares/validate.middleware.ts
 import { NextFunction, Request, Response } from "express";
 import { ObjectSchema } from "joi";
+
 import { HTTP_STATUS } from "@constants";
 
 export const validate = (schema: ObjectSchema) => {
@@ -592,18 +637,15 @@ export const validate = (schema: ObjectSchema) => {
 // Phone validation
 phone: Joi.string()
   .pattern(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/)
-  .required()
+  .required();
 
 // Email validation
-email: Joi.string()
-  .email()
-  .lowercase()
-  .required()
+email: Joi.string().email().lowercase().required();
 
 // Enum validation
 status: Joi.string()
   .valid("pending", "approved", "rejected")
-  .default("pending")
+  .default("pending");
 
 // Nested object validation
 address: Joi.object({
@@ -611,13 +653,10 @@ address: Joi.object({
   city: Joi.string().required(),
   latitude: Joi.number().min(-90).max(90).required(),
   longitude: Joi.number().min(-180).max(180).required(),
-})
+});
 
 // Array validation
-tags: Joi.array()
-  .items(Joi.string())
-  .min(1)
-  .max(10)
+tags: Joi.array().items(Joi.string()).min(1).max(10);
 ```
 
 ---
@@ -626,80 +665,258 @@ tags: Joi.array()
 
 ### ApiError Class
 
+The `ApiError` class provides both direct instantiation and convenient static factory methods. **IMPORTANT: All hardcoded values must use constants.**
+
 ```typescript
 // utils/apiError.ts
+import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
+
 export class ApiError extends Error {
   statusCode: number;
   isOperational: boolean;
+  errors?: unknown;
 
-  constructor(statusCode: number, message: string, isOperational = true) {
+  constructor(
+    statusCode: number,
+    message: string,
+    isOperational = true,
+    errors?: unknown,
+  ) {
     super(message);
     this.statusCode = statusCode;
     this.isOperational = isOperational;
+    this.errors = errors;
     Error.captureStackTrace(this, this.constructor);
+  }
+
+  // Static factory methods - use constants for default messages
+  static badRequest(message: string, errors?: unknown) {
+    return new ApiError(HTTP_STATUS.BAD_REQUEST, message, true, errors);
+  }
+
+  static unauthorized(message = ERROR_MESSAGES.COMMON.UNAUTHORIZED) {
+    return new ApiError(HTTP_STATUS.UNAUTHORIZED, message);
+  }
+
+  static forbidden(message = ERROR_MESSAGES.COMMON.FORBIDDEN) {
+    return new ApiError(HTTP_STATUS.FORBIDDEN, message);
+  }
+
+  static notFound(message = ERROR_MESSAGES.COMMON.RESOURCE_NOT_FOUND) {
+    return new ApiError(HTTP_STATUS.NOT_FOUND, message);
+  }
+
+  static conflict(message = ERROR_MESSAGES.COMMON.RESOURCE_ALREADY_EXISTS) {
+    return new ApiError(HTTP_STATUS.CONFLICT, message);
+  }
+
+  static validationError(errors: unknown) {
+    return new ApiError(
+      HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      ERROR_MESSAGES.COMMON.VALIDATION_ERROR,
+      true,
+      errors,
+    );
+  }
+
+  static internalError(message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR) {
+    return new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, message, false);
   }
 }
 ```
 
-### AsyncHandler Middleware
+### Error Throwing Patterns
 
-```typescript
-// middlewares/asyncHandler.middleware.ts
-import { NextFunction, Request, Response } from "express";
-
-export const asyncHandler = (fn: Function) => {
-  return (req: Request, res: Response, next: NextFunction) => {
-    Promise.resolve(fn(req, res, next)).catch(next);
-  };
-};
-```
-
-### Global Error Handler
-
-```typescript
-// middlewares/error.middleware.ts
-import { NextFunction, Request, Response } from "express";
-import { ApiError } from "@utils/apiError";
-import { HTTP_STATUS } from "@constants";
-
-export const errorHandler = (
-  err: ApiError,
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  let { statusCode, message } = err;
-
-  if (!statusCode) {
-    statusCode = HTTP_STATUS.INTERNAL_SERVER_ERROR;
-  }
-
-  res.status(statusCode).json({
-    success: false,
-    error: message,
-    ...(process.env.NODE_ENV === "development" && { stack: err.stack }),
-  });
-};
-```
-
-### Error Throwing Pattern
+**Using ApiError Constructor (Recommended for specific messages):**
 
 ```typescript
 // In controllers or services
 if (!user) {
-  throw new ApiError(
-    HTTP_STATUS.NOT_FOUND,
-    ERROR_MESSAGES.AUTH.USER_NOT_FOUND
-  );
+  throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.AUTH.USER_NOT_FOUND);
 }
 
 if (existingUser) {
   throw new ApiError(
     HTTP_STATUS.CONFLICT,
-    ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED
+    ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
   );
 }
 ```
+
+**Using ApiError Static Methods (Recommended for common errors):**
+
+```typescript
+// Generic "Not Found" error - uses default message from constants
+throw ApiError.notFound();
+
+// Custom "Not Found" error - overrides default message
+throw ApiError.notFound(ERROR_MESSAGES.STUDENT.NOT_FOUND);
+
+// Unauthorized error - uses default message
+throw ApiError.unauthorized();
+
+// Validation error with details
+throw ApiError.validationError({ field: "email", message: "Invalid format" });
+
+// Conflict error - uses default message
+throw ApiError.conflict();
+
+// Internal server error
+throw ApiError.internalError();
+```
+
+### ApiResponse Class
+
+The `ApiResponse` class provides convenient static methods for sending HTTP responses. **IMPORTANT: All hardcoded values must use constants.**
+
+```typescript
+// utils/apiResponse.ts
+import { Response } from "express";
+
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES_COMMON,
+} from "@constants";
+
+export class ApiResponse {
+  // Success responses
+  static success(
+    res: Response,
+    data: unknown,
+    message?: string,
+    statusCode: number = HTTP_STATUS.OK,
+  ) {
+    return res.status(statusCode).json({
+      success: true,
+      message,
+      data,
+    });
+  }
+
+  static created(
+    res: Response,
+    data: unknown,
+    message = SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+  ) {
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      message,
+      data,
+    });
+  }
+
+  static noContent(res: Response) {
+    return res.status(HTTP_STATUS.NO_CONTENT).send();
+  }
+
+  // Error responses
+  static error(
+    res: Response,
+    message: string,
+    statusCode: number = HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    errors?: unknown,
+  ) {
+    return res.status(statusCode).json({
+      success: false,
+      error: message,
+      ...(errors && typeof errors === "object" ? { errors } : {}),
+    });
+  }
+
+  static badRequest(res: Response, message: string, errors?: unknown) {
+    return this.error(res, message, HTTP_STATUS.BAD_REQUEST, errors);
+  }
+
+  static unauthorized(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.UNAUTHORIZED,
+  ) {
+    return this.error(res, message, HTTP_STATUS.UNAUTHORIZED);
+  }
+
+  static forbidden(res: Response, message = ERROR_MESSAGES.COMMON.FORBIDDEN) {
+    return this.error(res, message, HTTP_STATUS.FORBIDDEN);
+  }
+
+  static notFound(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.RESOURCE_NOT_FOUND,
+  ) {
+    return this.error(res, message, HTTP_STATUS.NOT_FOUND);
+  }
+
+  static conflict(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.RESOURCE_ALREADY_EXISTS,
+  ) {
+    return this.error(res, message, HTTP_STATUS.CONFLICT);
+  }
+
+  static validationError(res: Response, errors: unknown) {
+    return this.error(
+      res,
+      ERROR_MESSAGES.COMMON.VALIDATION_ERROR,
+      HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      errors,
+    );
+  }
+
+  static internalError(
+    res: Response,
+    message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR,
+  ) {
+    return this.error(res, message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
+  }
+}
+```
+
+### ApiResponse Usage Patterns
+
+**Using ApiResponse for success responses:**
+
+```typescript
+// Generic success response
+return ApiResponse.success(res, userData);
+
+// Success with custom message
+return ApiResponse.success(res, userData, SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL);
+
+// Created response (201)
+return ApiResponse.created(res, newUser);
+
+// Created with custom message
+return ApiResponse.created(res, newUser, SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY);
+
+// No content response (204)
+return ApiResponse.noContent(res);
+```
+
+**Using ApiResponse for error responses:**
+
+```typescript
+// Generic error responses with default messages
+return ApiResponse.notFound(res);
+return ApiResponse.unauthorized(res);
+return ApiResponse.forbidden(res);
+return ApiResponse.conflict(res);
+
+// Error responses with custom messages
+return ApiResponse.notFound(res, ERROR_MESSAGES.STUDENT.NOT_FOUND);
+return ApiResponse.badRequest(res, ERROR_MESSAGES.VALIDATION.INVALID_INPUT);
+
+// Validation error with details
+return ApiResponse.validationError(res, validationErrors);
+
+// Internal server error
+return ApiResponse.internalError(res);
+return ApiResponse.internalError(res, "Database connection failed");
+```
+
+**When to use ApiResponse vs ApiError:**
+
+- **ApiResponse**: Direct response sending in controllers (when you want to send success or handle errors directly)
+- **ApiError**: Throw errors to be caught by error middleware (recommended for most error handling)
 
 ---
 
@@ -785,6 +1002,7 @@ STUDENT: {
 
 ```typescript
 import Joi from "joi";
+
 import { VALIDATION_MESSAGES } from "@constants";
 
 export const createStudentSchema = Joi.object({
@@ -808,7 +1026,9 @@ export const createStudentSchema = Joi.object({
   pickup_address_id: Joi.string().required().messages({
     "any.required": "Pickup address ID is required",
   }),
-  emergency_contact: Joi.string().pattern(/^[+]?[0-9]{10,15}$/).optional(),
+  emergency_contact: Joi.string()
+    .pattern(/^[+]?[0-9]{10,15}$/)
+    .optional(),
   medical_info: Joi.string().max(500).optional(),
 });
 
@@ -820,7 +1040,9 @@ export const updateStudentSchema = Joi.object({
   date_of_birth: Joi.date().optional(),
   gender: Joi.string().valid("male", "female", "other").optional(),
   pickup_address_id: Joi.string().optional(),
-  emergency_contact: Joi.string().pattern(/^[+]?[0-9]{10,15}$/).optional(),
+  emergency_contact: Joi.string()
+    .pattern(/^[+]?[0-9]{10,15}$/)
+    .optional(),
   medical_info: Joi.string().max(500).optional(),
 });
 ```
@@ -829,8 +1051,10 @@ export const updateStudentSchema = Joi.object({
 
 ```typescript
 import { WithId } from "mongodb";
+
 import { STUDENTS_COLLECTION } from "@constants";
 import { Student } from "@types/student.type";
+
 import { BaseRepository } from "./base.repository";
 
 export class StudentRepository extends BaseRepository<Student> {
@@ -859,10 +1083,13 @@ export const studentRepository = new StudentRepository();
 ```typescript
 import { WithId } from "mongodb";
 import { nanoid } from "nanoid";
-import { Student } from "@types/student.type";
-import { studentRepository } from "@repositories/student.repository";
 
-export const createStudent = async (data: Omit<Student, "student_id" | "created_at" | "is_active">): Promise<WithId<Student>> => {
+import { studentRepository } from "@repositories/student.repository";
+import { Student } from "@types/student.type";
+
+export const createStudent = async (
+  data: Omit<Student, "student_id" | "created_at" | "is_active">,
+): Promise<WithId<Student>> => {
   const studentData: Student = {
     student_id: nanoid(),
     ...data,
@@ -874,15 +1101,22 @@ export const createStudent = async (data: Omit<Student, "student_id" | "created_
   return await studentRepository.create(studentData);
 };
 
-export const getStudentById = async (id: string): Promise<WithId<Student> | null> => {
+export const getStudentById = async (
+  id: string,
+): Promise<WithId<Student> | null> => {
   return await studentRepository.findById(id);
 };
 
-export const getStudentsByParentId = async (parentId: string): Promise<WithId<Student>[]> => {
+export const getStudentsByParentId = async (
+  parentId: string,
+): Promise<WithId<Student>[]> => {
   return await studentRepository.findByParentId(parentId);
 };
 
-export const updateStudent = async (id: string, updates: Partial<Student>): Promise<WithId<Student> | null> => {
+export const updateStudent = async (
+  id: string,
+  updates: Partial<Student>,
+): Promise<WithId<Student> | null> => {
   return await studentRepository.updateById(id, {
     $set: { ...updates, updated_at: new Date() },
   });
@@ -900,15 +1134,16 @@ export const deleteStudent = async (id: string): Promise<boolean> => {
 **6. Controller (`controllers/student.controller.ts`)**:
 
 ```typescript
-import { Request, Response } from "express";
-import { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
+import { Request, fo } from "express";
+
+import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
   createStudent,
+  deleteStudent,
   getStudentById,
   getStudentsByParentId,
   updateStudent,
-  deleteStudent,
 } from "@services/student.service";
 
 export const createStudentController = asyncHandler(
@@ -922,7 +1157,7 @@ export const createStudentController = asyncHandler(
       data: student,
       message: SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY,
     });
-  }
+  },
 );
 
 export const getStudentProfile = asyncHandler(
@@ -934,7 +1169,7 @@ export const getStudentProfile = asyncHandler(
     if (!student) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.STUDENT.NOT_FOUND
+        ERROR_MESSAGES.STUDENT.NOT_FOUND,
       );
     }
 
@@ -942,7 +1177,7 @@ export const getStudentProfile = asyncHandler(
       success: true,
       data: student,
     });
-  }
+  },
 );
 
 export const getMyStudents = asyncHandler(
@@ -952,7 +1187,7 @@ export const getMyStudents = asyncHandler(
     if (!parentId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       );
     }
 
@@ -962,7 +1197,7 @@ export const getMyStudents = asyncHandler(
       success: true,
       data: students,
     });
-  }
+  },
 );
 
 export const updateStudentController = asyncHandler(
@@ -975,7 +1210,7 @@ export const updateStudentController = asyncHandler(
     if (!student) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.STUDENT.NOT_FOUND
+        ERROR_MESSAGES.STUDENT.NOT_FOUND,
       );
     }
 
@@ -984,7 +1219,7 @@ export const updateStudentController = asyncHandler(
       data: student,
       message: SUCCESS_MESSAGES.STUDENT.UPDATED_SUCCESSFULLY,
     });
-  }
+  },
 );
 
 export const deleteStudentController = asyncHandler(
@@ -996,7 +1231,7 @@ export const deleteStudentController = asyncHandler(
     if (!deleted) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.STUDENT.NOT_FOUND
+        ERROR_MESSAGES.STUDENT.NOT_FOUND,
       );
     }
 
@@ -1004,7 +1239,7 @@ export const deleteStudentController = asyncHandler(
       success: true,
       message: SUCCESS_MESSAGES.STUDENT.DELETED_SUCCESSFULLY,
     });
-  }
+  },
 );
 ```
 
@@ -1012,15 +1247,19 @@ export const deleteStudentController = asyncHandler(
 
 ```typescript
 import { Router } from "express";
+
 import {
   createStudentController,
-  getStudentProfile,
-  getMyStudents,
-  updateStudentController,
   deleteStudentController,
+  getMyStudents,
+  getStudentProfile,
+  updateStudentController,
 } from "@controllers/student.controller";
-import { validate, authMiddleware } from "@middlewares";
-import { createStudentSchema, updateStudentSchema } from "@validations/student.validation";
+import { authMiddleware, validate } from "@middlewares";
+import {
+  createStudentSchema,
+  updateStudentSchema,
+} from "@validations/student.validation";
 
 const router = Router();
 
@@ -1072,7 +1311,12 @@ Table trips {
 
 ```typescript
 export type TripType = "pickup" | "drop";
-export type TripStatus = "scheduled" | "started" | "in_progress" | "completed" | "cancelled";
+export type TripStatus =
+  | "scheduled"
+  | "started"
+  | "in_progress"
+  | "completed"
+  | "cancelled";
 
 export interface RoutePoint {
   latitude: number;
@@ -1103,10 +1347,13 @@ export interface Trip {
 ```typescript
 import { WithId } from "mongodb";
 import { nanoid } from "nanoid";
-import { Trip, TripStatus } from "@types/trip.type";
-import { tripRepository } from "@repositories/trip.repository";
 
-export const createTrip = async (data: Omit<Trip, "trip_id" | "created_at" | "trip_status">): Promise<WithId<Trip>> => {
+import { tripRepository } from "@repositories/trip.repository";
+import { Trip, TripStatus } from "@types/trip.type";
+
+export const createTrip = async (
+  data: Omit<Trip, "trip_id" | "created_at" | "trip_status">,
+): Promise<WithId<Trip>> => {
   const tripData: Trip = {
     trip_id: nanoid(),
     ...data,
@@ -1118,7 +1365,9 @@ export const createTrip = async (data: Omit<Trip, "trip_id" | "created_at" | "tr
   return await tripRepository.create(tripData);
 };
 
-export const startTrip = async (tripId: string): Promise<WithId<Trip> | null> => {
+export const startTrip = async (
+  tripId: string,
+): Promise<WithId<Trip> | null> => {
   const trip = await tripRepository.findById(tripId);
 
   if (!trip) {
@@ -1126,7 +1375,9 @@ export const startTrip = async (tripId: string): Promise<WithId<Trip> | null> =>
   }
 
   if (trip.trip_status !== "scheduled") {
-    throw new Error("Trip has already been started or is not in scheduled state");
+    throw new Error(
+      "Trip has already been started or is not in scheduled state",
+    );
   }
 
   return await tripRepository.updateById(tripId, {
@@ -1138,7 +1389,10 @@ export const startTrip = async (tripId: string): Promise<WithId<Trip> | null> =>
   });
 };
 
-export const completeTrip = async (tripId: string, totalDistance: number): Promise<WithId<Trip> | null> => {
+export const completeTrip = async (
+  tripId: string,
+  totalDistance: number,
+): Promise<WithId<Trip> | null> => {
   const trip = await tripRepository.findById(tripId);
 
   if (!trip) {
@@ -1159,7 +1413,10 @@ export const completeTrip = async (tripId: string, totalDistance: number): Promi
   });
 };
 
-export const getDriverTrips = async (driverId: string, date?: Date): Promise<WithId<Trip>[]> => {
+export const getDriverTrips = async (
+  driverId: string,
+  date?: Date,
+): Promise<WithId<Trip>[]> => {
   return await tripRepository.findByDriverAndDate(driverId, date);
 };
 ```
@@ -1170,9 +1427,67 @@ export const getDriverTrips = async (driverId: string, date?: Date): Promise<Wit
 
 ### Authentication Middlewares
 
-The project uses role-based authentication middlewares located in `middlewares/auth.middleware.ts`:
+The project uses role-based authentication middlewares located in `middlewares/auth.middleware.ts`. **IMPORTANT: All middlewares must use constants for status codes and error messages.**
+
+**Authentication Middleware Implementation:**
+
+```typescript
+// middlewares/auth.middleware.ts
+import { NextFunction, Request, Response } from "express";
+
+import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
+import { verifyAccessToken } from "@services/token.service";
+
+export const verifyParentToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MALFORMED_AUTH_HEADER,
+    });
+  }
+
+  try {
+    const payload = verifyAccessToken(token);
+
+    if (payload.role !== "parent") {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        error: ERROR_MESSAGES.AUTH.PARENT_ROLE_REQUIRED,
+      });
+    }
+
+    req.user = payload;
+    next();
+  } catch {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.INVALID_TOKEN,
+    });
+  }
+};
+
+// verifyDriverToken and verifyToken_Middleware follow the same pattern
+```
+
+**Using Authentication Middlewares:**
 
 **1. Generic Token Verification (`verifyToken_Middleware`)**:
+
 ```typescript
 import { verifyToken_Middleware } from "@middlewares";
 
@@ -1181,6 +1496,7 @@ router.get("/profile", verifyToken_Middleware, getProfile);
 ```
 
 **2. Parent-Specific Authentication (`verifyParentToken`)**:
+
 ```typescript
 import { verifyParentToken } from "@middlewares";
 
@@ -1189,6 +1505,7 @@ router.get("/my-children", verifyParentToken, getMyChildren);
 ```
 
 **3. Driver-Specific Authentication (`verifyDriverToken`)**:
+
 ```typescript
 import { verifyDriverToken } from "@middlewares";
 
@@ -1197,6 +1514,8 @@ router.get("/my-trips", verifyDriverToken, getMyTrips);
 ```
 
 ### Validation Middleware
+
+**Usage:**
 
 ```typescript
 import { validate } from "@middlewares";
@@ -1207,78 +1526,49 @@ router.post("/entity", validate(createEntitySchema), createEntityController);
 
 ### Rate Limiting Middleware
 
-For sensitive operations like OTP generation:
+**Usage:**
 
 ```typescript
 import { loginRateLimiter } from "@middlewares";
 
+// For sensitive operations like OTP generation
 router.post("/send-otp", validate(sendOTPSchema), loginRateLimiter, sendOtp);
 ```
 
 ### Error Handling Middlewares
 
-**1. AsyncHandler** - Wraps async route handlers:
+**AsyncHandler** - Wraps async route handlers to catch errors:
+
 ```typescript
 import { asyncHandler } from "@middlewares";
 
 export const myController = asyncHandler(async (req, res) => {
-  // Your code - errors automatically caught
+  // Your code - errors automatically caught and passed to error handler
 });
 ```
 
-**2. NotFound Handler** - 404 responses:
-```typescript
-// Automatically registered in app.ts
-app.use(notFound);
-```
+**Registration in app.ts:**
 
-**3. Global Error Handler** - Centralized error handling:
 ```typescript
-// Automatically registered in app.ts (must be last middleware)
+// NotFound Handler - 404 responses (must be before error handler)
+app.use(notFound);
+
+// Global Error Handler - must be last middleware
 app.use(errorHandler);
 ```
 
 ### Middleware Order in Routes
 
 **Correct order**:
+
 ```typescript
 router.post(
   "/endpoint",
-  validate(schema),          // 1. Validation first
-  authMiddleware,            // 2. Authentication second
-  rateLimiter,               // 3. Rate limiting third
-  controllerFunction         // 4. Controller last
+  validate(schema), // 1. Validation first
+  authMiddleware, // 2. Authentication second
+  rateLimiter, // 3. Rate limiting (if needed)
+  controllerFunction, // 4. Controller last
 );
-```
-
-### Custom Middleware Pattern
-
-When creating custom middlewares:
-
-```typescript
-// middlewares/{purpose}.middleware.ts
-import { NextFunction, Request, Response } from "express";
-import { HTTP_STATUS } from "@constants";
-
-export const customMiddleware = (
-  req: Request,
-  res: Response,
-  next: NextFunction
-) => {
-  try {
-    // Your middleware logic
-
-    // Attach data to request if needed
-    req.customData = someData;
-
-    next(); // Continue to next middleware
-  } catch (error) {
-    return res.status(HTTP_STATUS.BAD_REQUEST).json({
-      success: false,
-      error: "Custom middleware error",
-    });
-  }
-};
 ```
 
 ---
@@ -1312,12 +1602,14 @@ src/
 ### File Placement Checklist
 
 **✅ DO:**
+
 - Place each entity in its own dedicated file
 - Use consistent naming: `{entity}.{layer}.ts`
 - Group related code by layer, not by feature
 - Keep one entity per file (single responsibility)
 
 **❌ DON'T:**
+
 - Create feature folders (e.g., `features/school/`)
 - Mix multiple entities in one file
 - Create nested layer structures
@@ -1328,16 +1620,18 @@ src/
 Some files require updates when adding new entities:
 
 **1. `constants/collections.ts`** - Add new collection:
+
 ```typescript
 export const COLLECTIONS = {
   // ... existing collections
-  SCHOOLS: "schools",  // Add this
+  SCHOOLS: "schools", // Add this
 };
 
 export const SCHOOLS_COLLECTION = COLLECTIONS.SCHOOLS;
 ```
 
 **2. `constants/messages.ts`** - Add error/success messages:
+
 ```typescript
 export const ERROR_MESSAGES = {
   // ... existing
@@ -1356,6 +1650,7 @@ export const SUCCESS_MESSAGES = {
 ```
 
 **3. `constants/enums.ts`** - Add shared enums (if needed):
+
 ```typescript
 export enum SchoolType {
   PUBLIC = "public",
@@ -1364,6 +1659,7 @@ export enum SchoolType {
 ```
 
 **4. `routes/index.ts`** - Register new routes:
+
 ```typescript
 import schoolRoutes from "./school.routes";
 
@@ -1371,6 +1667,7 @@ router.use("/schools", schoolRoutes);
 ```
 
 **5. `middlewares/index.ts`** - Export middleware (if creating new middleware):
+
 ```typescript
 export * from "./school.middleware";
 ```
@@ -1401,6 +1698,7 @@ src/
 ### Special Folders
 
 **`types/global/`** - Only for global type declarations:
+
 ```
 types/
 ├── auth.type.ts              # Entity types
@@ -1411,6 +1709,7 @@ types/
 ```
 
 **`environment/`** - Environment files:
+
 ```
 environment/
 ├── .env                      # Current environment
@@ -1419,6 +1718,7 @@ environment/
 ```
 
 **`config/`** - Configuration files (not entity-specific):
+
 ```
 config/
 ├── index.ts                  # Export all configs
@@ -1430,6 +1730,7 @@ config/
 ### Utils vs Helpers
 
 **`utils/`** - General utility functions:
+
 ```
 utils/
 ├── index.ts                  # Export all utils
@@ -1440,6 +1741,7 @@ utils/
 ```
 
 **Don't create entity-specific utils** - Use services instead:
+
 ```
 ✗ utils/schoolHelpers.ts      # Wrong - use services/school.service.ts
 ✓ services/school.service.ts  # Correct - business logic here
@@ -1503,45 +1805,53 @@ When creating a new module (e.g., "schools"), follow these steps:
 ### Common Patterns
 
 **ID Generation**:
+
 ```typescript
 import { nanoid } from "nanoid";
+
 const id = nanoid(); // Generates unique ID
 ```
 
 **Timestamps**:
+
 ```typescript
 created_at: new Date(),
 updated_at: new Date()
 ```
 
 **Soft Delete**:
+
 ```typescript
 $set: { is_active: false, updated_at: new Date() }
 ```
 
 **Update Pattern**:
+
 ```typescript
 await repository.updateById(id, {
-  $set: { ...updates, updated_at: new Date() }
+  $set: { ...updates, updated_at: new Date() },
 });
 ```
 
 **Phone Normalization**:
+
 ```typescript
 import { normalizePhone } from "@utils";
+
 const normalizedPhone = normalizePhone(phone);
 ```
 
-**Response Format**:
+**Response Formats**:
+
 ```typescript
-// Success
+// Success Response
 return res.json({
   success: true,
   data: result,
   message: SUCCESS_MESSAGES.ENTITY.ACTION_SUCCESSFUL,
 });
 
-// Error (throw ApiError)
+// Error Response (throw ApiError to be caught by error handler)
 throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ENTITY.NOT_FOUND);
 ```
 
@@ -1552,50 +1862,27 @@ throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ENTITY.NOT_FOUND);
 The project uses TypeScript path aliases (configured in `tsconfig.json`):
 
 ```typescript
-import { something } from "@config";          // src/config
-import { HTTP_STATUS } from "@constants";     // src/constants
-import { controller } from "@controllers";    // src/controllers
-import { middleware } from "@middlewares";    // src/middlewares
-import { repository } from "@repositories";   // src/repositories
-import { Router } from "@routes";             // src/routes (not commonly used)
-import { service } from "@services";          // src/services
-import { Type } from "@types";                // src/types or @models
-import { helper } from "@utils";              // src/utils
-import { schema } from "@validations";        // src/validations
-```
+import { something } from "@config";
+// src/config
+import { HTTP_STATUS } from "@constants";
+// src/constants
+import { controller } from "@controllers";
+// src/controllers
+import { middleware } from "@middlewares";
+// src/middlewares
+import { repository } from "@repositories";
+// src/repositories
+import { Router } from "@routes";
+// src/routes (not commonly used)
+import { service } from "@services";
+// src/services
+import { Type } from "@types";
+// src/types or @models
+import { helper } from "@utils";
+// src/utils
+import { schema } from "@validations";
 
----
-
-### Response Formats
-
-**Success Response**:
-```json
-{
-  "success": true,
-  "data": { ... },
-  "message": "Operation successful"
-}
-```
-
-**Error Response**:
-```json
-{
-  "success": false,
-  "error": "Error message",
-  "details": ["Detail 1", "Detail 2"]
-}
-```
-
-**Validation Error**:
-```json
-{
-  "success": false,
-  "error": "Validation error",
-  "details": [
-    "Phone number is required",
-    "Email is invalid"
-  ]
-}
+// src/validations
 ```
 
 ---
@@ -1631,6 +1918,7 @@ import { schema } from "@validations";        // src/validations
 When you receive a task to implement a new feature or module, follow these steps **in order**:
 
 #### Step 1: Read Database Schema
+
 ```
 1. Open: Database/ping_parent_dbdiagram.dbml
 2. Find the relevant table(s)
@@ -1639,6 +1927,7 @@ When you receive a task to implement a new feature or module, follow these steps
 ```
 
 #### Step 2: Plan File Structure
+
 ```
 Based on entity name (e.g., "school"), you will create:
 ├── types/school.type.ts
@@ -1656,6 +1945,7 @@ And update:
 ```
 
 #### Step 3: Implement in Correct Order
+
 ```
 1. Types (defines data structure)
 2. Constants (error messages, collection names)
@@ -1668,6 +1958,7 @@ And update:
 ```
 
 #### Step 4: Follow Auth Module Pattern
+
 ```
 For every file you create, reference the corresponding auth file:
 - auth.type.ts → your entity.type.ts
@@ -1679,7 +1970,9 @@ For every file you create, reference the corresponding auth file:
 ```
 
 #### Step 5: Verify Compliance
+
 Before considering the task complete, verify:
+
 - [ ] All field names use snake_case (match DB schema)
 - [ ] All enum values are lowercase strings
 - [ ] All constants are used from centralized files
@@ -1694,6 +1987,7 @@ Before considering the task complete, verify:
 ### Common AI Agent Mistakes to Avoid
 
 **❌ MISTAKE #1: Wrong Field Naming**
+
 ```typescript
 // Wrong - camelCase doesn't match DB
 interface User {
@@ -1709,6 +2003,7 @@ interface User {
 ```
 
 **❌ MISTAKE #2: Creating Feature Folders**
+
 ```
 Wrong:
 src/features/school/
@@ -1721,6 +2016,7 @@ src/services/school.service.ts
 ```
 
 **❌ MISTAKE #3: Hardcoding Messages**
+
 ```typescript
 // Wrong
 throw new Error("User not found");
@@ -1730,6 +2026,7 @@ throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.AUTH.USER_NOT_FOUND);
 ```
 
 **❌ MISTAKE #4: Not Using BaseRepository**
+
 ```typescript
 // Wrong - Direct MongoDB operations
 const collection = db.collection("schools");
@@ -1744,6 +2041,7 @@ export class SchoolRepository extends BaseRepository<School> {
 ```
 
 **❌ MISTAKE #5: Business Logic in Controllers**
+
 ```typescript
 // Wrong - Logic in controller
 export const createSchool = asyncHandler(async (req, res) => {
@@ -1768,6 +2066,7 @@ export const createSchool = asyncHandler(async (req, res) => {
 ```
 
 **❌ MISTAKE #6: Wrong Middleware Order**
+
 ```typescript
 // Wrong
 router.post("/endpoint", controller, validate(schema), authMiddleware);
@@ -1777,12 +2076,13 @@ router.post("/endpoint", validate(schema), authMiddleware, controller);
 ```
 
 **❌ MISTAKE #7: Missing Exports in Index Files**
+
 ```typescript
 // Wrong - Created school.routes.ts but forgot to register
 // routes/index.ts remains unchanged
-
 // Correct - Added to routes/index.ts
 import schoolRoutes from "./school.routes";
+
 router.use("/schools", schoolRoutes);
 ```
 
@@ -1794,6 +2094,7 @@ When implementing a feature, provide this structure in your response:
 ## Implementation: [Entity Name] Module
 
 ### Files Created:
+
 1. ✓ types/[entity].type.ts
 2. ✓ validations/[entity].validation.ts
 3. ✓ repositories/[entity].repository.ts
@@ -1802,23 +2103,27 @@ When implementing a feature, provide this structure in your response:
 6. ✓ routes/[entity].routes.ts
 
 ### Files Updated:
-1. ✓ constants/collections.ts - Added [ENTITY]_COLLECTION
+
+1. ✓ constants/collections.ts - Added [ENTITY]\_COLLECTION
 2. ✓ constants/messages.ts - Added ERROR_MESSAGES.[ENTITY] and SUCCESS_MESSAGES.[ENTITY]
 3. ✓ routes/index.ts - Registered [entity]Routes
 
 ### Database Schema Reference:
+
 - Table: [table_name]
 - Primary Key: [primary_key_field]
 - Required Fields: [list required fields]
 - Enums: [list enum fields and values]
 
 ### API Endpoints Created:
+
 - POST /api/[entity] - Create new [entity]
 - GET /api/[entity]/:id - Get [entity] by ID
 - PUT /api/[entity]/:id - Update [entity]
 - DELETE /api/[entity]/:id - Delete [entity]
 
 ### Next Steps:
+
 [Any additional tasks or considerations]
 ```
 
@@ -1888,6 +2193,7 @@ Task: "Create a School module"
 ### Support
 
 For questions or clarifications:
+
 1. Refer to existing auth module implementation
 2. Check database schema for field names and types
 3. Review constants for message templates
@@ -1896,6 +2202,7 @@ For questions or clarifications:
 ---
 
 **Last Updated**: This document should be reviewed and updated whenever:
+
 - New architectural patterns are introduced
 - Naming conventions change
 - New layers or folders are added

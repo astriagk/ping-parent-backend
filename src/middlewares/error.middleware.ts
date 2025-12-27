@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 
-import { HTTP_STATUS } from "@constants";
-
-import { logger } from "../utils";
+import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
+import { logger } from "@utils";
 
 export class ApiError extends Error {
   statusCode: number;
@@ -23,7 +22,7 @@ export const errorHandler = (
   next: NextFunction,
 ) => {
   let statusCode: number = HTTP_STATUS.INTERNAL_SERVER_ERROR;
-  let message = "Internal server error";
+  let message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR;
 
   if (err instanceof ApiError) {
     statusCode = err.statusCode;

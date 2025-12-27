@@ -1,3 +1,5 @@
+import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
+
 export class ApiError extends Error {
   statusCode: number;
   isOperational: boolean;
@@ -17,30 +19,35 @@ export class ApiError extends Error {
   }
 
   static badRequest(message: string, errors?: unknown) {
-    return new ApiError(400, message, true, errors);
+    return new ApiError(HTTP_STATUS.BAD_REQUEST, message, true, errors);
   }
 
-  static unauthorized(message = "Unauthorized") {
-    return new ApiError(401, message);
+  static unauthorized(message = ERROR_MESSAGES.COMMON.UNAUTHORIZED) {
+    return new ApiError(HTTP_STATUS.UNAUTHORIZED, message);
   }
 
-  static forbidden(message = "Forbidden") {
-    return new ApiError(403, message);
+  static forbidden(message = ERROR_MESSAGES.COMMON.FORBIDDEN) {
+    return new ApiError(HTTP_STATUS.FORBIDDEN, message);
   }
 
-  static notFound(message = "Resource not found") {
-    return new ApiError(404, message);
+  static notFound(message = ERROR_MESSAGES.COMMON.RESOURCE_NOT_FOUND) {
+    return new ApiError(HTTP_STATUS.NOT_FOUND, message);
   }
 
-  static conflict(message = "Resource already exists") {
-    return new ApiError(409, message);
+  static conflict(message = ERROR_MESSAGES.COMMON.RESOURCE_ALREADY_EXISTS) {
+    return new ApiError(HTTP_STATUS.CONFLICT, message);
   }
 
   static validationError(errors: unknown) {
-    return new ApiError(422, "Validation error", true, errors);
+    return new ApiError(
+      HTTP_STATUS.UNPROCESSABLE_ENTITY,
+      ERROR_MESSAGES.COMMON.VALIDATION_ERROR,
+      true,
+      errors,
+    );
   }
 
-  static internalError(message = "Internal server error") {
-    return new ApiError(500, message, false);
+  static internalError(message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR) {
+    return new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, message, false);
   }
 }

@@ -1,11 +1,15 @@
 import dotenv from "dotenv";
 import path from "path";
 
-// Load environment variables from environment/.env file
-dotenv.config({ path: path.join(__dirname, "../environment/.env") });
+// Load environment variables dynamically based on NODE_ENV
+const env = process.env.NODE_ENV || "dev";
+const envFile = `.env.${env}`;
+const envPath = path.join(__dirname, "../environment", envFile);
+
+dotenv.config({ path: envPath });
 
 export const ENV = {
-  NODE_ENV: process.env.NODE_ENV || "development",
+  NODE_ENV: process.env.NODE_ENV || "dev",
   PORT: process.env.PORT || 3000,
   MONGO_URI: process.env.MONGO_URI as string,
   DB_NAME: process.env.DB_NAME as string,
