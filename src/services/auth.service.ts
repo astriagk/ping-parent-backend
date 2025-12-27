@@ -2,11 +2,11 @@ import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@config";
 import { OTP_VERIFICATION_COLLECTION } from "@constants";
-import { User } from "@models";
-import { userRepository } from "@repositories";
+import { User } from "@models/auth.type";
+import { userRepository } from "@repositories/auth.repository";
 
 // User management
-export const createUser = async (data: Partial<User>) => {
+export const createUser = async (data: User) => {
   return await userRepository.create(data);
 };
 

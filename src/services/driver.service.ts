@@ -7,6 +7,7 @@ import {
   DRIVER_DOCUMENTS_COLLECTION,
   USERS_COLLECTION,
 } from "@constants";
+import { User } from "@models/auth.type";
 import {
   Driver,
   DriverAddress,
@@ -16,8 +17,7 @@ import {
   DriverDocumentUpdate,
   DriverInput,
   DriverProfileUpdate,
-  User,
-} from "@models";
+} from "@models/driver.type";
 
 /**
  * Generate a unique driver ID (8-character alphanumeric)

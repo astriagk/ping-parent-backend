@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-import { verifyAccessToken } from "@services";
+import { verifyAccessToken } from "@services/token.service";
 
 export const verifyParentToken = (
   req: Request,

@@ -1,18 +1,21 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
+import { nanoid } from "nanoid";
 
 import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
   createPhoneOtp,
   createUser,
-  generateAccessToken,
-  getAllRoles,
   getUserById,
   getUserByPhone,
-  verifyAccessToken,
   verifyPhoneOtp as verifyOtpService,
-} from "@services";
+} from "@services/auth.service";
+import { getAllRoles } from "@services/role.service";
+import {
+  generateAccessToken,
+  verifyAccessToken,
+} from "@services/token.service";
 import { logger, normalizePhone } from "@utils";
 
 export const verifyAuthToken = asyncHandler(
@@ -192,8 +195,8 @@ export const verifyLoginOtp = asyncHandler(
     }
 
     const token = generateAccessToken({
-      userId: user._id ? String(user._id) : user.email || "",
-      role: user.user_type || user.role || "parent",
+      userId: user._id ? String(user._id) : "",
+      role: user.user_type || "parent",
     });
 
     return res.json({
@@ -202,11 +205,8 @@ export const verifyLoginOtp = asyncHandler(
         token,
         user: {
           id: user._id ? String(user._id) : undefined,
-          email: user.email,
-          firstName: user.firstName,
-          lastName: user.lastName,
-          role: user.user_type || user.role || "parent",
-          phone: user.phone_number || user.phone,
+          role: user.user_type || "parent",
+          phone: user.phone_number,
         },
       },
       message: SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL,
@@ -297,6 +297,7 @@ export const verifyPhoneOtp = asyncHandler(
       // Create new user with phone number
       isNewUser = true;
       const newUserData = {
+        user_id: nanoid(),
         phone_number: normalizedPhone,
         user_type: (role || "parent") as "parent" | "driver",
         is_active: true,
@@ -320,7 +321,7 @@ export const verifyPhoneOtp = asyncHandler(
     // Generate token
     const token = generateAccessToken({
       userId: user._id ? String(user._id) : normalizedPhone,
-      role: user.user_type || user.role || "parent",
+      role: user.user_type || "parent",
     });
 
     return res.json({
@@ -333,8 +334,8 @@ export const verifyPhoneOtp = asyncHandler(
         token,
         user: {
           id: user._id ? String(user._id) : undefined,
-          phone: user.phone_number || user.phone,
-          userType: user.user_type || user.role || "parent",
+          phone: user.phone_number,
+          userType: user.user_type || "parent",
           isActive: user.is_active !== undefined ? user.is_active : true,
         },
       },

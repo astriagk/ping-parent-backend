@@ -1,7 +1,7 @@
 import { WithId } from "mongodb";
 
 import { USERS_COLLECTION } from "@constants";
-import { User } from "@models";
+import { User } from "@models/auth.type";
 
 import { BaseRepository } from "./base.repository";
 

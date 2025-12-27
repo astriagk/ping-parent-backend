@@ -1,13 +1,14 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
+import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
+import { ApiError, asyncHandler } from "@middlewares";
 import {
   createParentProfile,
   getAddressByUserId,
   getParentProfile,
   updateParentProfile,
   upsertAddressByUserId,
-} from "@services";
+} from "@services/parent.service";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;
@@ -23,47 +24,40 @@ const formatParentProfileResponse = (profile: any) => ({
   updated_at: profile.updated_at,
 });
 
-export const getProfile = async (req: Request, res: Response) => {
-  try {
-    const userId = getUserIdFromRequest(req);
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
-      });
-    }
-
-    const profile = await getParentProfile(userId);
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        ...formatParentProfileResponse(profile),
-        user: profile.user,
-      },
-    });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.PARENT.FAILED_TO_FETCH_PARENT_PROFILE,
-    });
+export const getProfile = asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+    );
   }
-};
 
-export const updateProfile = async (req: Request, res: Response) => {
-  try {
+  const profile = await getParentProfile(userId);
+  if (!profile) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: {
+      ...formatParentProfileResponse(profile),
+      user: profile.user,
+    },
+  });
+});
+
+export const updateProfile = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const { name, email, photo_url } = req.body;
@@ -86,10 +80,10 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.NO_UPDATES_PROVIDED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PARENT.NO_UPDATES_PROVIDED,
+      );
     }
 
     let updated = await updateParentProfile(userId, updates);
@@ -97,42 +91,37 @@ export const updateProfile = async (req: Request, res: Response) => {
     if (!updated) {
       const created = await createParentProfile(userId, updates);
       if (!created) {
-        return res.status(500).json({
-          success: false,
-          error: ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
-        });
+        throw new ApiError(
+          HTTP_STATUS.INTERNAL_SERVER_ERROR,
+          ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
+        );
       }
     }
 
     const updatedProfile = await getParentProfile(userId);
     if (!updatedProfile) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
-      });
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+      );
     }
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: formatParentProfileResponse(updatedProfile),
       message: SUCCESS_MESSAGES.PARENT.PROFILE_UPDATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
-    });
-  }
-};
+  },
+);
 
-export const updateAddress = async (req: Request, res: Response) => {
-  try {
+export const updateAddress = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const {
@@ -151,20 +140,20 @@ export const updateAddress = async (req: Request, res: Response) => {
     const trimmedState = String(state || "").trim();
 
     if (!trimmedAddressLine1 || !trimmedCity || !trimmedState) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.ADDRESS.ADDRESS_FIELDS_REQUIRED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.ADDRESS.ADDRESS_FIELDS_REQUIRED,
+      );
     }
 
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
 
     if (isNaN(lat) || isNaN(lng)) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.ADDRESS.ADDRESS_FIELDS_REQUIRED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.ADDRESS.INVALID_COORDINATES,
+      );
     }
 
     const addressData = {
@@ -181,54 +170,42 @@ export const updateAddress = async (req: Request, res: Response) => {
     const updated = await upsertAddressByUserId(userId, addressData);
 
     if (!updated) {
-      return res.status(500).json({
-        success: false,
-        error: ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
-      });
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
+      );
     }
 
     const updatedAddress = await getAddressByUserId(userId);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAddress,
       message: SUCCESS_MESSAGES.ADDRESS.ADDRESS_UPDATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
-    });
+  },
+);
+
+export const getAddress = asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+    );
   }
-};
 
-export const getAddress = async (req: Request, res: Response) => {
-  try {
-    const userId = getUserIdFromRequest(req);
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
-      });
-    }
+  const address = await getAddressByUserId(userId);
 
-    const address = await getAddressByUserId(userId);
-
-    if (!address) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.ADDRESS.ADDRESS_NOT_FOUND,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: address,
-    });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.ADDRESS.FAILED_TO_FETCH_ADDRESS,
-    });
+  if (!address) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.ADDRESS.ADDRESS_NOT_FOUND,
+    );
   }
-};
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: address,
+  });
+});
