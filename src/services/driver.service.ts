@@ -1,12 +1,12 @@
 import { ObjectId } from "mongodb";
 
+import { getDB } from "@config";
 import {
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
   USERS_COLLECTION,
-} from "@config/collections";
-import { connectDB } from "@db/mongo";
+} from "@constants";
 import {
   Driver,
   DriverAddress,
@@ -38,7 +38,7 @@ const generateDriverUniqueId = (): string => {
 export const getDriverProfile = async (
   userId: string,
 ): Promise<(Driver & { user?: User }) | null> => {
-  const db = await connectDB();
+  const db = await getDB();
 
   // Query users collection
   const userQuery: any = {
@@ -82,7 +82,7 @@ export const createDriverProfile = async (
   driverData: DriverInput,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // Generate unique driver ID
     let driverUniqueId = generateDriverUniqueId();
@@ -137,7 +137,7 @@ export const updateDriverProfile = async (
   updates: DriverProfileUpdate,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // Remove fields that shouldn't be updated
     const { ...sanitizedUpdates } = updates;
@@ -160,7 +160,7 @@ export const updateDriverProfile = async (
  * Check if driver profile exists for a user
  */
 export const driverProfileExists = async (userId: string): Promise<boolean> => {
-  const db = await connectDB();
+  const db = await getDB();
   const driver = await db
     .collection(DRIVERS_COLLECTION)
     .findOne({ user_id: userId });
@@ -173,7 +173,7 @@ export const driverProfileExists = async (userId: string): Promise<boolean> => {
 export const getDriverByUniqueId = async (
   driverUniqueId: string,
 ): Promise<Driver | null> => {
-  const db = await connectDB();
+  const db = await getDB();
   const driver = await db
     .collection(DRIVERS_COLLECTION)
     .findOne({ driver_unique_id: driverUniqueId });
@@ -188,7 +188,7 @@ export const upsertDriverAddressByUserId = async (
   address: DriverAddressInput,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the driver_id from the drivers collection
     const driver = await db
@@ -256,7 +256,7 @@ export const getDriverAddressByUserId = async (
   userId: string,
 ): Promise<DriverAddress | null> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the driver_id from the drivers collection
     const driver = await db
@@ -288,7 +288,7 @@ export const upsertDriverDocumentsByUserId = async (
   documents: DriverDocumentInput,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the driver_id from the drivers collection
     const driver = await db
@@ -353,7 +353,7 @@ export const updateDriverDocumentsByUserId = async (
   updates: DriverDocumentUpdate,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the driver_id from the drivers collection
     const driver = await db
@@ -387,7 +387,7 @@ export const getDriverDocumentsByUserId = async (
   userId: string,
 ): Promise<DriverDocument | null> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the driver_id from the drivers collection
     const driver = await db

@@ -1,53 +1,49 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
-import {
-  OTP_VERIFICATION_COLLECTION,
-  USERS_COLLECTION,
-} from "@config/collections";
-import { connectDB } from "@db/mongo";
+import { getDB } from "@config";
+import { OTP_VERIFICATION_COLLECTION } from "@constants";
 import { User } from "@models";
+import { userRepository } from "@repositories";
 
-const COLLECTION = USERS_COLLECTION;
-
-export const createUser = async (data: User) => {
-  const db = await connectDB();
-  return db.collection(COLLECTION).insertOne(data);
+// User management
+export const createUser = async (data: Partial<User>) => {
+  return await userRepository.create(data);
 };
 
-export const getUserById = async (id: string) => {
-  const db = await connectDB();
-  if (ObjectId.isValid(id)) {
-    return db.collection(COLLECTION).findOne({ _id: new ObjectId(id) });
+export const getUserById = async (id: string): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(id)) {
+    return null;
   }
-  return db.collection(COLLECTION).findOne({ _id: id } as any);
+  return await userRepository.findById(id);
 };
 
-export const getUserByEmail = async (email: string) => {
-  const db = await connectDB();
-  return db.collection(COLLECTION).findOne({ email: email.toLowerCase() });
-};
-
-export const updateUserPassword = async (
+export const getUserByEmail = async (
   email: string,
-  passwordHash: string,
-) => {
-  const db = await connectDB();
-  return db
-    .collection(COLLECTION)
-    .updateOne({ email: email.toLowerCase() }, { $set: { passwordHash } });
+): Promise<WithId<User> | null> => {
+  return await userRepository.findByEmail(email);
 };
 
-export const getUserByPhone = async (phone: string) => {
-  const db = await connectDB();
-  return db.collection(COLLECTION).findOne({ phone_number: phone });
+export const getUserByPhone = async (
+  phone: string,
+): Promise<WithId<User> | null> => {
+  return await userRepository.findByPhoneNumber(phone);
 };
 
+export const emailExists = async (email: string): Promise<boolean> => {
+  return await userRepository.emailExists(email);
+};
+
+export const phoneExists = async (phoneNumber: string): Promise<boolean> => {
+  return await userRepository.phoneExists(phoneNumber);
+};
+
+// OTP management
 export const createPhoneOtp = async (
   phone: string,
   otp: string,
   ttlMinutes = 10,
 ) => {
-  const db = await connectDB();
+  const db = await getDB();
   const now = new Date();
   const doc = {
     phone_number: phone,
@@ -61,7 +57,7 @@ export const createPhoneOtp = async (
 };
 
 export const verifyPhoneOtp = async (phone: string, otp: string) => {
-  const db = await connectDB();
+  const db = await getDB();
   const now = new Date();
   const row = await db.collection(OTP_VERIFICATION_COLLECTION).findOne({
     phone_number: phone,

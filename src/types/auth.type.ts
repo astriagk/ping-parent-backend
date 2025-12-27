@@ -2,11 +2,21 @@
 export interface User {
   _id?: any; // MongoDB internal ID
   user_id?: string;
-  phone_number: string;
-  user_type: "parent" | "driver";
+  email?: string;
+  password?: string;
+  firstName?: string;
+  lastName?: string;
+  phone_number?: string;
+  phone?: string;
+  user_type?: "admin" | "parent" | "driver";
+  role?: "admin" | "parent" | "driver";
   is_active?: boolean;
+  isEmailVerified?: boolean;
+  isPhoneVerified?: boolean;
   created_at?: Date;
   updated_at?: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
   last_login?: Date;
   fcm_token?: string;
 }

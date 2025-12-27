@@ -6,7 +6,7 @@ import {
   updateAddress,
   updateProfile,
 } from "@controllers/parent.controller";
-import { verifyParentToken } from "@middleware/auth";
+import { verifyParentToken } from "@middlewares";
 
 const router = Router();
 

@@ -10,7 +10,7 @@ import {
   updateProfile,
   upsertAddress,
 } from "@controllers/driver.controller";
-import { verifyDriverToken } from "@middleware/auth";
+import { verifyDriverToken } from "@middlewares";
 
 const router = Router();
 

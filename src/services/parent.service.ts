@@ -1,7 +1,7 @@
 import { ObjectId } from "mongodb";
 
-import { PARENTS_COLLECTION, USERS_COLLECTION } from "@config/collections";
-import { connectDB } from "@db/mongo";
+import { getDB } from "@config";
+import { PARENTS_COLLECTION, USERS_COLLECTION } from "@constants";
 import { Parent, User } from "@models";
 
 /**
@@ -11,7 +11,7 @@ import { Parent, User } from "@models";
 export const getParentProfile = async (
   userId: string,
 ): Promise<(Parent & { user?: User }) | null> => {
-  const db = await connectDB();
+  const db = await getDB();
 
   // Query users collection
   const userQuery: any = {
@@ -54,7 +54,7 @@ export const updateParentProfile = async (
   updates: Partial<Parent>,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // Remove fields that shouldn't be updated
     const { _id, parent_id, user_id, ...sanitizedUpdates } = updates;
@@ -82,7 +82,7 @@ export const createParentProfile = async (
   parentData: Partial<Parent>,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     const newParent = {
       user_id: userId,
@@ -104,7 +104,7 @@ export const createParentProfile = async (
  * Check if parent profile exists for a user
  */
 export const parentProfileExists = async (userId: string): Promise<boolean> => {
-  const db = await connectDB();
+  const db = await getDB();
   const parent = await db
     .collection(PARENTS_COLLECTION)
     .findOne({ user_id: userId });

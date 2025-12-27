@@ -1,12 +1,6 @@
 import { NextFunction, Request, Response } from "express";
 
-import { AccessTokenPayload, verifyToken } from "@utils";
-
-declare module "express-serve-static-core" {
-  interface Request {
-    user?: AccessTokenPayload;
-  }
-}
+import { verifyAccessToken } from "@services";
 
 export const verifyParentToken = (
   req: Request,
@@ -32,7 +26,7 @@ export const verifyParentToken = (
   }
 
   try {
-    const payload = verifyToken(token);
+    const payload = verifyAccessToken(token);
 
     if (payload.role !== "parent") {
       return res.status(403).json({
@@ -75,7 +69,7 @@ export const verifyDriverToken = (
   }
 
   try {
-    const payload = verifyToken(token);
+    const payload = verifyAccessToken(token);
 
     if (payload.role !== "driver") {
       return res.status(403).json({
@@ -118,7 +112,7 @@ export const verifyToken_Middleware = (
   }
 
   try {
-    const payload = verifyToken(token);
+    const payload = verifyAccessToken(token);
     req.user = payload;
     next();
   } catch {

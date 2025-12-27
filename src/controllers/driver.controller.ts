@@ -1,3 +1,4 @@
+/// <reference types="../types/global" />
 import { Request, Response } from "express";
 
 import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";

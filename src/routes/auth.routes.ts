@@ -1,37 +1,48 @@
 import { Router } from "express";
 
 import {
-  forgotPassword,
   roles as getRoles,
-  login,
   logout,
-  register,
-  resetPassword,
   sendLoginOtp,
   sendPhoneOtp,
   verifyAuthToken,
   verifyLoginOtp,
-  verifyOtp,
   verifyPhoneOtp,
 } from "@controllers/auth.controller";
-import { loginRateLimiter } from "@middleware/rateLimit";
+import { loginRateLimiter, validate } from "@middlewares";
+
+import { sendOTPSchema, verifyOTPSchema } from "../validations/auth.validation";
 
 const router = Router();
 
 router.get("/auth/roles", getRoles);
-// Original registration (with password)
-router.post("/auth/register", register);
 // New phone-based registration (3 steps, no password)
-router.post("/auth/register/send-otp", sendPhoneOtp);
-router.post("/auth/register/verify-otp", verifyPhoneOtp);
+router.post(
+  "/auth/register/send-otp",
+  validate(sendOTPSchema),
+  loginRateLimiter,
+  sendPhoneOtp,
+);
+router.post(
+  "/auth/register/verify-otp",
+  validate(verifyOTPSchema),
+  loginRateLimiter,
+  verifyPhoneOtp,
+);
 // Phone-based login (2 steps, OTP-based)
-router.post("/auth/login/send-otp", sendLoginOtp);
-router.post("/auth/login/verify-otp", verifyLoginOtp);
-// Traditional email/password login
-router.post("/auth/login", loginRateLimiter, login);
-router.post("/auth/forgot-password", forgotPassword);
-router.post("/auth/verify-otp", verifyOtp);
-router.post("/auth/reset-password", resetPassword);
+router.post(
+  "/auth/login/send-otp",
+  validate(sendOTPSchema),
+  loginRateLimiter,
+  sendLoginOtp,
+);
+router.post(
+  "/auth/login/verify-otp",
+  validate(verifyOTPSchema),
+  loginRateLimiter,
+  verifyLoginOtp,
+);
+// Token verification and logout
 router.get("/auth/verify-token", verifyAuthToken);
 router.post("/auth/logout", logout);
 

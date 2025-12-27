@@ -8,18 +8,20 @@
     "esModuleInterop": true,
     "skipLibCheck": true,
     "types": ["node", "jest"],
+    "typeRoots": ["./node_modules/@types", "./src/types"],
     "baseUrl": "./src",
     "paths": {
       "@services": ["services/index"],
       "@controllers/*": ["controllers/*"],
       "@utils": ["utils/index"],
       "@constants": ["constants/index"],
-      "@config/*": ["config/*"],
-      "@middleware/*": ["middleware/*"],
+      "@config": ["config/index"],
+      "@middlewares": ["middlewares/index"],
       "@models": ["types/index"],
       "@routes/*": ["routes/*"],
-      "@db/*": ["db/*"]
+      "@db/*": ["db/*"],
+      "@repositories": ["repositories/index"]
     }
   },
-  "include": ["src"]
+  "include": ["src/**/*"]
 }

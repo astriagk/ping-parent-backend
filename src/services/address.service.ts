@@ -1,8 +1,5 @@
-import {
-  PARENTS_COLLECTION,
-  PARENT_ADDRESSES_COLLECTION,
-} from "@config/collections";
-import { connectDB } from "@db/mongo";
+import { getDB } from "@config";
+import { PARENTS_COLLECTION, PARENT_ADDRESSES_COLLECTION } from "@constants";
 import { ParentAddress, ParentAddressInput } from "@models";
 
 /**
@@ -13,7 +10,7 @@ export const upsertAddressByUserId = async (
   address: ParentAddressInput,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the parent_id from the parents collection
     const parent = await db
@@ -81,7 +78,7 @@ export const getAddressByUserId = async (
   userId: string,
 ): Promise<ParentAddress | null> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // First, find the parent_id from the parents collection
     const parent = await db
