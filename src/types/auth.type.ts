@@ -1,0 +1,23 @@
+export type UserType = "parent" | "driver";
+
+export interface User {
+  _id?: any; // MongoDB internal ID
+  user_id: string;
+  phone_number: string;
+  user_type: UserType;
+  is_active: boolean;
+  created_at: Date;
+  updated_at?: Date;
+  last_login?: Date;
+  fcm_token?: string;
+}
+
+export interface OtpVerification {
+  _id?: any; // MongoDB internal ID
+  otp_id: number;
+  phone_number: string;
+  otp_code: string;
+  is_verified: boolean;
+  expires_at: Date;
+  created_at: Date;
+}
