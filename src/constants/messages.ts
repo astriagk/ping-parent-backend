@@ -83,6 +83,20 @@ export const ERROR_MESSAGES = {
     FAILED_TO_FETCH_DOCUMENTS: "Failed to fetch driver documents",
     FAILED_TO_UPDATE_DOCUMENTS: "Failed to update driver documents",
   },
+  STUDENT: {
+    NOT_FOUND: "Student not found",
+    FAILED_TO_CREATE: "Failed to create student",
+    FAILED_TO_UPDATE: "Failed to update student",
+    FAILED_TO_DELETE: "Failed to delete student",
+    NAME_REQUIRED: "Student name is required",
+    PARENT_ID_REQUIRED: "Parent ID is required",
+    SCHOOL_ID_REQUIRED: "School ID is required",
+    CLASS_REQUIRED: "Class is required",
+    PICKUP_ADDRESS_ID_REQUIRED: "Pickup address ID is required",
+    INVALID_GENDER: "Gender must be male, female, or other",
+    ALREADY_EXISTS:
+      "A student with the same name, school, and class already exists for this parent",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -116,6 +130,13 @@ export const SUCCESS_MESSAGES = {
     PROFILE_CREATED_SUCCESSFULLY: "Driver profile created successfully",
     ADDRESS_UPDATED_SUCCESSFULLY: "Driver address updated successfully",
     DOCUMENTS_UPDATED_SUCCESSFULLY: "Driver documents updated successfully",
+  },
+  STUDENT: {
+    CREATED_SUCCESSFULLY: "Student created successfully",
+    UPDATED_SUCCESSFULLY: "Student updated successfully",
+    DELETED_SUCCESSFULLY: "Student deleted successfully",
+    FETCHED_SUCCESSFULLY: "Student fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Students list fetched successfully",
   },
 };
 

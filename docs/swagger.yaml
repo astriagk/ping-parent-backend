@@ -1,0 +1,1807 @@
+openapi: 3.0.3
+info:
+  title: Ping Parent Backend API
+  description: |
+    Complete API documentation for the Ping Parent application backend.
+
+    ## Authentication
+    Most endpoints require authentication using Bearer tokens. Include the token in the Authorization header:
+    ```
+    Authorization: Bearer <your_token_here>
+    ```
+    
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://staging-api.pingparent.com/api
+    description: Staging server
+  - url: https://api.pingparent.com/api
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User authentication and authorization endpoints
+  - name: Parent
+    description: Parent profile and address management
+  - name: Driver
+    description: Driver profile and document management
+  - name: Student
+    description: Student management endpoints
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication
+
+  schemas:
+    # Common Schemas
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        error:
+          type: string
+          example: "Error message"
+        details:
+          type: array
+          items:
+            type: string
+
+    Success:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+        data:
+          type: object
+
+    # Authentication Schemas
+    RegisterRequest:
+      type: object
+      required:
+        - email
+        - password
+        - firstName
+        - lastName
+        - role
+      properties:
+        email:
+          type: string
+          format: email
+          example: "parent@example.com"
+        password:
+          type: string
+          minLength: 8
+          example: "SecurePass123"
+        firstName:
+          type: string
+          example: "John"
+        lastName:
+          type: string
+          example: "Doe"
+        role:
+          type: string
+          enum: [parent, driver]
+          example: "parent"
+
+    LoginRequest:
+      type: object
+      required:
+        - email
+        - password
+      properties:
+        email:
+          type: string
+          format: email
+          example: "parent@example.com"
+        password:
+          type: string
+          example: "SecurePass123"
+
+    PhoneOTPRequest:
+      type: object
+      required:
+        - phone
+      properties:
+        phone:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+          example: "+1234567890"
+        role:
+          type: string
+          enum: [parent, driver]
+          example: "parent"
+
+    VerifyOTPRequest:
+      type: object
+      required:
+        - phone
+        - otp
+      properties:
+        phone:
+          type: string
+          example: "+1234567890"
+        otp:
+          type: string
+          minLength: 6
+          maxLength: 6
+          example: "123456"
+
+    AuthResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Login successful"
+        data:
+          type: object
+          properties:
+            accessToken:
+              type: string
+            refreshToken:
+              type: string
+            user:
+              $ref: '#/components/schemas/User'
+
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        user_id:
+          type: string
+          example: "V1StGXR8_Z5jdHi6B"
+        phone_number:
+          type: string
+          example: "+1234567890"
+        email:
+          type: string
+          example: "parent@example.com"
+        user_type:
+          type: string
+          enum: [parent, driver, admin]
+          example: "parent"
+        is_active:
+          type: boolean
+          example: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    # Parent Schemas
+    Parent:
+      type: object
+      properties:
+        _id:
+          type: string
+        parent_id:
+          type: string
+        user_id:
+          type: string
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          example: "parent@example.com"
+        photo_url:
+          type: string
+          example: "https://example.com/photo.jpg"
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UpdateParentRequest:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "John Doe"
+        email:
+          type: string
+          format: email
+          example: "parent@example.com"
+        photo_url:
+          type: string
+          example: "https://example.com/photo.jpg"
+
+    ParentAddress:
+      type: object
+      properties:
+        _id:
+          type: string
+        address_id:
+          type: string
+        parent_id:
+          type: string
+        address_line1:
+          type: string
+        address_line2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        is_primary:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    ParentAddressRequest:
+      type: object
+      required:
+        - address_line1
+        - city
+        - state
+        - latitude
+        - longitude
+      properties:
+        address_line1:
+          type: string
+          example: "123 Main Street"
+          description: "Primary address line"
+        address_line2:
+          type: string
+          example: "Apartment 4B"
+          description: "Secondary address line (optional)"
+        city:
+          type: string
+          example: "Mumbai"
+          description: "City name"
+        state:
+          type: string
+          example: "Maharashtra"
+          description: "State name"
+        pincode:
+          type: string
+          example: "400001"
+          description: "Postal code (optional)"
+        latitude:
+          type: number
+          format: float
+          example: 19.0760
+          description: "Latitude coordinate"
+        longitude:
+          type: number
+          format: float
+          example: 72.8777
+          description: "Longitude coordinate"
+        is_primary:
+          type: boolean
+          example: true
+          description: "Whether this is the primary address (optional, defaults to true)"
+
+    # Driver Schemas
+    Driver:
+      type: object
+      properties:
+        _id:
+          type: string
+        driver_id:
+          type: string
+        user_id:
+          type: string
+        driver_unique_id:
+          type: string
+        name:
+          type: string
+        email:
+          type: string
+        photo_url:
+          type: string
+        vehicle_type:
+          type: string
+          enum: [van, auto, bus]
+        vehicle_number:
+          type: string
+        vehicle_capacity:
+          type: integer
+        current_student_count:
+          type: integer
+        approval_status:
+          type: string
+          enum: [pending, approved, rejected]
+        approved_by:
+          type: string
+        approved_at:
+          type: string
+          format: date-time
+        rejection_reason:
+          type: string
+        is_available:
+          type: boolean
+        rating:
+          type: number
+          format: float
+        total_trips:
+          type: integer
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+        user:
+          type: object
+          properties:
+            phone_number:
+              type: string
+            user_type:
+              type: string
+            is_active:
+              type: boolean
+            fcm_token:
+              type: string
+            last_login:
+              type: string
+              format: date-time
+
+    CreateDriverRequest:
+      type: object
+      required:
+        - name
+        - vehicle_type
+        - vehicle_number
+        - vehicle_capacity
+      properties:
+        name:
+          type: string
+          example: "Jane Driver"
+          description: "Driver's full name"
+        email:
+          type: string
+          format: email
+          example: "jane@example.com"
+          description: "Driver's email address (optional)"
+        photo_url:
+          type: string
+          example: "https://example.com/photo.jpg"
+          description: "URL to driver's profile photo (optional)"
+        vehicle_type:
+          type: string
+          enum: [van, auto, bus]
+          example: "van"
+          description: "Type of vehicle"
+        vehicle_number:
+          type: string
+          example: "ABC-1234"
+          description: "Vehicle registration number"
+        vehicle_capacity:
+          type: integer
+          example: 10
+          description: "Maximum number of students the vehicle can accommodate"
+        is_available:
+          type: boolean
+          example: true
+          description: "Whether the driver is currently available (optional, defaults to true)"
+
+    DriverAddress:
+      type: object
+      properties:
+        _id:
+          type: string
+        address_id:
+          type: string
+        driver_id:
+          type: string
+        address_line1:
+          type: string
+        address_line2:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        pincode:
+          type: string
+        latitude:
+          type: number
+          format: float
+        longitude:
+          type: number
+          format: float
+        is_primary:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DriverAddressRequest:
+      type: object
+      required:
+        - address_line1
+        - city
+        - state
+        - latitude
+        - longitude
+      properties:
+        address_line1:
+          type: string
+          example: "123 Main Street"
+          description: "Primary address line"
+        address_line2:
+          type: string
+          example: "Apartment 4B"
+          description: "Secondary address line (optional)"
+        city:
+          type: string
+          example: "Mumbai"
+          description: "City name"
+        state:
+          type: string
+          example: "Maharashtra"
+          description: "State name"
+        pincode:
+          type: string
+          example: "400001"
+          description: "Postal code (optional)"
+        latitude:
+          type: number
+          format: float
+          example: 19.0760
+          description: "Latitude coordinate"
+        longitude:
+          type: number
+          format: float
+          example: 72.8777
+          description: "Longitude coordinate"
+        is_primary:
+          type: boolean
+          example: true
+          description: "Whether this is the primary address (optional, defaults to true)"
+
+    DriverDocument:
+      type: object
+      properties:
+        _id:
+          type: string
+        document_id:
+          type: string
+        driver_id:
+          type: string
+        driving_license_number:
+          type: string
+        driving_license_photo_url:
+          type: string
+        vehicle_license_number:
+          type: string
+        vehicle_license_photo_url:
+          type: string
+        insurance_number:
+          type: string
+        insurance_photo_url:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    DriverDocumentRequest:
+      type: object
+      required:
+        - driving_license_number
+        - vehicle_license_number
+      properties:
+        driving_license_number:
+          type: string
+          example: "DL-123456789"
+          description: "Driving license number"
+        driving_license_photo_url:
+          type: string
+          example: "https://example.com/dl-photo.jpg"
+          description: "URL to driving license photo (optional)"
+        vehicle_license_number:
+          type: string
+          example: "VL-987654321"
+          description: "Vehicle license/registration number"
+        vehicle_license_photo_url:
+          type: string
+          example: "https://example.com/vl-photo.jpg"
+          description: "URL to vehicle license photo (optional)"
+        insurance_number:
+          type: string
+          example: "INS-456789123"
+          description: "Insurance policy number (optional)"
+        insurance_photo_url:
+          type: string
+          example: "https://example.com/ins-photo.jpg"
+          description: "URL to insurance document photo (optional)"
+
+    DriverDocumentUpdateRequest:
+      type: object
+      properties:
+        driving_license_number:
+          type: string
+          example: "DL-123456789"
+          description: "Driving license number"
+        driving_license_photo_url:
+          type: string
+          example: "https://example.com/dl-photo.jpg"
+          description: "URL to driving license photo"
+        vehicle_license_number:
+          type: string
+          example: "VL-987654321"
+          description: "Vehicle license/registration number"
+        vehicle_license_photo_url:
+          type: string
+          example: "https://example.com/vl-photo.jpg"
+          description: "URL to vehicle license photo"
+        insurance_number:
+          type: string
+          example: "INS-456789123"
+          description: "Insurance policy number"
+        insurance_photo_url:
+          type: string
+          example: "https://example.com/ins-photo.jpg"
+          description: "URL to insurance document photo"
+
+    # Student Schemas
+    Student:
+      type: object
+      properties:
+        _id:
+          type: string
+        student_id:
+          type: string
+        parent_id:
+          type: string
+        school_id:
+          type: string
+        student_name:
+          type: string
+        class:
+          type: string
+        section:
+          type: string
+        roll_number:
+          type: string
+        photo_url:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, other]
+        pickup_address_id:
+          type: string
+        emergency_contact:
+          type: string
+        medical_info:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateStudentRequest:
+      type: object
+      required:
+        - school_id
+        - student_name
+        - class
+        - pickup_address_id
+      properties:
+        school_id:
+          type: string
+          example: "W2TuHYS9_A6keIj7C"
+          description: "School ID where the student is enrolled"
+        student_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+          example: "Emma Johnson"
+          description: "Student's full name"
+        class:
+          type: string
+          example: "5"
+          description: "Student's class/grade"
+        section:
+          type: string
+          example: "A"
+          description: "Student's section/division (optional)"
+        roll_number:
+          type: string
+          example: "25"
+          description: "Student's roll number (optional)"
+        photo_url:
+          type: string
+          description: "URL to student's photo (optional)"
+        date_of_birth:
+          type: string
+          format: date
+          description: "Student's date of birth (optional)"
+        gender:
+          type: string
+          enum: [male, female, other]
+          description: "Student's gender (optional)"
+        pickup_address_id:
+          type: string
+          description: "Address ID for student pickup location"
+        emergency_contact:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+          description: "Emergency contact phone number (optional)"
+        medical_info:
+          type: string
+          maxLength: 500
+          description: "Medical information or notes (optional)"
+      description: "Note: parent_id is automatically derived from the authenticated user's JWT token and should not be included in the request"
+
+    UpdateStudentRequest:
+      type: object
+      properties:
+        student_name:
+          type: string
+          minLength: 2
+          maxLength: 100
+        class:
+          type: string
+        section:
+          type: string
+        roll_number:
+          type: string
+        photo_url:
+          type: string
+        date_of_birth:
+          type: string
+          format: date
+        gender:
+          type: string
+          enum: [male, female, other]
+        pickup_address_id:
+          type: string
+        emergency_contact:
+          type: string
+          pattern: '^\+?[0-9]{10,15}$'
+        medical_info:
+          type: string
+          maxLength: 500
+
+paths:
+  # Authentication Endpoints
+  /auth/roles:
+    get:
+      tags:
+        - Authentication
+      summary: Get available user roles
+      description: Retrieves list of available user roles in the system
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: string
+                    example: ["parent", "driver", "admin"]
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register/send-otp:
+    post:
+      tags:
+        - Authentication
+      summary: Send OTP for phone registration
+      description: Send OTP to phone number for registration (Step 1 of 3)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PhoneOTPRequest'
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "OTP sent successfully"
+        '400':
+          description: Bad request - invalid phone number
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Phone number already registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/register/verify-otp:
+    post:
+      tags:
+        - Authentication
+      summary: Verify OTP for phone registration
+      description: Verify OTP sent to phone number (Step 2 of 3)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+      responses:
+        '200':
+          description: OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      tempToken:
+                        type: string
+        '400':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login/send-otp:
+    post:
+      tags:
+        - Authentication
+      summary: Send OTP for phone login
+      description: Send OTP to registered phone number for login (Step 1 of 2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - phone
+              properties:
+                phone:
+                  type: string
+                  example: "+1234567890"
+      responses:
+        '200':
+          description: OTP sent successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Phone number not registered
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login/verify-otp:
+    post:
+      tags:
+        - Authentication
+      summary: Verify OTP for phone login
+      description: Verify OTP and complete login (Step 2 of 2)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyOTPRequest'
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '400':
+          description: Invalid or expired OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/verify-token:
+    get:
+      tags:
+        - Authentication
+      summary: Verify authentication token
+      description: Verify if the provided JWT token is valid
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Token is valid
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      userId:
+                        type: string
+                      role:
+                        type: string
+        '401':
+          description: Invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags:
+        - Authentication
+      summary: Logout user
+      description: Logout and invalidate tokens
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Logout successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Parent Endpoints
+  /parent/profile:
+    get:
+      tags:
+        - Parent
+      summary: Get parent profile
+      description: Get authenticated parent's profile information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Parent'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Parent
+      summary: Update parent profile
+      description: Update authenticated parent's profile information
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateParentRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Parent'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /parent/address:
+    get:
+      tags:
+        - Parent
+      summary: Get parent address
+      description: Get primary address for authenticated parent
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ParentAddress'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Parent
+      summary: Update parent address
+      description: Update or create authenticated parent's primary address
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ParentAddressRequest'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/ParentAddress'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Driver Endpoints
+  /driver/profile:
+    get:
+      tags:
+        - Driver
+      summary: Get driver profile
+      description: Get authenticated driver's profile information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Driver'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Driver
+      summary: Create driver profile
+      description: Create profile for authenticated driver
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDriverRequest'
+      responses:
+        '201':
+          description: Driver profile created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Driver'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Profile already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Driver
+      summary: Update driver profile
+      description: Update authenticated driver's profile information
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDriverRequest'
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Driver'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver/address:
+    get:
+      tags:
+        - Driver
+      summary: Get driver address
+      description: Get authenticated driver's primary address
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DriverAddress'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Address not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Driver
+      summary: Create or update driver address
+      description: Create or update authenticated driver's primary address
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverAddressRequest'
+      responses:
+        '200':
+          description: Address updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/DriverAddress'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver/documents:
+    get:
+      tags:
+        - Driver
+      summary: Get driver documents
+      description: Get authenticated driver's document information
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DriverDocument'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Documents not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Driver
+      summary: Create driver documents
+      description: Create or fully update driver's document information
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverDocumentRequest'
+      responses:
+        '200':
+          description: Documents created/updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/DriverDocument'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Driver
+      summary: Update driver documents
+      description: Partially update driver's document information
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DriverDocumentUpdateRequest'
+      responses:
+        '200':
+          description: Documents updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/DriverDocument'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Student Endpoints
+  /students:
+    post:
+      tags:
+        - Student
+      summary: Create student
+      description: |
+        Create a new student record for the authenticated parent.
+
+        **Important**: The `parent_id` is automatically derived from the authenticated user's JWT token.
+        Do not include `parent_id` in the request body - it will be ignored if provided.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateStudentRequest'
+      responses:
+        '201':
+          description: Student created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Duplicate student - same name, school, and class exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "A student with the same name, school, and class already exists for this parent"
+
+  /students/my-students:
+    get:
+      tags:
+        - Student
+      summary: Get my students
+      description: Get all students for authenticated parent
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Student'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /students/my-active-students:
+    get:
+      tags:
+        - Student
+      summary: Get my active students
+      description: Get all active students for authenticated parent
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Student'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /students/{id}:
+    get:
+      tags:
+        - Student
+      summary: Get student by ID
+      description: Get student details by MongoDB ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the student
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Student
+      summary: Update student
+      description: Update student details by MongoDB ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStudentRequest'
+      responses:
+        '200':
+          description: Student updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Duplicate student
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Student
+      summary: Delete student (soft delete)
+      description: Soft delete student by MongoDB ID (sets is_active to false)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the student
+      responses:
+        '200':
+          description: Student deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Student deleted successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /students/by-student-id/{student_id}:
+    get:
+      tags:
+        - Student
+      summary: Get student by student ID
+      description: Get student details by student_id (nanoid)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Student ID (nanoid)
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Student
+      summary: Update student by student ID
+      description: Update student details by student_id (nanoid)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Student ID (nanoid)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateStudentRequest'
+      responses:
+        '200':
+          description: Student updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                  data:
+                    $ref: '#/components/schemas/Student'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Duplicate student
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Student
+      summary: Delete student by student ID (soft delete)
+      description: Soft delete student by student_id (sets is_active to false)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: student_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Student ID (nanoid)
+      responses:
+        '200':
+          description: Student deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Student deleted successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'

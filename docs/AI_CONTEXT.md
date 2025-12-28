@@ -12,7 +12,9 @@ When asked to create a new feature (e.g., "Create a School module"):
 2. **Copy the auth pattern** → Use `src/**/auth.*` files as templates
 3. **Create 6 files** → types, validations, repository, service, controller, routes
 4. **Update 3 files** → constants/collections.ts, constants/messages.ts, routes/index.ts
-5. **Follow these rules**:
+5. **Update API documentation** → Add endpoints to `docs/API_DOCUMENTATION.md` after implementation
+6. **Update Swagger documentation** → Add endpoints to `docs/swagger.yaml` after implementation
+7. **Follow these rules**:
    - ✅ Field names in **snake_case** (e.g., `user_id`, `phone_number`)
    - ✅ One entity = one file per layer (e.g., `school.controller.ts`)
    - ✅ Files in layer folders (NOT feature folders)
@@ -20,6 +22,7 @@ When asked to create a new feature (e.g., "Create a School module"):
    - ✅ Repository extends `BaseRepository`
    - ✅ Controller uses `asyncHandler`
    - ✅ Middleware order: validate → auth → controller
+   - ✅ **Add duplicate checking** for create/update operations based on unique business logic
 
 ### 🎯 Document Purpose
 
@@ -349,7 +352,7 @@ export const createPhoneOtp = async (
 import { WithId } from "mongodb";
 
 import { COLLECTION_NAME } from "@constants";
-import { EntityType } from "@types/{entity}.type";
+import { EntityType } from "@models/{entity}.type";
 
 import { BaseRepository } from "./base.repository";
 
@@ -1053,7 +1056,7 @@ export const updateStudentSchema = Joi.object({
 import { WithId } from "mongodb";
 
 import { STUDENTS_COLLECTION } from "@constants";
-import { Student } from "@types/student.type";
+import { Student } from "@models/student.type";
 
 import { BaseRepository } from "./base.repository";
 
@@ -1085,7 +1088,7 @@ import { WithId } from "mongodb";
 import { nanoid } from "nanoid";
 
 import { studentRepository } from "@repositories/student.repository";
-import { Student } from "@types/student.type";
+import { Student } from "@models/student.type";
 
 export const createStudent = async (
   data: Omit<Student, "student_id" | "created_at" | "is_active">,
@@ -1349,7 +1352,7 @@ import { WithId } from "mongodb";
 import { nanoid } from "nanoid";
 
 import { tripRepository } from "@repositories/trip.repository";
-import { Trip, TripStatus } from "@types/trip.type";
+import { Trip, TripStatus } from "@models/trip.type";
 
 export const createTrip = async (
   data: Omit<Trip, "trip_id" | "created_at" | "trip_status">,
@@ -1870,20 +1873,643 @@ import { controller } from "@controllers";
 // src/controllers
 import { middleware } from "@middlewares";
 // src/middlewares
+import { Type } from "@models";
+// src/types (use @models alias, NOT @types)
 import { repository } from "@repositories";
 // src/repositories
 import { Router } from "@routes";
 // src/routes (not commonly used)
 import { service } from "@services";
 // src/services
-import { Type } from "@types";
-// src/types or @models
 import { helper } from "@utils";
 // src/utils
 import { schema } from "@validations";
 
 // src/validations
 ```
+
+---
+
+## User ID to Foreign Key Conversion Pattern
+
+**CRITICAL PATTERN**: When implementing modules that reference parent or driver entities (like students, addresses, etc.), you must properly convert the authenticated user's `userId` to the appropriate foreign key.
+
+### Database Relationship Chain
+
+```
+users.user_id (from JWT) → parents.user_id → parents._id (stored as parent_id in child tables)
+users.user_id (from JWT) → drivers.user_id → drivers._id (stored as driver_id in child tables)
+```
+
+### Why This Pattern is Necessary
+
+1. **Authentication**: User authenticates and receives JWT with `userId` (from `users` table)
+2. **Authorization**: The `userId` maps to a profile in `parents` or `drivers` table
+3. **Child Records**: Child tables (students, addresses) reference the profile ID, not the user ID
+
+### Implementation Pattern
+
+#### Service Layer Helper Function
+
+Create a helper function to convert `userId` to `parent_id` or `driver_id`:
+
+```typescript
+// services/student.service.ts
+import { getDB } from "@config";
+import { PARENTS_COLLECTION } from "@constants";
+
+/**
+ * Get parent_id from user_id
+ * This is needed because the student table stores parent_id (from parents table)
+ * but the authenticated user has user_id (from users table)
+ */
+const getParentIdByUserId = async (userId: string): Promise<string | null> => {
+  const db = await getDB();
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ user_id: userId });
+
+  if (!parent) {
+    return null;
+  }
+
+  return String(parent._id);
+};
+```
+
+#### Service Functions - Create Operations
+
+For create operations, accept `userId` as a parameter and convert it internally:
+
+```typescript
+export const createStudent = async (
+  userId: string,
+  data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">,
+): Promise<WithId<Student>> => {
+  // Convert user_id to parent_id
+  const parentId = await getParentIdByUserId(userId);
+
+  if (!parentId) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  // Create student with correct parent_id
+  const studentData: Student = {
+    student_id: nanoid(),
+    parent_id: parentId, // Use converted parent_id
+    ...data,
+    is_active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  return await studentRepository.create(studentData);
+};
+```
+
+#### Service Functions - Read Operations
+
+For read operations by user context, convert `userId` to foreign key:
+
+```typescript
+export const getStudentsByUserId = async (
+  userId: string,
+): Promise<WithId<Student>[]> => {
+  const parentId = await getParentIdByUserId(userId);
+
+  if (!parentId) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  return await studentRepository.findByParentId(parentId);
+};
+```
+
+#### Controller Layer
+
+Controllers extract `userId` from the authenticated user and pass it to service functions:
+
+```typescript
+export const createStudentController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId; // From JWT token
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const studentData = req.body; // Does NOT include parent_id
+
+    const student = await createStudent(userId, studentData);
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: student,
+      message: SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY,
+    });
+  },
+);
+```
+
+#### Validation Layer
+
+Remove foreign key fields from create request validation:
+
+```typescript
+// BEFORE (WRONG)
+export const createStudentSchema = Joi.object({
+  parent_id: Joi.string().required(), // DON'T accept this from request body
+  student_name: Joi.string().required(),
+  // ...
+});
+
+// AFTER (CORRECT)
+export const createStudentSchema = Joi.object({
+  // parent_id removed - derived from authenticated user
+  student_name: Joi.string().required(),
+  // ...
+});
+```
+
+### Key Benefits
+
+1. **Security**: Users can only create/modify their own child records
+2. **Simplified API**: Clients don't need to know or provide parent_id/driver_id
+3. **Data Integrity**: Prevents users from creating records for other parents/drivers
+4. **Better UX**: Automatic association based on who is logged in
+
+### When to Apply This Pattern
+
+Apply this pattern when creating modules where:
+- The entity belongs to a parent or driver (students, addresses, etc.)
+- The authenticated user is the owner of the entity
+- The entity table has a foreign key to `parent_id` or `driver_id`
+
+### Example: Student Module
+
+**Database Schema:**
+```
+users.user_id → parents.user_id → parents._id
+                                      ↓
+                        students.parent_id (foreign key)
+```
+
+**API Flow:**
+1. Parent authenticates → receives JWT with `userId`
+2. Parent calls `POST /api/students` with student data (NO parent_id in body)
+3. Controller extracts `userId` from `req.user.userId`
+4. Service converts `userId` → `parent_id` via database lookup
+5. Service creates student with correct `parent_id`
+
+### Reference Implementation
+
+See the complete implementation in:
+- **Service**: `src/services/student.service.ts` (lines 15-26, 31-70, 189-220)
+- **Controller**: `src/controllers/student.controller.ts` (lines 17-38, 73-92)
+- **Validation**: `src/validations/student.validation.ts` (parent_id removed from schema)
+
+---
+
+## Duplicate Checking Pattern
+
+**CRITICAL**: Always implement duplicate checking for create and update operations to prevent data duplication based on business logic.
+
+### When to Add Duplicate Checking
+
+Implement duplicate checking when:
+- Creating or updating records that should be unique based on a combination of fields
+- Business rules require uniqueness beyond database primary keys
+- Multiple fields together form a logical unique constraint
+
+### Implementation Pattern
+
+**Example: Student Module** - A student is duplicate if same parent has a student with same name, school, and class.
+
+**1. Repository Method** (`repositories/{entity}.repository.ts`):
+
+```typescript
+async findDuplicateStudent(
+  parentId: string,
+  studentName: string,
+  schoolId: string,
+  classValue: string,
+): Promise<WithId<Student> | null> {
+  return await this.findOne({
+    parent_id: parentId,
+    student_name: studentName,
+    school_id: schoolId,
+    class: classValue,
+    is_active: true, // Only check active records
+  });
+}
+```
+
+**2. Service Layer - Create** (`services/{entity}.service.ts`):
+
+```typescript
+export const createStudent = async (
+  data: Omit<Student, "student_id" | "created_at" | "is_active">,
+): Promise<WithId<Student>> => {
+  // Check for duplicate student
+  const duplicate = await studentRepository.findDuplicateStudent(
+    data.parent_id,
+    data.student_name,
+    data.school_id,
+    data.class,
+  );
+
+  if (duplicate) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.STUDENT.ALREADY_EXISTS,
+    );
+  }
+
+  // Proceed with creation...
+};
+```
+
+**3. Service Layer - Update** (`services/{entity}.service.ts`):
+
+```typescript
+export const updateStudent = async (
+  id: string,
+  updates: Partial<Student>,
+): Promise<WithId<Student> | null> => {
+  // Get current student
+  const currentStudent = await studentRepository.findById(id);
+
+  if (!currentStudent) {
+    return null;
+  }
+
+  // Check for duplicate if updating critical fields
+  if (
+    updates.student_name ||
+    updates.school_id ||
+    updates.class ||
+    updates.parent_id
+  ) {
+    const duplicate = await studentRepository.findDuplicateStudent(
+      updates.parent_id || currentStudent.parent_id,
+      updates.student_name || currentStudent.student_name,
+      updates.school_id || currentStudent.school_id,
+      updates.class || currentStudent.class,
+    );
+
+    // If duplicate exists and it's not the same student
+    if (duplicate && duplicate._id.toString() !== id) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.STUDENT.ALREADY_EXISTS,
+      );
+    }
+  }
+
+  // Proceed with update...
+};
+```
+
+**4. Error Message** (`constants/messages.ts`):
+
+```typescript
+STUDENT: {
+  // ... other messages
+  ALREADY_EXISTS: "A student with the same name, school, and class already exists for this parent",
+}
+```
+
+### Key Points
+
+- **Repository**: Add `findDuplicate{Entity}` method with business logic fields
+- **Service**: Check duplicates BEFORE create/update operations
+- **Update**: Only check if critical fields are being modified
+- **Exclude Self**: When updating, ensure duplicate check excludes the current record
+- **Active Records**: Usually only check against active records (`is_active: true`)
+- **Error Message**: Provide clear, descriptive duplicate error messages
+
+---
+
+## Swagger/OpenAPI Documentation
+
+**Location**: `docs/swagger.yaml`
+
+The project uses OpenAPI 3.0 specification for API documentation. All API endpoints MUST be documented in the Swagger file.
+
+### When to Update Swagger
+
+Update `docs/swagger.yaml` whenever you:
+- Create a new API endpoint
+- Modify request/response payloads
+- Add new schemas/models
+- Change authentication requirements
+- Update error responses
+
+### Swagger File Structure
+
+```yaml
+openapi: 3.0.3
+info:
+  title: Ping Parent Backend API
+  version: 1.0.0
+
+servers:
+  - url: http://localhost:3000/api          # Development
+  - url: https://staging-api.pingparent.com/api  # Staging
+  - url: https://api.pingparent.com/api     # Production
+
+components:
+  securitySchemes:
+    BearerAuth:                              # JWT authentication
+      type: http
+      scheme: bearer
+
+  schemas:
+    # Define reusable schemas here
+    Entity:
+      type: object
+      properties:
+        # field definitions
+
+paths:
+  /endpoint:
+    get:
+      tags: [Category]
+      summary: Brief description
+      # endpoint details
+```
+
+### Adding a New Endpoint to Swagger
+
+**Example: Adding a School endpoint**
+
+**1. Add Schema Definition** (in `components.schemas`):
+
+```yaml
+components:
+  schemas:
+    School:
+      type: object
+      properties:
+        _id:
+          type: string
+        school_id:
+          type: string
+        school_name:
+          type: string
+          example: "Lincoln Elementary"
+        address:
+          type: string
+        city:
+          type: string
+        state:
+          type: string
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateSchoolRequest:
+      type: object
+      required:
+        - school_name
+        - address
+        - city
+        - state
+      properties:
+        school_name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          example: "Lincoln Elementary"
+        address:
+          type: string
+          example: "123 Main St"
+        city:
+          type: string
+          example: "Springfield"
+        state:
+          type: string
+          example: "IL"
+```
+
+**2. Add Endpoint Path** (in `paths`):
+
+```yaml
+paths:
+  /schools:
+    post:
+      tags:
+        - School
+      summary: Create new school
+      description: Create a new school record in the system
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateSchoolRequest'
+      responses:
+        '201':
+          description: School created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "School created successfully"
+                  data:
+                    $ref: '#/components/schemas/School'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: School already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /schools/{id}:
+    get:
+      tags:
+        - School
+      summary: Get school by ID
+      description: Retrieve school details by MongoDB ObjectId
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the school
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/School'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: School not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+```
+
+### Swagger Documentation Checklist
+
+When adding a new module, ensure:
+
+- [ ] **Add to tags**: Create a new tag for the entity category
+- [ ] **Define schemas**: Add request/response schemas in `components.schemas`
+- [ ] **Document all endpoints**: Add all CRUD operations (GET, POST, PUT, DELETE)
+- [ ] **Include authentication**: Specify `security: - BearerAuth: []` for protected routes
+- [ ] **Define parameters**: Document path params, query params with types and descriptions
+- [ ] **Document request bodies**: Use `requestBody` with schema references
+- [ ] **Define all responses**: Include success (200, 201) and error responses (400, 401, 404, 409, 500)
+- [ ] **Add examples**: Provide example values for better clarity
+- [ ] **Use schema references**: Use `$ref` to reference reusable schemas
+- [ ] **Match field names**: Ensure snake_case fields match database schema
+- [ ] **Document validation**: Include validation rules (minLength, maxLength, pattern, required)
+
+### Swagger Field Type Mapping
+
+Map TypeScript types to OpenAPI types:
+
+```typescript
+// TypeScript → OpenAPI
+string → type: string
+number → type: number (or type: integer)
+boolean → type: boolean
+Date → type: string, format: date-time
+Date (date only) → type: string, format: date
+enum → type: string, enum: [value1, value2]
+object → type: object
+array → type: array, items: { ... }
+```
+
+### Testing Swagger Documentation
+
+After updating `docs/swagger.yaml`:
+
+1. **Validate YAML syntax**: Use an online YAML validator
+2. **Test with Swagger UI**:
+   - Use https://editor.swagger.io/
+   - Paste the swagger.yaml content
+   - Verify all endpoints render correctly
+3. **Check for errors**: Ensure no schema reference errors
+4. **Verify examples**: Confirm all examples are valid
+
+### Environment-Based Server URLs
+
+The Swagger file includes server configurations for all environments:
+
+```yaml
+servers:
+  - url: http://localhost:3000/api
+    description: Local development server
+  - url: https://staging-api.pingparent.com/api
+    description: Staging server
+  - url: https://api.pingparent.com/api
+    description: Production server
+```
+
+When deploying, the appropriate server URL is automatically selected based on the environment.
+
+### Common Swagger Patterns
+
+**Protected Endpoint (Requires Authentication)**:
+```yaml
+security:
+  - BearerAuth: []
+```
+
+**Public Endpoint (No Authentication)**:
+```yaml
+# Omit security field or use empty array
+security: []
+```
+
+**Pagination Parameters**:
+```yaml
+parameters:
+  - name: page
+    in: query
+    schema:
+      type: integer
+      default: 1
+  - name: limit
+    in: query
+    schema:
+      type: integer
+      default: 10
+```
+
+**File Upload**:
+```yaml
+requestBody:
+  content:
+    multipart/form-data:
+      schema:
+        type: object
+        properties:
+          file:
+            type: string
+            format: binary
+```
+
+### Important Notes
+
+- **Keep in sync**: Always update Swagger when you update API_DOCUMENTATION.md
+- **Use consistent naming**: Follow the same naming conventions as the codebase
+- **Document errors**: Include all possible error responses with status codes
+- **Version control**: Swagger file is version controlled with the codebase
+- **Single source of truth**: Swagger YAML is the definitive API contract
 
 ---
 
@@ -1907,7 +2533,15 @@ import { schema } from "@validations";
 
 9. **Service Layer**: Business logic belongs in services, not controllers.
 
-10. **Testing**: When implementing new features, consider writing tests following the existing test patterns.
+10. **Duplicate Checking**: Always implement duplicate checking for create/update operations based on business logic.
+
+11. **User ID to Foreign Key Conversion**: When creating modules that reference parent or driver data (like students), always convert `userId` (from authenticated user) to the appropriate foreign key (`parent_id` or `driver_id`) in the service layer. Never accept these IDs from the request body for create operations - derive them from the authenticated user's context.
+
+12. **Update API Documentation**: After implementing a new module, update `docs/API_DOCUMENTATION.md` with all endpoints.
+
+13. **Update Swagger Documentation**: After implementing a new module, update `docs/swagger.yaml` with all endpoints, schemas, and responses.
+
+14. **Testing**: When implementing new features, consider writing tests following the existing test patterns.
 
 ---
 

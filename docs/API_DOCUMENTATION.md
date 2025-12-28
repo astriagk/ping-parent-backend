@@ -10,11 +10,8 @@ Complete API reference with request payloads, response formats, and error messag
 
 - [Authentication Endpoints](#authentication-endpoints)
   - [Get Roles](#get-roles)
-  - [Traditional Registration](#traditional-registration-emailpassword)
-  - [Phone Registration (3-Step)](#phone-based-registration-3-step-process)
+  - [Phone Registration (2-Step)](#phone-based-registration-2-step-process)
   - [Phone Login (2-Step)](#phone-based-login-2-step-process)
-  - [Traditional Login](#traditional-login-emailpassword)
-  - [Forgot Password Flow](#forgot-password-flow)
   - [Verify Token](#verify-token)
   - [Logout](#logout)
 - [Parent Endpoints](#parent-endpoints)
@@ -27,6 +24,16 @@ Complete API reference with request payloads, response formats, and error messag
   - [Create Driver Profile](#create-driver-profile)
   - [Update Driver Profile](#update-driver-profile)
   - [Upload/Update Driver Documents](#uploadupdate-driver-documents)
+- [Student Endpoints](#student-endpoints)
+  - [Create Student](#create-student)
+  - [Get My Students](#get-my-students)
+  - [Get My Active Students](#get-my-active-students)
+  - [Get Student by ID](#get-student-by-id)
+  - [Get Student by Student ID](#get-student-by-student-id)
+  - [Update Student](#update-student)
+  - [Update Student by Student ID](#update-student-by-student-id)
+  - [Delete Student](#delete-student-soft-delete)
+  - [Delete Student by Student ID](#delete-student-by-student-id-soft-delete)
 
 ---
 
@@ -72,83 +79,7 @@ GET /api/auth/roles
 
 ---
 
-### Traditional Registration (Email/Password)
-
-Register a new user with email and password.
-
-**Endpoint**: `POST /api/auth/register`
-
-**Authentication**: Not required
-
-**Request Payload**:
-
-```json
-{
-  "email": "parent@example.com",
-  "password": "SecurePass123",
-  "firstName": "John",
-  "lastName": "Doe",
-  "phone": "+1234567890",
-  "role": "parent"
-}
-```
-
-**Required Fields**:
-
-- `email` (string): Valid email address
-- `password` (string): Min 8 characters, must include uppercase, lowercase, and number
-- `phone` (string): Valid phone number
-
-**Optional Fields**:
-
-- `firstName` (string)
-- `lastName` (string)
-- `role` (string): Defaults to "parent" if not provided
-
-**Success Response** (201):
-
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "507f1f77bcf86cd799439011",
-      "email": "parent@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
-      "role": "parent",
-      "emailVerified": false
-    }
-  },
-  "message": "Registration successful. Please check your email to verify your account."
-}
-```
-
-**Error Responses**:
-
-| Status | Error Code | Error Message                                                                            |
-| ------ | ---------- | ---------------------------------------------------------------------------------------- |
-| 400    | -          | `"Missing required fields"`                                                              |
-| 400    | -          | `"Invalid email"`                                                                        |
-| 400    | -          | `"Password must be at least 8 characters and include uppercase, lowercase and a number"` |
-| 400    | -          | `"Invalid phone number"`                                                                 |
-| 400    | -          | `"Invalid role"`                                                                         |
-| 409    | -          | `"Email already in use"`                                                                 |
-| 500    | -          | `"Unable to validate role"`                                                              |
-
-**Example Error**:
-
-```json
-{
-  "success": false,
-  "error": "Email already in use"
-}
-```
-
----
-
-### Phone-Based Registration (3-Step Process)
+### Phone-Based Registration (2-Step Process)
 
 #### Step 1: Send OTP
 
@@ -162,9 +93,15 @@ Send OTP to phone number for registration.
 
 ```json
 {
-  "phone": "+1234567890"
+  "phone": "+1234567890",
+  "role": "parent"
 }
 ```
+
+**Required Fields**:
+
+- `phone` (string): Valid phone number (10-15 digits)
+- `role` (string): Must be `"parent"` or `"driver"`
 
 **Success Response** (200):
 
@@ -190,7 +127,7 @@ Send OTP to phone number for registration.
 
 #### Step 2: Verify OTP
 
-Verify the OTP sent to phone number.
+Verify the OTP sent to phone number and complete registration.
 
 **Endpoint**: `POST /api/auth/register/verify-otp`
 
@@ -201,19 +138,29 @@ Verify the OTP sent to phone number.
 ```json
 {
   "phone": "+1234567890",
-  "otp": "123456",
-  "role": "parent | driver"
+  "otp": "123456"
 }
 ```
+
+**Required Fields**:
+
+- `phone` (string): Phone number used in Step 1
+- `otp` (string): 6-digit OTP code
 
 **Success Response** (200):
 
 ```json
 {
   "success": true,
-  "message": "Phone number verified successfully",
+  "message": "Phone number verified successfully. Registration complete.",
   "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
+    "user": {
+      "user_id": "V1StGXR8_Z5jdHi6B",
+      "phone_number": "+1234567890",
+      "user_type": "parent",
+      "is_active": true
+    }
   }
 }
 ```
@@ -225,68 +172,6 @@ Verify the OTP sent to phone number.
 | 400    | `"Phone number and OTP are required"` |
 | 400    | `"Invalid phone number"`              |
 | 400    | `"Invalid or expired OTP"`            |
-| 404    | `"Email or password is incorrect"`    |
-
----
-
-#### Step 3: Complete Registration
-
-Complete registration with user details (requires token from Step 2).
-
-**Endpoint**: `POST /api/auth/register/complete`
-
-**Authentication**: Required (Bearer token from Step 2)
-
-**Request Headers**:
-
-```http
-Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
-```
-
-**Request Payload**:
-
-```json
-{
-  "firstName": "John",
-  "lastName": "Doe",
-  "role": "parent"
-}
-```
-
-**Optional Fields**:
-
-- `firstName` (string)
-- `lastName` (string)
-- `role` (string): Defaults to "parent"
-
-**Success Response** (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "507f1f77bcf86cd799439011",
-      "firstName": "John",
-      "lastName": "Doe",
-      "role": "parent",
-      "emailVerified": false,
-      "phoneVerified": true
-    }
-  },
-  "message": "Registration completed successfully"
-}
-```
-
-**Error Responses**:
-
-| Status | Error Message                    |
-| ------ | -------------------------------- |
-| 400    | `"Invalid role"`                 |
-| 401    | `"Missing Authorization header"` |
-| 404    | `"User not found"`               |
-| 500    | `"Unable to validate role"`      |
 
 ---
 
@@ -375,183 +260,6 @@ Verify OTP and complete login.
 | 400    | `"Invalid phone number"`                        |
 | 400    | `"Invalid or expired OTP"`                      |
 | 404    | `"User not found"`                              |
-
----
-
-### Traditional Login (Email/Password)
-
-Login with email and password.
-
-**Endpoint**: `POST /api/auth/login`
-
-**Authentication**: Not required
-
-**Rate Limiting**: Yes (protects against brute-force attacks)
-
-**Request Payload**:
-
-```json
-{
-  "email": "parent@example.com",
-  "password": "SecurePass123"
-}
-```
-
-**Success Response** (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
-    "user": {
-      "id": "507f1f77bcf86cd799439011",
-      "email": "parent@example.com",
-      "firstName": "John",
-      "lastName": "Doe",
-      "role": "parent",
-      "phone": "+1234567890"
-    }
-  }
-}
-```
-
-**Error Responses**:
-
-| Status | Error Code            | Error Message                      |
-| ------ | --------------------- | ---------------------------------- |
-| 400    | -                     | `"Missing email or password"`      |
-| 400    | -                     | `"Invalid email"`                  |
-| 401    | `INVALID_CREDENTIALS` | `"Email or password is incorrect"` |
-
-**Example Error**:
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "INVALID_CREDENTIALS",
-    "message": "Email or password is incorrect"
-  }
-}
-```
-
----
-
-### Forgot Password Flow
-
-#### Step 1: Request Password Reset OTP
-
-Request OTP for password reset.
-
-**Endpoint**: `POST /api/auth/forgot-password`
-
-**Authentication**: Not required
-
-**Request Payload**:
-
-```json
-{
-  "email": "parent@example.com"
-}
-```
-
-**Success Response** (200):
-
-```json
-{
-  "success": true,
-  "message": "If an account exists with this email, you will receive a password reset code."
-}
-```
-
-> Note: Always returns success for privacy/security reasons, even if email doesn't exist
-
-**Error Responses**:
-
-| Status | Error Message    |
-| ------ | ---------------- |
-| 500    | `"Server error"` |
-
----
-
-#### Step 2: Verify OTP
-
-Verify the OTP sent to email.
-
-**Endpoint**: `POST /api/auth/verify-otp`
-
-**Authentication**: Not required
-
-**Request Payload**:
-
-```json
-{
-  "email": "parent@example.com",
-  "otp": "123456"
-}
-```
-
-**Success Response** (200):
-
-```json
-{
-  "success": true,
-  "data": {
-    "resetToken": "a1b2c3d4e5f6..."
-  }
-}
-```
-
-**Error Responses**:
-
-| Status | Error Message              |
-| ------ | -------------------------- |
-| 400    | `"Missing email or otp"`   |
-| 400    | `"Invalid or expired OTP"` |
-| 500    | `"Server error"`           |
-
----
-
-#### Step 3: Reset Password
-
-Reset password using the reset token from Step 2.
-
-**Endpoint**: `POST /api/auth/reset-password`
-
-**Authentication**: Not required
-
-**Request Payload**:
-
-```json
-{
-  "resetToken": "a1b2c3d4e5f6...",
-  "newPassword": "NewSecurePass123"
-}
-```
-
-**Required Fields**:
-
-- `resetToken` (string): Token from verify-otp response
-- `newPassword` (string): Min 8 characters, must include uppercase, lowercase, and number
-
-**Success Response** (200):
-
-```json
-{
-  "success": true,
-  "message": "Password reset successful. You can now login with your new password."
-}
-```
-
-**Error Responses**:
-
-| Status | Error Message                           |
-| ------ | --------------------------------------- |
-| 400    | `"Missing resetToken or newPassword"`   |
-| 400    | `"Password does not meet requirements"` |
-| 400    | `"Invalid or expired reset token"`      |
-| 500    | `"Server error"`                        |
 
 ---
 
@@ -1444,9 +1152,8 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
 Tokens are obtained through:
 
-- Traditional login (`/api/auth/login`)
+- Phone-based registration (`/api/auth/register/verify-otp`)
 - Phone-based login (`/api/auth/login/verify-otp`)
-- Registration endpoints
 
 Tokens expire based on the `JWT_EXPIRES_IN` environment variable (default: 7 days).
 
@@ -1465,4 +1172,512 @@ In development mode (`NODE_ENV=development`), some endpoints include additional 
 
 ## Rate Limiting
 
-The `/api/auth/login` endpoint has rate limiting enabled to prevent brute-force attacks. Multiple failed login attempts from the same IP or email will result in temporary blocking.
+Authentication endpoints (`/api/auth/login/send-otp`, `/api/auth/login/verify-otp`, `/api/auth/register/send-otp`, `/api/auth/register/verify-otp`) have rate limiting enabled to prevent brute-force attacks and abuse.
+
+---
+
+## Student Endpoints
+
+All student endpoints require parent authentication via JWT token in the `Authorization` header.
+
+**Request Headers**:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+### Create Student
+
+Create a new student record for the authenticated parent.
+
+**Endpoint**: `POST /api/students`
+
+**Authentication**: Required (Parent role)
+
+**Request Payload**:
+
+```json
+{
+  "school_id": "school_xyz789",
+  "student_name": "Emma Johnson",
+  "class": "5th",
+  "section": "A",
+  "roll_number": "25",
+  "photo_url": "https://example.com/students/emma.jpg",
+  "date_of_birth": "2015-06-15",
+  "gender": "female",
+  "pickup_address_id": "addr_def456",
+  "emergency_contact": "+1234567890",
+  "medical_info": "Allergic to peanuts"
+}
+```
+
+> **Note**: `parent_id` is automatically derived from the authenticated user's JWT token. Do not include it in the request body.
+
+**Required Fields**:
+
+- `school_id` (string): School's ID
+- `student_name` (string): Student's full name (2-100 characters)
+- `class` (string): Class/grade (max 20 characters)
+- `pickup_address_id` (string): Address ID for pickup location
+
+**Optional Fields**:
+
+- `section` (string): Section/division (max 10 characters)
+- `roll_number` (string): Roll number (max 20 characters)
+- `photo_url` (string): URL to student's photo
+- `date_of_birth` (date): Student's date of birth
+- `gender` (string): Must be `"male"`, `"female"`, or `"other"`
+- `emergency_contact` (string): Emergency contact number (10-15 digits)
+- `medical_info` (string): Medical information/notes (max 500 characters)
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "student_id": "stu_abc123xyz",
+    "parent_id": "parent_abc123",
+    "school_id": "school_xyz789",
+    "student_name": "Emma Johnson",
+    "class": "5th",
+    "section": "A",
+    "roll_number": "25",
+    "photo_url": "https://example.com/students/emma.jpg",
+    "date_of_birth": "2015-06-15T00:00:00.000Z",
+    "gender": "female",
+    "pickup_address_id": "addr_def456",
+    "emergency_contact": "+1234567890",
+    "medical_info": "Allergic to peanuts",
+    "is_active": true,
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-20T10:30:00.000Z"
+  },
+  "message": "Student created successfully"
+}
+```
+
+> Note: A unique `student_id` (format: nanoid) is automatically generated
+
+**Error Responses**:
+
+| Status | Error Message                                                                              |
+| ------ | ------------------------------------------------------------------------------------------ |
+| 400    | `"Student name is required"` / `"Parent ID is required"` / Other validation errors         |
+| 401    | `"User not authenticated"`                                                                 |
+| 409    | `"A student with the same name, school, and class already exists for this parent"`         |
+| 500    | `"Failed to create student"`                                                               |
+
+**Example Duplicate Error**:
+
+```json
+{
+  "success": false,
+  "error": "A student with the same name, school, and class already exists for this parent"
+}
+```
+
+---
+
+### Get My Students
+
+Retrieve all students (active and inactive) for the authenticated parent.
+
+**Endpoint**: `GET /api/students/my-students`
+
+**Authentication**: Required (Parent role)
+
+**Request**:
+
+```http
+GET /api/students/my-students
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "student_id": "stu_abc123xyz",
+      "parent_id": "parent_abc123",
+      "school_id": "school_xyz789",
+      "student_name": "Emma Johnson",
+      "class": "5th",
+      "section": "A",
+      "roll_number": "25",
+      "is_active": true,
+      "created_at": "2024-01-20T10:30:00.000Z",
+      "updated_at": "2024-01-20T10:30:00.000Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "student_id": "stu_def456uvw",
+      "parent_id": "parent_abc123",
+      "school_id": "school_xyz789",
+      "student_name": "Oliver Johnson",
+      "class": "3rd",
+      "section": "B",
+      "is_active": true,
+      "created_at": "2024-01-15T08:20:00.000Z",
+      "updated_at": "2024-01-15T08:20:00.000Z"
+    }
+  ],
+  "message": "Students list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                  |
+| ------ | ------------------------------ |
+| 401    | `"User not authenticated"`     |
+| 500    | `"Failed to fetch students"`   |
+
+---
+
+### Get My Active Students
+
+Retrieve only active students for the authenticated parent.
+
+**Endpoint**: `GET /api/students/my-active-students`
+
+**Authentication**: Required (Parent role)
+
+**Request**:
+
+```http
+GET /api/students/my-active-students
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "student_id": "stu_abc123xyz",
+      "parent_id": "parent_abc123",
+      "school_id": "school_xyz789",
+      "student_name": "Emma Johnson",
+      "class": "5th",
+      "is_active": true,
+      "created_at": "2024-01-20T10:30:00.000Z"
+    }
+  ],
+  "message": "Students list fetched successfully"
+}
+```
+
+> Note: Only returns students where `is_active: true`
+
+**Error Responses**:
+
+| Status | Error Message                  |
+| ------ | ------------------------------ |
+| 401    | `"User not authenticated"`     |
+| 500    | `"Failed to fetch students"`   |
+
+---
+
+### Get Student by ID
+
+Retrieve a specific student by MongoDB `_id`.
+
+**Endpoint**: `GET /api/students/:id`
+
+**Authentication**: Required (Parent role)
+
+**URL Parameters**:
+
+- `id` (string): MongoDB ObjectId of the student
+
+**Request**:
+
+```http
+GET /api/students/507f1f77bcf86cd799439011
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "student_id": "stu_abc123xyz",
+    "parent_id": "parent_abc123",
+    "school_id": "school_xyz789",
+    "student_name": "Emma Johnson",
+    "class": "5th",
+    "section": "A",
+    "roll_number": "25",
+    "photo_url": "https://example.com/students/emma.jpg",
+    "date_of_birth": "2015-06-15T00:00:00.000Z",
+    "gender": "female",
+    "pickup_address_id": "addr_def456",
+    "emergency_contact": "+1234567890",
+    "medical_info": "Allergic to peanuts",
+    "is_active": true,
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-20T10:30:00.000Z"
+  },
+  "message": "Student fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message              |
+| ------ | -------------------------- |
+| 401    | `"User not authenticated"` |
+| 404    | `"Student not found"`      |
+| 500    | `"Failed to fetch student"`|
+
+---
+
+### Get Student by Student ID
+
+Retrieve a specific student by `student_id` (nanoid).
+
+**Endpoint**: `GET /api/students/by-student-id/:student_id`
+
+**Authentication**: Required (Parent role)
+
+**URL Parameters**:
+
+- `student_id` (string): The unique student_id generated during creation
+
+**Request**:
+
+```http
+GET /api/students/by-student-id/stu_abc123xyz
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "student_id": "stu_abc123xyz",
+    "parent_id": "parent_abc123",
+    "student_name": "Emma Johnson",
+    "class": "5th",
+    "is_active": true,
+    "created_at": "2024-01-20T10:30:00.000Z"
+  },
+  "message": "Student fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message              |
+| ------ | -------------------------- |
+| 401    | `"User not authenticated"` |
+| 404    | `"Student not found"`      |
+| 500    | `"Failed to fetch student"`|
+
+---
+
+### Update Student
+
+Update a student's information by MongoDB `_id`.
+
+**Endpoint**: `PUT /api/students/:id`
+
+**Authentication**: Required (Parent role)
+
+**URL Parameters**:
+
+- `id` (string): MongoDB ObjectId of the student
+
+**Request Payload**:
+
+```json
+{
+  "student_name": "Emma Jane Johnson",
+  "class": "6th",
+  "section": "B",
+  "roll_number": "12",
+  "photo_url": "https://example.com/students/emma-updated.jpg",
+  "emergency_contact": "+9876543210"
+}
+```
+
+**Updatable Fields**:
+
+- `student_name` (string): 2-100 characters
+- `class` (string): Max 20 characters
+- `section` (string): Max 10 characters
+- `roll_number` (string): Max 20 characters
+- `photo_url` (string): Valid URL
+- `date_of_birth` (date)
+- `gender` (string): `"male"`, `"female"`, or `"other"`
+- `pickup_address_id` (string)
+- `emergency_contact` (string): 10-15 digits
+- `medical_info` (string): Max 500 characters
+
+> Note: All fields are optional. Update any combination of fields.
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "student_id": "stu_abc123xyz",
+    "parent_id": "parent_abc123",
+    "school_id": "school_xyz789",
+    "student_name": "Emma Jane Johnson",
+    "class": "6th",
+    "section": "B",
+    "roll_number": "12",
+    "is_active": true,
+    "updated_at": "2024-01-21T14:45:00.000Z"
+  },
+  "message": "Student updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                                              |
+| ------ | ------------------------------------------------------------------------------------------ |
+| 401    | `"User not authenticated"`                                                                 |
+| 404    | `"Student not found"`                                                                      |
+| 409    | `"A student with the same name, school, and class already exists for this parent"`         |
+| 500    | `"Failed to update student"`                                                               |
+
+> Note: Duplicate checking is performed if updating `student_name`, `school_id`, `class`, or `parent_id`
+
+---
+
+### Update Student by Student ID
+
+Update a student's information by `student_id`.
+
+**Endpoint**: `PUT /api/students/by-student-id/:student_id`
+
+**Authentication**: Required (Parent role)
+
+**URL Parameters**:
+
+- `student_id` (string): The unique student_id
+
+**Request Payload**:
+
+```json
+{
+  "class": "6th",
+  "section": "A"
+}
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "student_id": "stu_abc123xyz",
+    "student_name": "Emma Johnson",
+    "class": "6th",
+    "section": "A",
+    "updated_at": "2024-01-21T15:30:00.000Z"
+  },
+  "message": "Student updated successfully"
+}
+```
+
+**Error Responses**: Same as Update Student by ID
+
+---
+
+### Delete Student (Soft Delete)
+
+Soft delete a student by setting `is_active: false`. Does not permanently remove the record.
+
+**Endpoint**: `DELETE /api/students/:id`
+
+**Authentication**: Required (Parent role)
+
+**URL Parameters**:
+
+- `id` (string): MongoDB ObjectId of the student
+
+**Request**:
+
+```http
+DELETE /api/students/507f1f77bcf86cd799439011
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Student deleted successfully"
+}
+```
+
+> Note: This is a soft delete. The record is marked as `is_active: false` but remains in the database.
+
+**Error Responses**:
+
+| Status | Error Message              |
+| ------ | -------------------------- |
+| 401    | `"User not authenticated"` |
+| 404    | `"Student not found"`      |
+| 500    | `"Failed to delete student"`|
+
+---
+
+### Delete Student by Student ID (Soft Delete)
+
+Soft delete a student by `student_id`.
+
+**Endpoint**: `DELETE /api/students/by-student-id/:student_id`
+
+**Authentication**: Required (Parent role)
+
+**URL Parameters**:
+
+- `student_id` (string): The unique student_id
+
+**Request**:
+
+```http
+DELETE /api/students/by-student-id/stu_abc123xyz
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Student deleted successfully"
+}
+```
+
+**Error Responses**: Same as Delete Student by ID
+
+---

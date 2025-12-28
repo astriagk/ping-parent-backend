@@ -1,5 +1,7 @@
 import express, { NextFunction, Request, Response } from "express";
+import * as swaggerUi from "swagger-ui-express";
 
+import { swaggerDocument, swaggerOptions } from "@config";
 import { errorHandler, notFound } from "@middlewares";
 import apiRoutes from "@routes";
 import { logger } from "@utils";
@@ -13,6 +15,13 @@ app.use((req: Request, _res: Response, next: NextFunction) => {
   logger.info(`[${time}] ${req.method} ${req.originalUrl}`);
   next();
 });
+
+// Swagger UI documentation route
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, swaggerOptions),
+);
 
 app.use("/api", apiRoutes);
 

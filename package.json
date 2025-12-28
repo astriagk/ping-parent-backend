@@ -32,7 +32,9 @@
     "mongodb": "^7.0.0",
     "nanoid": "^3.3.11",
     "redis": "^5.10.0",
-    "socket.io": "^4.8.2"
+    "socket.io": "^4.8.2",
+    "swagger-ui-express": "^5.0.1",
+    "yamljs": "^0.3.0"
   },
   "optionalDependencies": {
     "nodemailer": "^6.9.4"
@@ -46,6 +48,8 @@
     "@types/node": "^25.0.1",
     "@types/nodemailer": "^7.0.4",
     "@types/supertest": "^2.0.12",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "@typescript-eslint/eslint-plugin": "^8.50.1",
     "@typescript-eslint/parser": "^8.50.1",
     "eslint": "^9.39.2",
