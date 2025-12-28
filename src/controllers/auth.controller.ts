@@ -1,8 +1,13 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { nanoid } from "nanoid";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
+import {
+  AlphabetType,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+  UniqueCodeTypes,
+} from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
   createPhoneOtp,
@@ -16,7 +21,7 @@ import {
   generateAccessToken,
   verifyAccessToken,
 } from "@services/token.service";
-import { logger, normalizePhone } from "@utils";
+import { generateUniqueCode, logger, normalizePhone } from "@utils";
 
 export const verifyAuthToken = asyncHandler(
   async (req: Request, res: Response) => {
@@ -297,7 +302,7 @@ export const verifyPhoneOtp = asyncHandler(
       // Create new user with phone number
       isNewUser = true;
       const newUserData = {
-        user_id: nanoid(),
+        user_id: generateUniqueCode(UniqueCodeTypes.USER),
         phone_number: normalizedPhone,
         user_type: (role || "parent") as "parent" | "driver",
         is_active: true,

@@ -24,6 +24,12 @@ Complete API reference with request payloads, response formats, and error messag
   - [Create Driver Profile](#create-driver-profile)
   - [Update Driver Profile](#update-driver-profile)
   - [Upload/Update Driver Documents](#uploadupdate-driver-documents)
+- [School Endpoints](#school-endpoints)
+  - [Create School](#create-school)
+  - [Get All Schools](#get-all-schools)
+  - [Get School by ID](#get-school-by-id)
+  - [Update School](#update-school)
+  - [Delete School](#delete-school)
 - [Student Endpoints](#student-endpoints)
   - [Create Student](#create-student)
   - [Get My Students](#get-my-students)
@@ -1173,6 +1179,318 @@ In development mode (`NODE_ENV=development`), some endpoints include additional 
 ## Rate Limiting
 
 Authentication endpoints (`/api/auth/login/send-otp`, `/api/auth/login/verify-otp`, `/api/auth/register/send-otp`, `/api/auth/register/verify-otp`) have rate limiting enabled to prevent brute-force attacks and abuse.
+
+---
+
+## School Endpoints
+
+All school endpoints require authentication via JWT token in the `Authorization` header.
+
+**Request Headers**:
+
+```http
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+---
+
+### Create School
+
+Create a new school record.
+
+**Endpoint**: `POST /api/schools`
+
+**Authentication**: Required
+
+**Request Payload**:
+
+```json
+{
+  "school_name": "Springfield Elementary School",
+  "address": "742 Evergreen Terrace, Springfield",
+  "city": "Springfield",
+  "state": "Illinois",
+  "latitude": 39.7817,
+  "longitude": -89.6501,
+  "contact_number": "+1234567890",
+  "email": "admin@springfield-school.edu"
+}
+```
+
+**Required Fields**:
+
+- `school_name` (string): School name (3-200 characters)
+- `address` (string): Full address (max 255 characters)
+- `city` (string): City name (max 100 characters)
+- `state` (string): State name (max 100 characters)
+- `latitude` (number): Latitude coordinate (-90 to 90)
+- `longitude` (number): Longitude coordinate (-180 to 180)
+
+**Optional Fields**:
+
+- `contact_number` (string): School contact number (10-15 digits)
+- `email` (string): School email address
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "school_id": "W2TuHYS9_A6keIj7C",
+    "school_name": "Springfield Elementary School",
+    "address": "742 Evergreen Terrace, Springfield",
+    "city": "Springfield",
+    "state": "Illinois",
+    "latitude": 39.7817,
+    "longitude": -89.6501,
+    "contact_number": "+1234567890",
+    "email": "admin@springfield-school.edu",
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-20T10:30:00.000Z"
+  },
+  "message": "School created successfully"
+}
+```
+
+> Note: A unique `school_id` (format: nanoid) is automatically generated
+
+**Error Responses**:
+
+| Status | Error Message                                                           |
+| ------ | ----------------------------------------------------------------------- |
+| 400    | Validation errors (e.g., `"School name must be between 3-200 characters"`) |
+| 401    | `"User not authenticated"`                                              |
+| 500    | `"Failed to create school"`                                             |
+
+---
+
+### Get All Schools
+
+Retrieve all schools, with optional filtering by city, state, or search query.
+
+**Endpoint**: `GET /api/schools`
+
+**Authentication**: Required
+
+**Query Parameters** (all optional):
+
+- `city` (string): Filter schools by city name
+- `state` (string): Filter schools by state name
+- `search` (string): Search schools by name (partial match)
+
+**Request Examples**:
+
+```http
+GET /api/schools
+GET /api/schools?city=Springfield
+GET /api/schools?state=Illinois
+GET /api/schools?search=elementary
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "school_id": "W2TuHYS9_A6keIj7C",
+      "school_name": "Springfield Elementary School",
+      "address": "742 Evergreen Terrace, Springfield",
+      "city": "Springfield",
+      "state": "Illinois",
+      "latitude": 39.7817,
+      "longitude": -89.6501,
+      "contact_number": "+1234567890",
+      "email": "admin@springfield-school.edu",
+      "created_at": "2024-01-20T10:30:00.000Z",
+      "updated_at": "2024-01-20T10:30:00.000Z"
+    },
+    {
+      "school_id": "X3UvIZT0_B7lfJk8D",
+      "school_name": "Springfield High School",
+      "address": "500 Main Street, Springfield",
+      "city": "Springfield",
+      "state": "Illinois",
+      "latitude": 39.7920,
+      "longitude": -89.6440,
+      "contact_number": "+1234567891",
+      "email": "info@springfield-high.edu",
+      "created_at": "2024-01-15T08:20:00.000Z",
+      "updated_at": "2024-01-15T08:20:00.000Z"
+    }
+  ],
+  "message": "Schools list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                  |
+| ------ | ------------------------------ |
+| 401    | `"User not authenticated"`     |
+| 500    | `"Failed to fetch schools"`    |
+
+---
+
+### Get School by ID
+
+Retrieve a specific school by its ID.
+
+**Endpoint**: `GET /api/schools/:school_id`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `school_id` (string): School ID
+
+**Request**:
+
+```http
+GET /api/schools/W2TuHYS9_A6keIj7C
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "school_id": "W2TuHYS9_A6keIj7C",
+    "school_name": "Springfield Elementary School",
+    "address": "742 Evergreen Terrace, Springfield",
+    "city": "Springfield",
+    "state": "Illinois",
+    "latitude": 39.7817,
+    "longitude": -89.6501,
+    "contact_number": "+1234567890",
+    "email": "admin@springfield-school.edu",
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-20T10:30:00.000Z"
+  },
+  "message": "School fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message              |
+| ------ | -------------------------- |
+| 401    | `"User not authenticated"` |
+| 404    | `"School not found"`       |
+| 500    | `"Failed to fetch school"` |
+
+---
+
+### Update School
+
+Update a school's information by ID.
+
+**Endpoint**: `PUT /api/schools/:school_id`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `school_id` (string): School ID
+
+**Request Payload**:
+
+```json
+{
+  "school_name": "Springfield Elementary & Middle School",
+  "contact_number": "+1234567899",
+  "email": "contact@springfield-school.edu"
+}
+```
+
+**Updatable Fields**:
+
+- `school_name` (string): 3-200 characters
+- `address` (string): Max 255 characters
+- `city` (string): Max 100 characters
+- `state` (string): Max 100 characters
+- `latitude` (number): -90 to 90
+- `longitude` (number): -180 to 180
+- `contact_number` (string): 10-15 digits
+- `email` (string): Valid email address
+
+> Note: All fields are optional. Update any combination of fields.
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "school_id": "W2TuHYS9_A6keIj7C",
+    "school_name": "Springfield Elementary & Middle School",
+    "address": "742 Evergreen Terrace, Springfield",
+    "city": "Springfield",
+    "state": "Illinois",
+    "latitude": 39.7817,
+    "longitude": -89.6501,
+    "contact_number": "+1234567899",
+    "email": "contact@springfield-school.edu",
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-21T14:45:00.000Z"
+  },
+  "message": "School updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                             |
+| ------ | ------------------------------------------------------------------------- |
+| 400    | Validation errors (e.g., `"School name must be between 3-200 characters"`) |
+| 401    | `"User not authenticated"`                                                |
+| 404    | `"School not found"`                                                      |
+| 500    | `"Failed to update school"`                                               |
+
+---
+
+### Delete School
+
+Delete a school by ID.
+
+**Endpoint**: `DELETE /api/schools/:school_id`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `school_id` (string): School ID
+
+**Request**:
+
+```http
+DELETE /api/schools/W2TuHYS9_A6keIj7C
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "School deleted successfully"
+}
+```
+
+> Note: This permanently deletes the school record from the database.
+
+**Error Responses**:
+
+| Status | Error Message              |
+| ------ | -------------------------- |
+| 401    | `"User not authenticated"` |
+| 404    | `"School not found"`       |
+| 500    | `"Failed to delete school"` |
 
 ---
 

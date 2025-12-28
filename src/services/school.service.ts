@@ -1,10 +1,15 @@
 import { WithId } from "mongodb";
-import { nanoid } from "nanoid";
 
-import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
+import {
+  AlphabetType,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  UniqueCodeTypes,
+} from "@constants";
 import { ApiError } from "@middlewares";
 import { School } from "@models/school.type";
 import { schoolRepository } from "@repositories/school.repository";
+import { generateUniqueCode } from "@utils";
 
 export const createSchool = async (
   data: Omit<School, "school_id" | "created_at">,
@@ -23,19 +28,13 @@ export const createSchool = async (
   }
 
   const schoolData: School = {
-    school_id: nanoid(),
+    school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL),
     ...data,
     created_at: new Date(),
     updated_at: new Date(),
   };
 
   return await schoolRepository.create(schoolData);
-};
-
-export const getSchoolById = async (
-  id: string,
-): Promise<WithId<School> | null> => {
-  return await schoolRepository.findById(id);
 };
 
 export const getAllSchools = async (): Promise<WithId<School>[]> => {
@@ -60,12 +59,19 @@ export const searchSchools = async (
   return await schoolRepository.searchSchools(query);
 };
 
+// Operations using school_id instead of MongoDB _id
+export const getSchool = async (
+  schoolId: string,
+): Promise<WithId<School> | null> => {
+  return await schoolRepository.findBySchoolId(schoolId);
+};
+
 export const updateSchool = async (
-  id: string,
+  schoolId: string,
   updates: Partial<School>,
 ): Promise<WithId<School> | null> => {
   // Get current school
-  const currentSchool = await schoolRepository.findById(id);
+  const currentSchool = await schoolRepository.findBySchoolId(schoolId);
 
   if (!currentSchool) {
     return null;
@@ -79,7 +85,7 @@ export const updateSchool = async (
     );
 
     // If duplicate exists and it's not the same school
-    if (duplicate && duplicate._id.toString() !== id) {
+    if (duplicate && duplicate.school_id !== schoolId) {
       throw new ApiError(
         HTTP_STATUS.CONFLICT,
         ERROR_MESSAGES.SCHOOL.ALREADY_EXISTS,
@@ -87,11 +93,12 @@ export const updateSchool = async (
     }
   }
 
-  return await schoolRepository.updateById(id, {
-    $set: { ...updates, updated_at: new Date() },
-  });
+  return await schoolRepository.updateOne(
+    { school_id: schoolId },
+    { $set: { ...updates, updated_at: new Date() } },
+  );
 };
 
-export const deleteSchool = async (id: string): Promise<boolean> => {
-  return await schoolRepository.deleteById(id);
+export const deleteSchool = async (schoolId: string): Promise<boolean> => {
+  return await schoolRepository.deleteOne({ school_id: schoolId });
 };

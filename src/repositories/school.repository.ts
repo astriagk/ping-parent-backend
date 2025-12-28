@@ -34,6 +34,10 @@ export class SchoolRepository extends BaseRepository<School> {
       $or: [{ school_name: { $regex: regex } }, { city: { $regex: regex } }],
     } as any);
   }
+
+  async findBySchoolId(schoolId: string): Promise<WithId<School> | null> {
+    return await this.findOne({ school_id: schoolId });
+  }
 }
 
 export const schoolRepository = new SchoolRepository();

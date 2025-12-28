@@ -1,11 +1,17 @@
 import { WithId } from "mongodb";
-import { nanoid } from "nanoid";
 
 import { getDB } from "@config";
-import { ERROR_MESSAGES, HTTP_STATUS, PARENTS_COLLECTION } from "@constants";
+import {
+  AlphabetType,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  PARENTS_COLLECTION,
+  UniqueCodeTypes,
+} from "@constants";
 import { ApiError } from "@middlewares";
 import { Student } from "@models/student.type";
 import { studentRepository } from "@repositories/student.repository";
+import { generateUniqueCode } from "@utils";
 
 /**
  * Get parent_id from user_id
@@ -58,7 +64,7 @@ export const createStudent = async (
   }
 
   const studentData: Student = {
-    student_id: nanoid(),
+    student_id: generateUniqueCode(UniqueCodeTypes.STUDENT),
     parent_id: parentId,
     ...data,
     is_active: true,

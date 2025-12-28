@@ -21,3 +21,16 @@ export enum OTPPurpose {
   PHONE_VERIFICATION = "phoneVerification",
   LOGIN = "login",
 }
+
+export enum AlphabetType {
+  Alphanumeric = "alphanumeric",
+  Uppercase = "uppercase",
+  Lowercase = "lowercase",
+  Numbers = "numbers",
+}
+
+export enum UniqueCodeTypes {
+  SCHOOL = "SCH",
+  STUDENT = "STU",
+  USER = "USR",
+}

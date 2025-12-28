@@ -179,7 +179,9 @@ export interface Entity {
 
 ```typescript
 // types/student.type.ts
-import { Gender } from "@constants/enums"; // Import enum from constants
+import { Gender } from "@constants/enums";
+
+// Import enum from constants
 
 export interface Student {
   _id?: any;
@@ -218,6 +220,7 @@ export enum UserRole {
 
 ```typescript
 import Joi from "joi";
+
 import { VALIDATION_MESSAGES } from "@constants";
 
 export const createEntitySchema = Joi.object({
@@ -267,8 +270,10 @@ tags: Joi.array().items(Joi.string()).min(1).max(10);
 
 ```typescript
 import { WithId } from "mongodb";
+
 import { COLLECTION_NAME } from "@constants";
 import { EntityType } from "@models/{entity}.type";
+
 import { BaseRepository } from "./base.repository";
 
 export class EntityRepository extends BaseRepository<EntityType> {
@@ -324,11 +329,13 @@ export const getEntityByField = async (
 **Purpose**: Handle HTTP requests/responses, minimal logic
 
 **CRITICAL: Export controller functions WITHOUT the "Controller" suffix**
+
 - ✅ Correct: `export const createSchool`, `export const getAllSchools`
 - ❌ Wrong: `export const createSchoolController`, `export const getAllSchoolsController`
 
 ```typescript
 import { Request, Response } from "express";
+
 import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import { serviceFunction } from "@services/{entity}.service";
@@ -367,6 +374,7 @@ export const controllerName = asyncHandler(
 
 ```typescript
 import { Router } from "express";
+
 import {
   controllerFunction1,
   controllerFunction2,
@@ -390,10 +398,10 @@ export default router;
 ```typescript
 router.post(
   "/endpoint",
-  validate(schema),      // 1. Validation first
-  authMiddleware,        // 2. Authentication second
-  rateLimiter,          // 3. Rate limiting (if needed)
-  controllerFunction,   // 4. Controller last
+  validate(schema), // 1. Validation first
+  authMiddleware, // 2. Authentication second
+  rateLimiter, // 3. Rate limiting (if needed)
+  controllerFunction, // 4. Controller last
 );
 ```
 
@@ -404,6 +412,7 @@ router.post(
 ### Constants Structure
 
 **IMPORTANT: Reuse Existing Constants**
+
 - Before adding new constants, **ALWAYS check if similar constants already exist**
 - Search through `constants/messages.ts`, `constants/validationMessages.ts`
 - Reuse existing constants instead of creating duplicates
@@ -499,6 +508,7 @@ return ApiResponse.badRequest(res, ERROR_MESSAGES.VALIDATION.INVALID_INPUT);
 // middlewares/validate.middleware.ts
 import { NextFunction, Request, Response } from "express";
 import { ObjectSchema } from "joi";
+
 import { HTTP_STATUS } from "@constants";
 
 export const validate = (schema: ObjectSchema) => {
@@ -532,18 +542,21 @@ export const validate = (schema: ObjectSchema) => {
 The project uses role-based authentication middlewares located in `middlewares/auth.middleware.ts`.
 
 **1. Generic Token Verification (`verifyToken_Middleware`)**:
+
 ```typescript
 // Use for routes that require authentication but any role is allowed
 router.get("/profile", verifyToken_Middleware, getProfile);
 ```
 
 **2. Parent-Specific Authentication (`verifyParentToken`)**:
+
 ```typescript
 // Use for parent-only routes
 router.get("/my-children", verifyParentToken, getMyChildren);
 ```
 
 **3. Driver-Specific Authentication (`verifyDriverToken`)**:
+
 ```typescript
 // Use for driver-only routes
 router.get("/my-trips", verifyDriverToken, getMyTrips);
@@ -552,6 +565,7 @@ router.get("/my-trips", verifyDriverToken, getMyTrips);
 ### Other Middlewares
 
 **AsyncHandler** - Wraps async route handlers to catch errors:
+
 ```typescript
 import { asyncHandler } from "@middlewares";
 
@@ -561,6 +575,7 @@ export const myController = asyncHandler(async (req, res) => {
 ```
 
 **Rate Limiting**:
+
 ```typescript
 import { loginRateLimiter } from "@middlewares";
 
@@ -651,11 +666,95 @@ Before considering the task complete, verify:
 
 ## Key Patterns
 
-### 1. User ID to Foreign Key Conversion Pattern
+### 1. Unique ID Generation Pattern
+
+**CRITICAL PATTERN**: Use `generateUniqueCode` utility for all entity IDs to maintain consistency and traceability.
+
+**Implementation**:
+
+```typescript
+// Import the utility and constants
+import { AlphabetType, UniqueCodeTypes } from "@constants";
+import { generateUniqueCode } from "@utils";
+
+// Generate entity ID with prefix
+const school_id = generateUniqueCode(UniqueCodeTypes.SCHOOL);
+// Result: SCHa2B9k4Lm
+
+const student_id = generateUniqueCode(UniqueCodeTypes.STUDENT);
+// Result: STUx7Y3m9Pq
+```
+
+**Configuration Options**:
+
+```typescript
+interface GenerateUniqueCodeOptions {
+  length?: number; // Default: 8
+  alphabetType?: AlphabetType; // Default: Alphanumeric
+  separator?: string; // Default: "-"
+}
+
+// Available alphabet types (from constants/enums.ts)
+export enum AlphabetType {
+  Alphanumeric = "alphanumeric", // 0-9, A-Z, a-z
+  Uppercase = "uppercase", // 0-9, A-Z
+  Lowercase = "lowercase", // 0-9, a-z
+  Numbers = "numbers", // 0-9 only
+}
+```
+
+**Entity Prefixes** (defined in `constants/enums.ts`):
+
+```typescript
+export enum UniqueCodeTypes {
+  SCHOOL = "SCH",
+  STUDENT = "STU",
+  USER = "USR",
+  // Add new entity prefixes here when creating new modules
+}
+```
+
+**Adding New Entity Prefix**:
+
+1. Add enum value to `UniqueCodeTypes` in `constants/enums.ts`
+2. Use in service layer when creating entity records
+
+**Benefits**:
+
+- **Traceability**: Instantly identify entity type from ID (e.g., "SCH..." = School)
+- **Debugging**: Easier to track entities in logs and databases
+- **Consistency**: Uniform ID format across all entities
+- **Data Management**: Simplifies data migration and cleanup operations
+
+**Example in Service**:
+
+```typescript
+// services/school.service.ts
+import { AlphabetType, UniqueCodeTypes } from "@constants";
+import { generateUniqueCode } from "@utils";
+
+export const createSchool = async (
+  data: Omit<School, "school_id" | "created_at">,
+): Promise<WithId<School>> => {
+  const schoolData: School = {
+    school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL),
+    ...data,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  return await schoolRepository.create(schoolData);
+};
+```
+
+---
+
+### 2. User ID to Foreign Key Conversion Pattern
 
 **CRITICAL PATTERN**: When implementing modules that reference parent or driver entities (like students, addresses), convert the authenticated user's `userId` to the appropriate foreign key.
 
 **Database Relationship Chain**:
+
 ```
 users.user_id (from JWT) → parents.user_id → parents._id (stored as parent_id in child tables)
 users.user_id (from JWT) → drivers.user_id → drivers._id (stored as driver_id in child tables)
@@ -710,6 +809,7 @@ export const createStudent = async (
 ```
 
 **Controller Layer**:
+
 ```typescript
 export const createStudent = asyncHandler(
   async (req: Request, res: Response) => {
@@ -736,6 +836,7 @@ export const createStudent = asyncHandler(
 ```
 
 **Validation Layer** - Remove foreign key from request:
+
 ```typescript
 // DON'T accept parent_id from request body
 export const createStudentSchema = Joi.object({
@@ -747,17 +848,19 @@ export const createStudentSchema = Joi.object({
 ```
 
 **Benefits**:
+
 - Security: Users can only create/modify their own child records
 - Simplified API: Clients don't need to provide parent_id/driver_id
 - Data Integrity: Prevents users from creating records for others
 
 ---
 
-### 2. Duplicate Checking Pattern
+### 3. Duplicate Checking Pattern
 
 **CRITICAL**: Always implement duplicate checking for create and update operations to prevent data duplication.
 
 **Repository Method**:
+
 ```typescript
 async findDuplicateStudent(
   parentId: string,
@@ -776,6 +879,7 @@ async findDuplicateStudent(
 ```
 
 **Service Layer - Create**:
+
 ```typescript
 export const createStudent = async (
   data: Omit<Student, "student_id" | "created_at" | "is_active">,
@@ -800,6 +904,7 @@ export const createStudent = async (
 ```
 
 **Service Layer - Update**:
+
 ```typescript
 export const updateStudent = async (
   id: string,
@@ -844,24 +949,44 @@ export const updateStudent = async (
 
 ### Common Patterns
 
-**ID Generation**:
+**ID Generation with Prefixes** (Recommended):
+
+```typescript
+import { AlphabetType, UniqueCodeTypes } from "@constants";
+import { generateUniqueCode } from "@utils";
+
+// Generate school ID with prefix
+const school_id = generateUniqueCode(UniqueCodeTypes.SCHOOL);
+// Result: SCHa2B9k4Lm
+
+// Generate student ID
+const student_id = generateUniqueCode(UniqueCodeTypes.STUDENT);
+// Result: STUx7Y3m9Pq
+```
+
+**Legacy ID Generation** (Use only if no prefix needed):
+
 ```typescript
 import { nanoid } from "nanoid";
+
 const id = nanoid();
 ```
 
 **Timestamps**:
+
 ```typescript
 created_at: new Date(),
 updated_at: new Date()
 ```
 
 **Soft Delete**:
+
 ```typescript
 $set: { is_active: false, updated_at: new Date() }
 ```
 
 **Update Pattern**:
+
 ```typescript
 await repository.updateById(id, {
   $set: { ...updates, updated_at: new Date() },
@@ -869,12 +994,15 @@ await repository.updateById(id, {
 ```
 
 **Phone Normalization**:
+
 ```typescript
 import { normalizePhone } from "@utils";
+
 const normalizedPhone = normalizePhone(phone);
 ```
 
 **Response Formats**:
+
 ```typescript
 // Success Response
 return res.json({
@@ -892,15 +1020,25 @@ throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ENTITY.NOT_FOUND);
 The project uses TypeScript path aliases:
 
 ```typescript
-import { something } from "@config";        // src/config
-import { HTTP_STATUS } from "@constants";   // src/constants
-import { controller } from "@controllers";  // src/controllers
-import { middleware } from "@middlewares";  // src/middlewares
-import { Type } from "@models";             // src/types (use @models alias)
-import { repository } from "@repositories"; // src/repositories
-import { service } from "@services";        // src/services
-import { helper } from "@utils";            // src/utils
-import { schema } from "@validations";      // src/validations
+import { something } from "@config";
+// src/config
+import { HTTP_STATUS } from "@constants";
+// src/constants
+import { controller } from "@controllers";
+// src/controllers
+import { middleware } from "@middlewares";
+// src/middlewares
+import { Type } from "@models";
+// src/types (use @models alias)
+import { repository } from "@repositories";
+// src/repositories
+import { service } from "@services";
+// src/services
+import { helper } from "@utils";
+// src/utils
+import { schema } from "@validations";
+
+// src/validations
 ```
 
 ### File Placement Standards
@@ -957,13 +1095,16 @@ src/
 
 12. **Duplicate Checking**: Implement duplicate checking for create/update operations based on business logic.
 
-13. **Update Documentation**: After implementing a new module, update both `docs/API_DOCUMENTATION.md` and `docs/swagger.yaml`.
+13. **Unique ID Generation**: Always use `generateUniqueCode` with entity prefix from `UniqueCodeTypes` enum. Add new prefixes to `constants/enums.ts` when creating new modules.
+
+14. **Update Documentation**: After implementing a new module, update both `docs/API_DOCUMENTATION.md` and `docs/swagger.yaml`.
 
 ---
 
 ## Additional Resources
 
 For detailed implementation examples, see:
+
 - **[IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md)** - Complete module examples (Student, Trip)
 - **[SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md)** - Swagger/OpenAPI documentation guide
 - **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common mistakes and debugging tips

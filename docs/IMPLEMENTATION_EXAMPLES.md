@@ -62,7 +62,9 @@ export enum Gender {
 ### 2. Type Definition (`types/student.type.ts`)
 
 ```typescript
-import { Gender } from "@constants/enums"; // Import enum from constants
+import { Gender } from "@constants/enums";
+
+// Import enum from constants
 
 export interface Student {
   _id?: any;
@@ -90,6 +92,7 @@ export interface Student {
 ### 3. Constants Updates
 
 **Add to `constants/collections.ts`**:
+
 ```typescript
 export const COLLECTIONS = {
   // ... existing collections
@@ -99,7 +102,19 @@ export const COLLECTIONS = {
 export const STUDENTS_COLLECTION = COLLECTIONS.STUDENTS;
 ```
 
+**Add unique code prefix to `constants/enums.ts`** (if creating new entity):
+
+```typescript
+export enum UniqueCodeTypes {
+  SCHOOL = "SCH",
+  STUDENT = "STU",
+  USER = "USR",
+  // Add new entity prefix here
+}
+```
+
 **Add to `constants/messages.ts`**:
+
 ```typescript
 export const ERROR_MESSAGES = {
   // ... existing
@@ -110,7 +125,8 @@ export const ERROR_MESSAGES = {
     NAME_REQUIRED: "Student name is required",
     PARENT_ID_REQUIRED: "Parent ID is required",
     SCHOOL_ID_REQUIRED: "School ID is required",
-    ALREADY_EXISTS: "A student with the same name, school, and class already exists for this parent",
+    ALREADY_EXISTS:
+      "A student with the same name, school, and class already exists for this parent",
   },
 };
 
@@ -126,6 +142,7 @@ export const SUCCESS_MESSAGES = {
 ```
 
 **Validation messages are already present in `constants/validationMessages.ts`**:
+
 ```typescript
 export const VALIDATION_MESSAGES = {
   // ... existing
@@ -157,8 +174,10 @@ export const VALIDATION_MESSAGES = {
 
 ```typescript
 import Joi from "joi";
-import { Gender } from "@constants/enums"; // Import enum
+
+// Import enum
 import { VALIDATION_MESSAGES } from "@constants";
+import { Gender } from "@constants/enums";
 
 export const createStudentSchema = Joi.object({
   // NOTE: parent_id is NOT included - it's derived from authenticated user
@@ -196,7 +215,8 @@ export const createStudentSchema = Joi.object({
     .pattern(/^[+]?[0-9]{10,15}$/)
     .optional()
     .messages({
-      "string.pattern.base": VALIDATION_MESSAGES.STUDENT.EMERGENCY_CONTACT_PATTERN,
+      "string.pattern.base":
+        VALIDATION_MESSAGES.STUDENT.EMERGENCY_CONTACT_PATTERN,
     }),
   medical_info: Joi.string().max(500).optional().messages({
     "string.max": VALIDATION_MESSAGES.STUDENT.MEDICAL_INFO_MAX,
@@ -234,7 +254,8 @@ export const updateStudentSchema = Joi.object({
     .pattern(/^[+]?[0-9]{10,15}$/)
     .optional()
     .messages({
-      "string.pattern.base": VALIDATION_MESSAGES.STUDENT.EMERGENCY_CONTACT_PATTERN,
+      "string.pattern.base":
+        VALIDATION_MESSAGES.STUDENT.EMERGENCY_CONTACT_PATTERN,
     }),
   medical_info: Joi.string().max(500).optional().messages({
     "string.max": VALIDATION_MESSAGES.STUDENT.MEDICAL_INFO_MAX,
@@ -251,8 +272,10 @@ export const updateStudentSchema = Joi.object({
 
 ```typescript
 import { WithId } from "mongodb";
+
 import { STUDENTS_COLLECTION } from "@constants";
 import { Student } from "@models/student.type";
+
 import { BaseRepository } from "./base.repository";
 
 export class StudentRepository extends BaseRepository<Student> {
@@ -297,12 +320,19 @@ export const studentRepository = new StudentRepository();
 
 ```typescript
 import { WithId } from "mongodb";
-import { nanoid } from "nanoid";
+
 import { getDB } from "@config";
-import { ERROR_MESSAGES, HTTP_STATUS, PARENTS_COLLECTION } from "@constants";
+import {
+  AlphabetType,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  PARENTS_COLLECTION,
+  UniqueCodeTypes,
+} from "@constants";
 import { ApiError } from "@middlewares";
 import { Student } from "@models/student.type";
 import { studentRepository } from "@repositories/student.repository";
+import { generateUniqueCode } from "@utils";
 
 /**
  * Helper function to convert userId to parent_id
@@ -352,7 +382,7 @@ export const createStudent = async (
   }
 
   const studentData: Student = {
-    student_id: nanoid(),
+    student_id: generateUniqueCode(UniqueCodeTypes.STUDENT),
     parent_id: parentId,
     ...data,
     is_active: true,
@@ -437,6 +467,7 @@ export const deleteStudent = async (id: string): Promise<boolean> => {
 
 ```typescript
 import { Request, Response } from "express";
+
 import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
@@ -560,6 +591,7 @@ export const deleteStudentProfile = asyncHandler(
 
 ```typescript
 import { Router } from "express";
+
 import {
   createStudent,
   deleteStudentProfile,
@@ -567,7 +599,7 @@ import {
   getStudentProfile,
   updateStudentProfile,
 } from "@controllers/student.controller";
-import { verifyParentToken, validate } from "@middlewares";
+import { validate, verifyParentToken } from "@middlewares";
 import {
   createStudentSchema,
   updateStudentSchema,
@@ -631,7 +663,7 @@ parent_addresses.parent_id = parents._id
 ```typescript
 // services/student.service.ts (or create a shared service)
 import { getDB } from "@config";
-import { PARENTS_COLLECTION, DRIVERS_COLLECTION } from "@constants";
+import { DRIVERS_COLLECTION, PARENTS_COLLECTION } from "@constants";
 
 /**
  * Convert authenticated userId to parent_id for child records
@@ -685,7 +717,7 @@ export const createStudent = async (
 
   // Now use parent_id to create student
   const studentData: Student = {
-    student_id: nanoid(),
+    student_id: generateUniqueCode(UniqueCodeTypes.STUDENT),
     parent_id: parentId, // Converted from userId
     ...data,
     is_active: true,
@@ -767,6 +799,7 @@ export const createStudentSchema = Joi.object({
 ### When to Add Duplicate Checking
 
 Implement duplicate checking when:
+
 - Creating records that should be unique based on business logic
 - Multiple fields together form a logical unique constraint
 - Database doesn't enforce the uniqueness constraint
@@ -833,7 +866,7 @@ export const createStudent = async (
 
   // Proceed with creation...
   const studentData: Student = {
-    student_id: nanoid(),
+    student_id: generateUniqueCode(UniqueCodeTypes.STUDENT),
     parent_id: parentId,
     ...data,
     is_active: true,
@@ -895,7 +928,8 @@ export const updateStudent = async (
 // constants/messages.ts
 export const ERROR_MESSAGES = {
   STUDENT: {
-    ALREADY_EXISTS: "A student with the same name, school, and class already exists for this parent",
+    ALREADY_EXISTS:
+      "A student with the same name, school, and class already exists for this parent",
     // ...
   },
 };
@@ -904,6 +938,7 @@ export const ERROR_MESSAGES = {
 ### Different Duplicate Patterns
 
 **Pattern 1: Simple Field Uniqueness**
+
 ```typescript
 // Example: School name must be unique
 async findDuplicateSchool(schoolName: string): Promise<WithId<School> | null> {
@@ -915,6 +950,7 @@ async findDuplicateSchool(schoolName: string): Promise<WithId<School> | null> {
 ```
 
 **Pattern 2: Scoped Uniqueness**
+
 ```typescript
 // Example: Address label must be unique per parent
 async findDuplicateAddress(
@@ -930,6 +966,7 @@ async findDuplicateAddress(
 ```
 
 **Pattern 3: Composite Key Uniqueness**
+
 ```typescript
 // Example: Driver-vehicle combination must be unique
 async findDuplicateDriverVehicle(
@@ -949,6 +986,7 @@ async findDuplicateDriverVehicle(
 ## Summary
 
 This document demonstrates:
+
 1. Complete module implementation following all patterns
 2. **Proper handling of enums** - ALL enums defined in `constants/enums.ts`
 3. **Proper validation messages** - ALL messages from `constants/validationMessages.ts`
@@ -962,6 +1000,7 @@ Use this example as a template when implementing new features in the Ping Parent
 ---
 
 **Related Documents**:
+
 - [AI_CONTEXT.md](./AI_CONTEXT.md) - Core patterns and conventions
 - [SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md) - API documentation
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common mistakes

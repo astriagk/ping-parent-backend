@@ -5,7 +5,7 @@ import {
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
 } from "@constants";
-import { Driver, DriverAddress, DriverDocument } from "@models";
+import { Driver, DriverAddress, DriverDocument } from "@models/driver.type";
 
 import { BaseRepository } from "./base.repository";
 

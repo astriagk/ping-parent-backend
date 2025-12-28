@@ -6,7 +6,7 @@ import {
   createSchool as createSchoolService,
   deleteSchool as deleteSchoolService,
   getAllSchools as getAllSchoolsService,
-  getSchoolById,
+  getSchool as getSchoolService,
   getSchoolsByCity,
   getSchoolsByState,
   searchSchools,
@@ -28,9 +28,9 @@ export const createSchool = asyncHandler(
 );
 
 export const getSchool = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params;
+  const { school_id } = req.params;
 
-  const school = await getSchoolById(id);
+  const school = await getSchoolService(school_id);
 
   if (!school) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.SCHOOL.NOT_FOUND);
@@ -69,10 +69,10 @@ export const getAllSchools = asyncHandler(
 
 export const updateSchool = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { school_id } = req.params;
     const updates = req.body;
 
-    const school = await updateSchoolService(id, updates);
+    const school = await updateSchoolService(school_id, updates);
 
     if (!school) {
       throw new ApiError(
@@ -91,9 +91,9 @@ export const updateSchool = asyncHandler(
 
 export const deleteSchool = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { school_id } = req.params;
 
-    const deleted = await deleteSchoolService(id);
+    const deleted = await deleteSchoolService(school_id);
 
     if (!deleted) {
       throw new ApiError(

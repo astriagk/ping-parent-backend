@@ -6,12 +6,12 @@ This document contains ready-to-use prompt templates for working with AI agents 
 
 | Task | Template Section |
 |------|-----------------|
-| Create new CRUD module | [New Module](#new-module-template) |
-| Fix bugs/errors | [Bug Fix](#bug-fix-template) |
-| Add single endpoint | [New Endpoint](#new-endpoint-template) |
-| Review/audit code | [Code Review](#code-review-template) |
-| Update documentation | [Documentation](#documentation-template) |
-| Add Swagger docs | [Swagger](#swagger-documentation-template) |
+| Create new CRUD module | [New Module](#-new-module-template) |
+| Fix bugs/errors | [Bug Fix](#-bug-fix-template) |
+| Add single endpoint | [New Endpoint](#-new-endpoint-template) |
+| Review/audit code | [Code Review](#-code-review-template) |
+| Update documentation | [Documentation](#-documentation-template) |
+| Add Swagger docs | [Swagger](#-swagger-documentation-template) |
 
 ---
 

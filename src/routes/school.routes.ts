@@ -21,8 +21,8 @@ router.use(verifyToken_Middleware);
 // School CRUD operations
 router.post("/", validate(createSchoolSchema), createSchool);
 router.get("/", getAllSchools);
-router.get("/:id", getSchool);
-router.put("/:id", validate(updateSchoolSchema), updateSchool);
-router.delete("/:id", deleteSchool);
+router.get("/:school_id", getSchool);
+router.put("/:school_id", validate(updateSchoolSchema), updateSchool);
+router.delete("/:school_id", deleteSchool);
 
 export default router;

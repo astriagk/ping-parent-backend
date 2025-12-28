@@ -156,10 +156,10 @@ router.post("/endpoint", authMiddleware, controller, validate(schema));
 // ✅ CORRECT
 router.post(
   "/endpoint",
-  validate(schema),      // 1. Validation first
-  authMiddleware,        // 2. Authentication second
-  rateLimiter,          // 3. Rate limiting (if needed)
-  controller,           // 4. Controller last
+  validate(schema), // 1. Validation first
+  authMiddleware, // 2. Authentication second
+  rateLimiter, // 3. Rate limiting (if needed)
+  controller, // 4. Controller last
 );
 ```
 
@@ -203,10 +203,10 @@ export const schoolRepository = new SchoolRepository();
 **Problem**: Putting business logic in controllers instead of services
 
 ```typescript
-// ❌ WRONG
+// ❌ WRONG - Business logic in controller
 export const createSchool = asyncHandler(async (req, res) => {
   const school = {
-    school_id: nanoid(),
+    school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL),
     ...req.body,
     is_active: true,
     created_at: new Date(),
@@ -233,9 +233,11 @@ export const createSchool = asyncHandler(async (req, res) => {
 });
 
 // ✅ CORRECT - Service
-export const createSchoolService = async (data: Omit<School, "school_id" | "created_at" | "is_active">) => {
+export const createSchoolService = async (
+  data: Omit<School, "school_id" | "created_at" | "is_active">,
+) => {
   const schoolData: School = {
-    school_id: nanoid(),
+    school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL),
     ...data,
     is_active: true,
     created_at: new Date(),
@@ -250,7 +252,59 @@ export const createSchoolService = async (data: Omit<School, "school_id" | "crea
 
 ---
 
-### ❌ Mistake #8: Forgetting to Register Routes
+### ❌ Mistake #8: Using nanoid Instead of generateUniqueCode
+
+**Problem**: Using plain nanoid without entity prefix
+
+```typescript
+// ❌ WRONG
+import { nanoid } from "nanoid";
+
+const schoolData: School = {
+  school_id: nanoid(), // No prefix, hard to identify entity type
+  ...data,
+};
+```
+
+**Solution**: Use generateUniqueCode with entity prefix
+
+```typescript
+// ✅ CORRECT
+import { AlphabetType, UniqueCodeTypes } from "@constants";
+import { generateUniqueCode } from "@utils";
+
+const schoolData: School = {
+  school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL), // Generates: SCHa2B9k4Lm
+  ...data,
+};
+```
+
+**Why**: Prefixed IDs make it easier to:
+
+- Identify entity type from ID alone
+- Debug and trace issues
+- Maintain consistency across the application
+- Support easier data migration and cleanup
+
+**Available Prefixes** (in `constants/enums.ts`):
+
+```typescript
+export enum UniqueCodeTypes {
+  SCHOOL = "SCH",
+  STUDENT = "STU",
+  USER = "USR",
+  // Add new entity prefixes here
+}
+```
+
+**Adding New Entity Prefix**:
+
+1. Add to `constants/enums.ts` in `UniqueCodeTypes`
+2. Use in service layer with `generateUniqueCode`
+
+---
+
+### ❌ Mistake #9: Forgetting to Register Routes
 
 **Problem**: Created routes file but forgot to register in `routes/index.ts`
 
@@ -291,23 +345,23 @@ const successMessage = "Success";      // camelCase for variables
 
 ```typescript
 // ❌ WRONG
-function GetUserById() { }             // PascalCase
-function get_user_by_id() { }          // snake_case
+function GetUserById() {} // PascalCase
+function get_user_by_id() {} // snake_case
 
 // ✅ CORRECT
-function getUserById() { }             // camelCase
+function getUserById() {} // camelCase
 ```
 
 ### Types and Interfaces
 
 ```typescript
 // ❌ WRONG
-interface student { }                  // lowercase
-type userType = "parent" | "driver";   // camelCase
+interface student {} // lowercase
+type userType = "parent" | "driver"; // camelCase
 
 // ✅ CORRECT
-interface Student { }                  // PascalCase
-type UserType = "parent" | "driver";   // PascalCase
+interface Student {} // PascalCase
+type UserType = "parent" | "driver"; // PascalCase
 ```
 
 ---
@@ -351,15 +405,15 @@ export interface Student {
 **Solution**: Define enums in `constants/enums.ts`
 
 ```typescript
+// ✅ CORRECT - types/student.type.ts
+import { Gender } from "@constants/enums";
+
 // ✅ CORRECT - constants/enums.ts
 export enum Gender {
   MALE = "male",
   FEMALE = "female",
   OTHER = "other",
 }
-
-// ✅ CORRECT - types/student.type.ts
-import { Gender } from "@constants/enums";
 
 export interface Student {
   gender?: Gender;
@@ -411,7 +465,7 @@ export const createStudentSchema = Joi.object({
 ```typescript
 // ❌ WRONG
 export const createStudentSchema = Joi.object({
-  parent_id: Joi.string().required(),  // Don't accept from client
+  parent_id: Joi.string().required(), // Don't accept from client
   student_name: Joi.string().required(),
 });
 ```
@@ -474,30 +528,34 @@ export const getStudent = asyncHandler(async (req: Request, res: Response) => {
 
 ```typescript
 // ❌ WRONG
-export const createStudent = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;  // Might be undefined
-  const student = await createStudentService(userId, req.body);  // Could fail
-  // ...
-});
+export const createStudent = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId; // Might be undefined
+    const student = await createStudentService(userId, req.body); // Could fail
+    // ...
+  },
+);
 ```
 
 **Solution**: Always validate authentication
 
 ```typescript
 // ✅ CORRECT
-export const createStudent = asyncHandler(async (req: Request, res: Response) => {
-  const userId = req.user?.userId;
+export const createStudent = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
 
-  if (!userId) {
-    throw new ApiError(
-      HTTP_STATUS.UNAUTHORIZED,
-      ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
-    );
-  }
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+      );
+    }
 
-  const student = await createStudentService(userId, req.body);
-  // ...
-});
+    const student = await createStudentService(userId, req.body);
+    // ...
+  },
+);
 ```
 
 **Why**: Prevents errors when user is not authenticated.
@@ -515,7 +573,7 @@ export const createStudent = asyncHandler(async (req: Request, res: Response) =>
 export const createStudent = async (data: Student) => {
   const studentData = {
     student_id: nanoid(),
-    parent_id: data.user_id,  // Wrong - user_id is not parent_id
+    parent_id: data.user_id, // Wrong - user_id is not parent_id
     ...data,
   };
   return await studentRepository.create(studentData);
@@ -528,20 +586,28 @@ export const createStudent = async (data: Student) => {
 // ✅ CORRECT
 const getParentIdByUserId = async (userId: string): Promise<string | null> => {
   const db = await getDB();
-  const parent = await db.collection(PARENTS_COLLECTION).findOne({ user_id: userId });
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ user_id: userId });
   return parent ? String(parent._id) : null;
 };
 
-export const createStudent = async (userId: string, data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">) => {
+export const createStudent = async (
+  userId: string,
+  data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">,
+) => {
   const parentId = await getParentIdByUserId(userId);
 
   if (!parentId) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND);
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
   }
 
   const studentData: Student = {
     student_id: nanoid(),
-    parent_id: parentId,  // Converted from userId
+    parent_id: parentId, // Converted from userId
     ...data,
     is_active: true,
     created_at: new Date(),
@@ -551,7 +617,7 @@ export const createStudent = async (userId: string, data: Omit<Student, "student
 };
 ```
 
-**Why**: user_id (from users table) ≠ parent_id (from parents table._id).
+**Why**: user_id (from users table) ≠ parent_id (from parents table.\_id).
 
 ---
 
@@ -562,7 +628,7 @@ export const createStudent = async (userId: string, data: Omit<Student, "student
 ```typescript
 // ❌ WRONG
 export const createStudent = async (data: Student) => {
-  return await studentRepository.create(data);  // No duplicate check
+  return await studentRepository.create(data); // No duplicate check
 };
 ```
 
@@ -570,11 +636,17 @@ export const createStudent = async (data: Student) => {
 
 ```typescript
 // ✅ CORRECT
-export const createStudent = async (userId: string, data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">) => {
+export const createStudent = async (
+  userId: string,
+  data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">,
+) => {
   const parentId = await getParentIdByUserId(userId);
 
   if (!parentId) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND);
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
   }
 
   // Check for duplicate
@@ -586,7 +658,10 @@ export const createStudent = async (userId: string, data: Omit<Student, "student
   );
 
   if (duplicate) {
-    throw new ApiError(HTTP_STATUS.CONFLICT, ERROR_MESSAGES.STUDENT.ALREADY_EXISTS);
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.STUDENT.ALREADY_EXISTS,
+    );
   }
 
   // Proceed with creation
@@ -662,6 +737,7 @@ router.get("/my-trips", verifyDriverToken, getMyTrips);
 **Cause**: TypeScript path aliases not configured or not recognized
 
 **Solution**:
+
 1. Check `tsconfig.json` has correct path mappings
 2. Restart TypeScript server in your IDE
 3. Run `npm run build` to check for compilation errors
@@ -673,10 +749,11 @@ router.get("/my-trips", verifyDriverToken, getMyTrips);
 **Cause**: Using `_id?: ObjectId` instead of `_id?: any`
 
 **Solution**:
+
 ```typescript
 // ✅ CORRECT
 interface Entity {
-  _id?: any;  // MongoDB internal ID
+  _id?: any; // MongoDB internal ID
   entity_id: string;
 }
 ```
@@ -688,6 +765,7 @@ interface Entity {
 **Cause**: Incorrect import of ApiError
 
 **Solution**:
+
 ```typescript
 // ❌ WRONG
 import ApiError from "@middlewares";
@@ -703,6 +781,7 @@ import { ApiError } from "@middlewares";
 **Cause**: req.user is undefined (authentication middleware not applied)
 
 **Solution**:
+
 1. Ensure route has authentication middleware
 2. Check middleware order
 3. Validate token is being sent in Authorization header

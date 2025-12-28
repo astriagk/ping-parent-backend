@@ -1,3 +1,8 @@
+import { customAlphabet } from "nanoid";
+
+import { AlphabetType } from "@constants";
+import { ALPHABETS, GenerateUniqueCodeOptions } from "@models/utills.types";
+
 export const isValidEmail = (email: string): boolean => {
   const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   return emailRegex.test(email);
@@ -115,4 +120,35 @@ export const assignTrimmedFields = (
       target[field] = typeof value === "string" ? value.trim() : value;
     }
   });
+};
+
+/**
+ * Generate a unique code with a custom prefix
+ * @param prefix - The prefix for the code (e.g., "SCH", "STU", "PAR")
+ * @param options - Configuration options for the unique code generation
+ * @param options.length - Length of the random part (default: 6)
+ * @param options.alphabetType - Type of alphabet to use: 'alphanumeric', 'uppercase', 'lowercase', 'numbers' (default: 'alphanumeric')
+ * @param options.separator - Separator between prefix and unique part (default: no separator)
+ * @returns A unique code string
+ *
+ * @example
+ * generateUniqueCode("SCH") // SCH4k9Lm2
+ * generateUniqueCode("SCH", { length: 8 }) // SCH7n2Px9Qs
+ * generateUniqueCode("SCH", { separator: "-" }) // SCH-4k9Lm2
+ * generateUniqueCode("SCH", { alphabetType: "uppercase" }) // SCHAK4MN9
+ * generateUniqueCode("STU", { alphabetType: "numbers", length: 10 }) // STU1234567890
+ */
+export const generateUniqueCode = (
+  prefix: string,
+  options?: GenerateUniqueCodeOptions,
+): string => {
+  const {
+    length = 8,
+    alphabetType = AlphabetType.Alphanumeric,
+    separator = "-",
+  } = options || {};
+
+  const alphabet = ALPHABETS[alphabetType];
+  const generateId = customAlphabet(alphabet, length);
+  return `${prefix}${separator}${generateId()}`;
 };

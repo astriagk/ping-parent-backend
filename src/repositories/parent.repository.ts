@@ -1,7 +1,7 @@
 import { WithId } from "mongodb";
 
 import { PARENTS_COLLECTION, PARENT_ADDRESSES_COLLECTION } from "@constants";
-import { Parent, ParentAddress } from "@models";
+import { Parent, ParentAddress } from "@models/parent.type";
 
 import { BaseRepository } from "./base.repository";
 
