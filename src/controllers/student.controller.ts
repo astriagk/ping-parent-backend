@@ -3,18 +3,18 @@ import { Request, Response } from "express";
 import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
-  createStudent,
-  deleteStudent,
-  deleteStudentByStudentId,
+  createStudent as createStudentService,
+  deleteStudentByStudentId as deleteStudentByStudentIdService,
+  deleteStudent as deleteStudentService,
   getActiveStudentsByUserId,
   getStudentById,
-  getStudentByStudentId,
+  getStudentByStudentId as getStudentByStudentIdService,
   getStudentsByUserId,
-  updateStudent,
-  updateStudentByStudentId,
+  updateStudentByStudentId as updateStudentByStudentIdService,
+  updateStudent as updateStudentService,
 } from "@services/student.service";
 
-export const createStudentController = asyncHandler(
+export const createStudent = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
 
@@ -27,7 +27,7 @@ export const createStudentController = asyncHandler(
 
     const studentData = req.body;
 
-    const student = await createStudent(userId, studentData);
+    const student = await createStudentService(userId, studentData);
 
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
@@ -58,11 +58,11 @@ export const getStudentProfile = asyncHandler(
   },
 );
 
-export const getStudentByStudentIdController = asyncHandler(
+export const getStudentByStudentId = asyncHandler(
   async (req: Request, res: Response) => {
     const { student_id } = req.params;
 
-    const student = await getStudentByStudentId(student_id);
+    const student = await getStudentByStudentIdService(student_id);
 
     if (!student) {
       throw new ApiError(
@@ -121,12 +121,12 @@ export const getMyActiveStudents = asyncHandler(
   },
 );
 
-export const updateStudentController = asyncHandler(
+export const updateStudent = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
     const updates = req.body;
 
-    const student = await updateStudent(id, updates);
+    const student = await updateStudentService(id, updates);
 
     if (!student) {
       throw new ApiError(
@@ -143,12 +143,12 @@ export const updateStudentController = asyncHandler(
   },
 );
 
-export const updateStudentByStudentIdController = asyncHandler(
+export const updateStudentByStudentId = asyncHandler(
   async (req: Request, res: Response) => {
     const { student_id } = req.params;
     const updates = req.body;
 
-    const student = await updateStudentByStudentId(student_id, updates);
+    const student = await updateStudentByStudentIdService(student_id, updates);
 
     if (!student) {
       throw new ApiError(
@@ -165,11 +165,11 @@ export const updateStudentByStudentIdController = asyncHandler(
   },
 );
 
-export const deleteStudentController = asyncHandler(
+export const deleteStudent = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params;
 
-    const deleted = await deleteStudent(id);
+    const deleted = await deleteStudentService(id);
 
     if (!deleted) {
       throw new ApiError(
@@ -185,11 +185,11 @@ export const deleteStudentController = asyncHandler(
   },
 );
 
-export const deleteStudentByStudentIdController = asyncHandler(
+export const deleteStudentByStudentId = asyncHandler(
   async (req: Request, res: Response) => {
     const { student_id } = req.params;
 
-    const deleted = await deleteStudentByStudentId(student_id);
+    const deleted = await deleteStudentByStudentIdService(student_id);
 
     if (!deleted) {
       throw new ApiError(

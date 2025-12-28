@@ -1,15 +1,15 @@
 import { Router } from "express";
 
 import {
-  createStudentController,
-  deleteStudentByStudentIdController,
-  deleteStudentController,
+  createStudent,
+  deleteStudent,
+  deleteStudentByStudentId,
   getMyActiveStudents,
   getMyStudents,
-  getStudentByStudentIdController,
+  getStudentByStudentId,
   getStudentProfile,
-  updateStudentByStudentIdController,
-  updateStudentController,
+  updateStudent,
+  updateStudentByStudentId,
 } from "@controllers/student.controller";
 import { validate, verifyParentToken } from "@middlewares";
 import {
@@ -23,20 +23,20 @@ const router = Router();
 router.use(verifyParentToken);
 
 // Student CRUD operations
-router.post("/", validate(createStudentSchema), createStudentController);
+router.post("/", validate(createStudentSchema), createStudent);
 router.get("/my-students", getMyStudents);
 router.get("/my-active-students", getMyActiveStudents);
 router.get("/:id", getStudentProfile);
-router.put("/:id", validate(updateStudentSchema), updateStudentController);
-router.delete("/:id", deleteStudentController);
+router.put("/:id", validate(updateStudentSchema), updateStudent);
+router.delete("/:id", deleteStudent);
 
 // Operations by student_id (instead of MongoDB _id)
-router.get("/by-student-id/:student_id", getStudentByStudentIdController);
+router.get("/by-student-id/:student_id", getStudentByStudentId);
 router.put(
   "/by-student-id/:student_id",
   validate(updateStudentSchema),
-  updateStudentByStudentIdController,
+  updateStudentByStudentId,
 );
-router.delete("/by-student-id/:student_id", deleteStudentByStudentIdController);
+router.delete("/by-student-id/:student_id", deleteStudentByStudentId);
 
 export default router;

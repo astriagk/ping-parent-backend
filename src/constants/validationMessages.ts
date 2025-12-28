@@ -100,4 +100,17 @@ export const VALIDATION_MESSAGES = {
     EMERGENCY_CONTACT_PATTERN: "Emergency contact must be a valid phone number",
     MEDICAL_INFO_MAX: "Medical info cannot exceed 500 characters",
   },
+  SCHOOL: {
+    NAME_REQUIRED: "School name is required",
+    NAME_MIN: "School name must be at least 3 characters",
+    NAME_MAX: "School name cannot exceed 200 characters",
+    ADDRESS_REQUIRED: "School address is required",
+    ADDRESS_MAX: "School address cannot exceed 255 characters",
+    CITY_REQUIRED: "City is required",
+    CITY_MAX: "City cannot exceed 100 characters",
+    STATE_REQUIRED: "State is required",
+    STATE_MAX: "State cannot exceed 100 characters",
+    CONTACT_NUMBER_PATTERN: "Contact number must be a valid phone number",
+    EMAIL_INVALID: "Email must be a valid email address",
+  },
 };

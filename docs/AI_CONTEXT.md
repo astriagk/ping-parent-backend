@@ -4,7 +4,7 @@
 
 This document provides comprehensive context for AI agents working on the Ping Parent backend project. It defines project structure, naming conventions, patterns, and implementation guidelines based on the existing auth module implementation.
 
-### 📋 TL;DR - Quick Instructions for AI Agents
+### 📋 Quick Start for AI Agents
 
 When asked to create a new feature (e.g., "Create a School module"):
 
@@ -12,26 +12,18 @@ When asked to create a new feature (e.g., "Create a School module"):
 2. **Copy the auth pattern** → Use `src/**/auth.*` files as templates
 3. **Create 6 files** → types, validations, repository, service, controller, routes
 4. **Update 3 files** → constants/collections.ts, constants/messages.ts, routes/index.ts
-5. **Update API documentation** → Add endpoints to `docs/API_DOCUMENTATION.md` after implementation
-6. **Update Swagger documentation** → Add endpoints to `docs/swagger.yaml` after implementation
-7. **Follow these rules**:
-   - ✅ Field names in **snake_case** (e.g., `user_id`, `phone_number`)
-   - ✅ One entity = one file per layer (e.g., `school.controller.ts`)
-   - ✅ Files in layer folders (NOT feature folders)
-   - ✅ Use constants (NO hardcoded strings)
-   - ✅ Repository extends `BaseRepository`
-   - ✅ Controller uses `asyncHandler`
-   - ✅ Middleware order: validate → auth → controller
-   - ✅ **Add duplicate checking** for create/update operations based on unique business logic
+5. **Update documentation** → Add endpoints to `docs/API_DOCUMENTATION.md` and `docs/swagger.yaml`
 
-### 🎯 Document Purpose
+### 🎯 Critical Rules
 
-This document serves as:
-
-- **Single source of truth** for code structure and patterns
-- **Implementation guide** with complete working examples
-- **Reference manual** for naming conventions and standards
-- **Quality checklist** to ensure consistency across the codebase
+- ✅ Field names in **snake_case** (e.g., `user_id`, `phone_number`)
+- ✅ One entity = one file per layer (e.g., `school.controller.ts`)
+- ✅ Files in layer folders (NOT feature folders)
+- ✅ Use constants (NO hardcoded strings)
+- ✅ Repository extends `BaseRepository`
+- ✅ Controller uses `asyncHandler`
+- ✅ Controller exports WITHOUT "Controller" suffix (e.g., `export const getAllSchools`)
+- ✅ Add duplicate checking for create/update operations
 
 ---
 
@@ -41,14 +33,12 @@ This document serves as:
 2. [Project Architecture](#project-architecture)
 3. [Naming Conventions](#naming-conventions)
 4. [File Structure Patterns](#file-structure-patterns)
-5. [Implementation Examples](#implementation-examples)
-6. [Constants & Configuration](#constants--configuration)
-7. [Validation Patterns](#validation-patterns)
-8. [Error Handling](#error-handling)
-9. [Middleware Patterns](#middleware-patterns)
-10. [File Placement Standards](#file-placement-standards)
-11. [Quick Reference Guide](#quick-reference-guide)
-12. [AI Agent Instructions](#ai-agent-instructions)
+5. [Constants & Configuration](#constants--configuration)
+6. [Validation & Error Handling](#validation--error-handling)
+7. [Middleware Patterns](#middleware-patterns)
+8. [Implementation Checklist](#implementation-checklist)
+9. [Key Patterns](#key-patterns)
+10. [Quick Reference](#quick-reference)
 
 ---
 
@@ -156,6 +146,7 @@ export const COLLECTIONS = {
   PARENTS: "parents",
   PARENT_ADDRESSES: "parent_addresses",
   DRIVERS: "drivers",
+  STUDENTS: "students",
 };
 ```
 
@@ -163,58 +154,181 @@ export const COLLECTIONS = {
 
 ## File Structure Patterns
 
-### 1. Routes (`routes/{entity}.routes.ts`)
+### 1. Types (`types/{entity}.type.ts`)
 
-**Purpose**: Define API endpoints and apply middlewares
+**Purpose**: TypeScript interfaces matching DBML schema
+
+**IMPORTANT**: Define enums in `constants/enums.ts` (NOT in type files as type unions)
 
 ```typescript
-import { Router } from "express";
+// Import enums from constants
+import { EntityStatus } from "@constants/enums";
 
-import {
-  controllerFunction1,
-  controllerFunction2,
-} from "@controllers/{entity}.controller";
-import { authMiddleware, validate } from "@middlewares";
-import { validationSchema } from "@validations/{entity}.validation";
-
-const router = Router();
-
-// Public routes
-router.post("/action", validate(validationSchema), controllerFunction1);
-
-// Protected routes
-router.get("/profile", authMiddleware, controllerFunction2);
-
-export default router;
+export interface Entity {
+  _id?: any; // MongoDB internal ID
+  entity_id: string; // Use snake_case to match DB schema
+  field_name: string;
+  status: EntityStatus; // Use enum from constants/enums.ts
+  is_active: boolean;
+  created_at: Date;
+  updated_at?: Date;
+}
 ```
 
-**Example (auth.routes.ts)**:
+**Example**:
 
 ```typescript
-router.post(
-  "/register/send-otp",
-  validate(sendOTPSchema),
-  loginRateLimiter,
-  sendPhoneOtp,
-);
-router.post(
-  "/login/verify-otp",
-  validate(verifyOTPSchema),
-  loginRateLimiter,
-  verifyLoginOtp,
-);
-router.get("/verify-token", verifyAuthToken);
+// types/student.type.ts
+import { Gender } from "@constants/enums"; // Import enum from constants
+
+export interface Student {
+  _id?: any;
+  student_id: string;
+  parent_id: string;
+  student_name: string;
+  gender?: Gender; // Use enum from constants
+  is_active: boolean;
+  created_at: Date;
+  updated_at?: Date;
+}
+```
+
+**Enums belong in `constants/enums.ts`**:
+
+```typescript
+// constants/enums.ts
+export enum Gender {
+  MALE = "male",
+  FEMALE = "female",
+  OTHER = "other",
+}
+
+export enum UserRole {
+  ADMIN = "admin",
+  PARENT = "parent",
+  DRIVER = "driver",
+}
 ```
 
 ---
 
-### 2. Controllers (`controllers/{entity}.controller.ts`)
+### 2. Validations (`validations/{entity}.validation.ts`)
+
+**Purpose**: Joi schemas for request validation
+
+```typescript
+import Joi from "joi";
+import { VALIDATION_MESSAGES } from "@constants";
+
+export const createEntitySchema = Joi.object({
+  field_name: Joi.string().min(3).max(100).required().messages({
+    "string.min": VALIDATION_MESSAGES.FIELD.MIN_LENGTH,
+    "any.required": VALIDATION_MESSAGES.FIELD.REQUIRED,
+  }),
+  enum_field: Joi.string().valid("value1", "value2").optional().messages({
+    "any.only": VALIDATION_MESSAGES.FIELD.INVALID_VALUE,
+  }),
+});
+```
+
+**Common Validation Patterns**:
+
+```typescript
+// Phone validation
+phone: Joi.string()
+  .pattern(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/)
+  .required();
+
+// Email validation
+email: Joi.string().email().lowercase().required();
+
+// Enum validation
+status: Joi.string()
+  .valid("pending", "approved", "rejected")
+  .default("pending");
+
+// Nested object validation
+address: Joi.object({
+  street: Joi.string().required(),
+  city: Joi.string().required(),
+  latitude: Joi.number().min(-90).max(90).required(),
+  longitude: Joi.number().min(-180).max(180).required(),
+});
+
+// Array validation
+tags: Joi.array().items(Joi.string()).min(1).max(10);
+```
+
+---
+
+### 3. Repositories (`repositories/{entity}.repository.ts`)
+
+**Purpose**: Database operations, extend BaseRepository
+
+```typescript
+import { WithId } from "mongodb";
+import { COLLECTION_NAME } from "@constants";
+import { EntityType } from "@models/{entity}.type";
+import { BaseRepository } from "./base.repository";
+
+export class EntityRepository extends BaseRepository<EntityType> {
+  constructor() {
+    super(COLLECTION_NAME);
+  }
+
+  async findByCustomField(field: string): Promise<WithId<EntityType> | null> {
+    return await this.findOne({ custom_field: field });
+  }
+
+  async customExists(field: string): Promise<boolean> {
+    return await this.exists({ custom_field: field });
+  }
+}
+
+export const entityRepository = new EntityRepository();
+```
+
+---
+
+### 4. Services (`services/{entity}.service.ts`)
+
+**Purpose**: Business logic, orchestrate repositories
+
+```typescript
+import { repository } from "@repositories/{entity}.repository";
+
+export const createEntity = async (data: EntityType) => {
+  return await repository.create(data);
+};
+
+export const getEntityById = async (
+  id: string,
+): Promise<WithId<EntityType> | null> => {
+  if (!ObjectId.isValid(id)) {
+    return null;
+  }
+  return await repository.findById(id);
+};
+
+export const getEntityByField = async (
+  field: string,
+): Promise<WithId<EntityType> | null> => {
+  return await repository.findByField(field);
+};
+```
+
+---
+
+### 5. Controllers (`controllers/{entity}.controller.ts`)
 
 **Purpose**: Handle HTTP requests/responses, minimal logic
 
+**CRITICAL: Export controller functions WITHOUT the "Controller" suffix**
+- ✅ Correct: `export const createSchool`, `export const getAllSchools`
+- ❌ Wrong: `export const createSchoolController`, `export const getAllSchoolsController`
+
 ```typescript
 import { Request, Response } from "express";
-
 import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import { serviceFunction } from "@services/{entity}.service";
@@ -245,265 +359,42 @@ export const controllerName = asyncHandler(
 );
 ```
 
-**Example (sendPhoneOtp from auth.controller.ts)**:
+---
+
+### 6. Routes (`routes/{entity}.routes.ts`)
+
+**Purpose**: Define API endpoints and apply middlewares
 
 ```typescript
-export const sendPhoneOtp = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { phone } = req.body;
+import { Router } from "express";
+import {
+  controllerFunction1,
+  controllerFunction2,
+} from "@controllers/{entity}.controller";
+import { authMiddleware, validate } from "@middlewares";
+import { validationSchema } from "@validations/{entity}.validation";
 
-    const normalizedPhone = normalizePhone(phone);
-    if (!normalizedPhone) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.PHONE.INVALID_PHONE,
-      );
-    }
+const router = Router();
 
-    const existing = await getUserByPhone(normalizedPhone);
-    if (existing) {
-      throw new ApiError(
-        HTTP_STATUS.CONFLICT,
-        ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
-      );
-    }
+// Public routes
+router.post("/action", validate(validationSchema), controllerFunction1);
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    await createPhoneOtp(normalizedPhone, otp, 10);
+// Protected routes
+router.get("/profile", authMiddleware, controllerFunction2);
 
-    logger.info(`OTP for ${normalizedPhone}: ${otp}`);
+export default router;
+```
 
-    return res.json({
-      success: true,
-      message: SUCCESS_MESSAGES.PHONE.OTP_SENT,
-    });
-  },
+**Middleware Order (CRITICAL)**:
+
+```typescript
+router.post(
+  "/endpoint",
+  validate(schema),      // 1. Validation first
+  authMiddleware,        // 2. Authentication second
+  rateLimiter,          // 3. Rate limiting (if needed)
+  controllerFunction,   // 4. Controller last
 );
-```
-
----
-
-### 3. Services (`services/{entity}.service.ts`)
-
-**Purpose**: Business logic, orchestrate repositories
-
-```typescript
-import { repository } from "@repositories/{entity}.repository";
-
-export const createEntity = async (data: EntityType) => {
-  return await repository.create(data);
-};
-
-export const getEntityById = async (
-  id: string,
-): Promise<WithId<EntityType> | null> => {
-  if (!ObjectId.isValid(id)) {
-    return null;
-  }
-  return await repository.findById(id);
-};
-
-export const getEntityByField = async (
-  field: string,
-): Promise<WithId<EntityType> | null> => {
-  return await repository.findByField(field);
-};
-```
-
-**Example (auth.service.ts)**:
-
-```typescript
-export const createUser = async (data: User) => {
-  return await userRepository.create(data);
-};
-
-export const getUserByPhone = async (
-  phone: string,
-): Promise<WithId<User> | null> => {
-  return await userRepository.findByPhoneNumber(phone);
-};
-
-export const createPhoneOtp = async (
-  phone: string,
-  otp: string,
-  ttlMinutes = 10,
-) => {
-  const db = await getDB();
-  const now = new Date();
-  const doc = {
-    phone_number: phone,
-    otp_code: otp,
-    expires_at: new Date(now.getTime() + ttlMinutes * 60 * 1000),
-    is_verified: false,
-    created_at: now,
-  };
-  const res = await db.collection(OTP_VERIFICATION_COLLECTION).insertOne(doc);
-  return res.insertedId;
-};
-```
-
----
-
-### 4. Repositories (`repositories/{entity}.repository.ts`)
-
-**Purpose**: Database operations, extend BaseRepository
-
-```typescript
-import { WithId } from "mongodb";
-
-import { COLLECTION_NAME } from "@constants";
-import { EntityType } from "@models/{entity}.type";
-
-import { BaseRepository } from "./base.repository";
-
-export class EntityRepository extends BaseRepository<EntityType> {
-  constructor() {
-    super(COLLECTION_NAME);
-  }
-
-  async findByCustomField(field: string): Promise<WithId<EntityType> | null> {
-    return await this.findOne({ custom_field: field });
-  }
-
-  async customExists(field: string): Promise<boolean> {
-    return await this.exists({ custom_field: field });
-  }
-}
-
-export const entityRepository = new EntityRepository();
-```
-
-**Example (auth.repository.ts)**:
-
-```typescript
-export class UserRepository extends BaseRepository<User> {
-  constructor() {
-    super(USERS_COLLECTION);
-  }
-
-  async findByEmail(email: string): Promise<WithId<User> | null> {
-    return await this.findOne({ email: email.toLowerCase() });
-  }
-
-  async findByPhoneNumber(phoneNumber: string): Promise<WithId<User> | null> {
-    return await this.findOne({ phone_number: phoneNumber });
-  }
-
-  async emailExists(email: string): Promise<boolean> {
-    return await this.exists({ email: email.toLowerCase() });
-  }
-
-  async phoneExists(phoneNumber: string): Promise<boolean> {
-    return await this.exists({ phone_number: phoneNumber });
-  }
-}
-
-export const userRepository = new UserRepository();
-```
-
----
-
-### 5. Types (`types/{entity}.type.ts`)
-
-**Purpose**: TypeScript interfaces matching DBML schema
-
-```typescript
-export type EntityEnum = "value1" | "value2";
-
-export interface Entity {
-  _id?: any; // MongoDB internal ID
-  entity_id: string; // Use snake_case to match DB schema
-  field_name: string;
-  enum_field: EntityEnum;
-  is_active: boolean;
-  created_at: Date;
-  updated_at?: Date;
-}
-```
-
-**Example (auth.type.ts)**:
-
-```typescript
-export type UserType = "parent" | "driver";
-
-export interface User {
-  _id?: any; // MongoDB internal ID
-  user_id: string;
-  phone_number: string;
-  user_type: UserType;
-  is_active: boolean;
-  created_at: Date;
-  updated_at?: Date;
-  last_login?: Date;
-  fcm_token?: string;
-}
-
-export interface OtpVerification {
-  _id?: any;
-  otp_id: number;
-  phone_number: string;
-  otp_code: string;
-  is_verified: boolean;
-  expires_at: Date;
-  created_at: Date;
-}
-```
-
----
-
-### 6. Validations (`validations/{entity}.validation.ts`)
-
-**Purpose**: Joi schemas for request validation
-
-```typescript
-import Joi from "joi";
-
-import { VALIDATION_MESSAGES } from "@constants";
-
-export const createEntitySchema = Joi.object({
-  field_name: Joi.string().min(3).max(100).required().messages({
-    "string.min": VALIDATION_MESSAGES.FIELD.MIN_LENGTH,
-    "any.required": VALIDATION_MESSAGES.FIELD.REQUIRED,
-  }),
-  enum_field: Joi.string().valid("value1", "value2").optional().messages({
-    "any.only": VALIDATION_MESSAGES.FIELD.INVALID_VALUE,
-  }),
-});
-```
-
-**Example (auth.validation.ts)**:
-
-```typescript
-export const sendOTPSchema = Joi.object({
-  phone: Joi.string()
-    .pattern(
-      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
-    )
-    .required()
-    .messages({
-      "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
-      "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
-    }),
-  role: Joi.string().valid("parent", "driver").optional().messages({
-    "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
-  }),
-});
-
-export const verifyOTPSchema = Joi.object({
-  phone: Joi.string()
-    .pattern(
-      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
-    )
-    .required()
-    .messages({
-      "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
-      "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
-    }),
-  otp: Joi.string().length(6).required().messages({
-    "string.length": VALIDATION_MESSAGES.OTP.LENGTH,
-    "any.required": VALIDATION_MESSAGES.OTP.REQUIRED,
-  }),
-});
 ```
 
 ---
@@ -512,15 +403,11 @@ export const verifyOTPSchema = Joi.object({
 
 ### Constants Structure
 
-All constants are centralized in `constants/` directory:
-
 **IMPORTANT: Reuse Existing Constants**
-
 - Before adding new constants, **ALWAYS check if similar constants already exist**
-- Search through `constants/messages.ts`, `constants/validationMessages.ts`, and other constant files
-- Reuse existing constants instead of creating duplicates (e.g., use `ERROR_MESSAGES.COMMON.UNAUTHORIZED` instead of creating a new "Unauthorized" message)
-- Group related constants together (e.g., all common error messages under `ERROR_MESSAGES.COMMON`)
-- Only create new constants when the existing ones don't fit your use case
+- Search through `constants/messages.ts`, `constants/validationMessages.ts`
+- Reuse existing constants instead of creating duplicates
+- Only create new constants when existing ones don't fit
 
 ```typescript
 // constants/httpStatus.ts
@@ -550,13 +437,6 @@ export const SUCCESS_MESSAGES = {
   },
 };
 
-// constants/enums.ts
-export enum EntityStatus {
-  ACTIVE = "active",
-  INACTIVE = "inactive",
-  PENDING = "pending",
-}
-
 // constants/collections.ts
 export const COLLECTIONS = {
   ENTITY: "entity_collection_name",
@@ -572,36 +452,46 @@ export const VALIDATION_MESSAGES = {
 };
 ```
 
-### Environment Configuration
-
-```typescript
-// config/env.ts
-import dotenv from "dotenv";
-import path from "path";
-
-dotenv.config({ path: path.join(__dirname, "../environment/.env") });
-
-export const ENV = {
-  NODE_ENV: process.env.NODE_ENV || "development",
-  PORT: process.env.PORT || 3000,
-  MONGO_URI: process.env.MONGO_URI as string,
-  DB_NAME: process.env.DB_NAME as string,
-  JWT_SECRET: process.env.JWT_SECRET as string,
-  JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || "15m",
-} as const;
-
-// Validate required environment variables
-const requiredEnvVars = ["MONGO_URI", "DB_NAME", "JWT_SECRET"];
-requiredEnvVars.forEach((envVar) => {
-  if (!process.env[envVar]) {
-    throw new Error(`Missing required environment variable: ${envVar}`);
-  }
-});
-```
-
 ---
 
-## Validation Patterns
+## Validation & Error Handling
+
+### ApiError Class
+
+The `ApiError` class provides both direct instantiation and convenient static factory methods. **All hardcoded values must use constants.**
+
+```typescript
+// Direct usage (for specific messages)
+throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.AUTH.USER_NOT_FOUND);
+
+throw new ApiError(
+  HTTP_STATUS.CONFLICT,
+  ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
+);
+
+// Static methods (for common errors with default messages)
+throw ApiError.notFound();
+throw ApiError.notFound(ERROR_MESSAGES.STUDENT.NOT_FOUND);
+throw ApiError.unauthorized();
+throw ApiError.conflict();
+throw ApiError.validationError({ field: "email", message: "Invalid format" });
+```
+
+### ApiResponse Class
+
+```typescript
+// Success responses
+return ApiResponse.success(res, userData);
+return ApiResponse.success(res, userData, SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL);
+return ApiResponse.created(res, newUser);
+return ApiResponse.created(res, newUser, SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY);
+
+// Error responses
+return ApiResponse.notFound(res);
+return ApiResponse.notFound(res, ERROR_MESSAGES.STUDENT.NOT_FOUND);
+return ApiResponse.unauthorized(res);
+return ApiResponse.badRequest(res, ERROR_MESSAGES.VALIDATION.INVALID_INPUT);
+```
 
 ### Request Validation Middleware
 
@@ -609,7 +499,6 @@ requiredEnvVars.forEach((envVar) => {
 // middlewares/validate.middleware.ts
 import { NextFunction, Request, Response } from "express";
 import { ObjectSchema } from "joi";
-
 import { HTTP_STATUS } from "@constants";
 
 export const validate = (schema: ObjectSchema) => {
@@ -634,914 +523,35 @@ export const validate = (schema: ObjectSchema) => {
 };
 ```
 
-### Common Validation Patterns
-
-```typescript
-// Phone validation
-phone: Joi.string()
-  .pattern(/^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/)
-  .required();
-
-// Email validation
-email: Joi.string().email().lowercase().required();
-
-// Enum validation
-status: Joi.string()
-  .valid("pending", "approved", "rejected")
-  .default("pending");
-
-// Nested object validation
-address: Joi.object({
-  street: Joi.string().required(),
-  city: Joi.string().required(),
-  latitude: Joi.number().min(-90).max(90).required(),
-  longitude: Joi.number().min(-180).max(180).required(),
-});
-
-// Array validation
-tags: Joi.array().items(Joi.string()).min(1).max(10);
-```
-
----
-
-## Error Handling
-
-### ApiError Class
-
-The `ApiError` class provides both direct instantiation and convenient static factory methods. **IMPORTANT: All hardcoded values must use constants.**
-
-```typescript
-// utils/apiError.ts
-import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
-
-export class ApiError extends Error {
-  statusCode: number;
-  isOperational: boolean;
-  errors?: unknown;
-
-  constructor(
-    statusCode: number,
-    message: string,
-    isOperational = true,
-    errors?: unknown,
-  ) {
-    super(message);
-    this.statusCode = statusCode;
-    this.isOperational = isOperational;
-    this.errors = errors;
-    Error.captureStackTrace(this, this.constructor);
-  }
-
-  // Static factory methods - use constants for default messages
-  static badRequest(message: string, errors?: unknown) {
-    return new ApiError(HTTP_STATUS.BAD_REQUEST, message, true, errors);
-  }
-
-  static unauthorized(message = ERROR_MESSAGES.COMMON.UNAUTHORIZED) {
-    return new ApiError(HTTP_STATUS.UNAUTHORIZED, message);
-  }
-
-  static forbidden(message = ERROR_MESSAGES.COMMON.FORBIDDEN) {
-    return new ApiError(HTTP_STATUS.FORBIDDEN, message);
-  }
-
-  static notFound(message = ERROR_MESSAGES.COMMON.RESOURCE_NOT_FOUND) {
-    return new ApiError(HTTP_STATUS.NOT_FOUND, message);
-  }
-
-  static conflict(message = ERROR_MESSAGES.COMMON.RESOURCE_ALREADY_EXISTS) {
-    return new ApiError(HTTP_STATUS.CONFLICT, message);
-  }
-
-  static validationError(errors: unknown) {
-    return new ApiError(
-      HTTP_STATUS.UNPROCESSABLE_ENTITY,
-      ERROR_MESSAGES.COMMON.VALIDATION_ERROR,
-      true,
-      errors,
-    );
-  }
-
-  static internalError(message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR) {
-    return new ApiError(HTTP_STATUS.INTERNAL_SERVER_ERROR, message, false);
-  }
-}
-```
-
-### Error Throwing Patterns
-
-**Using ApiError Constructor (Recommended for specific messages):**
-
-```typescript
-// In controllers or services
-if (!user) {
-  throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.AUTH.USER_NOT_FOUND);
-}
-
-if (existingUser) {
-  throw new ApiError(
-    HTTP_STATUS.CONFLICT,
-    ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
-  );
-}
-```
-
-**Using ApiError Static Methods (Recommended for common errors):**
-
-```typescript
-// Generic "Not Found" error - uses default message from constants
-throw ApiError.notFound();
-
-// Custom "Not Found" error - overrides default message
-throw ApiError.notFound(ERROR_MESSAGES.STUDENT.NOT_FOUND);
-
-// Unauthorized error - uses default message
-throw ApiError.unauthorized();
-
-// Validation error with details
-throw ApiError.validationError({ field: "email", message: "Invalid format" });
-
-// Conflict error - uses default message
-throw ApiError.conflict();
-
-// Internal server error
-throw ApiError.internalError();
-```
-
-### ApiResponse Class
-
-The `ApiResponse` class provides convenient static methods for sending HTTP responses. **IMPORTANT: All hardcoded values must use constants.**
-
-```typescript
-// utils/apiResponse.ts
-import { Response } from "express";
-
-import {
-  ERROR_MESSAGES,
-  HTTP_STATUS,
-  SUCCESS_MESSAGES_COMMON,
-} from "@constants";
-
-export class ApiResponse {
-  // Success responses
-  static success(
-    res: Response,
-    data: unknown,
-    message?: string,
-    statusCode: number = HTTP_STATUS.OK,
-  ) {
-    return res.status(statusCode).json({
-      success: true,
-      message,
-      data,
-    });
-  }
-
-  static created(
-    res: Response,
-    data: unknown,
-    message = SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
-  ) {
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      message,
-      data,
-    });
-  }
-
-  static noContent(res: Response) {
-    return res.status(HTTP_STATUS.NO_CONTENT).send();
-  }
-
-  // Error responses
-  static error(
-    res: Response,
-    message: string,
-    statusCode: number = HTTP_STATUS.INTERNAL_SERVER_ERROR,
-    errors?: unknown,
-  ) {
-    return res.status(statusCode).json({
-      success: false,
-      error: message,
-      ...(errors && typeof errors === "object" ? { errors } : {}),
-    });
-  }
-
-  static badRequest(res: Response, message: string, errors?: unknown) {
-    return this.error(res, message, HTTP_STATUS.BAD_REQUEST, errors);
-  }
-
-  static unauthorized(
-    res: Response,
-    message = ERROR_MESSAGES.COMMON.UNAUTHORIZED,
-  ) {
-    return this.error(res, message, HTTP_STATUS.UNAUTHORIZED);
-  }
-
-  static forbidden(res: Response, message = ERROR_MESSAGES.COMMON.FORBIDDEN) {
-    return this.error(res, message, HTTP_STATUS.FORBIDDEN);
-  }
-
-  static notFound(
-    res: Response,
-    message = ERROR_MESSAGES.COMMON.RESOURCE_NOT_FOUND,
-  ) {
-    return this.error(res, message, HTTP_STATUS.NOT_FOUND);
-  }
-
-  static conflict(
-    res: Response,
-    message = ERROR_MESSAGES.COMMON.RESOURCE_ALREADY_EXISTS,
-  ) {
-    return this.error(res, message, HTTP_STATUS.CONFLICT);
-  }
-
-  static validationError(res: Response, errors: unknown) {
-    return this.error(
-      res,
-      ERROR_MESSAGES.COMMON.VALIDATION_ERROR,
-      HTTP_STATUS.UNPROCESSABLE_ENTITY,
-      errors,
-    );
-  }
-
-  static internalError(
-    res: Response,
-    message = ERROR_MESSAGES.COMMON.INTERNAL_SERVER_ERROR,
-  ) {
-    return this.error(res, message, HTTP_STATUS.INTERNAL_SERVER_ERROR);
-  }
-}
-```
-
-### ApiResponse Usage Patterns
-
-**Using ApiResponse for success responses:**
-
-```typescript
-// Generic success response
-return ApiResponse.success(res, userData);
-
-// Success with custom message
-return ApiResponse.success(res, userData, SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL);
-
-// Created response (201)
-return ApiResponse.created(res, newUser);
-
-// Created with custom message
-return ApiResponse.created(res, newUser, SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY);
-
-// No content response (204)
-return ApiResponse.noContent(res);
-```
-
-**Using ApiResponse for error responses:**
-
-```typescript
-// Generic error responses with default messages
-return ApiResponse.notFound(res);
-return ApiResponse.unauthorized(res);
-return ApiResponse.forbidden(res);
-return ApiResponse.conflict(res);
-
-// Error responses with custom messages
-return ApiResponse.notFound(res, ERROR_MESSAGES.STUDENT.NOT_FOUND);
-return ApiResponse.badRequest(res, ERROR_MESSAGES.VALIDATION.INVALID_INPUT);
-
-// Validation error with details
-return ApiResponse.validationError(res, validationErrors);
-
-// Internal server error
-return ApiResponse.internalError(res);
-return ApiResponse.internalError(res, "Database connection failed");
-```
-
-**When to use ApiResponse vs ApiError:**
-
-- **ApiResponse**: Direct response sending in controllers (when you want to send success or handle errors directly)
-- **ApiError**: Throw errors to be caught by error middleware (recommended for most error handling)
-
----
-
-## Implementation Examples
-
-### Example 1: Creating a Student Module
-
-Based on the database schema:
-
-```dbml
-Table students {
-  student_id varchar(36) [pk]
-  parent_id varchar(36) [not null, ref: > parents.parent_id]
-  school_id varchar(36) [not null, ref: > schools.school_id]
-  student_name varchar(100) [not null]
-  class varchar(20) [not null]
-  section varchar(10)
-  roll_number varchar(20)
-  photo_url varchar(255)
-  date_of_birth date
-  gender enum [note: 'male, female, other']
-  pickup_address_id varchar(36) [not null, ref: > parent_addresses.address_id]
-  emergency_contact varchar(20)
-  medical_info text
-  is_active boolean [default: true]
-  created_at timestamp [default: `CURRENT_TIMESTAMP`]
-  updated_at timestamp
-}
-```
-
-**1. Type Definition (`types/student.type.ts`)**:
-
-```typescript
-export type Gender = "male" | "female" | "other";
-
-export interface Student {
-  _id?: any;
-  student_id: string;
-  parent_id: string;
-  school_id: string;
-  student_name: string;
-  class: string;
-  section?: string;
-  roll_number?: string;
-  photo_url?: string;
-  date_of_birth?: Date;
-  gender?: Gender;
-  pickup_address_id: string;
-  emergency_contact?: string;
-  medical_info?: string;
-  is_active: boolean;
-  created_at: Date;
-  updated_at?: Date;
-}
-```
-
-**2. Constants (`constants/collections.ts` - add to existing)**:
-
-```typescript
-STUDENTS: "students",
-```
-
-```typescript
-// constants/messages.ts - add to ERROR_MESSAGES
-STUDENT: {
-  NOT_FOUND: "Student not found",
-  FAILED_TO_CREATE: "Failed to create student",
-  FAILED_TO_UPDATE: "Failed to update student",
-  NAME_REQUIRED: "Student name is required",
-  PARENT_ID_REQUIRED: "Parent ID is required",
-  SCHOOL_ID_REQUIRED: "School ID is required",
-},
-
-// Add to SUCCESS_MESSAGES
-STUDENT: {
-  CREATED_SUCCESSFULLY: "Student created successfully",
-  UPDATED_SUCCESSFULLY: "Student updated successfully",
-  DELETED_SUCCESSFULLY: "Student deleted successfully",
-},
-```
-
-**3. Validation (`validations/student.validation.ts`)**:
-
-```typescript
-import Joi from "joi";
-
-import { VALIDATION_MESSAGES } from "@constants";
-
-export const createStudentSchema = Joi.object({
-  parent_id: Joi.string().required().messages({
-    "any.required": "Parent ID is required",
-  }),
-  school_id: Joi.string().required().messages({
-    "any.required": "School ID is required",
-  }),
-  student_name: Joi.string().min(2).max(100).required().messages({
-    "string.min": "Student name must be at least 2 characters",
-    "any.required": "Student name is required",
-  }),
-  class: Joi.string().required().messages({
-    "any.required": "Class is required",
-  }),
-  section: Joi.string().optional(),
-  roll_number: Joi.string().optional(),
-  date_of_birth: Joi.date().optional(),
-  gender: Joi.string().valid("male", "female", "other").optional(),
-  pickup_address_id: Joi.string().required().messages({
-    "any.required": "Pickup address ID is required",
-  }),
-  emergency_contact: Joi.string()
-    .pattern(/^[+]?[0-9]{10,15}$/)
-    .optional(),
-  medical_info: Joi.string().max(500).optional(),
-});
-
-export const updateStudentSchema = Joi.object({
-  student_name: Joi.string().min(2).max(100).optional(),
-  class: Joi.string().optional(),
-  section: Joi.string().optional(),
-  roll_number: Joi.string().optional(),
-  date_of_birth: Joi.date().optional(),
-  gender: Joi.string().valid("male", "female", "other").optional(),
-  pickup_address_id: Joi.string().optional(),
-  emergency_contact: Joi.string()
-    .pattern(/^[+]?[0-9]{10,15}$/)
-    .optional(),
-  medical_info: Joi.string().max(500).optional(),
-});
-```
-
-**4. Repository (`repositories/student.repository.ts`)**:
-
-```typescript
-import { WithId } from "mongodb";
-
-import { STUDENTS_COLLECTION } from "@constants";
-import { Student } from "@models/student.type";
-
-import { BaseRepository } from "./base.repository";
-
-export class StudentRepository extends BaseRepository<Student> {
-  constructor() {
-    super(STUDENTS_COLLECTION);
-  }
-
-  async findByParentId(parentId: string): Promise<WithId<Student>[]> {
-    return await this.findMany({ parent_id: parentId });
-  }
-
-  async findBySchoolId(schoolId: string): Promise<WithId<Student>[]> {
-    return await this.findMany({ school_id: schoolId });
-  }
-
-  async findActiveStudents(parentId: string): Promise<WithId<Student>[]> {
-    return await this.findMany({ parent_id: parentId, is_active: true });
-  }
-}
-
-export const studentRepository = new StudentRepository();
-```
-
-**5. Service (`services/student.service.ts`)**:
-
-```typescript
-import { WithId } from "mongodb";
-import { nanoid } from "nanoid";
-
-import { studentRepository } from "@repositories/student.repository";
-import { Student } from "@models/student.type";
-
-export const createStudent = async (
-  data: Omit<Student, "student_id" | "created_at" | "is_active">,
-): Promise<WithId<Student>> => {
-  const studentData: Student = {
-    student_id: nanoid(),
-    ...data,
-    is_active: true,
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-
-  return await studentRepository.create(studentData);
-};
-
-export const getStudentById = async (
-  id: string,
-): Promise<WithId<Student> | null> => {
-  return await studentRepository.findById(id);
-};
-
-export const getStudentsByParentId = async (
-  parentId: string,
-): Promise<WithId<Student>[]> => {
-  return await studentRepository.findByParentId(parentId);
-};
-
-export const updateStudent = async (
-  id: string,
-  updates: Partial<Student>,
-): Promise<WithId<Student> | null> => {
-  return await studentRepository.updateById(id, {
-    $set: { ...updates, updated_at: new Date() },
-  });
-};
-
-export const deleteStudent = async (id: string): Promise<boolean> => {
-  // Soft delete - set is_active to false
-  const result = await studentRepository.updateById(id, {
-    $set: { is_active: false, updated_at: new Date() },
-  });
-  return result !== null;
-};
-```
-
-**6. Controller (`controllers/student.controller.ts`)**:
-
-```typescript
-import { Request, fo } from "express";
-
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
-import {
-  createStudent,
-  deleteStudent,
-  getStudentById,
-  getStudentsByParentId,
-  updateStudent,
-} from "@services/student.service";
-
-export const createStudentController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const studentData = req.body;
-
-    const student = await createStudent(studentData);
-
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      data: student,
-      message: SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY,
-    });
-  },
-);
-
-export const getStudentProfile = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const student = await getStudentById(id);
-
-    if (!student) {
-      throw new ApiError(
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.STUDENT.NOT_FOUND,
-      );
-    }
-
-    return res.json({
-      success: true,
-      data: student,
-    });
-  },
-);
-
-export const getMyStudents = asyncHandler(
-  async (req: Request, res: Response) => {
-    const parentId = req.user?.userId; // From auth middleware
-
-    if (!parentId) {
-      throw new ApiError(
-        HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
-      );
-    }
-
-    const students = await getStudentsByParentId(parentId);
-
-    return res.json({
-      success: true,
-      data: students,
-    });
-  },
-);
-
-export const updateStudentController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-    const updates = req.body;
-
-    const student = await updateStudent(id, updates);
-
-    if (!student) {
-      throw new ApiError(
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.STUDENT.NOT_FOUND,
-      );
-    }
-
-    return res.json({
-      success: true,
-      data: student,
-      message: SUCCESS_MESSAGES.STUDENT.UPDATED_SUCCESSFULLY,
-    });
-  },
-);
-
-export const deleteStudentController = asyncHandler(
-  async (req: Request, res: Response) => {
-    const { id } = req.params;
-
-    const deleted = await deleteStudent(id);
-
-    if (!deleted) {
-      throw new ApiError(
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.STUDENT.NOT_FOUND,
-      );
-    }
-
-    return res.json({
-      success: true,
-      message: SUCCESS_MESSAGES.STUDENT.DELETED_SUCCESSFULLY,
-    });
-  },
-);
-```
-
-**7. Routes (`routes/student.routes.ts`)**:
-
-```typescript
-import { Router } from "express";
-
-import {
-  createStudentController,
-  deleteStudentController,
-  getMyStudents,
-  getStudentProfile,
-  updateStudentController,
-} from "@controllers/student.controller";
-import { authMiddleware, validate } from "@middlewares";
-import {
-  createStudentSchema,
-  updateStudentSchema,
-} from "@validations/student.validation";
-
-const router = Router();
-
-// All routes require authentication
-router.use(authMiddleware);
-
-// Student CRUD operations
-router.post("/", validate(createStudentSchema), createStudentController);
-router.get("/my-students", getMyStudents);
-router.get("/:id", getStudentProfile);
-router.put("/:id", validate(updateStudentSchema), updateStudentController);
-router.delete("/:id", deleteStudentController);
-
-export default router;
-```
-
-**8. Register Routes (`routes/index.ts` - add to existing)**:
-
-```typescript
-import studentRoutes from "./student.routes";
-
-router.use("/students", studentRoutes);
-```
-
----
-
-### Example 2: Creating a Trip Module (Complex Example)
-
-Based on the database schema:
-
-```dbml
-Table trips {
-  trip_id varchar(36) [pk]
-  driver_id varchar(36) [not null, ref: > drivers.driver_id]
-  school_id varchar(36) [not null, ref: > schools.school_id]
-  trip_type enum [not null, note: 'pickup, drop']
-  trip_date date [not null]
-  trip_status enum [default: 'scheduled', note: 'scheduled, started, in_progress, completed, cancelled']
-  start_time timestamp
-  end_time timestamp
-  total_distance decimal(10,2)
-  optimized_route_data json
-  created_at timestamp [default: `CURRENT_TIMESTAMP`]
-  updated_at timestamp
-}
-```
-
-**Type Definition (`types/trip.type.ts`)**:
-
-```typescript
-export type TripType = "pickup" | "drop";
-export type TripStatus =
-  | "scheduled"
-  | "started"
-  | "in_progress"
-  | "completed"
-  | "cancelled";
-
-export interface RoutePoint {
-  latitude: number;
-  longitude: number;
-  address: string;
-  sequence_order: number;
-}
-
-export interface Trip {
-  _id?: any;
-  trip_id: string;
-  driver_id: string;
-  school_id: string;
-  trip_type: TripType;
-  trip_date: Date;
-  trip_status: TripStatus;
-  start_time?: Date;
-  end_time?: Date;
-  total_distance?: number;
-  optimized_route_data?: RoutePoint[];
-  created_at: Date;
-  updated_at?: Date;
-}
-```
-
-**Service with Business Logic (`services/trip.service.ts`)**:
-
-```typescript
-import { WithId } from "mongodb";
-import { nanoid } from "nanoid";
-
-import { tripRepository } from "@repositories/trip.repository";
-import { Trip, TripStatus } from "@models/trip.type";
-
-export const createTrip = async (
-  data: Omit<Trip, "trip_id" | "created_at" | "trip_status">,
-): Promise<WithId<Trip>> => {
-  const tripData: Trip = {
-    trip_id: nanoid(),
-    ...data,
-    trip_status: "scheduled",
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
-
-  return await tripRepository.create(tripData);
-};
-
-export const startTrip = async (
-  tripId: string,
-): Promise<WithId<Trip> | null> => {
-  const trip = await tripRepository.findById(tripId);
-
-  if (!trip) {
-    return null;
-  }
-
-  if (trip.trip_status !== "scheduled") {
-    throw new Error(
-      "Trip has already been started or is not in scheduled state",
-    );
-  }
-
-  return await tripRepository.updateById(tripId, {
-    $set: {
-      trip_status: "started",
-      start_time: new Date(),
-      updated_at: new Date(),
-    },
-  });
-};
-
-export const completeTrip = async (
-  tripId: string,
-  totalDistance: number,
-): Promise<WithId<Trip> | null> => {
-  const trip = await tripRepository.findById(tripId);
-
-  if (!trip) {
-    return null;
-  }
-
-  if (trip.trip_status === "completed" || trip.trip_status === "cancelled") {
-    throw new Error("Trip is already completed or cancelled");
-  }
-
-  return await tripRepository.updateById(tripId, {
-    $set: {
-      trip_status: "completed",
-      end_time: new Date(),
-      total_distance: totalDistance,
-      updated_at: new Date(),
-    },
-  });
-};
-
-export const getDriverTrips = async (
-  driverId: string,
-  date?: Date,
-): Promise<WithId<Trip>[]> => {
-  return await tripRepository.findByDriverAndDate(driverId, date);
-};
-```
-
 ---
 
 ## Middleware Patterns
 
 ### Authentication Middlewares
 
-The project uses role-based authentication middlewares located in `middlewares/auth.middleware.ts`. **IMPORTANT: All middlewares must use constants for status codes and error messages.**
-
-**Authentication Middleware Implementation:**
-
-```typescript
-// middlewares/auth.middleware.ts
-import { NextFunction, Request, Response } from "express";
-
-import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
-import { verifyAccessToken } from "@services/token.service";
-
-export const verifyParentToken = (
-  req: Request,
-  res: Response,
-  next: NextFunction,
-) => {
-  const authHeader = req.headers.authorization;
-
-  if (!authHeader) {
-    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
-    });
-  }
-
-  const token = authHeader.split(" ")[1];
-
-  if (!token) {
-    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: ERROR_MESSAGES.AUTH.MALFORMED_AUTH_HEADER,
-    });
-  }
-
-  try {
-    const payload = verifyAccessToken(token);
-
-    if (payload.role !== "parent") {
-      return res.status(HTTP_STATUS.FORBIDDEN).json({
-        success: false,
-        error: ERROR_MESSAGES.AUTH.PARENT_ROLE_REQUIRED,
-      });
-    }
-
-    req.user = payload;
-    next();
-  } catch {
-    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
-      success: false,
-      error: ERROR_MESSAGES.AUTH.INVALID_TOKEN,
-    });
-  }
-};
-
-// verifyDriverToken and verifyToken_Middleware follow the same pattern
-```
-
-**Using Authentication Middlewares:**
+The project uses role-based authentication middlewares located in `middlewares/auth.middleware.ts`.
 
 **1. Generic Token Verification (`verifyToken_Middleware`)**:
-
 ```typescript
-import { verifyToken_Middleware } from "@middlewares";
-
 // Use for routes that require authentication but any role is allowed
 router.get("/profile", verifyToken_Middleware, getProfile);
 ```
 
 **2. Parent-Specific Authentication (`verifyParentToken`)**:
-
 ```typescript
-import { verifyParentToken } from "@middlewares";
-
 // Use for parent-only routes
 router.get("/my-children", verifyParentToken, getMyChildren);
 ```
 
 **3. Driver-Specific Authentication (`verifyDriverToken`)**:
-
 ```typescript
-import { verifyDriverToken } from "@middlewares";
-
 // Use for driver-only routes
 router.get("/my-trips", verifyDriverToken, getMyTrips);
 ```
 
-### Validation Middleware
-
-**Usage:**
-
-```typescript
-import { validate } from "@middlewares";
-import { createEntitySchema } from "@validations/entity.validation";
-
-router.post("/entity", validate(createEntitySchema), createEntityController);
-```
-
-### Rate Limiting Middleware
-
-**Usage:**
-
-```typescript
-import { loginRateLimiter } from "@middlewares";
-
-// For sensitive operations like OTP generation
-router.post("/send-otp", validate(sendOTPSchema), loginRateLimiter, sendOtp);
-```
-
-### Error Handling Middlewares
+### Other Middlewares
 
 **AsyncHandler** - Wraps async route handlers to catch errors:
-
 ```typescript
 import { asyncHandler } from "@middlewares";
 
@@ -1550,228 +560,37 @@ export const myController = asyncHandler(async (req, res) => {
 });
 ```
 
-**Registration in app.ts:**
-
+**Rate Limiting**:
 ```typescript
-// NotFound Handler - 404 responses (must be before error handler)
-app.use(notFound);
+import { loginRateLimiter } from "@middlewares";
 
-// Global Error Handler - must be last middleware
-app.use(errorHandler);
-```
-
-### Middleware Order in Routes
-
-**Correct order**:
-
-```typescript
-router.post(
-  "/endpoint",
-  validate(schema), // 1. Validation first
-  authMiddleware, // 2. Authentication second
-  rateLimiter, // 3. Rate limiting (if needed)
-  controllerFunction, // 4. Controller last
-);
+// For sensitive operations like OTP generation
+router.post("/send-otp", validate(sendOTPSchema), loginRateLimiter, sendOtp);
 ```
 
 ---
 
-## File Placement Standards
+## Implementation Checklist
 
-### Critical Rule: ONE Entity = ONE Set of Files
+When creating a new module (e.g., "schools"), follow these steps **in order**:
 
-When creating a new feature/module (e.g., "schools"), you MUST create files in the following locations:
-
-```
-src/
-├── types/
-│   └── school.type.ts              ✓ Type definitions
-├── constants/
-│   ├── collections.ts              ✓ Add SCHOOLS collection
-│   ├── messages.ts                 ✓ Add SCHOOL error/success messages
-│   └── enums.ts                    ✓ Add shared enums (optional)
-├── validations/
-│   └── school.validation.ts        ✓ Joi validation schemas
-├── repositories/
-│   └── school.repository.ts        ✓ Database operations
-├── services/
-│   └── school.service.ts           ✓ Business logic
-├── controllers/
-│   └── school.controller.ts        ✓ HTTP handlers
-└── routes/
-    └── school.routes.ts            ✓ Route definitions
-```
-
-### File Placement Checklist
-
-**✅ DO:**
-
-- Place each entity in its own dedicated file
-- Use consistent naming: `{entity}.{layer}.ts`
-- Group related code by layer, not by feature
-- Keep one entity per file (single responsibility)
-
-**❌ DON'T:**
-
-- Create feature folders (e.g., `features/school/`)
-- Mix multiple entities in one file
-- Create nested layer structures
-- Place files outside their designated layer folders
-
-### Adding to Existing Files
-
-Some files require updates when adding new entities:
-
-**1. `constants/collections.ts`** - Add new collection:
-
-```typescript
-export const COLLECTIONS = {
-  // ... existing collections
-  SCHOOLS: "schools", // Add this
-};
-
-export const SCHOOLS_COLLECTION = COLLECTIONS.SCHOOLS;
-```
-
-**2. `constants/messages.ts`** - Add error/success messages:
-
-```typescript
-export const ERROR_MESSAGES = {
-  // ... existing
-  SCHOOL: {
-    NOT_FOUND: "School not found",
-    FAILED_TO_CREATE: "Failed to create school",
-  },
-};
-
-export const SUCCESS_MESSAGES = {
-  // ... existing
-  SCHOOL: {
-    CREATED_SUCCESSFULLY: "School created successfully",
-  },
-};
-```
-
-**3. `constants/enums.ts`** - Add shared enums (if needed):
-
-```typescript
-export enum SchoolType {
-  PUBLIC = "public",
-  PRIVATE = "private",
-}
-```
-
-**4. `routes/index.ts`** - Register new routes:
-
-```typescript
-import schoolRoutes from "./school.routes";
-
-router.use("/schools", schoolRoutes);
-```
-
-**5. `middlewares/index.ts`** - Export middleware (if creating new middleware):
-
-```typescript
-export * from "./school.middleware";
-```
-
-### Folder Structure Rules
-
-```
-✓ CORRECT:
-src/
-├── controllers/
-│   ├── auth.controller.ts
-│   ├── parent.controller.ts
-│   └── school.controller.ts       # Each entity separate
-├── services/
-│   ├── auth.service.ts
-│   ├── parent.service.ts
-│   └── school.service.ts          # Parallel structure
-
-✗ INCORRECT:
-src/
-├── features/
-│   └── school/
-│       ├── school.controller.ts   # Don't group by feature
-│       ├── school.service.ts
-│       └── school.routes.ts
-```
-
-### Special Folders
-
-**`types/global/`** - Only for global type declarations:
-
-```
-types/
-├── auth.type.ts              # Entity types
-├── parent.type.ts            # Entity types
-└── global/                   # Global declarations only
-    ├── environment.d.ts      # Environment variables
-    └── global.d.ts           # Express request extensions
-```
-
-**`environment/`** - Environment files:
-
-```
-environment/
-├── .env                      # Current environment
-├── .env.dev                  # Development
-└── .env.prod                 # Production
-```
-
-**`config/`** - Configuration files (not entity-specific):
-
-```
-config/
-├── index.ts                  # Export all configs
-├── env.ts                    # Environment config
-├── database.ts               # Database connection
-└── redis.ts                  # Redis connection
-```
-
-### Utils vs Helpers
-
-**`utils/`** - General utility functions:
-
-```
-utils/
-├── index.ts                  # Export all utils
-├── logger.ts                 # Logging utility
-├── apiError.ts               # Error class
-├── apiResponse.ts            # Response formatter
-└── helpers.ts                # Generic helper functions
-```
-
-**Don't create entity-specific utils** - Use services instead:
-
-```
-✗ utils/schoolHelpers.ts      # Wrong - use services/school.service.ts
-✓ services/school.service.ts  # Correct - business logic here
-```
-
----
-
-## Quick Reference Guide
-
-### Creating a New Module Checklist
-
-When creating a new module (e.g., "schools"), follow these steps:
+### ✅ Step-by-Step Process
 
 1. **Check Database Schema** (`Database/ping_parent_dbdiagram.dbml`)
    - Note all fields, types, and constraints
    - Identify enums and default values
+   - Identify relationships (foreign keys)
 
 2. **Create Type Definition** (`types/{entity}.type.ts`)
-   - Define enums as union types
    - Create interface with snake_case fields matching DB schema
+   - Import enums from `constants/enums.ts` (do NOT define as type unions)
    - Include `_id?: any` for MongoDB
 
 3. **Add Constants**:
    - Collection name in `constants/collections.ts`
    - Error messages in `constants/messages.ts` (ERROR_MESSAGES)
    - Success messages in `constants/messages.ts` (SUCCESS_MESSAGES)
-   - Enums in `constants/enums.ts` if shared across modules
+   - **Enums in `constants/enums.ts`** (ALL enums go here, not in type files)
 
 4. **Create Validation Schemas** (`validations/{entity}.validation.ts`)
    - Use Joi for request validation
@@ -1793,6 +612,7 @@ When creating a new module (e.g., "schools"), follow these steps:
    - Extract request data
    - Call service methods
    - Return standardized responses
+   - **Export WITHOUT "Controller" suffix**
 
 8. **Create Routes** (`routes/{entity}.routes.ts`)
    - Define endpoints
@@ -1803,126 +623,50 @@ When creating a new module (e.g., "schools"), follow these steps:
 9. **Register Routes** (`routes/index.ts`)
    - Import and mount entity routes
 
----
+10. **Update API Documentation** (`docs/API_DOCUMENTATION.md`)
+    - Add all new endpoints with request/response examples
 
-### Common Patterns
+11. **Update Swagger Documentation** (`docs/swagger.yaml`)
+    - Add schemas and endpoint definitions
 
-**ID Generation**:
+### ✅ Verification Checklist
 
-```typescript
-import { nanoid } from "nanoid";
+Before considering the task complete, verify:
 
-const id = nanoid(); // Generates unique ID
-```
-
-**Timestamps**:
-
-```typescript
-created_at: new Date(),
-updated_at: new Date()
-```
-
-**Soft Delete**:
-
-```typescript
-$set: { is_active: false, updated_at: new Date() }
-```
-
-**Update Pattern**:
-
-```typescript
-await repository.updateById(id, {
-  $set: { ...updates, updated_at: new Date() },
-});
-```
-
-**Phone Normalization**:
-
-```typescript
-import { normalizePhone } from "@utils";
-
-const normalizedPhone = normalizePhone(phone);
-```
-
-**Response Formats**:
-
-```typescript
-// Success Response
-return res.json({
-  success: true,
-  data: result,
-  message: SUCCESS_MESSAGES.ENTITY.ACTION_SUCCESSFUL,
-});
-
-// Error Response (throw ApiError to be caught by error handler)
-throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ENTITY.NOT_FOUND);
-```
+- [ ] All field names use snake_case (match DB schema)
+- [ ] All enum values are lowercase strings
+- [ ] All constants are used from centralized files
+- [ ] All files are in correct folders (no feature folders)
+- [ ] Repository extends BaseRepository
+- [ ] Controller uses asyncHandler
+- [ ] Controller exports WITHOUT "Controller" suffix
+- [ ] Routes use correct middleware order (validate → auth → controller)
+- [ ] Error messages use ApiError class
+- [ ] Success/error messages use constants
+- [ ] Routes are registered in routes/index.ts
+- [ ] API documentation is updated
+- [ ] Swagger documentation is updated
 
 ---
 
-### Import Aliases
+## Key Patterns
 
-The project uses TypeScript path aliases (configured in `tsconfig.json`):
+### 1. User ID to Foreign Key Conversion Pattern
 
-```typescript
-import { something } from "@config";
-// src/config
-import { HTTP_STATUS } from "@constants";
-// src/constants
-import { controller } from "@controllers";
-// src/controllers
-import { middleware } from "@middlewares";
-// src/middlewares
-import { Type } from "@models";
-// src/types (use @models alias, NOT @types)
-import { repository } from "@repositories";
-// src/repositories
-import { Router } from "@routes";
-// src/routes (not commonly used)
-import { service } from "@services";
-// src/services
-import { helper } from "@utils";
-// src/utils
-import { schema } from "@validations";
+**CRITICAL PATTERN**: When implementing modules that reference parent or driver entities (like students, addresses), convert the authenticated user's `userId` to the appropriate foreign key.
 
-// src/validations
-```
-
----
-
-## User ID to Foreign Key Conversion Pattern
-
-**CRITICAL PATTERN**: When implementing modules that reference parent or driver entities (like students, addresses, etc.), you must properly convert the authenticated user's `userId` to the appropriate foreign key.
-
-### Database Relationship Chain
-
+**Database Relationship Chain**:
 ```
 users.user_id (from JWT) → parents.user_id → parents._id (stored as parent_id in child tables)
 users.user_id (from JWT) → drivers.user_id → drivers._id (stored as driver_id in child tables)
 ```
 
-### Why This Pattern is Necessary
-
-1. **Authentication**: User authenticates and receives JWT with `userId` (from `users` table)
-2. **Authorization**: The `userId` maps to a profile in `parents` or `drivers` table
-3. **Child Records**: Child tables (students, addresses) reference the profile ID, not the user ID
-
-### Implementation Pattern
-
-#### Service Layer Helper Function
-
-Create a helper function to convert `userId` to `parent_id` or `driver_id`:
+**Implementation**:
 
 ```typescript
 // services/student.service.ts
-import { getDB } from "@config";
-import { PARENTS_COLLECTION } from "@constants";
 
-/**
- * Get parent_id from user_id
- * This is needed because the student table stores parent_id (from parents table)
- * but the authenticated user has user_id (from users table)
- */
+// Helper function to convert userId to parent_id
 const getParentIdByUserId = async (userId: string): Promise<string | null> => {
   const db = await getDB();
   const parent = await db
@@ -1935,13 +679,8 @@ const getParentIdByUserId = async (userId: string): Promise<string | null> => {
 
   return String(parent._id);
 };
-```
 
-#### Service Functions - Create Operations
-
-For create operations, accept `userId` as a parameter and convert it internally:
-
-```typescript
+// Create operation - accept userId, convert internally
 export const createStudent = async (
   userId: string,
   data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">,
@@ -1970,33 +709,9 @@ export const createStudent = async (
 };
 ```
 
-#### Service Functions - Read Operations
-
-For read operations by user context, convert `userId` to foreign key:
-
+**Controller Layer**:
 ```typescript
-export const getStudentsByUserId = async (
-  userId: string,
-): Promise<WithId<Student>[]> => {
-  const parentId = await getParentIdByUserId(userId);
-
-  if (!parentId) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
-    );
-  }
-
-  return await studentRepository.findByParentId(parentId);
-};
-```
-
-#### Controller Layer
-
-Controllers extract `userId` from the authenticated user and pass it to service functions:
-
-```typescript
-export const createStudentController = asyncHandler(
+export const createStudent = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId; // From JWT token
 
@@ -2009,7 +724,7 @@ export const createStudentController = asyncHandler(
 
     const studentData = req.body; // Does NOT include parent_id
 
-    const student = await createStudent(userId, studentData);
+    const student = await createStudentService(userId, studentData);
 
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
@@ -2020,82 +735,29 @@ export const createStudentController = asyncHandler(
 );
 ```
 
-#### Validation Layer
-
-Remove foreign key fields from create request validation:
-
+**Validation Layer** - Remove foreign key from request:
 ```typescript
-// BEFORE (WRONG)
-export const createStudentSchema = Joi.object({
-  parent_id: Joi.string().required(), // DON'T accept this from request body
-  student_name: Joi.string().required(),
-  // ...
-});
-
-// AFTER (CORRECT)
+// DON'T accept parent_id from request body
 export const createStudentSchema = Joi.object({
   // parent_id removed - derived from authenticated user
   student_name: Joi.string().required(),
-  // ...
+  school_id: Joi.string().required(),
+  // ... other fields
 });
 ```
 
-### Key Benefits
-
-1. **Security**: Users can only create/modify their own child records
-2. **Simplified API**: Clients don't need to know or provide parent_id/driver_id
-3. **Data Integrity**: Prevents users from creating records for other parents/drivers
-4. **Better UX**: Automatic association based on who is logged in
-
-### When to Apply This Pattern
-
-Apply this pattern when creating modules where:
-- The entity belongs to a parent or driver (students, addresses, etc.)
-- The authenticated user is the owner of the entity
-- The entity table has a foreign key to `parent_id` or `driver_id`
-
-### Example: Student Module
-
-**Database Schema:**
-```
-users.user_id → parents.user_id → parents._id
-                                      ↓
-                        students.parent_id (foreign key)
-```
-
-**API Flow:**
-1. Parent authenticates → receives JWT with `userId`
-2. Parent calls `POST /api/students` with student data (NO parent_id in body)
-3. Controller extracts `userId` from `req.user.userId`
-4. Service converts `userId` → `parent_id` via database lookup
-5. Service creates student with correct `parent_id`
-
-### Reference Implementation
-
-See the complete implementation in:
-- **Service**: `src/services/student.service.ts` (lines 15-26, 31-70, 189-220)
-- **Controller**: `src/controllers/student.controller.ts` (lines 17-38, 73-92)
-- **Validation**: `src/validations/student.validation.ts` (parent_id removed from schema)
+**Benefits**:
+- Security: Users can only create/modify their own child records
+- Simplified API: Clients don't need to provide parent_id/driver_id
+- Data Integrity: Prevents users from creating records for others
 
 ---
 
-## Duplicate Checking Pattern
+### 2. Duplicate Checking Pattern
 
-**CRITICAL**: Always implement duplicate checking for create and update operations to prevent data duplication based on business logic.
+**CRITICAL**: Always implement duplicate checking for create and update operations to prevent data duplication.
 
-### When to Add Duplicate Checking
-
-Implement duplicate checking when:
-- Creating or updating records that should be unique based on a combination of fields
-- Business rules require uniqueness beyond database primary keys
-- Multiple fields together form a logical unique constraint
-
-### Implementation Pattern
-
-**Example: Student Module** - A student is duplicate if same parent has a student with same name, school, and class.
-
-**1. Repository Method** (`repositories/{entity}.repository.ts`):
-
+**Repository Method**:
 ```typescript
 async findDuplicateStudent(
   parentId: string,
@@ -2113,8 +775,7 @@ async findDuplicateStudent(
 }
 ```
 
-**2. Service Layer - Create** (`services/{entity}.service.ts`):
-
+**Service Layer - Create**:
 ```typescript
 export const createStudent = async (
   data: Omit<Student, "student_id" | "created_at" | "is_active">,
@@ -2138,14 +799,12 @@ export const createStudent = async (
 };
 ```
 
-**3. Service Layer - Update** (`services/{entity}.service.ts`):
-
+**Service Layer - Update**:
 ```typescript
 export const updateStudent = async (
   id: string,
   updates: Partial<Student>,
 ): Promise<WithId<Student> | null> => {
-  // Get current student
   const currentStudent = await studentRepository.findById(id);
 
   if (!currentStudent) {
@@ -2179,351 +838,110 @@ export const updateStudent = async (
 };
 ```
 
-**4. Error Message** (`constants/messages.ts`):
-
-```typescript
-STUDENT: {
-  // ... other messages
-  ALREADY_EXISTS: "A student with the same name, school, and class already exists for this parent",
-}
-```
-
-### Key Points
-
-- **Repository**: Add `findDuplicate{Entity}` method with business logic fields
-- **Service**: Check duplicates BEFORE create/update operations
-- **Update**: Only check if critical fields are being modified
-- **Exclude Self**: When updating, ensure duplicate check excludes the current record
-- **Active Records**: Usually only check against active records (`is_active: true`)
-- **Error Message**: Provide clear, descriptive duplicate error messages
-
 ---
 
-## Swagger/OpenAPI Documentation
+## Quick Reference
 
-**Location**: `docs/swagger.yaml`
+### Common Patterns
 
-The project uses OpenAPI 3.0 specification for API documentation. All API endpoints MUST be documented in the Swagger file.
-
-### When to Update Swagger
-
-Update `docs/swagger.yaml` whenever you:
-- Create a new API endpoint
-- Modify request/response payloads
-- Add new schemas/models
-- Change authentication requirements
-- Update error responses
-
-### Swagger File Structure
-
-```yaml
-openapi: 3.0.3
-info:
-  title: Ping Parent Backend API
-  version: 1.0.0
-
-servers:
-  - url: http://localhost:3000/api          # Development
-  - url: https://staging-api.pingparent.com/api  # Staging
-  - url: https://api.pingparent.com/api     # Production
-
-components:
-  securitySchemes:
-    BearerAuth:                              # JWT authentication
-      type: http
-      scheme: bearer
-
-  schemas:
-    # Define reusable schemas here
-    Entity:
-      type: object
-      properties:
-        # field definitions
-
-paths:
-  /endpoint:
-    get:
-      tags: [Category]
-      summary: Brief description
-      # endpoint details
+**ID Generation**:
+```typescript
+import { nanoid } from "nanoid";
+const id = nanoid();
 ```
 
-### Adding a New Endpoint to Swagger
-
-**Example: Adding a School endpoint**
-
-**1. Add Schema Definition** (in `components.schemas`):
-
-```yaml
-components:
-  schemas:
-    School:
-      type: object
-      properties:
-        _id:
-          type: string
-        school_id:
-          type: string
-        school_name:
-          type: string
-          example: "Lincoln Elementary"
-        address:
-          type: string
-        city:
-          type: string
-        state:
-          type: string
-        is_active:
-          type: boolean
-        created_at:
-          type: string
-          format: date-time
-        updated_at:
-          type: string
-          format: date-time
-
-    CreateSchoolRequest:
-      type: object
-      required:
-        - school_name
-        - address
-        - city
-        - state
-      properties:
-        school_name:
-          type: string
-          minLength: 3
-          maxLength: 100
-          example: "Lincoln Elementary"
-        address:
-          type: string
-          example: "123 Main St"
-        city:
-          type: string
-          example: "Springfield"
-        state:
-          type: string
-          example: "IL"
+**Timestamps**:
+```typescript
+created_at: new Date(),
+updated_at: new Date()
 ```
 
-**2. Add Endpoint Path** (in `paths`):
-
-```yaml
-paths:
-  /schools:
-    post:
-      tags:
-        - School
-      summary: Create new school
-      description: Create a new school record in the system
-      security:
-        - BearerAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CreateSchoolRequest'
-      responses:
-        '201':
-          description: School created successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  message:
-                    type: string
-                    example: "School created successfully"
-                  data:
-                    $ref: '#/components/schemas/School'
-        '400':
-          description: Bad request - validation error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '409':
-          description: School already exists
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-
-  /schools/{id}:
-    get:
-      tags:
-        - School
-      summary: Get school by ID
-      description: Retrieve school details by MongoDB ObjectId
-      security:
-        - BearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: MongoDB ObjectId of the school
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    $ref: '#/components/schemas/School'
-        '401':
-          description: Unauthorized
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
-        '404':
-          description: School not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/Error'
+**Soft Delete**:
+```typescript
+$set: { is_active: false, updated_at: new Date() }
 ```
 
-### Swagger Documentation Checklist
+**Update Pattern**:
+```typescript
+await repository.updateById(id, {
+  $set: { ...updates, updated_at: new Date() },
+});
+```
 
-When adding a new module, ensure:
+**Phone Normalization**:
+```typescript
+import { normalizePhone } from "@utils";
+const normalizedPhone = normalizePhone(phone);
+```
 
-- [ ] **Add to tags**: Create a new tag for the entity category
-- [ ] **Define schemas**: Add request/response schemas in `components.schemas`
-- [ ] **Document all endpoints**: Add all CRUD operations (GET, POST, PUT, DELETE)
-- [ ] **Include authentication**: Specify `security: - BearerAuth: []` for protected routes
-- [ ] **Define parameters**: Document path params, query params with types and descriptions
-- [ ] **Document request bodies**: Use `requestBody` with schema references
-- [ ] **Define all responses**: Include success (200, 201) and error responses (400, 401, 404, 409, 500)
-- [ ] **Add examples**: Provide example values for better clarity
-- [ ] **Use schema references**: Use `$ref` to reference reusable schemas
-- [ ] **Match field names**: Ensure snake_case fields match database schema
-- [ ] **Document validation**: Include validation rules (minLength, maxLength, pattern, required)
+**Response Formats**:
+```typescript
+// Success Response
+return res.json({
+  success: true,
+  data: result,
+  message: SUCCESS_MESSAGES.ENTITY.ACTION_SUCCESSFUL,
+});
 
-### Swagger Field Type Mapping
+// Error Response (throw ApiError to be caught by error handler)
+throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ENTITY.NOT_FOUND);
+```
 
-Map TypeScript types to OpenAPI types:
+### Import Aliases
+
+The project uses TypeScript path aliases:
 
 ```typescript
-// TypeScript → OpenAPI
-string → type: string
-number → type: number (or type: integer)
-boolean → type: boolean
-Date → type: string, format: date-time
-Date (date only) → type: string, format: date
-enum → type: string, enum: [value1, value2]
-object → type: object
-array → type: array, items: { ... }
+import { something } from "@config";        // src/config
+import { HTTP_STATUS } from "@constants";   // src/constants
+import { controller } from "@controllers";  // src/controllers
+import { middleware } from "@middlewares";  // src/middlewares
+import { Type } from "@models";             // src/types (use @models alias)
+import { repository } from "@repositories"; // src/repositories
+import { service } from "@services";        // src/services
+import { helper } from "@utils";            // src/utils
+import { schema } from "@validations";      // src/validations
 ```
 
-### Testing Swagger Documentation
+### File Placement Standards
 
-After updating `docs/swagger.yaml`:
+**One Entity = One Set of Files**:
 
-1. **Validate YAML syntax**: Use an online YAML validator
-2. **Test with Swagger UI**:
-   - Use https://editor.swagger.io/
-   - Paste the swagger.yaml content
-   - Verify all endpoints render correctly
-3. **Check for errors**: Ensure no schema reference errors
-4. **Verify examples**: Confirm all examples are valid
-
-### Environment-Based Server URLs
-
-The Swagger file includes server configurations for all environments:
-
-```yaml
-servers:
-  - url: http://localhost:3000/api
-    description: Local development server
-  - url: https://staging-api.pingparent.com/api
-    description: Staging server
-  - url: https://api.pingparent.com/api
-    description: Production server
+```
+src/
+├── types/
+│   └── school.type.ts              ✓ Type definitions
+├── constants/
+│   ├── collections.ts              ✓ Add SCHOOLS collection
+│   └── messages.ts                 ✓ Add SCHOOL messages
+├── validations/
+│   └── school.validation.ts        ✓ Joi schemas
+├── repositories/
+│   └── school.repository.ts        ✓ Database operations
+├── services/
+│   └── school.service.ts           ✓ Business logic
+├── controllers/
+│   └── school.controller.ts        ✓ HTTP handlers
+└── routes/
+    └── school.routes.ts            ✓ Route definitions
 ```
 
-When deploying, the appropriate server URL is automatically selected based on the environment.
-
-### Common Swagger Patterns
-
-**Protected Endpoint (Requires Authentication)**:
-```yaml
-security:
-  - BearerAuth: []
-```
-
-**Public Endpoint (No Authentication)**:
-```yaml
-# Omit security field or use empty array
-security: []
-```
-
-**Pagination Parameters**:
-```yaml
-parameters:
-  - name: page
-    in: query
-    schema:
-      type: integer
-      default: 1
-  - name: limit
-    in: query
-    schema:
-      type: integer
-      default: 10
-```
-
-**File Upload**:
-```yaml
-requestBody:
-  content:
-    multipart/form-data:
-      schema:
-        type: object
-        properties:
-          file:
-            type: string
-            format: binary
-```
-
-### Important Notes
-
-- **Keep in sync**: Always update Swagger when you update API_DOCUMENTATION.md
-- **Use consistent naming**: Follow the same naming conventions as the codebase
-- **Document errors**: Include all possible error responses with status codes
-- **Version control**: Swagger file is version controlled with the codebase
-- **Single source of truth**: Swagger YAML is the definitive API contract
+**✅ DO**: Place each entity in its own dedicated file, group by layer
+**❌ DON'T**: Create feature folders (e.g., `features/school/`)
 
 ---
 
 ## Final Notes for AI Agents
 
-1. **Always Read Database Schema First**: Before implementing any feature, consult `Database/ping_parent_dbdiagram.dbml` for accurate field names, types, and relationships.
+1. **Always Read Database Schema First**: Consult `Database/ping_parent_dbdiagram.dbml` for accurate field names, types, and relationships.
 
-2. **Follow Auth Module Pattern**: Use the auth module as the gold standard for code structure, naming, and organization.
+2. **Follow Auth Module Pattern**: Use the auth module (`src/**/auth.*`) as the gold standard for code structure and organization.
 
-3. **Use Existing Constants**: Never hardcode messages, status codes, or collection names. Use centralized constants.
+3. **Use Existing Constants**: Never hardcode messages, status codes, or collection names. Search existing constants first.
 
 4. **Type Safety**: Always use TypeScript types and interfaces. Never use `any` except for `_id` field.
 
-5. **Database Field Names**: Use snake_case in types/interfaces to match MongoDB documents (e.g., `user_id`, `phone_number`).
+5. **Database Field Names**: Use snake_case in types/interfaces to match MongoDB documents.
 
 6. **Error Handling**: Always use `ApiError` class and `asyncHandler` wrapper.
 
@@ -2533,313 +951,24 @@ requestBody:
 
 9. **Service Layer**: Business logic belongs in services, not controllers.
 
-10. **Duplicate Checking**: Always implement duplicate checking for create/update operations based on business logic.
+10. **Controller Exports**: Export functions WITHOUT "Controller" suffix.
 
-11. **User ID to Foreign Key Conversion**: When creating modules that reference parent or driver data (like students), always convert `userId` (from authenticated user) to the appropriate foreign key (`parent_id` or `driver_id`) in the service layer. Never accept these IDs from the request body for create operations - derive them from the authenticated user's context.
+11. **User ID Conversion**: Convert `userId` to foreign keys (`parent_id`, `driver_id`) in service layer for create operations.
 
-12. **Update API Documentation**: After implementing a new module, update `docs/API_DOCUMENTATION.md` with all endpoints.
+12. **Duplicate Checking**: Implement duplicate checking for create/update operations based on business logic.
 
-13. **Update Swagger Documentation**: After implementing a new module, update `docs/swagger.yaml` with all endpoints, schemas, and responses.
-
-14. **Testing**: When implementing new features, consider writing tests following the existing test patterns.
+13. **Update Documentation**: After implementing a new module, update both `docs/API_DOCUMENTATION.md` and `docs/swagger.yaml`.
 
 ---
 
-## AI Agent Instructions
+## Additional Resources
 
-### How AI Agents Should Use This Document
-
-When you receive a task to implement a new feature or module, follow these steps **in order**:
-
-#### Step 1: Read Database Schema
-
-```
-1. Open: Database/ping_parent_dbdiagram.dbml
-2. Find the relevant table(s)
-3. Note all fields, types, enums, and constraints
-4. Identify relationships (foreign keys, references)
-```
-
-#### Step 2: Plan File Structure
-
-```
-Based on entity name (e.g., "school"), you will create:
-├── types/school.type.ts
-├── validations/school.validation.ts
-├── repositories/school.repository.ts
-├── services/school.service.ts
-├── controllers/school.controller.ts
-└── routes/school.routes.ts
-
-And update:
-├── constants/collections.ts
-├── constants/messages.ts
-├── constants/enums.ts (if needed)
-└── routes/index.ts
-```
-
-#### Step 3: Implement in Correct Order
-
-```
-1. Types (defines data structure)
-2. Constants (error messages, collection names)
-3. Validations (request validation)
-4. Repository (database layer)
-5. Service (business logic)
-6. Controller (HTTP handling)
-7. Routes (endpoint definitions)
-8. Register routes in routes/index.ts
-```
-
-#### Step 4: Follow Auth Module Pattern
-
-```
-For every file you create, reference the corresponding auth file:
-- auth.type.ts → your entity.type.ts
-- auth.validation.ts → your entity.validation.ts
-- auth.repository.ts → your entity.repository.ts
-- auth.service.ts → your entity.service.ts
-- auth.controller.ts → your entity.controller.ts
-- auth.routes.ts → your entity.routes.ts
-```
-
-#### Step 5: Verify Compliance
-
-Before considering the task complete, verify:
-
-- [ ] All field names use snake_case (match DB schema)
-- [ ] All enum values are lowercase strings
-- [ ] All constants are used from centralized files
-- [ ] All files are in correct folders (no feature folders)
-- [ ] Repository extends BaseRepository
-- [ ] Controller uses asyncHandler
-- [ ] Routes use correct middleware order
-- [ ] Error messages use ApiError class
-- [ ] Success/error messages use constants
-- [ ] Routes are registered in routes/index.ts
-
-### Common AI Agent Mistakes to Avoid
-
-**❌ MISTAKE #1: Wrong Field Naming**
-
-```typescript
-// Wrong - camelCase doesn't match DB
-interface User {
-  userId: string;
-  phoneNumber: string;
-}
-
-// Correct - snake_case matches DB schema
-interface User {
-  user_id: string;
-  phone_number: string;
-}
-```
-
-**❌ MISTAKE #2: Creating Feature Folders**
-
-```
-Wrong:
-src/features/school/
-  ├── school.controller.ts
-  └── school.service.ts
-
-Correct:
-src/controllers/school.controller.ts
-src/services/school.service.ts
-```
-
-**❌ MISTAKE #3: Hardcoding Messages**
-
-```typescript
-// Wrong
-throw new Error("User not found");
-
-// Correct
-throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.AUTH.USER_NOT_FOUND);
-```
-
-**❌ MISTAKE #4: Not Using BaseRepository**
-
-```typescript
-// Wrong - Direct MongoDB operations
-const collection = db.collection("schools");
-const school = await collection.findOne({ _id: id });
-
-// Correct - Extend BaseRepository
-export class SchoolRepository extends BaseRepository<School> {
-  constructor() {
-    super(SCHOOLS_COLLECTION);
-  }
-}
-```
-
-**❌ MISTAKE #5: Business Logic in Controllers**
-
-```typescript
-// Wrong - Logic in controller
-export const createSchool = asyncHandler(async (req, res) => {
-  const school = {
-    school_id: nanoid(),
-    ...req.body,
-    created_at: new Date(),
-  };
-  const result = await schoolRepository.create(school);
-  return res.json({ success: true, data: result });
-});
-
-// Correct - Logic in service, controller is thin
-export const createSchool = asyncHandler(async (req, res) => {
-  const school = await createSchoolService(req.body);
-  return res.json({
-    success: true,
-    data: school,
-    message: SUCCESS_MESSAGES.SCHOOL.CREATED_SUCCESSFULLY,
-  });
-});
-```
-
-**❌ MISTAKE #6: Wrong Middleware Order**
-
-```typescript
-// Wrong
-router.post("/endpoint", controller, validate(schema), authMiddleware);
-
-// Correct
-router.post("/endpoint", validate(schema), authMiddleware, controller);
-```
-
-**❌ MISTAKE #7: Missing Exports in Index Files**
-
-```typescript
-// Wrong - Created school.routes.ts but forgot to register
-// routes/index.ts remains unchanged
-// Correct - Added to routes/index.ts
-import schoolRoutes from "./school.routes";
-
-router.use("/schools", schoolRoutes);
-```
-
-### AI Agent Response Template
-
-When implementing a feature, provide this structure in your response:
-
-```markdown
-## Implementation: [Entity Name] Module
-
-### Files Created:
-
-1. ✓ types/[entity].type.ts
-2. ✓ validations/[entity].validation.ts
-3. ✓ repositories/[entity].repository.ts
-4. ✓ services/[entity].service.ts
-5. ✓ controllers/[entity].controller.ts
-6. ✓ routes/[entity].routes.ts
-
-### Files Updated:
-
-1. ✓ constants/collections.ts - Added [ENTITY]\_COLLECTION
-2. ✓ constants/messages.ts - Added ERROR_MESSAGES.[ENTITY] and SUCCESS_MESSAGES.[ENTITY]
-3. ✓ routes/index.ts - Registered [entity]Routes
-
-### Database Schema Reference:
-
-- Table: [table_name]
-- Primary Key: [primary_key_field]
-- Required Fields: [list required fields]
-- Enums: [list enum fields and values]
-
-### API Endpoints Created:
-
-- POST /api/[entity] - Create new [entity]
-- GET /api/[entity]/:id - Get [entity] by ID
-- PUT /api/[entity]/:id - Update [entity]
-- DELETE /api/[entity]/:id - Delete [entity]
-
-### Next Steps:
-
-[Any additional tasks or considerations]
-```
-
-### Testing Your Implementation
-
-After implementing, AI agents should verify:
-
-```bash
-# 1. TypeScript compilation
-npm run build
-
-# 2. Linting
-npm run lint
-
-# 3. Format check
-npm run format:check
-
-# 4. Run tests (if applicable)
-npm test
-```
+For detailed implementation examples, see:
+- **[IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md)** - Complete module examples (Student, Trip)
+- **[SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md)** - Swagger/OpenAPI documentation guide
+- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common mistakes and debugging tips
 
 ---
 
-## Summary
-
-This document provides a complete blueprint for implementing new features in the Ping Parent backend. By following these patterns and conventions, AI agents can generate consistent, maintainable code that integrates seamlessly with the existing codebase.
-
-### Key Principles
-
-1. **Database Schema First** - Always start with `Database/ping_parent_dbdiagram.dbml`
-2. **Follow Auth Pattern** - Use auth module as the reference implementation
-3. **Layer Separation** - Keep controllers thin, logic in services, data in repositories
-4. **Type Safety** - Use TypeScript types matching DB schema with snake_case
-5. **Centralized Constants** - Never hardcode messages, statuses, or collection names
-6. **Consistent Structure** - One entity = one set of files across all layers
-7. **Proper File Placement** - No feature folders, group by layer
-8. **Middleware Order** - Validation → Authentication → Rate Limiting → Controller
-9. **Error Handling** - Use ApiError and asyncHandler consistently
-10. **Export & Register** - Update index files and register routes
-
-### Quick Start for AI Agents
-
-```
-Task: "Create a School module"
-
-1. Read: Database/ping_parent_dbdiagram.dbml (schools table)
-2. Create: types/school.type.ts (fields match DB schema)
-3. Update: constants/collections.ts, messages.ts
-4. Create: validations/school.validation.ts (Joi schemas)
-5. Create: repositories/school.repository.ts (extends BaseRepository)
-6. Create: services/school.service.ts (business logic)
-7. Create: controllers/school.controller.ts (use asyncHandler)
-8. Create: routes/school.routes.ts (apply middlewares)
-9. Update: routes/index.ts (register routes)
-10. Verify: All patterns match auth module
-```
-
-### Key Resources
-
-- **Database Schema**: `Database/ping_parent_dbdiagram.dbml`
-- **Reference Implementation**: `src/routes/auth.routes.ts` and related auth files
-- **Constants Directory**: `src/constants/`
-- **Base Repository**: `src/repositories/base.repository.ts`
-- **Middleware Examples**: `src/middlewares/`
-- **Type Definitions**: `src/types/`
-
-### Support
-
-For questions or clarifications:
-
-1. Refer to existing auth module implementation
-2. Check database schema for field names and types
-3. Review constants for message templates
-4. Follow the patterns documented in this file
-
----
-
-**Last Updated**: This document should be reviewed and updated whenever:
-
-- New architectural patterns are introduced
-- Naming conventions change
-- New layers or folders are added
-- Best practices evolve
-
-**Document Version**: 1.0
+**Document Version**: 2.0
+**Last Updated**: 2025

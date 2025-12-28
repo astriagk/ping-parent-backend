@@ -2,6 +2,7 @@ import {
   Collection,
   Document,
   Filter,
+  ObjectId,
   OptionalId,
   OptionalUnlessRequiredId,
   UpdateFilter,
@@ -31,7 +32,9 @@ export class BaseRepository<T extends Document> {
   }
 
   async findById(id: string): Promise<WithId<T> | null> {
-    return await this.getCollection().findOne({ _id: id } as Filter<T>);
+    return await this.getCollection().findOne({
+      _id: new ObjectId(id),
+    } as Filter<T>);
   }
 
   async create(data: OptionalId<T>): Promise<WithId<T>> {
@@ -55,7 +58,7 @@ export class BaseRepository<T extends Document> {
     id: string,
     update: UpdateFilter<T>,
   ): Promise<WithId<T> | null> {
-    return await this.updateOne({ _id: id } as Filter<T>, update);
+    return await this.updateOne({ _id: new ObjectId(id) } as Filter<T>, update);
   }
 
   async deleteOne(filter: Filter<T>): Promise<boolean> {
@@ -64,7 +67,7 @@ export class BaseRepository<T extends Document> {
   }
 
   async deleteById(id: string): Promise<boolean> {
-    return await this.deleteOne({ _id: id } as Filter<T>);
+    return await this.deleteOne({ _id: new ObjectId(id) } as Filter<T>);
   }
 
   async count(filter: Filter<T> = {}): Promise<number> {

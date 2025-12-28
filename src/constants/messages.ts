@@ -97,6 +97,18 @@ export const ERROR_MESSAGES = {
     ALREADY_EXISTS:
       "A student with the same name, school, and class already exists for this parent",
   },
+  SCHOOL: {
+    NOT_FOUND: "School not found",
+    FAILED_TO_CREATE: "Failed to create school",
+    FAILED_TO_UPDATE: "Failed to update school",
+    FAILED_TO_DELETE: "Failed to delete school",
+    NAME_REQUIRED: "School name is required",
+    ADDRESS_REQUIRED: "School address is required",
+    CITY_REQUIRED: "City is required",
+    STATE_REQUIRED: "State is required",
+    COORDINATES_REQUIRED: "Latitude and longitude are required",
+    ALREADY_EXISTS: "A school with the same name and city already exists",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -137,6 +149,13 @@ export const SUCCESS_MESSAGES = {
     DELETED_SUCCESSFULLY: "Student deleted successfully",
     FETCHED_SUCCESSFULLY: "Student fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Students list fetched successfully",
+  },
+  SCHOOL: {
+    CREATED_SUCCESSFULLY: "School created successfully",
+    UPDATED_SUCCESSFULLY: "School updated successfully",
+    DELETED_SUCCESSFULLY: "School deleted successfully",
+    FETCHED_SUCCESSFULLY: "School fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Schools list fetched successfully",
   },
 };
 
