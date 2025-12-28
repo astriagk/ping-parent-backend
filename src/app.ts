@@ -1,8 +1,10 @@
 import express, { NextFunction, Request, Response } from "express";
+import * as swaggerUi from "swagger-ui-express";
 
-import authRoutes from "@routes/auth.routes";
-import driverRoutes from "@routes/driver.routes";
-import parentRoutes from "@routes/parent.routes";
+import { swaggerDocument, swaggerOptions } from "@config";
+import { errorHandler, notFound } from "@middlewares";
+import apiRoutes from "@routes";
+import { logger } from "@utils";
 
 const app = express();
 
@@ -10,12 +12,23 @@ app.use(express.json());
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
   const time = new Date().toISOString();
-  console.log(`[${time}] ${req.method} ${req.originalUrl}`);
+  logger.info(`[${time}] ${req.method} ${req.originalUrl}`);
   next();
 });
 
-app.use("/api", authRoutes);
-app.use("/api", driverRoutes);
-app.use("/api", parentRoutes);
+// Swagger UI documentation route
+app.use(
+  "/api-docs",
+  swaggerUi.serve,
+  swaggerUi.setup(swaggerDocument, swaggerOptions),
+);
+
+app.use("/api", apiRoutes);
+
+// 404 handler - must come after all routes
+app.use(notFound);
+
+// Error handler - must be the last middleware
+app.use(errorHandler);
 
 export default app;

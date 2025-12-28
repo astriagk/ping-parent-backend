@@ -1,11 +1,26 @@
+export const SUCCESS_MESSAGES_COMMON = {
+  RESOURCE_CREATED: "Resource created successfully",
+};
+
 export const ERROR_MESSAGES = {
+  COMMON: {
+    UNAUTHORIZED: "Unauthorized",
+    FORBIDDEN: "Forbidden",
+    RESOURCE_NOT_FOUND: "Resource not found",
+    RESOURCE_ALREADY_EXISTS: "Resource already exists",
+    VALIDATION_ERROR: "Validation error",
+    INTERNAL_SERVER_ERROR: "Internal server error",
+    RATE_LIMIT_EXCEEDED: "Too many login attempts. Try again later.",
+  },
   AUTH: {
-    MISSING_AUTH_HEADER: "Missing Authorization header",
-    MALFORMED_AUTH_HEADER: "Malformed Authorization header",
+    MISSING_AUTH_HEADER: "Authorization header missing",
+    MALFORMED_AUTH_HEADER: "Token missing from authorization header",
     USER_NOT_FOUND: "User not found",
     INVALID_REFRESH_TOKEN: "Invalid refresh token",
     TOKEN_EXPIRED: "Token expired",
-    INVALID_TOKEN: "Invalid token",
+    INVALID_TOKEN: "Invalid or expired token",
+    PARENT_ROLE_REQUIRED: "Access denied. Parent role required.",
+    DRIVER_ROLE_REQUIRED: "Access denied. Driver role required.",
     FAILED_TO_FETCH_ROLES: "Failed to fetch roles",
     UNABLE_TO_VALIDATE_ROLE: "Unable to validate role",
     INVALID_ROLE: "Invalid role",
@@ -68,6 +83,32 @@ export const ERROR_MESSAGES = {
     FAILED_TO_FETCH_DOCUMENTS: "Failed to fetch driver documents",
     FAILED_TO_UPDATE_DOCUMENTS: "Failed to update driver documents",
   },
+  STUDENT: {
+    NOT_FOUND: "Student not found",
+    FAILED_TO_CREATE: "Failed to create student",
+    FAILED_TO_UPDATE: "Failed to update student",
+    FAILED_TO_DELETE: "Failed to delete student",
+    NAME_REQUIRED: "Student name is required",
+    PARENT_ID_REQUIRED: "Parent ID is required",
+    SCHOOL_ID_REQUIRED: "School ID is required",
+    CLASS_REQUIRED: "Class is required",
+    PICKUP_ADDRESS_ID_REQUIRED: "Pickup address ID is required",
+    INVALID_GENDER: "Gender must be male, female, or other",
+    ALREADY_EXISTS:
+      "A student with the same name, school, and class already exists for this parent",
+  },
+  SCHOOL: {
+    NOT_FOUND: "School not found",
+    FAILED_TO_CREATE: "Failed to create school",
+    FAILED_TO_UPDATE: "Failed to update school",
+    FAILED_TO_DELETE: "Failed to delete school",
+    NAME_REQUIRED: "School name is required",
+    ADDRESS_REQUIRED: "School address is required",
+    CITY_REQUIRED: "City is required",
+    STATE_REQUIRED: "State is required",
+    COORDINATES_REQUIRED: "Latitude and longitude are required",
+    ALREADY_EXISTS: "A school with the same name and city already exists",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -101,6 +142,20 @@ export const SUCCESS_MESSAGES = {
     PROFILE_CREATED_SUCCESSFULLY: "Driver profile created successfully",
     ADDRESS_UPDATED_SUCCESSFULLY: "Driver address updated successfully",
     DOCUMENTS_UPDATED_SUCCESSFULLY: "Driver documents updated successfully",
+  },
+  STUDENT: {
+    CREATED_SUCCESSFULLY: "Student created successfully",
+    UPDATED_SUCCESSFULLY: "Student updated successfully",
+    DELETED_SUCCESSFULLY: "Student deleted successfully",
+    FETCHED_SUCCESSFULLY: "Student fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Students list fetched successfully",
+  },
+  SCHOOL: {
+    CREATED_SUCCESSFULLY: "School created successfully",
+    UPDATED_SUCCESSFULLY: "School updated successfully",
+    DELETED_SUCCESSFULLY: "School deleted successfully",
+    FETCHED_SUCCESSFULLY: "School fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Schools list fetched successfully",
   },
 };
 

@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, SUCCESS_MESSAGES } from "@constants";
+import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
+import { ApiError, asyncHandler } from "@middlewares";
 import {
   createDriverProfile,
   getDriverAddressByUserId,
@@ -10,7 +11,7 @@ import {
   updateDriverProfile,
   upsertDriverAddressByUserId,
   upsertDriverDocumentsByUserId,
-} from "@services";
+} from "@services/driver.service";
 import { assignTrimmedFields } from "@utils";
 
 const getUserIdFromRequest = (req: Request): string | null => {
@@ -49,51 +50,44 @@ const formatDriverProfileResponse = (profile: any) => ({
  * GET /driver/profile
  * Get driver profile details
  */
-export const getProfile = async (req: Request, res: Response) => {
-  try {
-    const userId = getUserIdFromRequest(req);
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
-    }
-
-    const profile = await getDriverProfile(userId);
-    if (!profile) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: {
-        ...formatDriverProfileResponse(profile),
-        user: profile.user,
-      },
-    });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_FETCH_DRIVER_PROFILE,
-    });
+export const getProfile = asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+    );
   }
-};
+
+  const profile = await getDriverProfile(userId);
+  if (!profile) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+    );
+  }
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: {
+      ...formatDriverProfileResponse(profile),
+      user: profile.user,
+    },
+  });
+});
 
 /**
  * POST /driver/profile
  * Create driver profile (during registration)
  */
-export const createProfile = async (req: Request, res: Response) => {
-  try {
+export const createProfile = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const {
@@ -108,27 +102,27 @@ export const createProfile = async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!name || !vehicle_type || !vehicle_number || !vehicle_capacity) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
+      );
     }
 
     // Validate vehicle type
     if (!["van", "auto", "bus"].includes(vehicle_type)) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_TYPE,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_TYPE,
+      );
     }
 
     // Validate vehicle capacity
     const capacity = parseInt(vehicle_capacity);
     if (isNaN(capacity) || capacity <= 0) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_CAPACITY,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_CAPACITY,
+      );
     }
 
     const driverData = {
@@ -144,45 +138,40 @@ export const createProfile = async (req: Request, res: Response) => {
 
     const created = await createDriverProfile(userId, driverData);
     if (!created) {
-      return res.status(500).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.FAILED_TO_CREATE_DRIVER_PROFILE,
-      });
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.DRIVER.FAILED_TO_CREATE_DRIVER_PROFILE,
+      );
     }
 
     const createdProfile = await getDriverProfile(userId);
     if (!createdProfile) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
-      });
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
     }
 
-    return res.status(201).json({
+    return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: formatDriverProfileResponse(createdProfile),
       message: SUCCESS_MESSAGES.DRIVER.PROFILE_CREATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_CREATE_DRIVER_PROFILE,
-    });
-  }
-};
+  },
+);
 
 /**
  * PUT /driver/profile
  * Update driver profile
  */
-export const updateProfile = async (req: Request, res: Response) => {
-  try {
+export const updateProfile = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const { vehicle_type, vehicle_capacity, is_available } = req.body;
@@ -199,20 +188,20 @@ export const updateProfile = async (req: Request, res: Response) => {
       if (["van", "auto", "bus"].includes(vehicle_type)) {
         updates.vehicle_type = vehicle_type;
       } else {
-        return res.status(400).json({
-          success: false,
-          error: ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_TYPE,
-        });
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_TYPE,
+        );
       }
     }
 
     if (vehicle_capacity !== undefined) {
       const capacity = parseInt(vehicle_capacity);
       if (isNaN(capacity) || capacity <= 0) {
-        return res.status(400).json({
-          success: false,
-          error: ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_CAPACITY,
-        });
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_CAPACITY,
+        );
       }
       updates.vehicle_capacity = capacity;
     }
@@ -222,10 +211,10 @@ export const updateProfile = async (req: Request, res: Response) => {
     }
 
     if (Object.keys(updates).length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.NO_UPDATES_PROVIDED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.NO_UPDATES_PROVIDED,
+      );
     }
 
     const updated = await updateDriverProfile(userId, updates);
@@ -234,85 +223,73 @@ export const updateProfile = async (req: Request, res: Response) => {
       // Try to create profile if it doesn't exist
       const exists = await getDriverProfile(userId);
       if (!exists) {
-        return res.status(404).json({
-          success: false,
-          error: ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
-        });
+        throw new ApiError(
+          HTTP_STATUS.NOT_FOUND,
+          ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+        );
       }
 
-      return res.status(500).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DRIVER_PROFILE,
-      });
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DRIVER_PROFILE,
+      );
     }
 
     const updatedProfile = await getDriverProfile(userId);
     if (!updatedProfile) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
-      });
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
     }
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: formatDriverProfileResponse(updatedProfile),
       message: SUCCESS_MESSAGES.DRIVER.PROFILE_UPDATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DRIVER_PROFILE,
-    });
-  }
-};
+  },
+);
 
 /**
  * GET /driver/address
  * Get driver's primary address
  */
-export const getAddress = async (req: Request, res: Response) => {
-  try {
-    const userId = getUserIdFromRequest(req);
-    if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
-    }
-
-    const address = await getDriverAddressByUserId(userId);
-    if (!address) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.ADDRESS_NOT_FOUND,
-      });
-    }
-
-    return res.status(200).json({
-      success: true,
-      data: address,
-    });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_FETCH_ADDRESS,
-    });
+export const getAddress = asyncHandler(async (req: Request, res: Response) => {
+  const userId = getUserIdFromRequest(req);
+  if (!userId) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+    );
   }
-};
+
+  const address = await getDriverAddressByUserId(userId);
+  if (!address) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER.ADDRESS_NOT_FOUND,
+    );
+  }
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: address,
+  });
+});
 
 /**
  * POST /driver/address
  * Create or update driver's primary address
  */
-export const upsertAddress = async (req: Request, res: Response) => {
-  try {
+export const upsertAddress = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const {
@@ -328,20 +305,20 @@ export const upsertAddress = async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!address_line1 || !city || !state || !latitude || !longitude) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
+      );
     }
 
     // Validate latitude and longitude
     const lat = parseFloat(latitude);
     const lng = parseFloat(longitude);
     if (isNaN(lat) || isNaN(lng)) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.INVALID_COORDINATES,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.INVALID_COORDINATES,
+      );
     }
 
     const addressData = {
@@ -358,73 +335,63 @@ export const upsertAddress = async (req: Request, res: Response) => {
 
     const success = await upsertDriverAddressByUserId(userId, addressData);
     if (!success) {
-      return res.status(500).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_ADDRESS,
-      });
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_ADDRESS,
+      );
     }
 
     const updatedAddress = await getDriverAddressByUserId(userId);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAddress,
       message: SUCCESS_MESSAGES.DRIVER.ADDRESS_UPDATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_ADDRESS,
-    });
-  }
-};
+  },
+);
 
 /**
  * GET /driver/documents
  * Get driver documents
  */
-export const getDocuments = async (req: Request, res: Response) => {
-  try {
+export const getDocuments = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const documents = await getDriverDocumentsByUserId(userId);
     if (!documents) {
-      return res.status(404).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.DOCUMENTS_NOT_FOUND,
-      });
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DOCUMENTS_NOT_FOUND,
+      );
     }
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: documents,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_FETCH_DOCUMENTS,
-    });
-  }
-};
+  },
+);
 
 /**
  * POST /driver/documents
  * Create or fully update driver documents
  */
-export const createDocuments = async (req: Request, res: Response) => {
-  try {
+export const createDocuments = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const {
@@ -438,10 +405,10 @@ export const createDocuments = async (req: Request, res: Response) => {
 
     // Validate required fields
     if (!driving_license_number || !vehicle_license_number) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
+      );
     }
 
     const documentsData = {
@@ -464,39 +431,34 @@ export const createDocuments = async (req: Request, res: Response) => {
 
     const success = await upsertDriverDocumentsByUserId(userId, documentsData);
     if (!success) {
-      return res.status(500).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
-      });
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
+      );
     }
 
     const updatedDocuments = await getDriverDocumentsByUserId(userId);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedDocuments,
       message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
-    });
-  }
-};
+  },
+);
 
 /**
  * PUT /driver/documents
  * Partially update driver documents
  */
-export const updateDocuments = async (req: Request, res: Response) => {
-  try {
+export const updateDocuments = asyncHandler(
+  async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
     if (!userId) {
-      return res.status(401).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
     }
 
     const documents: any = {};
@@ -510,32 +472,27 @@ export const updateDocuments = async (req: Request, res: Response) => {
     ]);
 
     if (Object.keys(documents).length === 0) {
-      return res.status(400).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.NO_UPDATES_PROVIDED,
-      });
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DRIVER.NO_UPDATES_PROVIDED,
+      );
     }
 
     const updated = await updateDriverDocumentsByUserId(userId, documents);
 
     if (!updated) {
-      return res.status(500).json({
-        success: false,
-        error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
-      });
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
+      );
     }
 
     const updatedDocuments = await getDriverDocumentsByUserId(userId);
 
-    return res.status(200).json({
+    return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedDocuments,
       message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
     });
-  } catch {
-    return res.status(500).json({
-      success: false,
-      error: ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
-    });
-  }
-};
+  },
+);

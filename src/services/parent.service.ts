@@ -1,8 +1,13 @@
 import { ObjectId } from "mongodb";
 
-import { PARENTS_COLLECTION, USERS_COLLECTION } from "@config/collections";
-import { connectDB } from "@db/mongo";
-import { Parent, User } from "@models";
+import { getDB } from "@config";
+import {
+  PARENTS_COLLECTION,
+  PARENT_ADDRESSES_COLLECTION,
+  USERS_COLLECTION,
+} from "@constants";
+import { User } from "@models/auth.type";
+import { Parent, ParentAddress, ParentAddressInput } from "@models/parent.type";
 
 /**
  * Get parent profile by user_id
@@ -11,7 +16,7 @@ import { Parent, User } from "@models";
 export const getParentProfile = async (
   userId: string,
 ): Promise<(Parent & { user?: User }) | null> => {
-  const db = await connectDB();
+  const db = await getDB();
 
   // Query users collection
   const userQuery: any = {
@@ -54,7 +59,7 @@ export const updateParentProfile = async (
   updates: Partial<Parent>,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     // Remove fields that shouldn't be updated
     const { _id, parent_id, user_id, ...sanitizedUpdates } = updates;
@@ -82,7 +87,7 @@ export const createParentProfile = async (
   parentData: Partial<Parent>,
 ): Promise<boolean> => {
   try {
-    const db = await connectDB();
+    const db = await getDB();
 
     const newParent = {
       user_id: userId,
@@ -104,9 +109,109 @@ export const createParentProfile = async (
  * Check if parent profile exists for a user
  */
 export const parentProfileExists = async (userId: string): Promise<boolean> => {
-  const db = await connectDB();
+  const db = await getDB();
   const parent = await db
     .collection(PARENTS_COLLECTION)
     .findOne({ user_id: userId });
   return !!parent;
+};
+
+/**
+ * Upsert address by user_id (finds parent first, then updates/creates address)
+ */
+export const upsertAddressByUserId = async (
+  userId: string,
+  address: ParentAddressInput,
+): Promise<boolean> => {
+  try {
+    const db = await getDB();
+
+    // First, find the parent_id from the parents collection
+    const parent = await db
+      .collection(PARENTS_COLLECTION)
+      .findOne({ user_id: userId });
+
+    if (!parent) {
+      return false;
+    }
+
+    const parentId = String(parent._id);
+
+    // Try to update existing primary address first
+    const updateResult = await db
+      .collection(PARENT_ADDRESSES_COLLECTION)
+      .updateOne(
+        { parent_id: parentId, is_primary: true },
+        {
+          $set: {
+            address_line1: address.address_line1,
+            address_line2: address.address_line2,
+            city: address.city,
+            state: address.state,
+            pincode: address.pincode,
+            latitude: address.latitude,
+            longitude: address.longitude,
+            updated_at: new Date(),
+          },
+        },
+      );
+
+    // If no existing address found, create a new one
+    if (updateResult.matchedCount === 0) {
+      const newAddress = {
+        parent_id: parentId,
+        address_line1: address.address_line1,
+        address_line2: address.address_line2,
+        city: address.city,
+        state: address.state,
+        pincode: address.pincode,
+        latitude: address.latitude,
+        longitude: address.longitude,
+        is_primary:
+          address.is_primary !== undefined ? address.is_primary : true,
+        created_at: new Date(),
+        updated_at: new Date(),
+      };
+
+      const insertResult = await db
+        .collection(PARENT_ADDRESSES_COLLECTION)
+        .insertOne(newAddress);
+      return !!insertResult.insertedId;
+    }
+
+    return updateResult.modifiedCount > 0;
+  } catch {
+    return false;
+  }
+};
+
+/**
+ * Get primary address by user_id (finds parent first, then gets address)
+ */
+export const getAddressByUserId = async (
+  userId: string,
+): Promise<ParentAddress | null> => {
+  try {
+    const db = await getDB();
+
+    // First, find the parent_id from the parents collection
+    const parent = await db
+      .collection(PARENTS_COLLECTION)
+      .findOne({ user_id: userId });
+
+    if (!parent) {
+      return null;
+    }
+
+    const parentId = String(parent._id);
+
+    // Get the primary address for this parent
+    const address = await db
+      .collection(PARENT_ADDRESSES_COLLECTION)
+      .findOne({ parent_id: parentId, is_primary: true });
+
+    return address as ParentAddress | null;
+  } catch {
+    return null;
+  }
 };
