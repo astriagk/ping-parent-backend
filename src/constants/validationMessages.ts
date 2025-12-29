@@ -113,4 +113,18 @@ export const VALIDATION_MESSAGES = {
     CONTACT_NUMBER_PATTERN: "Contact number must be a valid phone number",
     EMAIL_INVALID: "Email must be a valid email address",
   },
+  DRIVER_STUDENT_ASSIGNMENT: {
+    DRIVER_ID_REQUIRED: "Driver ID is required",
+    STUDENT_ID_REQUIRED: "Student ID is required",
+    DRIVER_UNIQUE_ID_REQUIRED: "Driver unique ID is required",
+    DRIVER_UNIQUE_ID_MAX: "Driver unique ID cannot exceed 20 characters",
+    MONTHLY_FEE_INVALID: "Monthly fee must be a valid number",
+    MONTHLY_FEE_MIN: "Monthly fee must be at least 0",
+    ASSIGNMENT_STATUS_INVALID:
+      "Assignment status must be active, inactive, pending, or parent_requested",
+    ASSIGNED_DATE_REQUIRED: "Assigned date is required",
+    ASSIGNED_DATE_INVALID: "Assigned date must be a valid date",
+    START_DATE_INVALID: "Start date must be a valid date",
+    END_DATE_INVALID: "End date must be a valid date",
+  },
 };

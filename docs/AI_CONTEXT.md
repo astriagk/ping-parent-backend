@@ -162,7 +162,7 @@ export const COLLECTIONS = {
 
 ```typescript
 // Import enums from constants
-import { EntityStatus } from "@constants/enums";
+import { EntityStatus } from "@constants";
 
 export interface Entity {
   _id?: any; // MongoDB internal ID
@@ -179,7 +179,7 @@ export interface Entity {
 
 ```typescript
 // types/student.type.ts
-import { Gender } from "@constants/enums";
+import { Gender } from "@constants";
 
 // Import enum from constants
 

@@ -40,6 +40,18 @@ Complete API reference with request payloads, response formats, and error messag
   - [Update Student by Student ID](#update-student-by-student-id)
   - [Delete Student](#delete-student-soft-delete)
   - [Delete Student by Student ID](#delete-student-by-student-id-soft-delete)
+- [Driver-Student Assignment Endpoints](#driver-student-assignment-endpoints)
+  - [Create Assignment](#create-driver-student-assignment)
+  - [Get Assignment by ID](#get-assignment-by-id)
+  - [Get My Assignments](#get-my-assignments-driver)
+  - [Get My Active Assignments](#get-my-active-assignments-driver)
+  - [Get My Pending Assignments](#get-my-pending-assignments-driver)
+  - [Get Assignments by Student](#get-assignments-by-student)
+  - [Update Assignment](#update-driver-student-assignment)
+  - [Approve Assignment](#approve-driver-student-assignment)
+  - [Reject Assignment](#reject-driver-student-assignment)
+  - [Deactivate Assignment](#deactivate-driver-student-assignment)
+  - [Delete Assignment](#delete-driver-student-assignment)
 
 ---
 
@@ -1997,5 +2009,474 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
 **Error Responses**: Same as Delete Student by ID
+
+---
+
+## Driver-Student Assignment Endpoints
+
+### Create Driver-Student Assignment
+
+Create a new driver-student assignment. Can be used by:
+- **Driver**: To add a student to their assignment list (status: `pending`)
+- **Parent**: To request assignment from a driver using `driver_unique_id` (status: `parent_requested`)
+
+**Endpoint**: `POST /api/driver-student-assignments`
+
+**Authentication**: Required (Driver or Parent role)
+
+**Request Payload**:
+
+```json
+{
+  "student_id": "507f1f77bcf86cd799439014",
+  "driver_unique_id": "DRV123456",
+  "monthly_fee": 5000.00,
+  "assigned_date": "2024-01-20",
+  "start_date": "2024-02-01",
+  "end_date": "2024-12-31"
+}
+```
+
+**Required Fields**:
+
+- `student_id` (string): Student's MongoDB ObjectId
+- `driver_unique_id` (string): Driver's unique identifier (for parent requests) or current driver's ID
+- `assigned_date` (string): Date when assignment was created (ISO 8601 date format)
+
+**Optional Fields**:
+
+- `monthly_fee` (number): Monthly fee for the service
+- `assignment_status` (string): Status - `active`, `inactive`, `pending`, `parent_requested` (auto-set based on role)
+- `start_date` (string): Assignment start date (ISO 8601 date format)
+- `end_date` (string): Assignment end date (ISO 8601 date format)
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439015",
+    "assignment_id": "DSAx7Y3m9Pq",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "student_id": "507f1f77bcf86cd799439014",
+    "driver_unique_id": "DRV123456",
+    "monthly_fee": 5000.00,
+    "assignment_status": "pending",
+    "assigned_date": "2024-01-20T00:00:00.000Z",
+    "start_date": "2024-02-01T00:00:00.000Z",
+    "end_date": "2024-12-31T00:00:00.000Z",
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-20T10:30:00.000Z"
+  },
+  "message": "Driver-student assignment created successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                                 |
+| ------ | ----------------------------------------------------------------------------- |
+| 400    | `"End date must be after start date"`                                         |
+| 401    | `"User not authenticated"`                                                    |
+| 404    | `"Driver profile not found"` / `"Driver not found"`                           |
+| 409    | `"An assignment for this driver and student combination already exists"`      |
+
+---
+
+### Get Assignment by ID
+
+Retrieve a specific driver-student assignment by ID.
+
+**Endpoint**: `GET /api/driver-student-assignments/:id`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `id` (string): Assignment's MongoDB ObjectId
+
+**Request**:
+
+```http
+GET /api/driver-student-assignments/507f1f77bcf86cd799439015
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439015",
+    "assignment_id": "DSAx7Y3m9Pq",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "student_id": "507f1f77bcf86cd799439014",
+    "driver_unique_id": "DRV123456",
+    "monthly_fee": 5000.00,
+    "assignment_status": "active",
+    "assigned_date": "2024-01-20T00:00:00.000Z",
+    "start_date": "2024-02-01T00:00:00.000Z",
+    "created_at": "2024-01-20T10:30:00.000Z",
+    "updated_at": "2024-01-21T09:15:00.000Z"
+  },
+  "message": "Driver-student assignment fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 401    | `"User not authenticated"`               |
+| 404    | `"Driver-student assignment not found"`  |
+
+---
+
+### Get My Assignments (Driver)
+
+Get all assignments for the authenticated driver.
+
+**Endpoint**: `GET /api/driver-student-assignments/driver/my-assignments`
+
+**Authentication**: Required (Driver role)
+
+**Request**:
+
+```http
+GET /api/driver-student-assignments/driver/my-assignments
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439015",
+      "assignment_id": "DSAx7Y3m9Pq",
+      "driver_id": "507f1f77bcf86cd799439011",
+      "student_id": "507f1f77bcf86cd799439014",
+      "driver_unique_id": "DRV123456",
+      "monthly_fee": 5000.00,
+      "assignment_status": "active",
+      "assigned_date": "2024-01-20T00:00:00.000Z",
+      "start_date": "2024-02-01T00:00:00.000Z",
+      "created_at": "2024-01-20T10:30:00.000Z",
+      "updated_at": "2024-01-21T09:15:00.000Z"
+    }
+  ],
+  "message": "Driver-student assignments list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                       |
+| ------ | ----------------------------------- |
+| 401    | `"User not authenticated"`          |
+| 403    | `"Access denied. Driver role required."` |
+| 404    | `"Driver profile not found"`        |
+
+---
+
+### Get My Active Assignments (Driver)
+
+Get active assignments for the authenticated driver.
+
+**Endpoint**: `GET /api/driver-student-assignments/driver/my-active-assignments`
+
+**Authentication**: Required (Driver role)
+
+**Success Response**: Same as [Get My Assignments](#get-my-assignments-driver)
+
+---
+
+### Get My Pending Assignments (Driver)
+
+Get pending assignments (awaiting driver approval) for the authenticated driver.
+
+**Endpoint**: `GET /api/driver-student-assignments/driver/my-pending-assignments`
+
+**Authentication**: Required (Driver role)
+
+**Success Response**: Same as [Get My Assignments](#get-my-assignments-driver)
+
+---
+
+### Get Assignments by Student
+
+Get all assignments for a specific student.
+
+**Endpoint**: `GET /api/driver-student-assignments/student/:studentId`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `studentId` (string): Student's MongoDB ObjectId
+
+**Request**:
+
+```http
+GET /api/driver-student-assignments/student/507f1f77bcf86cd799439014
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439015",
+      "assignment_id": "DSAx7Y3m9Pq",
+      "driver_id": "507f1f77bcf86cd799439011",
+      "student_id": "507f1f77bcf86cd799439014",
+      "driver_unique_id": "DRV123456",
+      "monthly_fee": 5000.00,
+      "assignment_status": "active",
+      "assigned_date": "2024-01-20T00:00:00.000Z",
+      "start_date": "2024-02-01T00:00:00.000Z",
+      "created_at": "2024-01-20T10:30:00.000Z"
+    }
+  ],
+  "message": "Driver-student assignments list fetched successfully"
+}
+```
+
+---
+
+### Update Driver-Student Assignment
+
+Update an existing driver-student assignment.
+
+**Endpoint**: `PUT /api/driver-student-assignments/:id`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `id` (string): Assignment's MongoDB ObjectId
+
+**Request Payload**:
+
+```json
+{
+  "monthly_fee": 5500.00,
+  "assignment_status": "active",
+  "start_date": "2024-02-01",
+  "end_date": "2024-12-31"
+}
+```
+
+**Optional Fields** (all fields are optional for update):
+
+- `monthly_fee` (number): Updated monthly fee
+- `assignment_status` (string): Updated status
+- `start_date` (string): Updated start date
+- `end_date` (string): Updated end date
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439015",
+    "assignment_id": "DSAx7Y3m9Pq",
+    "driver_id": "507f1f77bcf86cd799439011",
+    "student_id": "507f1f77bcf86cd799439014",
+    "driver_unique_id": "DRV123456",
+    "monthly_fee": 5500.00,
+    "assignment_status": "active",
+    "assigned_date": "2024-01-20T00:00:00.000Z",
+    "start_date": "2024-02-01T00:00:00.000Z",
+    "end_date": "2024-12-31T00:00:00.000Z",
+    "updated_at": "2024-01-22T14:30:00.000Z"
+  },
+  "message": "Driver-student assignment updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                            |
+| ------ | ---------------------------------------- |
+| 400    | `"End date must be after start date"`    |
+| 401    | `"User not authenticated"`               |
+| 404    | `"Driver-student assignment not found"`  |
+
+---
+
+### Approve Driver-Student Assignment
+
+Approve a parent-requested assignment (driver only).
+
+**Endpoint**: `POST /api/driver-student-assignments/:id/approve`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Assignment's MongoDB ObjectId
+
+**Request**:
+
+```http
+POST /api/driver-student-assignments/507f1f77bcf86cd799439015/approve
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439015",
+    "assignment_id": "DSAx7Y3m9Pq",
+    "assignment_status": "active",
+    "start_date": "2024-01-22T14:30:00.000Z",
+    "updated_at": "2024-01-22T14:30:00.000Z"
+  },
+  "message": "Assignment approved successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                   |
+| ------ | ----------------------------------------------- |
+| 400    | `"Only pending assignments can be approved"`    |
+| 401    | `"User not authenticated"`                      |
+| 403    | `"Forbidden"` (if driver doesn't own assignment)|
+| 404    | `"Driver-student assignment not found"`         |
+
+---
+
+### Reject Driver-Student Assignment
+
+Reject a pending or parent-requested assignment (driver only).
+
+**Endpoint**: `POST /api/driver-student-assignments/:id/reject`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Assignment's MongoDB ObjectId
+
+**Request**:
+
+```http
+POST /api/driver-student-assignments/507f1f77bcf86cd799439015/reject
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439015",
+    "assignment_id": "DSAx7Y3m9Pq",
+    "assignment_status": "rejected",
+    "updated_at": "2024-01-22T14:30:00.000Z"
+  },
+  "message": "Assignment rejected successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                      |
+| ------ | ------------------------------------------------------------------ |
+| 400    | `"Only pending or parent-requested assignments can be rejected"`   |
+| 401    | `"User not authenticated"`                                         |
+| 403    | `"Forbidden"` (if driver doesn't own assignment)                   |
+| 404    | `"Driver-student assignment not found"`                            |
+
+---
+
+### Deactivate Driver-Student Assignment
+
+Deactivate an assignment (sets status to `inactive` and records end_date).
+
+**Endpoint**: `POST /api/driver-student-assignments/:id/deactivate`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Assignment's MongoDB ObjectId
+
+**Request**:
+
+```http
+POST /api/driver-student-assignments/507f1f77bcf86cd799439015/deactivate
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439015",
+    "assignment_status": "inactive",
+    "end_date": "2024-01-22T14:30:00.000Z",
+    "updated_at": "2024-01-22T14:30:00.000Z"
+  },
+  "message": "Assignment deactivated successfully"
+}
+```
+
+**Error Responses**: Same as Approve Assignment
+
+---
+
+### Delete Driver-Student Assignment
+
+Soft delete an assignment (sets status to `inactive` and records end_date).
+
+**Endpoint**: `DELETE /api/driver-student-assignments/:id`
+
+**Authentication**: Required
+
+**URL Parameters**:
+
+- `id` (string): Assignment's MongoDB ObjectId
+
+**Request**:
+
+```http
+DELETE /api/driver-student-assignments/507f1f77bcf86cd799439015
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Driver-student assignment deleted successfully"
+}
+```
+
+> Note: This is a soft delete. The assignment is marked as `inactive` but remains in the database.
+
+**Error Responses**:
+
+| Status | Error Message                           |
+| ------ | --------------------------------------- |
+| 401    | `"User not authenticated"`              |
+| 404    | `"Driver-student assignment not found"` |
 
 ---

@@ -31,6 +31,8 @@ tags:
     description: School management endpoints
   - name: Student
     description: Student management endpoints
+  - name: Driver-Student Assignment
+    description: Driver and student assignment management
 
 components:
   securitySchemes:
@@ -859,6 +861,116 @@ components:
         medical_info:
           type: string
           maxLength: 500
+
+    # Driver-Student Assignment Schemas
+    DriverStudentAssignment:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        assignment_id:
+          type: string
+          description: Unique assignment identifier with DSA prefix
+          example: "DSAx7Y3m9Pq"
+        driver_id:
+          type: string
+          description: Driver's MongoDB ObjectId
+        student_id:
+          type: string
+          description: Student's MongoDB ObjectId
+        driver_unique_id:
+          type: string
+          description: Driver's unique identifier for parent search
+          example: "DRV123456"
+        monthly_fee:
+          type: number
+          format: decimal
+          description: Monthly fee for the service
+          example: 5000.00
+        assignment_status:
+          type: string
+          enum: [active, inactive, pending, parent_requested, rejected]
+          description: Assignment status
+          example: "active"
+        assigned_date:
+          type: string
+          format: date
+          description: Date when assignment was created
+        start_date:
+          type: string
+          format: date
+          description: Assignment start date
+        end_date:
+          type: string
+          format: date
+          description: Assignment end date
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateDriverStudentAssignmentRequest:
+      type: object
+      required:
+        - student_id
+        - driver_unique_id
+        - assigned_date
+      properties:
+        student_id:
+          type: string
+          description: Student's MongoDB ObjectId
+          example: "507f1f77bcf86cd799439014"
+        driver_unique_id:
+          type: string
+          maxLength: 20
+          description: Driver's unique identifier
+          example: "DRV123456"
+        monthly_fee:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Monthly fee (optional)
+          example: 5000.00
+        assigned_date:
+          type: string
+          format: date
+          description: Date when assignment is created
+          example: "2024-01-20"
+        start_date:
+          type: string
+          format: date
+          description: Assignment start date (optional)
+          example: "2024-02-01"
+        end_date:
+          type: string
+          format: date
+          description: Assignment end date (optional)
+          example: "2024-12-31"
+      description: "Note: driver_id is automatically derived from authenticated user for drivers, or looked up by driver_unique_id for parents"
+
+    UpdateDriverStudentAssignmentRequest:
+      type: object
+      properties:
+        monthly_fee:
+          type: number
+          format: decimal
+          minimum: 0
+          description: Updated monthly fee
+        assignment_status:
+          type: string
+          enum: [active, inactive, pending, parent_requested, rejected]
+          description: Updated assignment status
+        start_date:
+          type: string
+          format: date
+          description: Updated start date
+        end_date:
+          type: string
+          format: date
+          description: Updated end date
 
 paths:
   # Authentication Endpoints
@@ -2253,6 +2365,490 @@ paths:
                 $ref: '#/components/schemas/Error'
         '404':
           description: Student not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Driver-Student Assignment Endpoints
+  /driver-student-assignments:
+    post:
+      tags:
+        - Driver-Student Assignment
+      summary: Create driver-student assignment
+      description: |
+        Create a new driver-student assignment. Can be used by:
+        - Driver: To add a student (status: pending)
+        - Parent: To request assignment by driver_unique_id (status: parent_requested)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateDriverStudentAssignmentRequest'
+      responses:
+        '201':
+          description: Assignment created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+                    example: "Driver-student assignment created successfully"
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Driver or parent profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Assignment already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/{id}:
+    get:
+      tags:
+        - Driver-Student Assignment
+      summary: Get assignment by ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Assignment MongoDB ObjectId
+      responses:
+        '200':
+          description: Assignment fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Driver-Student Assignment
+      summary: Update assignment
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Assignment MongoDB ObjectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateDriverStudentAssignmentRequest'
+      responses:
+        '200':
+          description: Assignment updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Driver-Student Assignment
+      summary: Delete assignment (soft delete)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Assignment MongoDB ObjectId
+      responses:
+        '200':
+          description: Assignment deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Driver-student assignment deleted successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/driver/my-assignments:
+    get:
+      tags:
+        - Driver-Student Assignment
+      summary: Get all assignments for authenticated driver
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Assignments fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - Driver role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/driver/my-active-assignments:
+    get:
+      tags:
+        - Driver-Student Assignment
+      summary: Get active assignments for authenticated driver
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Active assignments fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/driver/my-pending-assignments:
+    get:
+      tags:
+        - Driver-Student Assignment
+      summary: Get pending assignments for authenticated driver
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Pending assignments fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/student/{studentId}:
+    get:
+      tags:
+        - Driver-Student Assignment
+      summary: Get assignments by student ID
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Student MongoDB ObjectId
+      responses:
+        '200':
+          description: Assignments fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/{id}/approve:
+    post:
+      tags:
+        - Driver-Student Assignment
+      summary: Approve parent-requested assignment
+      description: Driver approves a parent-requested assignment (changes status to active)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Assignment MongoDB ObjectId
+      responses:
+        '200':
+          description: Assignment approved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+                    example: "Assignment approved successfully"
+        '400':
+          description: Bad request - only pending assignments can be approved
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - driver doesn't own assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/{id}/reject:
+    post:
+      tags:
+        - Driver-Student Assignment
+      summary: Reject pending or parent-requested assignment
+      description: Driver rejects a pending or parent-requested assignment (changes status to rejected)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Assignment MongoDB ObjectId
+      responses:
+        '200':
+          description: Assignment rejected successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+                    example: "Assignment rejected successfully"
+        '400':
+          description: Bad request - only pending or parent-requested assignments can be rejected
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Only pending or parent-requested assignments can be rejected"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden - driver doesn't own assignment
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /driver-student-assignments/{id}/deactivate:
+    post:
+      tags:
+        - Driver-Student Assignment
+      summary: Deactivate assignment
+      description: Deactivate an assignment (sets status to inactive and records end_date)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Assignment MongoDB ObjectId
+      responses:
+        '200':
+          description: Assignment deactivated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    $ref: '#/components/schemas/DriverStudentAssignment'
+                  message:
+                    type: string
+                    example: "Assignment deactivated successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Assignment not found
           content:
             application/json:
               schema:

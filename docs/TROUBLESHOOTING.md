@@ -406,7 +406,7 @@ export interface Student {
 
 ```typescript
 // ✅ CORRECT - types/student.type.ts
-import { Gender } from "@constants/enums";
+import { Gender } from "@constants";
 
 // ✅ CORRECT - constants/enums.ts
 export enum Gender {

@@ -33,4 +33,13 @@ export enum UniqueCodeTypes {
   SCHOOL = "SCH",
   STUDENT = "STU",
   USER = "USR",
+  DRIVER_STUDENT_ASSIGNMENT = "DSA",
+}
+
+export enum AssignmentStatus {
+  ACTIVE = "active",
+  INACTIVE = "inactive",
+  PENDING = "pending",
+  PARENT_REQUESTED = "parent_requested",
+  REJECTED = "rejected",
 }

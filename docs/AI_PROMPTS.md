@@ -22,13 +22,14 @@ This document contains ready-to-use prompt templates for working with AI agents 
 ```
 Create a [ENTITY_NAME] module following the Ping Parent backend patterns.
 
-Database Schema:
-- Check Database/ping_parent_dbdiagram.dbml for [table_name] table
-
-Reference Documentation:
+FIRST - Read Project Documentation:
 - @docs/AI_CONTEXT.md - Core patterns and conventions
+- @docs/FOLDER_STRUCTURE.MD - File organization and architecture
 - @docs/IMPLEMENTATION_EXAMPLES.md - Student module example (use as template)
 - @docs/TROUBLESHOOTING.md - Common mistakes to avoid
+
+Database Schema:
+- Check Database/ping_parent_dbdiagram.dbml for [table_name] table
 
 Implementation Steps:
 
@@ -108,9 +109,15 @@ Context:
 - File: [file path]
 - What I was trying to do: [description]
 
+Reference Documentation:
+- @docs/TROUBLESHOOTING.md - Common mistakes and fixes
+- @docs/AI_CONTEXT.md - Core patterns and conventions
+- @docs/FOLDER_STRUCTURE.MD - File organization rules
+
 Steps:
 1. First check @docs/TROUBLESHOOTING.md for common mistakes
-2. If not found, debug using patterns from @docs/AI_CONTEXT.md
+2. Verify file placement against @docs/FOLDER_STRUCTURE.MD
+3. If not found, debug using patterns from @docs/AI_CONTEXT.md
 
 Common issues to check:
 - Controller naming (should NOT have "Controller" suffix)
@@ -139,10 +146,11 @@ Requirements:
 - Request body: [fields needed]
 - Response: [what to return]
 
-Follow these patterns:
-- @docs/AI_CONTEXT.md - Core patterns
-- @docs/IMPLEMENTATION_EXAMPLES.md - Code structure
-- @docs/SWAGGER_GUIDE.md - API documentation
+Reference Documentation:
+- @docs/AI_CONTEXT.md - Core patterns and conventions
+- @docs/FOLDER_STRUCTURE.MD - File organization
+- @docs/IMPLEMENTATION_EXAMPLES.md - Code structure examples
+- @docs/SWAGGER_GUIDE.md - API documentation patterns
 
 Implementation:
 1. Add repository method (if needed)
@@ -172,6 +180,7 @@ Review the [module name / file path] for compliance with project standards.
 
 Check against:
 - @docs/AI_CONTEXT.md - All patterns and conventions
+- @docs/FOLDER_STRUCTURE.MD - File organization and architecture
 - @docs/TROUBLESHOOTING.md - Common mistakes
 - @docs/IMPLEMENTATION_EXAMPLES.md - Reference implementation
 
@@ -301,16 +310,17 @@ Database Changes:
 - Table: [table_name]
 - Changes: [what changed - new fields, modified fields, new enums, etc.]
 
+Reference Documentation:
+- Database/ping_parent_dbdiagram.dbml - Database schema
+- @docs/AI_CONTEXT.md - Core patterns and conventions
+- @docs/FOLDER_STRUCTURE.MD - File organization
+
 Files to Update:
 1. constants/enums.ts - Add/update enums
 2. types/[entity].type.ts - Update interface
 3. validations/[entity].validation.ts - Update Joi schemas
 4. services/[entity].service.ts - Handle new fields
 5. docs/swagger.yaml - Update schemas
-
-Reference: Database/ping_parent_dbdiagram.dbml
-
-Follow patterns from @docs/AI_CONTEXT.md
 ```
 
 ---
@@ -349,37 +359,46 @@ Follow project testing patterns.
 
 ### Create Module
 ```
-New module: [Entity] - follow Student example @docs/IMPLEMENTATION_EXAMPLES.md
+New module: [Entity] - follow patterns from:
+- @docs/AI_CONTEXT.md
+- @docs/FOLDER_STRUCTURE.MD
+- @docs/IMPLEMENTATION_EXAMPLES.md (Student example)
 DB: Database/ping_parent_dbdiagram.dbml table [table_name]
 ```
 
 ### Fix Error
 ```
 Error: [error message]
-Check @docs/TROUBLESHOOTING.md first
+Check: @docs/TROUBLESHOOTING.md, @docs/AI_CONTEXT.md, @docs/FOLDER_STRUCTURE.MD
 ```
 
 ### Add Endpoint
 ```
-Add [METHOD] /[path] - patterns @docs/AI_CONTEXT.md
+Add [METHOD] /[path]
+Follow: @docs/AI_CONTEXT.md, @docs/FOLDER_STRUCTURE.MD
 ```
 
 ### Review Code
 ```
-Review [file/module] against @docs/AI_CONTEXT.md and @docs/TROUBLESHOOTING.md
+Review [file/module] against:
+- @docs/AI_CONTEXT.md
+- @docs/FOLDER_STRUCTURE.MD
+- @docs/TROUBLESHOOTING.md
 ```
 
 ### Update Docs
 ```
-Update Swagger for [entity] - follow @docs/SWAGGER_GUIDE.md
+Update Swagger for [entity]
+Follow: @docs/SWAGGER_GUIDE.md, @docs/AI_CONTEXT.md
 ```
 
 ---
 
 ## 📌 Important Reminders
 
-### Always Reference These Files:
-- `@docs/AI_CONTEXT.md` - Core patterns and rules
+### Always Reference These Files FIRST:
+- `@docs/AI_CONTEXT.md` - Core patterns and rules (READ FIRST!)
+- `@docs/FOLDER_STRUCTURE.MD` - File organization and architecture (READ FIRST!)
 - `@docs/IMPLEMENTATION_EXAMPLES.md` - Student module (complete example)
 - `@docs/TROUBLESHOOTING.md` - Common mistakes to avoid
 - `@docs/SWAGGER_GUIDE.md` - API documentation guide
@@ -410,7 +429,8 @@ Update Swagger for [entity] - follow @docs/SWAGGER_GUIDE.md
 **Last Updated**: 2025
 
 **Related Documentation**:
-- [AI_CONTEXT.md](./AI_CONTEXT.md) - Core patterns
+- [AI_CONTEXT.md](./AI_CONTEXT.md) - Core patterns and conventions
+- [FOLDER_STRUCTURE.MD](./FOLDER_STRUCTURE.MD) - File organization and architecture
 - [IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md) - Complete examples
 - [SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md) - API documentation
 - [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common mistakes

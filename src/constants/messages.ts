@@ -109,6 +109,29 @@ export const ERROR_MESSAGES = {
     COORDINATES_REQUIRED: "Latitude and longitude are required",
     ALREADY_EXISTS: "A school with the same name and city already exists",
   },
+  DRIVER_STUDENT_ASSIGNMENT: {
+    NOT_FOUND: "Driver-student assignment not found",
+    FAILED_TO_CREATE: "Failed to create driver-student assignment",
+    FAILED_TO_UPDATE: "Failed to update driver-student assignment",
+    FAILED_TO_DELETE: "Failed to delete driver-student assignment",
+    DRIVER_ID_REQUIRED: "Driver ID is required",
+    STUDENT_ID_REQUIRED: "Student ID is required",
+    DRIVER_UNIQUE_ID_REQUIRED: "Driver unique ID is required",
+    ASSIGNED_DATE_REQUIRED: "Assigned date is required",
+    INVALID_ASSIGNMENT_STATUS:
+      "Assignment status must be active, inactive, pending, or parent_requested",
+    ALREADY_EXISTS:
+      "An assignment for this driver and student combination already exists",
+    DRIVER_NOT_FOUND: "Driver not found",
+    STUDENT_NOT_FOUND: "Student not found for this assignment",
+    INVALID_MONTHLY_FEE: "Monthly fee must be a positive number",
+    INVALID_DATE_RANGE: "End date must be after start date",
+    ASSIGNMENT_ALREADY_ACTIVE: "This assignment is already active",
+    ASSIGNMENT_NOT_PENDING: "Only pending assignments can be approved",
+    CREATOR_CANNOT_APPROVE: "You cannot approve an assignment you created.",
+    CANNOT_REJECT:
+      "Only pending or parent-requested assignments can be rejected",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -156,6 +179,18 @@ export const SUCCESS_MESSAGES = {
     DELETED_SUCCESSFULLY: "School deleted successfully",
     FETCHED_SUCCESSFULLY: "School fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Schools list fetched successfully",
+  },
+  DRIVER_STUDENT_ASSIGNMENT: {
+    CREATED_SUCCESSFULLY: "Driver-student assignment created successfully",
+    UPDATED_SUCCESSFULLY: "Driver-student assignment updated successfully",
+    DELETED_SUCCESSFULLY: "Driver-student assignment deleted successfully",
+    FETCHED_SUCCESSFULLY: "Driver-student assignment fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY:
+      "Driver-student assignments list fetched successfully",
+    APPROVED_SUCCESSFULLY: "Assignment approved successfully",
+    REJECTED_SUCCESSFULLY: "Assignment rejected successfully",
+    ACTIVATED_SUCCESSFULLY: "Assignment activated successfully",
+    DEACTIVATED_SUCCESSFULLY: "Assignment deactivated successfully",
   },
 };
 
