@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS } from "@constants";
-import { verifyAccessToken } from "@services/token.service";
+import { ERROR_MESSAGES, HTTP_STATUS, UserRole } from "@constants";
+import {
+  verifyAccessToken,
+  verifyAdminAccessToken,
+} from "@services/token.service";
 
 export const verifyParentToken = (
   req: Request,
@@ -115,6 +118,52 @@ export const verifyToken_Middleware = (
   try {
     const payload = verifyAccessToken(token);
     req.user = payload;
+    next();
+  } catch {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.INVALID_TOKEN,
+    });
+  }
+};
+
+export const verifyAdminToken = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
+    });
+  }
+
+  const token = authHeader.split(" ")[1];
+
+  if (!token) {
+    return res.status(HTTP_STATUS.UNAUTHORIZED).json({
+      success: false,
+      error: ERROR_MESSAGES.AUTH.MALFORMED_AUTH_HEADER,
+    });
+  }
+
+  try {
+    const payload = verifyAdminAccessToken(token);
+
+    if (
+      payload.role !== UserRole.ADMIN &&
+      payload.role !== UserRole.SUPERADMIN
+    ) {
+      return res.status(HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        error: ERROR_MESSAGES.AUTH.ADMIN_ROLE_REQUIRED,
+      });
+    }
+
+    req.admin = payload;
     next();
   } catch {
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({

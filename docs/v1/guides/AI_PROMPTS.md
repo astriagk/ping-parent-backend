@@ -4,14 +4,15 @@ This document contains ready-to-use prompt templates for working with AI agents 
 
 ## 📋 Quick Reference
 
-| Task | Template Section |
-|------|-----------------|
-| Create new CRUD module | [New Module](#-new-module-template) |
-| Fix bugs/errors | [Bug Fix](#-bug-fix-template) |
-| Add single endpoint | [New Endpoint](#-new-endpoint-template) |
-| Review/audit code | [Code Review](#-code-review-template) |
-| Update documentation | [Documentation](#-documentation-template) |
-| Add Swagger docs | [Swagger](#-swagger-documentation-template) |
+| Task                   | Template Section                            |
+| ---------------------- | ------------------------------------------- |
+| Create new CRUD module | [New Module](#-new-module-template)         |
+| Fix bugs/errors        | [Bug Fix](#-bug-fix-template)               |
+| Add single endpoint    | [New Endpoint](#-new-endpoint-template)     |
+| Review/audit code      | [Code Review](#-code-review-template)       |
+| Update documentation   | [Documentation](#-documentation-template)   |
+| Add Swagger docs       | [Swagger](#-swagger-documentation-template) |
+| Auto-generate docs from routes | [Auto-Generate Docs](#-auto-generate-documentation-from-routes-template) |
 
 ---
 
@@ -22,13 +23,16 @@ This document contains ready-to-use prompt templates for working with AI agents 
 ```
 Create a [ENTITY_NAME] module following the Ping Parent backend patterns.
 
+FIRST - Read Project Documentation:
+- @docs/v1/guides/AI_CONTEXT.md - Core patterns and conventions
+- @docs/v1/guides/FOLDER_STRUCTURE.MD - File organization and architecture
+- @docs/v1/guides/IMPLEMENTATION_EXAMPLES.md - Student module example (use as template)
+- @docs/v1/guides/TROUBLESHOOTING.md - Common mistakes to avoid
+
 Database Schema:
 - Check Database/ping_parent_dbdiagram.dbml for [table_name] table
-
-Reference Documentation:
-- @docs/AI_CONTEXT.md - Core patterns and conventions
-- @docs/IMPLEMENTATION_EXAMPLES.md - Student module example (use as template)
-- @docs/TROUBLESHOOTING.md - Common mistakes to avoid
+- ⚠️ CRITICAL: Check field-level notes and table Note
+- Exclude calculated fields from validation schemas (e.g., optimized_route_data, sequence_order)
 
 Implementation Steps:
 
@@ -80,8 +84,8 @@ Implementation Steps:
    - Import and mount [entity]Routes
 
 10. Update Documentation:
-    - Add endpoints to docs/API_DOCUMENTATION.md
-    - Add Swagger definitions to docs/swagger.yaml (use @docs/SWAGGER_GUIDE.md)
+    - Add endpoints to docs/v1/api/API_DOCUMENTATION.md
+    - Add Swagger definitions to docs/v1/api/openapi/swagger.yaml (use @docs/v1/api/openapi/SWAGGER_GUIDE.md)
 
 Critical Requirements:
 ✅ ALL enums in constants/enums.ts (NOT type unions)
@@ -92,7 +96,7 @@ Critical Requirements:
 ✅ Soft delete (set is_active: false)
 ✅ snake_case for all database field names
 
-Example Entity: Student (see @docs/IMPLEMENTATION_EXAMPLES.md)
+Example Entity: Student (see @docs/v1/guides/IMPLEMENTATION_EXAMPLES.md)
 ```
 
 ---
@@ -108,9 +112,15 @@ Context:
 - File: [file path]
 - What I was trying to do: [description]
 
+Reference Documentation:
+- @docs/v1/guides/TROUBLESHOOTING.md - Common mistakes and fixes
+- @docs/v1/guides/AI_CONTEXT.md - Core patterns and conventions
+- @docs/v1/guides/FOLDER_STRUCTURE.MD - File organization rules
+
 Steps:
-1. First check @docs/TROUBLESHOOTING.md for common mistakes
-2. If not found, debug using patterns from @docs/AI_CONTEXT.md
+1. First check @docs/v1/guides/TROUBLESHOOTING.md for common mistakes
+2. Verify file placement against @docs/v1/guides/FOLDER_STRUCTURE.MD
+3. If not found, debug using patterns from @docs/v1/guides/AI_CONTEXT.md
 
 Common issues to check:
 - Controller naming (should NOT have "Controller" suffix)
@@ -139,10 +149,11 @@ Requirements:
 - Request body: [fields needed]
 - Response: [what to return]
 
-Follow these patterns:
-- @docs/AI_CONTEXT.md - Core patterns
-- @docs/IMPLEMENTATION_EXAMPLES.md - Code structure
-- @docs/SWAGGER_GUIDE.md - API documentation
+Reference Documentation:
+- @docs/v1/guides/AI_CONTEXT.md - Core patterns and conventions
+- @docs/v1/guides/FOLDER_STRUCTURE.MD - File organization
+- @docs/v1/guides/IMPLEMENTATION_EXAMPLES.md - Code structure examples
+- @docs/v1/api/openapi/SWAGGER_GUIDE.md - API documentation patterns
 
 Implementation:
 1. Add repository method (if needed)
@@ -171,9 +182,10 @@ Authentication:
 Review the [module name / file path] for compliance with project standards.
 
 Check against:
-- @docs/AI_CONTEXT.md - All patterns and conventions
-- @docs/TROUBLESHOOTING.md - Common mistakes
-- @docs/IMPLEMENTATION_EXAMPLES.md - Reference implementation
+- @docs/v1/guides/AI_CONTEXT.md - All patterns and conventions
+- @docs/v1/guides/FOLDER_STRUCTURE.MD - File organization and architecture
+- @docs/v1/guides/TROUBLESHOOTING.md - Common mistakes
+- @docs/v1/guides/IMPLEMENTATION_EXAMPLES.md - Reference implementation
 
 Verify:
 ✅ Naming Conventions
@@ -237,12 +249,12 @@ Provide detailed feedback on any issues found.
 Update documentation for [entity/feature].
 
 Files to update:
-1. docs/API_DOCUMENTATION.md
+1. docs/v1/api/API_DOCUMENTATION.md
    - Add endpoint descriptions
    - Include request/response examples
    - Document authentication requirements
 
-2. docs/swagger.yaml (follow @docs/SWAGGER_GUIDE.md)
+2. docs/v1/api/openapi/swagger.yaml (follow @docs/v1/api/openapi/SWAGGER_GUIDE.md)
    - Add schemas in components.schemas
    - Add endpoints in paths
    - Include all HTTP status codes
@@ -250,7 +262,7 @@ Files to update:
 
 Entity: [entity name]
 Endpoints: [list endpoints]
-Reference: @docs/SWAGGER_GUIDE.md for patterns
+Reference: @docs/v1/api/openapi/SWAGGER_GUIDE.md for patterns
 ```
 
 ---
@@ -275,17 +287,96 @@ Response:
 - Success (200/201): [response schema]
 - Errors: [400, 401, 404, 409, 500]
 
-Follow @docs/SWAGGER_GUIDE.md for:
+Follow @docs/v1/api/openapi/SWAGGER_GUIDE.md for:
 - Schema definitions
 - Field type mapping
 - Common patterns
 - Response structures
 
-Add to docs/swagger.yaml:
+Add to docs/v1/api/openapi/swagger.yaml:
 1. Define schema in components.schemas (if new)
 2. Add endpoint under paths
 3. Include all response codes
 4. Add example values
+```
+
+---
+
+## 🤖 Auto-Generate Documentation from Routes Template
+
+**Copy this to automatically generate/update API documentation from route files**
+
+```
+Generate complete API documentation from the route file.
+
+Route File: @src/routes/[entity].routes.ts
+
+Reference Documentation:
+- @docs/v1/guides/AI_CONTEXT.md - Core patterns and conventions
+- @docs/v1/api/openapi/SWAGGER_GUIDE.md - API documentation patterns and standards
+- @docs/v1/guides/FOLDER_STRUCTURE.MD - File organization
+
+Process:
+1. Read the route file: @src/routes/[entity].routes.ts
+2. Analyze ALL routes defined in the file:
+   - Extract HTTP methods (GET, POST, PUT, DELETE)
+   - Extract route paths and parameters
+   - Identify middleware (validation, authentication)
+   - Trace to controller functions
+   - Trace to validation schemas (for request/response structure)
+
+3. For EACH route found, gather complete information:
+   - Read the validation schema from @src/validations/[entity].validation.ts
+   - Read the controller from @src/controllers/[entity].controller.ts
+   - Read the service from @src/services/[entity].service.ts
+   - Read the type definitions from @src/types/[entity].type.ts
+   - Extract authentication requirements from middleware
+   - Identify request body/params/query structure
+   - Identify response structure and status codes
+
+4. Update docs/v1/api/API_DOCUMENTATION.md:
+   - Add/update section for [Entity] endpoints
+   - For each route, include:
+     * Method and path
+     * Description (infer from controller/service logic)
+     * Authentication requirement (Public/Parent/Driver/Any)
+     * Request parameters (path/query/body) with types
+     * Request body example (JSON)
+     * Success response example (JSON)
+     * Error responses (400, 401, 404, 409, 500)
+   - Follow existing documentation format in the file
+   - Maintain alphabetical order by entity
+
+5. Update docs/v1/api/openapi/swagger.yaml:
+   - Add/update schemas in components.schemas:
+     * [Entity] - Main entity schema
+     * Create[Entity]Request - Request body for POST
+     * Update[Entity]Request - Request body for PUT
+     * [Entity]Response - Response wrapper with success/data
+   - Add/update paths for each endpoint:
+     * Include all HTTP methods
+     * Add parameters (path, query)
+     * Add requestBody (for POST/PUT)
+     * Add responses (200, 201, 400, 401, 404, 409, 500)
+     * Include security requirements
+     * Add descriptions and examples
+   - Follow patterns from @docs/v1/api/openapi/SWAGGER_GUIDE.md
+   - Use existing response schemas (ApiResponse, ErrorResponse)
+
+Critical Requirements:
+✅ Read ALL related files (routes, validation, controller, service, types)
+✅ Document EVERY route found in the route file
+✅ Use actual field names and types from validation schemas
+✅ Include authentication requirements based on middleware
+✅ Add realistic example values in documentation
+✅ Follow Swagger YAML formatting exactly (indentation matters!)
+✅ Reuse common schemas (ApiResponse, ErrorResponse) from existing swagger.yaml
+✅ Maintain consistency with existing documentation style
+✅ Include all possible error codes (refer to controller implementations)
+
+Example Usage:
+Route File: @src/routes/student.routes.ts
+→ This will analyze all student routes and update both documentation files
 ```
 
 ---
@@ -301,16 +392,17 @@ Database Changes:
 - Table: [table_name]
 - Changes: [what changed - new fields, modified fields, new enums, etc.]
 
+Reference Documentation:
+- Database/ping_parent_dbdiagram.dbml - Database schema
+- @docs/v1/guides/AI_CONTEXT.md - Core patterns and conventions
+- @docs/v1/guides/FOLDER_STRUCTURE.MD - File organization
+
 Files to Update:
 1. constants/enums.ts - Add/update enums
 2. types/[entity].type.ts - Update interface
 3. validations/[entity].validation.ts - Update Joi schemas
 4. services/[entity].service.ts - Handle new fields
-5. docs/swagger.yaml - Update schemas
-
-Reference: Database/ping_parent_dbdiagram.dbml
-
-Follow patterns from @docs/AI_CONTEXT.md
+5. docs/v1/api/openapi/swagger.yaml - Update schemas
 ```
 
 ---
@@ -348,44 +440,74 @@ Follow project testing patterns.
 **Ultra-short prompts for common tasks**
 
 ### Create Module
+
 ```
-New module: [Entity] - follow Student example @docs/IMPLEMENTATION_EXAMPLES.md
+New module: [Entity] - follow patterns from:
+- @docs/v1/guides/AI_CONTEXT.md
+- @docs/v1/guides/FOLDER_STRUCTURE.MD
+- @docs/v1/guides/IMPLEMENTATION_EXAMPLES.md (Student example)
 DB: Database/ping_parent_dbdiagram.dbml table [table_name]
 ```
 
 ### Fix Error
+
 ```
 Error: [error message]
-Check @docs/TROUBLESHOOTING.md first
+Check: @docs/v1/guides/TROUBLESHOOTING.md, @docs/v1/guides/AI_CONTEXT.md, @docs/v1/guides/FOLDER_STRUCTURE.MD
 ```
 
 ### Add Endpoint
+
 ```
-Add [METHOD] /[path] - patterns @docs/AI_CONTEXT.md
+Add [METHOD] /[path]
+Follow: @docs/v1/guides/AI_CONTEXT.md, @docs/v1/guides/FOLDER_STRUCTURE.MD
 ```
 
 ### Review Code
+
 ```
-Review [file/module] against @docs/AI_CONTEXT.md and @docs/TROUBLESHOOTING.md
+Review [file/module] against:
+- @docs/v1/guides/AI_CONTEXT.md
+- @docs/v1/guides/FOLDER_STRUCTURE.MD
+- @docs/v1/guides/TROUBLESHOOTING.md
 ```
 
 ### Update Docs
+
 ```
-Update Swagger for [entity] - follow @docs/SWAGGER_GUIDE.md
+Update Swagger for [entity]
+Follow: @docs/v1/api/openapi/SWAGGER_GUIDE.md, @docs/v1/guides/AI_CONTEXT.md
+```
+
+### Auto-Generate Docs from Routes
+
+```
+Generate docs from route file:
+@src/routes/[entity].routes.ts
+
+Update:
+- docs/v1/api/API_DOCUMENTATION.md
+- docs/v1/api/openapi/swagger.yaml
+
+Follow: @docs/v1/api/openapi/SWAGGER_GUIDE.md, @docs/v1/guides/AI_CONTEXT.md
+Read all related files (validation, controller, service, types)
 ```
 
 ---
 
 ## 📌 Important Reminders
 
-### Always Reference These Files:
-- `@docs/AI_CONTEXT.md` - Core patterns and rules
-- `@docs/IMPLEMENTATION_EXAMPLES.md` - Student module (complete example)
-- `@docs/TROUBLESHOOTING.md` - Common mistakes to avoid
-- `@docs/SWAGGER_GUIDE.md` - API documentation guide
+### Always Reference These Files FIRST:
+
+- `@docs/v1/guides/AI_CONTEXT.md` - Core patterns and rules (READ FIRST!)
+- `@docs/v1/guides/FOLDER_STRUCTURE.MD` - File organization and architecture (READ FIRST!)
+- `@docs/v1/guides/IMPLEMENTATION_EXAMPLES.md` - Student module (complete example)
+- `@docs/v1/guides/TROUBLESHOOTING.md` - Common mistakes to avoid
+- `@docs/v1/api/openapi/SWAGGER_GUIDE.md` - API documentation guide
 - `Database/ping_parent_dbdiagram.dbml` - Database schema
 
 ### Critical Rules (Never Forget):
+
 1. ✅ Enums in `constants/enums.ts` (NOT type unions)
 2. ✅ Validation messages from `constants/validationMessages.ts`
 3. ✅ Controller exports WITHOUT "Controller" suffix
@@ -410,7 +532,9 @@ Update Swagger for [entity] - follow @docs/SWAGGER_GUIDE.md
 **Last Updated**: 2025
 
 **Related Documentation**:
-- [AI_CONTEXT.md](./AI_CONTEXT.md) - Core patterns
-- [IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md) - Complete examples
-- [SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md) - API documentation
-- [TROUBLESHOOTING.md](./TROUBLESHOOTING.md) - Common mistakes
+
+- [AI_CONTEXT.md](v1/guides/AI_CONTEXT.md) - Core patterns and conventions
+- [FOLDER_STRUCTURE.MD](v1/guides/FOLDER_STRUCTURE.MD) - File organization and architecture
+- [IMPLEMENTATION_EXAMPLES.md](v1/guides/IMPLEMENTATION_EXAMPLES.md) - Complete examples
+- [SWAGGER_GUIDE.md](v1/api/openapi/SWAGGER_GUIDE.md) - API documentation
+- [TROUBLESHOOTING.md](v1/guides/TROUBLESHOOTING.md) - Common mistakes

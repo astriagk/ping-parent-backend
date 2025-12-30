@@ -157,6 +157,29 @@ export const updateDriverProfile = async (
 };
 
 /**
+ * Set driver availability status
+ */
+export const setDriverAvailability = async (
+  userId: string,
+  isAvailable: boolean,
+): Promise<boolean> => {
+  try {
+    const db = await getDB();
+
+    const result = await db.collection(DRIVERS_COLLECTION).updateOne(
+      { user_id: userId },
+      {
+        $set: { is_available: isAvailable, updated_at: new Date() },
+      },
+    );
+
+    return result.modifiedCount > 0;
+  } catch {
+    return false;
+  }
+};
+
+/**
  * Check if driver profile exists for a user
  */
 export const driverProfileExists = async (userId: string): Promise<boolean> => {

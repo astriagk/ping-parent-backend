@@ -8,7 +8,7 @@ This project now has comprehensive documentation to guide both AI agents and hum
 
 ## 📄 Documentation Files
 
-### 1. **AI_CONTEXT.md** (Main Implementation Guide)
+### 1. **v1/guides/AI_CONTEXT.md** (Main Implementation Guide)
 
 **Purpose**: The single source of truth for implementing features in this codebase.
 
@@ -84,7 +84,7 @@ Step 1: Read Database Schema
     └─> Note all fields, types, enums
 
 Step 2: Read Implementation Guide
-└─> AI_CONTEXT.md
+└─> v1/guides/AI_CONTEXT.md
     └─> Review "Creating a New Module Checklist"
     └─> Study relevant examples (Student/Trip)
     └─> Check file placement standards
@@ -107,17 +107,17 @@ Answer: Check ../Database/ping_parent_dbdiagram.dbml
         Use exact name from schema (snake_case)
 
 Question: "Where do I put this file?"
-Answer: Check AI_CONTEXT.md → "File Placement Standards"
+Answer: Check v1/guides/AI_CONTEXT.md → "File Placement Standards"
         ↓
         One entity = one file per layer
 
 Question: "What's the correct pattern for X?"
-Answer: Check AI_CONTEXT.md → "File Structure Patterns"
+Answer: Check v1/guides/AI_CONTEXT.md → "File Structure Patterns"
         ↓
         Reference auth module implementation
 
 Question: "How do I structure my response?"
-Answer: Check AI_CONTEXT.md → "AI Agent Response Template"
+Answer: Check v1/guides/AI_CONTEXT.md → "AI Agent Response Template"
 ```
 
 ---
@@ -171,7 +171,7 @@ Notes:
 
 **Step 2**: Plan implementation
 ```
-Opens: AI_CONTEXT.md
+Opens: v1/guides/AI_CONTEXT.md
 Reviews: "Creating a New Module Checklist"
 Plans:
   ✓ types/school.type.ts
@@ -199,7 +199,7 @@ Verifies compliance checklist
 
 **Step 5**: Respond
 ```
-Uses template from AI_CONTEXT.md:
+Uses template from v1/guides/AI_CONTEXT.md:
   ## Implementation: School Module
   ### Files Created: ...
   ### Files Updated: ...
@@ -212,7 +212,7 @@ Uses template from AI_CONTEXT.md:
 
 ### When to Update Documentation
 
-**Update docs/AI_CONTEXT.md when**:
+**Update docs/v1/guides/AI_CONTEXT.md when**:
 - New architectural patterns are introduced
 - Naming conventions change
 - New layers or folders are added
@@ -235,7 +235,7 @@ Uses template from AI_CONTEXT.md:
 
 ## 📊 Documentation Stats
 
-- **AI_CONTEXT.md**: ~1,900 lines
+- **v1/guides/AI_CONTEXT.md**: ~1,900 lines
   - Sections: 12
   - Code examples: 50+
   - Complete module examples: 2 (Student, Trip)
@@ -256,15 +256,15 @@ Uses template from AI_CONTEXT.md:
 
 1. **Day 1**: Read ../README.md (understand project overview)
 2. **Day 2**: Read ../Database/ping_parent_dbdiagram.dbml (understand data model)
-3. **Day 3**: Read docs/AI_CONTEXT.md sections 1-4 (understand architecture)
+3. **Day 3**: Read docs/v1/guides/AI_CONTEXT.md sections 1-4 (understand architecture)
 4. **Day 4**: Study auth module implementation (understand patterns)
-5. **Day 5**: Read docs/AI_CONTEXT.md sections 5-9 (understand implementation)
+5. **Day 5**: Read docs/v1/guides/AI_CONTEXT.md sections 5-9 (understand implementation)
 6. **Day 6+**: Implement a simple feature following the guide
 
 ### For AI Agents
 
 1. **Always**: Read database schema first
-2. **Always**: Reference docs/AI_CONTEXT.md for patterns
+2. **Always**: Reference docs/v1/guides/AI_CONTEXT.md for patterns
 3. **Always**: Use auth module as template
 4. **Always**: Verify compliance before responding
 
@@ -272,7 +272,7 @@ Uses template from AI_CONTEXT.md:
 
 ## 🔗 Quick Links
 
-- **Start Here**: [AI_CONTEXT.md](./AI_CONTEXT.md)
+- **Start Here**: [AI_CONTEXT.md](v1/guides/AI_CONTEXT.md)
 - **Database Schema**: [ping_parent_dbdiagram.dbml](../Database/ping_parent_dbdiagram.dbml)
 - **Project Overview**: [README.md](../README.md)
 - **Auth Reference**: [auth.routes.ts](../src/routes/auth.routes.ts)
@@ -281,7 +281,7 @@ Uses template from AI_CONTEXT.md:
 
 ## 💡 Key Takeaways
 
-1. **docs/AI_CONTEXT.md is the Bible** - Everything you need to implement features correctly
+1. **docs/v1/guides/AI_CONTEXT.md is the Bible** - Everything you need to implement features correctly
 2. **Database Schema is the Constitution** - Field names and types are law
 3. **Auth Module is the Template** - Copy its patterns for consistency
 4. **README.md is the Welcome Mat** - Start here for project understanding
@@ -291,7 +291,7 @@ Uses template from AI_CONTEXT.md:
 ## 📞 Support
 
 When stuck:
-1. Check docs/AI_CONTEXT.md for the pattern
+1. Check docs/v1/guides/AI_CONTEXT.md for the pattern
 2. Check ../Database/ping_parent_dbdiagram.dbml for field names
 3. Check auth module for implementation example
 4. Check ../README.md for high-level context
