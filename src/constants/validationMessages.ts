@@ -222,4 +222,25 @@ export const VALIDATION_MESSAGES = {
     SUBSCRIPTION_ID_INVALID: "Subscription ID must be a valid ID",
     PAYMENT_DATE_INVALID: "Payment date must be a valid date-time",
   },
+  ADMIN: {
+    EMAIL_REQUIRED: "Email is required",
+    EMAIL_INVALID: "Email must be a valid email address",
+    PASSWORD_REQUIRED: "Password is required",
+    PASSWORD_MIN: "Password must be at least 8 characters",
+    PASSWORD_PATTERN:
+      "Password must contain at least one uppercase letter, one lowercase letter, and one number",
+    USERNAME_REQUIRED: "Username is required",
+    USERNAME_MIN: "Username must be at least 3 characters",
+    USERNAME_MAX: "Username cannot exceed 100 characters",
+    PHONE_PATTERN: "Phone number must be a valid phone number",
+    ADMIN_ROLE_REQUIRED: "Admin role is required",
+    ADMIN_ROLE_INVALID: "Admin role must be admin or superadmin",
+    IS_ACTIVE_INVALID: "Is active must be a boolean value",
+  },
+  ROLE_MANAGEMENT: {
+    ROLE_NAME_REQUIRED: "Role name is required",
+    ROLE_NAME_MIN: "Role name must be at least 2 characters",
+    ROLE_NAME_MAX: "Role name cannot exceed 50 characters",
+    DESCRIPTION_MAX: "Description cannot exceed 500 characters",
+  },
 };

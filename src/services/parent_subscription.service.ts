@@ -86,6 +86,15 @@ export const getParentSubscriptionById = async (
   return await parentSubscriptionRepository.findById(id);
 };
 
+/**
+ * Get all parent subscriptions across the system (admin only)
+ */
+export const getAllParentSubscriptions = async (): Promise<
+  WithId<ParentSubscription>[]
+> => {
+  return await parentSubscriptionRepository.findMany();
+};
+
 export const getParentSubscriptionsByUserId = async (
   userId: string,
 ): Promise<WithId<ParentSubscription>[]> => {

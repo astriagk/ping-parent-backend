@@ -40,6 +40,8 @@ export enum UniqueCodeTypes {
   DAILY_QR_OTP = "DQO",
   SUBSCRIPTION_PLAN = "SPL",
   PAYMENT = "PAY",
+  ADMIN = "ADM",
+  ROLE = "ROL",
 }
 
 export enum AssignmentStatus {
@@ -115,4 +117,9 @@ export enum PaymentStatus {
   COMPLETED = "completed",
   FAILED = "failed",
   REFUNDED = "refunded",
+}
+
+export enum AdminRole {
+  SUPERADMIN = "superadmin",
+  ADMIN = "admin",
 }

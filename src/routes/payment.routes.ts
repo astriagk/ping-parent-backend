@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   completePaymentById,
   createPayment,
+  getAllPaymentsController,
   getMyCompletedPayments,
   getMyPayments,
   getMyPendingPayments,
@@ -10,7 +11,7 @@ import {
   refundPaymentById,
   updatePaymentById,
 } from "@controllers/payment.controller";
-import { validate, verifyParentToken } from "@middlewares";
+import { validate, verifyAdminToken, verifyParentToken } from "@middlewares";
 import {
   createPaymentSchema,
   updatePaymentSchema,
@@ -18,7 +19,10 @@ import {
 
 const router = Router();
 
-// All routes require parent authentication
+// Admin routes
+router.get("/admin/all-payments", verifyAdminToken, getAllPaymentsController);
+
+// All other routes require parent authentication
 router.use(verifyParentToken);
 
 // Payment operations

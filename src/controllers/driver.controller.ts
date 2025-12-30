@@ -7,6 +7,7 @@ import {
   getDriverAddressByUserId,
   getDriverDocumentsByUserId,
   getDriverProfile,
+  setDriverAvailability,
   updateDriverDocumentsByUserId,
   updateDriverProfile,
   upsertDriverAddressByUserId,
@@ -493,6 +494,48 @@ export const updateDocuments = asyncHandler(
       success: true,
       data: updatedDocuments,
       message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * PATCH /driver/availability
+ * Set driver availability status
+ */
+export const setAvailability = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const { is_available } = req.body;
+
+    if (is_available === undefined) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        "Availability status (is_available) is required",
+      );
+    }
+
+    const updated = await setDriverAvailability(userId, Boolean(is_available));
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
+    }
+
+    const updatedProfile = await getDriverProfile(userId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updatedProfile ? formatDriverProfileResponse(updatedProfile) : null,
+      message: "Driver availability updated successfully",
     });
   },
 );

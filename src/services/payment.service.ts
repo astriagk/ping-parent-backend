@@ -76,6 +76,13 @@ export const getPaymentById = async (
   return await paymentRepository.findById(id);
 };
 
+/**
+ * Get all payments across the system (admin only)
+ */
+export const getAllPayments = async (): Promise<WithId<Payment>[]> => {
+  return await paymentRepository.findMany();
+};
+
 export const getPaymentsByUserId = async (
   userId: string,
 ): Promise<WithId<Payment>[]> => {

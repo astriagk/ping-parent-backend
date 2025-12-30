@@ -137,6 +137,15 @@ export const getAssignmentById = async (
 };
 
 /**
+ * Get all assignments across the system (admin only)
+ */
+export const getAllAssignments = async (): Promise<
+  WithId<DriverStudentAssignment>[]
+> => {
+  return await driverStudentAssignmentRepository.findMany();
+};
+
+/**
  * Get all assignments for a driver (by userId)
  */
 export const getAssignmentsByDriverUserId = async (

@@ -3,6 +3,7 @@ import { Router } from "express";
 import {
   createTrip,
   deleteTripProfile,
+  getAllTripsController,
   getMyActiveTrips,
   getMyTrips,
   getMyTripsByDate,
@@ -10,7 +11,7 @@ import {
   updateTripProfile,
   updateTripStatus,
 } from "@controllers/trip.controller";
-import { validate, verifyDriverToken } from "@middlewares";
+import { validate, verifyAdminToken, verifyDriverToken } from "@middlewares";
 import {
   createTripSchema,
   updateTripSchema,
@@ -19,7 +20,10 @@ import {
 
 const router = Router();
 
-// All routes require driver authentication
+// Admin routes
+router.get("/admin/all-trips", verifyAdminToken, getAllTripsController);
+
+// All other routes require driver authentication
 router.use(verifyDriverToken);
 
 // Trip CRUD operations

@@ -1,7 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 
 import { ERROR_MESSAGES, HTTP_STATUS, UserRole } from "@constants";
-import { verifyAccessToken } from "@services/token.service";
+import {
+  verifyAccessToken,
+  verifyAdminAccessToken,
+} from "@services/token.service";
 
 export const verifyParentToken = (
   req: Request,
@@ -148,7 +151,7 @@ export const verifyAdminToken = (
   }
 
   try {
-    const payload = verifyAccessToken(token);
+    const payload = verifyAdminAccessToken(token);
 
     if (
       payload.role !== UserRole.ADMIN &&
@@ -160,7 +163,7 @@ export const verifyAdminToken = (
       });
     }
 
-    req.user = payload;
+    req.admin = payload;
     next();
   } catch {
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({

@@ -37,6 +37,41 @@ export const phoneExists = async (phoneNumber: string): Promise<boolean> => {
   return await userRepository.phoneExists(phoneNumber);
 };
 
+/**
+ * Get all users (admin only)
+ */
+export const getAllUsers = async (): Promise<WithId<User>[]> => {
+  return await userRepository.findMany();
+};
+
+/**
+ * Activate user (admin only)
+ */
+export const activateUser = async (
+  userId: string,
+): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+  return await userRepository.updateById(userId, {
+    $set: { is_active: true, updated_at: new Date() },
+  });
+};
+
+/**
+ * Deactivate user (admin only)
+ */
+export const deactivateUser = async (
+  userId: string,
+): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+  return await userRepository.updateById(userId, {
+    $set: { is_active: false, updated_at: new Date() },
+  });
+};
+
 // OTP management
 export const createPhoneOtp = async (
   phone: string,

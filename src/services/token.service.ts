@@ -1,6 +1,7 @@
 import jwt from "jsonwebtoken";
 
 import { ENV } from "@config";
+import { AdminTokenPayload } from "@models/global/global";
 
 export interface TokenPayload {
   userId: string;
@@ -31,5 +32,33 @@ export const generateTokenPair = (payload: TokenPayload) => {
   return {
     accessToken: generateAccessToken(payload),
     refreshToken: generateRefreshToken(payload),
+  };
+};
+
+// Admin token functions
+export const generateAdminAccessToken = (
+  payload: AdminTokenPayload,
+): string => {
+  return jwt.sign(payload, ENV.JWT_SECRET, {
+    expiresIn: ENV.JWT_EXPIRES_IN,
+  } as jwt.SignOptions);
+};
+
+export const generateAdminRefreshToken = (
+  payload: AdminTokenPayload,
+): string => {
+  return jwt.sign(payload, ENV.JWT_SECRET, {
+    expiresIn: ENV.REFRESH_TOKEN_EXPIRES_IN,
+  } as jwt.SignOptions);
+};
+
+export const verifyAdminAccessToken = (token: string): AdminTokenPayload => {
+  return jwt.verify(token, ENV.JWT_SECRET) as AdminTokenPayload;
+};
+
+export const generateAdminTokenPair = (payload: AdminTokenPayload) => {
+  return {
+    access_token: generateAdminAccessToken(payload),
+    refresh_token: generateAdminRefreshToken(payload),
   };
 };

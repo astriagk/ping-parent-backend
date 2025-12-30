@@ -13,6 +13,7 @@ import {
   deactivateAssignment,
   deleteAssignment,
   getActiveAssignmentsByDriverUserId,
+  getAllAssignments,
   getAssignmentById,
   getAssignmentsByDriverUserId,
   getAssignmentsByStudentId,
@@ -49,6 +50,22 @@ export const createDriverStudentAssignment = asyncHandler(
       success: true,
       data: assignment,
       message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CREATED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get all assignments (admin only)
+ */
+export const getAllDriverStudentAssignments = asyncHandler(
+  async (req: Request, res: Response) => {
+    const assignments = await getAllAssignments();
+
+    return res.json({
+      success: true,
+      data: assignments,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
     });
   },
 );

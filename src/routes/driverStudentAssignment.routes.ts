@@ -5,6 +5,7 @@ import {
   createDriverStudentAssignment,
   deactivateDriverStudentAssignment,
   deleteDriverStudentAssignment,
+  getAllDriverStudentAssignments,
   getAssignment,
   getAssignmentsByStudent,
   getMyActiveAssignments,
@@ -15,6 +16,7 @@ import {
 } from "@controllers/driverStudentAssignment.controller";
 import {
   validate,
+  verifyAdminToken,
   verifyDriverToken,
   verifyToken_Middleware,
 } from "@middlewares";
@@ -24,6 +26,13 @@ import {
 } from "@validations/driverStudentAssignment.validation";
 
 const router = Router();
+
+// Admin routes
+router.get(
+  "/admin/all-assignments",
+  verifyAdminToken,
+  getAllDriverStudentAssignments,
+);
 
 // Routes accessible by both parents and drivers (authenticated users)
 router.post(

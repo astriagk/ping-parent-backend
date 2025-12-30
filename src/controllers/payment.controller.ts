@@ -5,6 +5,7 @@ import { ApiError, asyncHandler } from "@middlewares";
 import {
   completePayment,
   createPayment as createPaymentService,
+  getAllPayments,
   getCompletedPaymentsByUserId,
   getPaymentById,
   getPaymentsByUserId,
@@ -14,6 +15,22 @@ import {
 } from "@services/payment.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
+
+/**
+ * Get all payments (admin only)
+ */
+export const getAllPaymentsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const payments = await getAllPayments();
+
+    return res.json({
+      success: true,
+      data: payments,
+      message: SUCCESS_MESSAGES.PAYMENT.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
 export const createPayment = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId; // From JWT token

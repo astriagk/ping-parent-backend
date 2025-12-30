@@ -4,12 +4,13 @@ import {
   cancelSubscriptionById,
   createSubscription,
   deleteSubscriptionById,
+  getAllParentSubscriptionsController,
   getMyActiveSubscription,
   getMySubscriptions,
   getSubscriptionById,
   updateSubscriptionById,
 } from "@controllers/parent_subscription.controller";
-import { validate, verifyParentToken } from "@middlewares";
+import { validate, verifyAdminToken, verifyParentToken } from "@middlewares";
 import {
   createParentSubscriptionSchema,
   updateParentSubscriptionSchema,
@@ -17,7 +18,14 @@ import {
 
 const router = Router();
 
-// All routes require parent authentication
+// Admin routes
+router.get(
+  "/admin/all-subscriptions",
+  verifyAdminToken,
+  getAllParentSubscriptionsController,
+);
+
+// All other routes require parent authentication
 router.use(verifyParentToken);
 
 // Parent subscription CRUD operations

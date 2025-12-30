@@ -7,12 +7,29 @@ import {
   createParentSubscription as createParentSubscriptionService,
   deleteParentSubscription,
   getActiveParentSubscriptionByUserId,
+  getAllParentSubscriptions,
   getParentSubscriptionById,
   getParentSubscriptionsByUserId,
   updateParentSubscription,
 } from "@services/parent_subscription.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
+
+/**
+ * Get all parent subscriptions (admin only)
+ */
+export const getAllParentSubscriptionsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const subscriptions = await getAllParentSubscriptions();
+
+    return res.json({
+      success: true,
+      data: subscriptions,
+      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
 export const createSubscription = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId; // From JWT token

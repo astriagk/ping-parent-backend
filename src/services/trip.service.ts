@@ -76,6 +76,13 @@ export const getTripById = async (id: string): Promise<WithId<Trip> | null> => {
   return await tripRepository.findById(id);
 };
 
+/**
+ * Get all trips across the system (admin only)
+ */
+export const getAllTrips = async (): Promise<WithId<Trip>[]> => {
+  return await tripRepository.findMany();
+};
+
 export const getTripsByUserId = async (
   userId: string,
 ): Promise<WithId<Trip>[]> => {

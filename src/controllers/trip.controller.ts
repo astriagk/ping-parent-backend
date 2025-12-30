@@ -6,6 +6,7 @@ import {
   createTrip as createTripService,
   deleteTrip,
   getActiveTrips,
+  getAllTrips,
   getTripById,
   getTripsByDriverIdAndDate,
   getTripsByUserId,
@@ -14,6 +15,21 @@ import {
 } from "@services/trip.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
+
+/**
+ * Get all trips (admin only)
+ */
+export const getAllTripsController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const trips = await getAllTrips();
+
+    return res.json({
+      success: true,
+      data: trips,
+      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
 
 export const createTrip = asyncHandler(async (req: Request, res: Response) => {
   const userId = req.user?.userId; // From JWT token

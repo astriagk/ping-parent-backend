@@ -10,8 +10,11 @@ import {
 } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
+  activateUser,
   createPhoneOtp,
   createUser,
+  deactivateUser,
+  getAllUsers,
   getUserById,
   getUserByPhone,
   verifyPhoneOtp as verifyOtpService,
@@ -354,3 +357,66 @@ export const logout = asyncHandler(async (_req: Request, res: Response) => {
     message: SUCCESS_MESSAGES.AUTH.LOGGED_OUT_SUCCESSFULLY,
   });
 });
+
+/**
+ * Get all users (admin only)
+ */
+export const getAllUsersController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const users = await getAllUsers();
+
+    return res.json({
+      success: true,
+      data: users,
+      message: SUCCESS_MESSAGES.AUTH.USER_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Activate user (admin only)
+ */
+export const activateUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await activateUser(id);
+
+    if (!user) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: user,
+      message: SUCCESS_MESSAGES.AUTH.USER_ACTIVATED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Deactivate user (admin only)
+ */
+export const deactivateUserController = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const user = await deactivateUser(id);
+
+    if (!user) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: user,
+      message: SUCCESS_MESSAGES.AUTH.USER_DEACTIVATED_SUCCESSFULLY,
+    });
+  },
+);

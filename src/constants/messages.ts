@@ -251,6 +251,32 @@ export const ERROR_MESSAGES = {
     ALREADY_COMPLETED: "Payment is already completed",
     ALREADY_REFUNDED: "Payment is already refunded",
   },
+  ADMIN: {
+    NOT_FOUND: "Admin not found",
+    EMAIL_ALREADY_EXISTS: "Admin with this email already exists",
+    USERNAME_ALREADY_EXISTS: "Admin with this username already exists",
+    INVALID_CREDENTIALS: "Invalid email or password",
+    EMAIL_REQUIRED: "Email is required",
+    PASSWORD_REQUIRED: "Password is required",
+    USERNAME_REQUIRED: "Username is required",
+    ONLY_SUPERADMIN_CAN_CREATE: "Only superadmin can create new admins",
+    CANNOT_MODIFY_SUPERADMIN: "Cannot modify superadmin account",
+    FAILED_TO_CREATE: "Failed to create admin",
+    FAILED_TO_UPDATE: "Failed to update admin",
+    FAILED_TO_DELETE: "Failed to delete admin",
+    ADMIN_ROLE_REQUIRED: "Admin role is required",
+    INVALID_ADMIN_ROLE: "Admin role must be admin or superadmin",
+  },
+  ROLE: {
+    NOT_FOUND: "Role not found",
+    ROLE_NAME_ALREADY_EXISTS: "Role with this name already exists",
+    ROLE_NAME_REQUIRED: "Role name is required",
+    FAILED_TO_CREATE: "Failed to create role",
+    FAILED_TO_UPDATE: "Failed to update role",
+    FAILED_TO_DELETE: "Failed to delete role",
+    CANNOT_DELETE_IN_USE:
+      "Cannot delete role that is currently assigned to users",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -267,6 +293,9 @@ export const SUCCESS_MESSAGES = {
     PASSWORD_RESET_SUCCESS:
       "Password reset successful. You can now login with your new password.",
     LOGGED_OUT_SUCCESSFULLY: "Logged out successfully",
+    USER_FETCHED_SUCCESSFULLY: "User fetched successfully",
+    USER_ACTIVATED_SUCCESSFULLY: "User activated successfully",
+    USER_DEACTIVATED_SUCCESSFULLY: "User deactivated successfully",
   },
   PHONE: {
     OTP_SENT: "OTP sent to phone number",
@@ -364,6 +393,23 @@ export const SUCCESS_MESSAGES = {
     LIST_FETCHED_SUCCESSFULLY: "Payment history fetched successfully",
     COMPLETED_SUCCESSFULLY: "Payment completed successfully",
     REFUNDED_SUCCESSFULLY: "Payment refunded successfully",
+  },
+  ADMIN: {
+    LOGIN_SUCCESSFUL: "Admin login successful",
+    CREATED_SUCCESSFULLY: "Admin created successfully",
+    UPDATED_SUCCESSFULLY: "Admin updated successfully",
+    DELETED_SUCCESSFULLY: "Admin deleted successfully",
+    FETCHED_SUCCESSFULLY: "Admin fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Admins list fetched successfully",
+    ACTIVATED_SUCCESSFULLY: "Admin activated successfully",
+    DEACTIVATED_SUCCESSFULLY: "Admin deactivated successfully",
+  },
+  ROLE: {
+    CREATED_SUCCESSFULLY: "Role created successfully",
+    UPDATED_SUCCESSFULLY: "Role updated successfully",
+    DELETED_SUCCESSFULLY: "Role deleted successfully",
+    FETCHED_SUCCESSFULLY: "Role fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Roles list fetched successfully",
   },
 };
 
