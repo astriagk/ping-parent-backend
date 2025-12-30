@@ -277,6 +277,25 @@ export const ERROR_MESSAGES = {
     CANNOT_DELETE_IN_USE:
       "Cannot delete role that is currently assigned to users",
   },
+  RATING_REVIEW: {
+    NOT_FOUND: "Rating/review not found",
+    FAILED_TO_CREATE: "Failed to submit rating/review",
+    FAILED_TO_UPDATE: "Failed to update rating/review",
+    FAILED_TO_DELETE: "Failed to delete rating/review",
+    FAILED_TO_FETCH: "Failed to fetch rating/review",
+    PARENT_ID_REQUIRED: "Parent ID is required",
+    DRIVER_ID_REQUIRED: "Driver ID is required",
+    RATING_REQUIRED: "Rating is required",
+    INVALID_RATING: "Rating must be between 1 and 5",
+    ALREADY_EXISTS: "You have already submitted a rating/review for this trip",
+    DRIVER_NOT_FOUND: "Driver not found",
+    TRIP_NOT_FOUND: "Trip not found",
+    UNAUTHORIZED_ACCESS: "You are not authorized to access this rating/review",
+  },
+  AUDIT_LOG: {
+    NOT_FOUND: "Audit log not found",
+    FAILED_TO_FETCH: "Failed to fetch audit logs",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -410,6 +429,17 @@ export const SUCCESS_MESSAGES = {
     DELETED_SUCCESSFULLY: "Role deleted successfully",
     FETCHED_SUCCESSFULLY: "Role fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Roles list fetched successfully",
+  },
+  RATING_REVIEW: {
+    SUBMITTED_SUCCESSFULLY: "Rating/review submitted successfully",
+    UPDATED_SUCCESSFULLY: "Rating/review updated successfully",
+    DELETED_SUCCESSFULLY: "Rating/review deleted successfully",
+    FETCHED_SUCCESSFULLY: "Rating/review fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Ratings/reviews list fetched successfully",
+  },
+  AUDIT_LOG: {
+    FETCHED_SUCCESSFULLY: "Audit log fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Audit logs fetched successfully",
   },
 };
 

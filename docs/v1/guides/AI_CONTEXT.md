@@ -12,7 +12,7 @@ When asked to create a new feature (e.g., "Create a School module"):
 2. **Copy the auth pattern** → Use `src/**/auth.*` files as templates
 3. **Create 6 files** → types, validations, repository, service, controller, routes
 4. **Update 3 files** → constants/collections.ts, constants/messages.ts, routes/index.ts
-5. **Update documentation** → Add endpoints to `docs/API_DOCUMENTATION.md` and `docs/swagger.yaml`
+5. **Update documentation** → Add endpoints to `docs/v1/api/API_DOCUMENTATION.md` and `docs/v1/api/openapi/swagger.yaml`
 
 ### 🎯 Critical Rules
 
@@ -640,10 +640,10 @@ When creating a new module (e.g., "schools"), follow these steps **in order**:
 9. **Register Routes** (`routes/index.ts`)
    - Import and mount entity routes
 
-10. **Update API Documentation** (`docs/API_DOCUMENTATION.md`)
+10. **Update API Documentation** (`docs/v1/api/API_DOCUMENTATION.md`)
     - Add all new endpoints with request/response examples
 
-11. **Update Swagger Documentation** (`docs/swagger.yaml`)
+11. **Update Swagger Documentation** (`docs/v1/api/openapi/swagger.yaml`)
     - Add schemas and endpoint definitions
 
 ### ✅ Verification Checklist
@@ -1107,9 +1107,9 @@ src/
 
 For detailed implementation examples, see:
 
-- **[IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md)** - Complete module examples (Student, Trip)
-- **[SWAGGER_GUIDE.md](./SWAGGER_GUIDE.md)** - Swagger/OpenAPI documentation guide
-- **[TROUBLESHOOTING.md](./TROUBLESHOOTING.md)** - Common mistakes and debugging tips
+- **[IMPLEMENTATION_EXAMPLES.md](../guides/IMPLEMENTATION_EXAMPLES.md)** - Complete module examples (Student, Trip)
+- **[SWAGGER_GUIDE.md](../api/openapi/SWAGGER_GUIDE.md)** - Swagger/OpenAPI documentation guide
+- **[TROUBLESHOOTING.md](../guides/TROUBLESHOOTING.md)** - Common mistakes and debugging tips
 
 ---
 

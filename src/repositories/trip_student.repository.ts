@@ -1,6 +1,10 @@
 import { WithId } from "mongodb";
 
-import { TRIP_STUDENTS_COLLECTION } from "@constants";
+import {
+  AttendanceStatus,
+  PickupStatus,
+  TRIP_STUDENTS_COLLECTION,
+} from "@constants";
 import { TripStudent } from "@models/trip_student.type";
 
 import { BaseRepository } from "./base.repository";
@@ -52,7 +56,7 @@ export class TripStudentRepository extends BaseRepository<TripStudent> {
    */
   async findByAttendanceStatus(
     tripId: string,
-    attendanceStatus: string,
+    attendanceStatus: AttendanceStatus,
   ): Promise<WithId<TripStudent>[]> {
     return await this.findMany({
       trip_id: tripId,
@@ -65,7 +69,7 @@ export class TripStudentRepository extends BaseRepository<TripStudent> {
    */
   async findByPickupStatus(
     tripId: string,
-    pickupStatus: string,
+    pickupStatus: PickupStatus,
   ): Promise<WithId<TripStudent>[]> {
     return await this.findMany({
       trip_id: tripId,
@@ -79,9 +83,7 @@ export class TripStudentRepository extends BaseRepository<TripStudent> {
   async findByTripIdOrderedBySequence(
     tripId: string,
   ): Promise<WithId<TripStudent>[]> {
-    const db = await this.getDB();
-    return await db
-      .collection<TripStudent>(this.collectionName)
+    return await this.getCollection()
       .find({ trip_id: tripId })
       .sort({ sequence_order: 1 })
       .toArray();

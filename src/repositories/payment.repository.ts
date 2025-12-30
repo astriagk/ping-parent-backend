@@ -13,7 +13,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
   async findByParentId(parentId: string): Promise<WithId<Payment>[]> {
     return await this.findMany(
       { parent_id: parentId },
-      { sort: { payment_date: -1 } },
+      // { sort: { payment_date: -1 } },
     );
   }
 
@@ -50,7 +50,7 @@ export class PaymentRepository extends BaseRepository<Payment> {
         parent_id: parentId,
         payment_status: PaymentStatus.COMPLETED,
       },
-      { sort: { payment_date: -1 } },
+      // { sort: { payment_date: -1 } },
     );
   }
 }

@@ -1,6 +1,6 @@
 import { WithId } from "mongodb";
 
-import { TRIPS_COLLECTION } from "@constants";
+import { TRIPS_COLLECTION, TripStatus, TripType } from "@constants";
 import { Trip } from "@models/trip.type";
 
 import { BaseRepository } from "./base.repository";
@@ -37,14 +37,14 @@ export class TripRepository extends BaseRepository<Trip> {
     });
   }
 
-  async findByStatus(status: string): Promise<WithId<Trip>[]> {
+  async findByStatus(status: TripStatus): Promise<WithId<Trip>[]> {
     return await this.findMany({ trip_status: status });
   }
 
   async findDuplicateTrip(
     driverId: string,
     schoolId: string,
-    tripType: string,
+    tripType: TripType,
     tripDate: Date,
   ): Promise<WithId<Trip> | null> {
     const startOfDay = new Date(tripDate);
@@ -67,7 +67,9 @@ export class TripRepository extends BaseRepository<Trip> {
   async findActiveTrips(driverId: string): Promise<WithId<Trip>[]> {
     return await this.findMany({
       driver_id: driverId,
-      trip_status: { $in: ["scheduled", "started", "in_progress"] },
+      trip_status: {
+        $in: [TripStatus.SCHEDULED, TripStatus.STARTED, TripStatus.IN_PROGRESS],
+      },
     });
   }
 }

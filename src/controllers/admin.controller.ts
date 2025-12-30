@@ -11,6 +11,14 @@ import {
   loginAdmin as loginAdminService,
   updateAdmin as updateAdminService,
 } from "@services/admin.service";
+import {
+  activateUser as activateUserService,
+  deactivateUser as deactivateUserService,
+  deleteUser as deleteUserService,
+  getAllUsers as getAllUsersService,
+  getUserById as getUserByIdService,
+  updateUser as updateUserService,
+} from "@services/auth.service";
 
 // Admin login
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -158,3 +166,121 @@ export const deactivateAdmin = asyncHandler(
     });
   },
 );
+
+// User Management Controllers
+
+// Get all users
+export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
+  const users = await getAllUsersService();
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: users,
+    message: "Users list fetched successfully",
+  });
+});
+
+// Get user by ID
+export const getUserById = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const user = await getUserByIdService(id);
+
+  if (!user) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+    );
+  }
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: user,
+    message: SUCCESS_MESSAGES.AUTH.USER_FETCHED_SUCCESSFULLY,
+  });
+});
+
+// Update user
+export const updateUser = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+  const updates = req.body;
+
+  const updatedUser = await updateUserService(id, updates);
+
+  if (!updatedUser) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+    );
+  }
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: updatedUser,
+    message: "User updated successfully",
+  });
+});
+
+// Activate user
+export const activateUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const activatedUser = await activateUserService(id);
+
+    if (!activatedUser) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: activatedUser,
+      message: SUCCESS_MESSAGES.AUTH.USER_ACTIVATED_SUCCESSFULLY,
+    });
+  },
+);
+
+// Deactivate user
+export const deactivateUser = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+
+    const deactivatedUser = await deactivateUserService(id);
+
+    if (!deactivatedUser) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: deactivatedUser,
+      message: SUCCESS_MESSAGES.AUTH.USER_DEACTIVATED_SUCCESSFULLY,
+    });
+  },
+);
+
+// Delete user (soft delete)
+export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
+  const { id } = req.params;
+
+  const deleted = await deleteUserService(id);
+
+  if (!deleted) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+    );
+  }
+
+  return res.status(HTTP_STATUS.OK).json({
+    success: true,
+    data: null,
+    message: "User deleted successfully",
+  });
+});

@@ -42,6 +42,7 @@ export enum UniqueCodeTypes {
   PAYMENT = "PAY",
   ADMIN = "ADM",
   ROLE = "ROL",
+  AUDIT_LOG = "AUL",
 }
 
 export enum AssignmentStatus {

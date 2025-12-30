@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
+import {
+  AttendanceStatus,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  PickupStatus,
+  SUCCESS_MESSAGES,
+} from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
   getTripStudentById,
@@ -208,7 +214,7 @@ export const getTripStudentsByAttendance = asyncHandler(
 
     const tripStudents = await getTripStudentsByAttendanceStatus(
       tripId,
-      status,
+      status as AttendanceStatus,
     );
 
     return res.json({
@@ -234,7 +240,10 @@ export const getTripStudentsByPickup = asyncHandler(
       );
     }
 
-    const tripStudents = await getTripStudentsByPickupStatus(tripId, status);
+    const tripStudents = await getTripStudentsByPickupStatus(
+      tripId,
+      status as PickupStatus,
+    );
 
     return res.json({
       success: true,

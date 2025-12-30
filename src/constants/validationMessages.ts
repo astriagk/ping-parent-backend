@@ -243,4 +243,14 @@ export const VALIDATION_MESSAGES = {
     ROLE_NAME_MAX: "Role name cannot exceed 50 characters",
     DESCRIPTION_MAX: "Description cannot exceed 500 characters",
   },
+  RATING_REVIEW: {
+    DRIVER_ID_REQUIRED: "Driver ID is required",
+    TRIP_ID_INVALID: "Trip ID must be a valid ID",
+    RATING_REQUIRED: "Rating is required",
+    RATING_INVALID: "Rating must be a valid number",
+    RATING_MIN: "Rating must be at least 1",
+    RATING_MAX: "Rating must be at most 5",
+    RATING_INTEGER: "Rating must be an integer",
+    REVIEW_TEXT_MAX: "Review text cannot exceed 1000 characters",
+  },
 };

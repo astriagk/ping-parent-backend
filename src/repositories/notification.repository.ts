@@ -1,5 +1,6 @@
 import { WithId } from "mongodb";
 
+import { getDB } from "@config";
 import { NOTIFICATIONS_COLLECTION } from "@constants";
 import { Notification } from "@models/notification.type";
 
@@ -19,7 +20,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
   }
 
   async countUnreadByUserId(userId: string): Promise<number> {
-    const db = await this.getDB();
+    const db = await getDB();
     return await db
       .collection<Notification>(this.collectionName)
       .countDocuments({ user_id: userId, is_read: false });
@@ -34,7 +35,7 @@ export class NotificationRepository extends BaseRepository<Notification> {
   }
 
   async markAllAsReadForUser(userId: string): Promise<number> {
-    const db = await this.getDB();
+    const db = await getDB();
     const result = await db
       .collection<Notification>(this.collectionName)
       .updateMany(
