@@ -1,3 +1,4 @@
+import bcrypt from "bcryptjs";
 import { customAlphabet } from "nanoid";
 
 import { AlphabetType } from "@constants";
@@ -151,4 +152,27 @@ export const generateUniqueCode = (
   const alphabet = ALPHABETS[alphabetType];
   const generateId = customAlphabet(alphabet, length);
   return `${prefix}${separator}${generateId()}`;
+};
+
+/**
+ * Hash a password using bcrypt
+ * @param password - Plain text password to hash
+ * @returns Hashed password
+ */
+export const hashPassword = async (password: string): Promise<string> => {
+  const salt = await bcrypt.genSalt(10);
+  return bcrypt.hash(password, salt);
+};
+
+/**
+ * Compare a plain text password with a hashed password
+ * @param password - Plain text password
+ * @param hashedPassword - Hashed password to compare against
+ * @returns True if passwords match, false otherwise
+ */
+export const comparePassword = async (
+  password: string,
+  hashedPassword: string,
+): Promise<boolean> => {
+  return bcrypt.compare(password, hashedPassword);
 };

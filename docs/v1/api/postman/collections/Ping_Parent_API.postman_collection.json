@@ -1,0 +1,2466 @@
+{
+  "info": {
+    "name": "Ping Parent API - Complete Collection",
+    "description": "Complete API collection for Ping Parent application with all endpoints, test data, and automated tests",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "ping-parent-api"
+  },
+  "auth": {
+    "type": "bearer",
+    "bearer": [
+      {
+        "key": "token",
+        "value": "{{TOKEN}}",
+        "type": "string"
+      }
+    ]
+  },
+  "item": [
+    {
+      "name": "01. Authentication & User Management",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/roles",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Send OTP (Parent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 200\", function () {",
+                  "    pm.response.to.have.status(200);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has success true\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.success).to.eql(true);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{PARENT1_PHONE}}\",\n  \"role\": \"parent\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register/send-otp",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "register", "send-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Verify OTP (Parent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "pm.test(\"Response has token\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.token).to.exist;",
+                  "    pm.environment.set(\"PARENT1_TOKEN\", jsonData.data.token);",
+                  "    pm.environment.set(\"PARENT1_ID\", jsonData.data.user._id);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{PARENT1_PHONE}}\",\n  \"otp\": \"{{TEST_OTP}}\",\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@parent.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register/verify-otp",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "register", "verify-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Send OTP (Driver)",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{DRIVER1_PHONE}}\",\n  \"role\": \"driver\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register/send-otp",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "register", "send-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register - Verify OTP (Driver)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code is 201\", function () {",
+                  "    pm.response.to.have.status(201);",
+                  "});",
+                  "",
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"DRIVER1_TOKEN\", jsonData.data.token);",
+                  "    pm.environment.set(\"DRIVER1_ID\", jsonData.data.user._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{DRIVER1_PHONE}}\",\n  \"otp\": \"{{TEST_OTP}}\",\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@driver.com\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/register/verify-otp",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "register", "verify-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Send OTP",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{PARENT1_PHONE}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login/send-otp",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login", "send-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login - Verify OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"TOKEN\", jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"phone\": \"{{PARENT1_PHONE}}\",\n  \"otp\": \"{{TEST_OTP}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/auth/login/verify-otp",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "login", "verify-otp"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify Token",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/verify-token",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "verify-token"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/logout",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "logout"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/admin/users?page=1&limit=10",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                },
+                {
+                  "key": "role",
+                  "value": "parent",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/admin/users/:id/activate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "admin", "users", ":id", "activate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PARENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/auth/admin/users/:id/deactivate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["auth", "admin", "users", ":id", "deactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PARENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "02. Parent APIs",
+      "item": [
+        {
+          "name": "Get Parent Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/parent/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Parent Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"john.doe@parent.com\",\n  \"alternate_phone\": \"+1987654320\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/parent/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Parent Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/parent/address",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent", "address"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Parent Address (WITH COORDINATES)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Address has coordinates\", function () {",
+                  "    var jsonData = pm.response.json();",
+                  "    pm.expect(jsonData.data.coordinates).to.exist;",
+                  "    pm.expect(jsonData.data.coordinates.latitude).to.eql(40.7128);",
+                  "    pm.expect(jsonData.data.coordinates.longitude).to.eql(-74.0060);",
+                  "});"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"123 Main St\",\n  \"city\": \"New York\",\n  \"state\": \"NY\",\n  \"zip_code\": \"10001\",\n  \"coordinates\": {\n    \"latitude\": {{PARENT1_LAT}},\n    \"longitude\": {{PARENT1_LNG}}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/parent/address",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent", "address"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "03. Driver APIs",
+      "item": [
+        {
+          "name": "Get Driver Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Driver Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@driver.com\",\n  \"alternate_phone\": \"+1987654323\",\n  \"license_number\": \"DL-NY-123456\",\n  \"vehicle_number\": \"NY-ABC-1234\",\n  \"vehicle_type\": \"Sedan\",\n  \"vehicle_model\": \"Toyota Camry 2023\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Driver Profile",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Jane Smith\",\n  \"email\": \"jane.smith@driver.com\",\n  \"vehicle_type\": \"Sedan\",\n  \"vehicle_model\": \"Toyota Camry 2023\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver/profile",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "profile"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Set Driver Availability",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"is_available\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver/availability",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "availability"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Driver Address",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver/address",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "address"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create/Update Driver Address (WITH COORDINATES)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"111 Driver Lane\",\n  \"city\": \"New York\",\n  \"state\": \"NY\",\n  \"zip_code\": \"10002\",\n  \"coordinates\": {\n    \"latitude\": {{DRIVER1_LAT}},\n    \"longitude\": {{DRIVER1_LNG}}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver/address",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "address"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Driver Documents",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver/documents",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "documents"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Upload Driver Documents",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document_type\": \"license\",\n  \"document_url\": \"https://storage.pingparent.com/docs/license_jane.pdf\",\n  \"expiry_date\": \"2026-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver/documents",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "documents"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Driver Documents",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"document_id\": \"{{DOCUMENT_ID}}\",\n  \"document_url\": \"https://storage.pingparent.com/docs/license_jane_new.pdf\",\n  \"expiry_date\": \"2027-12-31\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver/documents",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver", "documents"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "04. Student APIs",
+      "item": [
+        {
+          "name": "Add New Student",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.environment.set(\"STUDENT1_ID\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"STU001\",\n  \"name\": \"Emily Johnson\",\n  \"school_id\": \"{{SCHOOL1_ID}}\",\n  \"grade\": \"5th Grade\",\n  \"section\": \"A\",\n  \"age\": 10,\n  \"gender\": \"female\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/students",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All My Students",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/students/my-students",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", "my-students"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Students",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/students/my-active-students",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", "my-active-students"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Student Details by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/students/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Student",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Emily Jane Johnson\",\n  \"grade\": \"6th Grade\",\n  \"age\": 11\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/students/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Student",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/students/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Student by Student ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/students/by-student-id/:student_id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", "by-student-id", ":student_id"],
+              "variable": [
+                {
+                  "key": "student_id",
+                  "value": "STU001"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "05. School APIs",
+      "item": [
+        {
+          "name": "Get All Schools",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/schools?page=1&limit=10",
+              "host": ["{{BASE_URL}}"],
+              "path": ["schools"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "10"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get School Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/schools/:school_id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["schools", ":school_id"],
+              "variable": [
+                {
+                  "key": "school_id",
+                  "value": "SCH001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create School (Admin - WITH COORDINATES)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.environment.set(\"SCHOOL1_ID\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"school_id\": \"SCH001\",\n  \"name\": \"Springfield Elementary\",\n  \"address\": {\n    \"street\": \"100 School St\",\n    \"city\": \"New York\",\n    \"state\": \"NY\",\n    \"zip_code\": \"10003\",\n    \"coordinates\": {\n      \"latitude\": {{SCHOOL1_LAT}},\n      \"longitude\": {{SCHOOL1_LNG}}\n    }\n  },\n  \"phone\": \"+1234567896\",\n  \"email\": \"info@springfield.edu\",\n  \"principal_name\": \"Dr. John Smith\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/schools/admin",
+              "host": ["{{BASE_URL}}"],
+              "path": ["schools", "admin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update School (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Springfield Elementary - Updated\",\n  \"phone\": \"+1234567899\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/schools/admin/:school_id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["schools", "admin", ":school_id"],
+              "variable": [
+                {
+                  "key": "school_id",
+                  "value": "SCH001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete School (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/schools/admin/:school_id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["schools", "admin", ":school_id"],
+              "variable": [
+                {
+                  "key": "school_id",
+                  "value": "SCH001"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "06. Assignment & Trip APIs",
+      "item": [
+        {
+          "name": "Create Driver-Student Assignment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.environment.set(\"ASSIGNMENT1_ID\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"{{STUDENT1_ID}}\",\n  \"driver_id\": \"{{DRIVER1_ID}}\",\n  \"trip_type\": \"both\",\n  \"start_date\": \"2025-02-01\",\n  \"end_date\": \"2025-06-30\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assignment Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ASSIGNMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Assignments (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/driver/my-assignments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", "driver", "my-assignments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Assignments (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/driver/my-pending-assignments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", "driver", "my-pending-assignments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Approve Assignment (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/:id/approve",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", ":id", "approve"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ASSIGNMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Reject Assignment (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/:id/reject",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", ":id", "reject"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ASSIGNMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Trip (Driver)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.environment.set(\"TRIP1_ID\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip_type\": \"pickup\",\n  \"scheduled_date\": \"2025-02-01\",\n  \"start_time\": \"2025-02-01T07:00:00Z\",\n  \"route_details\": {\n    \"starting_point\": \"Driver Home\",\n    \"stops\": [\"Emily Home\", \"School\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trips",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Trips (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trips/my-trips",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", "my-trips"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trips by Date",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trips/my-trips/by-date?date=2025-02-01",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", "my-trips", "by-date"],
+              "query": [
+                {
+                  "key": "date",
+                  "value": "2025-02-01"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Start Trip (Update Status)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"in_progress\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trips/:id/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Trip",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"completed\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trips/:id/status",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", ":id", "status"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "07. Attendance & QR/OTP APIs",
+      "item": [
+        {
+          "name": "Generate QR/OTP",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.otp) {",
+                  "    pm.environment.set(\"GENERATED_OTP\", jsonData.data.otp);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"{{STUDENT1_ID}}\",\n  \"trip_id\": \"{{TRIP1_ID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/daily-qr-otp/generate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["daily-qr-otp", "generate"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QR/OTP for Student Trip",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/daily-qr-otp/student/:studentId/trip/:tripId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["daily-qr-otp", "student", ":studentId", "trip", ":tripId"],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                },
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Verify QR/OTP",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"student_id\": \"{{STUDENT1_ID}}\",\n  \"trip_id\": \"{{TRIP1_ID}}\",\n  \"code\": \"{{GENERATED_OTP}}\",\n  \"type\": \"otp\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/daily-qr-otp/verify",
+              "host": ["{{BASE_URL}}"],
+              "path": ["daily-qr-otp", "verify"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Student Attendance",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"status\": \"present\",\n  \"remarks\": \"Student arrived on time\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId/student/:studentId/attendance",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId", "student", ":studentId", "attendance"],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                },
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Record Pickup (WITH GPS)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"pickup_time\": \"2025-02-01T07:15:00Z\",\n  \"location\": {\n    \"latitude\": {{PARENT1_LAT}},\n    \"longitude\": {{PARENT1_LNG}}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId/student/:studentId/pickup",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId", "student", ":studentId", "pickup"],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                },
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Record Drop (WITH GPS)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"drop_time\": \"2025-02-01T08:30:00Z\",\n  \"location\": {\n    \"latitude\": {{SCHOOL1_LAT}},\n    \"longitude\": {{SCHOOL1_LNG}}\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId/student/:studentId/drop",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId", "student", ":studentId", "drop"],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                },
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Students",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId?ordered=true",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId"],
+              "query": [
+                {
+                  "key": "ordered",
+                  "value": "true"
+                }
+              ],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "08. Notification APIs",
+      "item": [
+        {
+          "name": "Get All Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/notifications?page=1&limit=20",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Notifications",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/unread",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "unread"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Unread Count",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/unread-count",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "unread-count"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark Notification as Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/:id/mark-as-read",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", ":id", "mark-as-read"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{NOTIFICATION_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Mark All as Read",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/notifications/mark-all-as-read",
+              "host": ["{{BASE_URL}}"],
+              "path": ["notifications", "mark-all-as-read"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "09. Subscription & Payment APIs",
+      "item": [
+        {
+          "name": "Get All Subscription Plans",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/subscription-plans",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subscription-plans"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Subscribe to Plan (Parent)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.environment.set(\"SUBSCRIPTION1_ID\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"{{PLAN1_ID}}\",\n  \"start_date\": \"2025-02-01\",\n  \"auto_renew\": true\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/parent-subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent-subscriptions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Subscriptions",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/parent-subscriptions/my-subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent-subscriptions", "my-subscriptions"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Subscription",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/parent-subscriptions/my-active-subscription",
+              "host": ["{{BASE_URL}}"],
+              "path": ["parent-subscriptions", "my-active-subscription"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Make Payment",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data._id) {",
+                  "    pm.environment.set(\"PAYMENT1_ID\", jsonData.data._id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscription_id\": \"{{SUBSCRIPTION1_ID}}\",\n  \"amount\": 99.99,\n  \"payment_method\": \"card\",\n  \"transaction_id\": \"TXN123456789\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/payments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Complete Payment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/:id/complete",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", ":id", "complete"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PAYMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment History",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/my-payments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", "my-payments"]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "10. Ratings & Reviews APIs",
+      "item": [
+        {
+          "name": "Submit Rating/Review",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driver_id\": \"{{DRIVER1_ID}}\",\n  \"rating\": 4.5,\n  \"review\": \"Great driver! Very punctual and friendly with kids.\",\n  \"trip_id\": \"{{TRIP1_ID}}\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get My Reviews",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews/my-reviews",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews", "my-reviews"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Driver Reviews (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews/driver/:driverId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews", "driver", ":driverId"],
+              "variable": [
+                {
+                  "key": "driverId",
+                  "value": "{{DRIVER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Driver Rating (Public)",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews/driver/:driverId/rating",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews", "driver", ":driverId", "rating"],
+              "variable": [
+                {
+                  "key": "driverId",
+                  "value": "{{DRIVER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "11. Admin Portal APIs",
+      "item": [
+        {
+          "name": "Admin Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.token) {",
+                  "    pm.environment.set(\"ADMIN_TOKEN\", jsonData.data.token);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"username\": \"admin_super\",\n  \"password\": \"Admin@123456\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/admin/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "login"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Admins",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Users (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users?page=1&limit=50",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "50"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Logs",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/audit-logs?page=1&limit=20",
+              "host": ["{{BASE_URL}}"],
+              "path": ["audit-logs"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "action",
+                  "value": "create",
+                  "disabled": true
+                },
+                {
+                  "key": "resource",
+                  "value": "payment",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "12. Role Management",
+      "item": [
+        {
+          "name": "Get All Roles",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/roles",
+              "host": ["{{BASE_URL}}"],
+              "path": ["roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Role",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Super Admin\",\n  \"description\": \"Full system access\",\n  \"permissions\": [\n    \"user.create\",\n    \"user.read\",\n    \"user.update\",\n    \"user.delete\",\n    \"admin.manage\",\n    \"audit.view\"\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/roles",
+              "host": ["{{BASE_URL}}"],
+              "path": ["roles"]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    }
+  ]
+}

@@ -6,6 +6,7 @@ import {
   getAddress,
   getDocuments,
   getProfile,
+  setAvailability,
   updateDocuments,
   updateProfile,
   upsertAddress,
@@ -18,6 +19,9 @@ const router = Router();
 router.get("/profile", verifyDriverToken, getProfile);
 router.post("/profile", verifyDriverToken, createProfile);
 router.put("/profile", verifyDriverToken, updateProfile);
+
+// Availability route
+router.patch("/availability", verifyDriverToken, setAvailability);
 
 // Address routes
 router.get("/address", verifyDriverToken, getAddress);

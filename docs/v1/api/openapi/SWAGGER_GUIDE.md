@@ -17,7 +17,7 @@ This guide explains how to document API endpoints using Swagger/OpenAPI 3.0 spec
 
 ## Overview
 
-**Location**: `docs/swagger.yaml`
+**Location**: `docs/v1/api/openapi/swagger.yaml`
 
 The project uses OpenAPI 3.0 specification for API documentation. All API endpoints MUST be documented in the Swagger file.
 
@@ -69,7 +69,7 @@ paths:
 
 ## When to Update Swagger
 
-Update `docs/swagger.yaml` whenever you:
+Update `docs/v1/api/openapi/swagger.yaml` whenever you:
 - ✅ Create a new API endpoint
 - ✅ Modify request/response payloads
 - ✅ Add new schemas/models

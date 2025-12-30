@@ -62,7 +62,7 @@ export enum Gender {
 ### 2. Type Definition (`types/student.type.ts`)
 
 ```typescript
-import { Gender } from "@constants/enums";
+import { Gender } from "@constants";
 
 // Import enum from constants
 
@@ -170,14 +170,15 @@ export const VALIDATION_MESSAGES = {
 
 ### 4. Validation (`validations/student.validation.ts`)
 
-**IMPORTANT**: Use `VALIDATION_MESSAGES` from constants for all validation error messages.
+**IMPORTANT**:
+- Use `VALIDATION_MESSAGES` from constants for all validation error messages
+- **Check database schema notes** - exclude fields marked as "calculated", "derived", or "optimized" from validation schemas
 
 ```typescript
 import Joi from "joi";
 
-// Import enum
 import { VALIDATION_MESSAGES } from "@constants";
-import { Gender } from "@constants/enums";
+import { Gender } from "@constants";
 
 export const createStudentSchema = Joi.object({
   // NOTE: parent_id is NOT included - it's derived from authenticated user

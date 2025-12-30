@@ -37,6 +37,72 @@ export const phoneExists = async (phoneNumber: string): Promise<boolean> => {
   return await userRepository.phoneExists(phoneNumber);
 };
 
+/**
+ * Get all users (admin only)
+ */
+export const getAllUsers = async (): Promise<WithId<User>[]> => {
+  return await userRepository.findMany();
+};
+
+/**
+ * Activate user (admin only)
+ */
+export const activateUser = async (
+  userId: string,
+): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+  return await userRepository.updateById(userId, {
+    $set: { is_active: true, updated_at: new Date() },
+  });
+};
+
+/**
+ * Deactivate user (admin only)
+ */
+export const deactivateUser = async (
+  userId: string,
+): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+  return await userRepository.updateById(userId, {
+    $set: { is_active: false, updated_at: new Date() },
+  });
+};
+
+/**
+ * Update user (admin only)
+ */
+export const updateUser = async (
+  userId: string,
+  updates: Partial<
+    Pick<User, "phone_number" | "user_type" | "is_active" | "fcm_token">
+  >,
+): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(userId)) {
+    return null;
+  }
+  return await userRepository.updateById(userId, {
+    $set: { ...updates, updated_at: new Date() },
+  });
+};
+
+/**
+ * Delete user (admin only) - Soft delete by deactivating
+ */
+export const deleteUser = async (userId: string): Promise<boolean> => {
+  if (!ObjectId.isValid(userId)) {
+    return false;
+  }
+  // Soft delete by deactivating the user
+  const result = await userRepository.updateById(userId, {
+    $set: { is_active: false, updated_at: new Date() },
+  });
+  return result !== null;
+};
+
 // OTP management
 export const createPhoneOtp = async (
   phone: string,

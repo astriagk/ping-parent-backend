@@ -7,7 +7,11 @@ import {
   getSchool,
   updateSchool,
 } from "@controllers/school.controller";
-import { validate, verifyToken_Middleware } from "@middlewares";
+import {
+  validate,
+  verifyAdminToken,
+  verifyToken_Middleware,
+} from "@middlewares";
 import {
   createSchoolSchema,
   updateSchoolSchema,
@@ -15,14 +19,25 @@ import {
 
 const router = Router();
 
-// All routes require authentication
+// Admin routes - School CRUD operations (admin only)
+router.post(
+  "/admin",
+  verifyAdminToken,
+  validate(createSchoolSchema),
+  createSchool,
+);
+router.put(
+  "/admin/:school_id",
+  verifyAdminToken,
+  validate(updateSchoolSchema),
+  updateSchool,
+);
+router.delete("/admin/:school_id", verifyAdminToken, deleteSchool);
+
+// Public routes - Read operations (all authenticated users)
 router.use(verifyToken_Middleware);
 
-// School CRUD operations
-router.post("/", validate(createSchoolSchema), createSchool);
 router.get("/", getAllSchools);
 router.get("/:school_id", getSchool);
-router.put("/:school_id", validate(updateSchoolSchema), updateSchool);
-router.delete("/:school_id", deleteSchool);
 
 export default router;

@@ -1,6 +1,9 @@
 import { Router } from "express";
 
 import {
+  activateUserController,
+  deactivateUserController,
+  getAllUsersController,
   roles as getRoles,
   logout,
   sendLoginOtp,
@@ -9,10 +12,23 @@ import {
   verifyLoginOtp,
   verifyPhoneOtp,
 } from "@controllers/auth.controller";
-import { loginRateLimiter, validate } from "@middlewares";
+import { loginRateLimiter, validate, verifyAdminToken } from "@middlewares";
 import { sendOTPSchema, verifyOTPSchema } from "@validations/auth.validation";
 
 const router = Router();
+
+// Admin routes
+router.get("/admin/users", verifyAdminToken, getAllUsersController);
+router.patch(
+  "/admin/users/:id/activate",
+  verifyAdminToken,
+  activateUserController,
+);
+router.patch(
+  "/admin/users/:id/deactivate",
+  verifyAdminToken,
+  deactivateUserController,
+);
 
 router.get("/roles", getRoles);
 // New phone-based registration (3 steps, no password)
