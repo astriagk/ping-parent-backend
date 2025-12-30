@@ -426,6 +426,56 @@ export interface Student {
 
 ## Validation Errors
 
+### ❌ Mistake: Including System-Calculated Fields in Validation
+
+**Problem**: Adding fields to validation schemas that are calculated by the system
+
+```typescript
+// ❌ WRONG - Database/ping_parent_dbdiagram.dbml shows this is calculated
+Table trips {
+  optimized_route_data json [note: 'Calculated optimal sequence of student pickups/drops based on lat/long']
+  total_distance decimal(10,2) [note: 'in kilometers']
+
+  Note: 'Route is dynamically calculated: Driver home → Students (optimized order) → School (pickup)'
+}
+
+// ❌ WRONG - validations/trip.validation.ts
+export const createTripSchema = Joi.object({
+  school_id: Joi.string().required(),
+  trip_type: Joi.string().valid("pickup", "drop").required(),
+  trip_date: Joi.date().required(),
+  optimized_route_data: Joi.any().optional(), // ❌ This is calculated, not user input
+  total_distance: Joi.number().optional(),     // ❌ This may be calculated
+});
+```
+
+**Solution**: Check database schema notes and exclude calculated fields
+
+```typescript
+// ✅ CORRECT - Check schema notes first
+// optimized_route_data has note: 'Calculated optimal sequence...'
+// Table Note: 'Route is dynamically calculated...'
+
+// ✅ CORRECT - validations/trip.validation.ts
+export const createTripSchema = Joi.object({
+  school_id: Joi.string().required(),
+  trip_type: Joi.string().valid("pickup", "drop").required(),
+  trip_date: Joi.date().required(),
+  // optimized_route_data excluded - system calculated
+  // total_distance excluded - derived from route calculation
+});
+```
+
+**How to identify**: Look for these keywords in database schema notes:
+- "calculated", "calculated by system"
+- "derived", "optimized"
+- "dynamic", "auto-generated"
+- Check table-level Note for business logic
+
+**Why**: User input validation should only include fields the user provides, not fields the system calculates.
+
+---
+
 ### ❌ Mistake: Hardcoded Validation Messages
 
 **Problem**: Using hardcoded strings in validation schemas

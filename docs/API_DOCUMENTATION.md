@@ -52,6 +52,56 @@ Complete API reference with request payloads, response formats, and error messag
   - [Reject Assignment](#reject-driver-student-assignment)
   - [Deactivate Assignment](#deactivate-driver-student-assignment)
   - [Delete Assignment](#delete-driver-student-assignment)
+- [Trip Endpoints](#trip-endpoints)
+  - [Create Trip](#create-trip)
+  - [Get My Trips](#get-my-trips)
+  - [Get My Trips by Date](#get-my-trips-by-date)
+  - [Get My Active Trips](#get-my-active-trips)
+  - [Get Trip by ID](#get-trip-by-id)
+  - [Update Trip](#update-trip)
+  - [Update Trip Status](#update-trip-status)
+  - [Delete Trip](#delete-trip)
+- [Trip Student Endpoints](#trip-student-endpoints)
+  - [Get Trip Student by ID](#get-trip-student-by-id)
+  - [Get Trip Students by Trip](#get-trip-students-by-trip)
+  - [Get Trip Students by Student](#get-trip-students-by-student)
+  - [Get Trip Student by Trip and Student](#get-trip-student-by-trip-and-student)
+  - [Get Trip Students by Attendance Status](#get-trip-students-by-attendance-status)
+  - [Get Trip Students by Pickup Status](#get-trip-students-by-pickup-status)
+  - [Mark Student Attendance](#mark-student-attendance)
+  - [Record Student Pickup](#record-student-pickup)
+  - [Record Student Drop](#record-student-drop)
+  - [Update Trip Student Record](#update-trip-student-record)
+- [Daily QR/OTP Endpoints](#daily-qrotp-endpoints)
+  - [Generate QR Code and OTP](#generate-qr-code-and-otp)
+  - [Get QR/OTP by Student and Trip](#get-qrotp-by-student-and-trip)
+  - [Verify QR Code or OTP](#verify-qr-code-or-otp)
+- [Notification Endpoints](#notification-endpoints)
+  - [Get All Notifications](#get-all-notifications)
+  - [Get Unread Notifications](#get-unread-notifications)
+  - [Get Unread Count](#get-unread-count)
+  - [Mark Notification as Read](#mark-notification-as-read)
+  - [Mark All Notifications as Read](#mark-all-notifications-as-read)
+- [Subscription Plan Endpoints](#subscription-plan-endpoints)
+  - [Get All Subscription Plans](#get-all-subscription-plans)
+  - [Get Subscription Plan by ID](#get-subscription-plan-by-id)
+- [Parent Subscription Endpoints](#parent-subscription-endpoints)
+  - [Create Parent Subscription](#create-parent-subscription)
+  - [Get My Subscriptions](#get-my-subscriptions)
+  - [Get My Active Subscription](#get-my-active-subscription)
+  - [Get Subscription by ID](#get-subscription-by-id)
+  - [Update Subscription](#update-subscription)
+  - [Cancel Subscription](#cancel-subscription)
+  - [Delete Subscription](#delete-subscription)
+- [Payment Endpoints](#payment-endpoints)
+  - [Create Payment](#create-payment)
+  - [Get My Payments](#get-my-payments)
+  - [Get My Pending Payments](#get-my-pending-payments)
+  - [Get My Completed Payments](#get-my-completed-payments)
+  - [Get Payment by ID](#get-payment-by-id)
+  - [Update Payment](#update-payment)
+  - [Complete Payment](#complete-payment)
+  - [Refund Payment](#refund-payment)
 
 ---
 
@@ -2478,5 +2528,1906 @@ Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 | ------ | --------------------------------------- |
 | 401    | `"User not authenticated"`              |
 | 404    | `"Driver-student assignment not found"` |
+
+---
+
+## Trip Endpoints
+
+### Create Trip
+
+Create a new trip for the authenticated driver.
+
+**Endpoint**: `POST /api/trips`
+
+**Authentication**: Required (Driver role)
+
+**Note**: `driver_id` is automatically derived from the authenticated driver's user ID.
+
+**Request Payload**:
+
+```json
+{
+  "school_id": "507f1f77bcf86cd799439011",
+  "trip_type": "pickup",
+  "trip_date": "2024-01-22T00:00:00.000Z"
+}
+```
+
+**Required Fields**:
+
+- `school_id` (string): School's MongoDB ObjectId
+- `trip_type` (string): Must be `"pickup"` or `"drop"`
+- `trip_date` (string): Trip date in ISO 8601 format
+
+> **Important**: The following fields are automatically managed by the system and should NOT be included in the request:
+> - `driver_id`: Automatically derived from authenticated driver
+> - `trip_status`: Automatically set to `'scheduled'` on creation
+> - `start_time` and `end_time`: Managed automatically by status transitions
+> - `total_distance`: System-calculated from route data
+> - `optimized_route_data`: System-calculated based on student locations
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439013",
+    "trip_id": "TRPa2B9k4Lm",
+    "driver_id": "507f1f77bcf86cd799439012",
+    "school_id": "507f1f77bcf86cd799439011",
+    "trip_type": "pickup",
+    "trip_date": "2024-01-22T00:00:00.000Z",
+    "trip_status": "scheduled",
+    "start_time": null,
+    "end_time": null,
+    "total_distance": null,
+    "optimized_route_data": null,
+    "created_at": "2024-01-22T10:00:00.000Z",
+    "updated_at": "2024-01-22T10:00:00.000Z"
+  },
+  "message": "Trip created successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                          |
+| ------ | ---------------------------------------------------------------------- |
+| 400    | `"Validation error"` (missing required fields)                         |
+| 401    | `"User not authenticated"`                                             |
+| 404    | `"Driver profile not found"`                                           |
+| 409    | `"A trip for this driver, school, type, and date already exists"`      |
+
+---
+
+### Get My Trips
+
+Get all trips for the authenticated driver.
+
+**Endpoint**: `GET /api/trips/my-trips`
+
+**Authentication**: Required (Driver role)
+
+**Request**:
+
+```http
+GET /api/trips/my-trips
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439013",
+      "trip_id": "TRPa2B9k4Lm",
+      "driver_id": "507f1f77bcf86cd799439012",
+      "school_id": "507f1f77bcf86cd799439011",
+      "trip_type": "pickup",
+      "trip_date": "2024-01-22T00:00:00.000Z",
+      "trip_status": "scheduled",
+      "created_at": "2024-01-22T10:00:00.000Z",
+      "updated_at": "2024-01-22T10:00:00.000Z"
+    }
+  ],
+  "message": "Trips list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                    |
+| ------ | -------------------------------- |
+| 401    | `"User not authenticated"`       |
+| 404    | `"Driver profile not found"`     |
+
+---
+
+### Get My Trips by Date
+
+Get all trips for the authenticated driver on a specific date.
+
+**Endpoint**: `GET /api/trips/my-trips/by-date?date=YYYY-MM-DD`
+
+**Authentication**: Required (Driver role)
+
+**Query Parameters**:
+
+- `date` (string, required): Date in ISO format (e.g., "2024-01-22")
+
+**Request**:
+
+```http
+GET /api/trips/my-trips/by-date?date=2024-01-22
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439013",
+      "trip_id": "TRPa2B9k4Lm",
+      "driver_id": "507f1f77bcf86cd799439012",
+      "school_id": "507f1f77bcf86cd799439011",
+      "trip_type": "pickup",
+      "trip_date": "2024-01-22T00:00:00.000Z",
+      "trip_status": "scheduled",
+      "created_at": "2024-01-22T10:00:00.000Z",
+      "updated_at": "2024-01-22T10:00:00.000Z"
+    }
+  ],
+  "message": "Trips list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                    |
+| ------ | -------------------------------- |
+| 400    | `"Trip date is required"`        |
+| 401    | `"User not authenticated"`       |
+| 404    | `"Driver profile not found"`     |
+
+---
+
+### Get My Active Trips
+
+Get all active trips (scheduled, started, or in_progress) for the authenticated driver.
+
+**Endpoint**: `GET /api/trips/my-trips/active`
+
+**Authentication**: Required (Driver role)
+
+**Request**:
+
+```http
+GET /api/trips/my-trips/active
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439013",
+      "trip_id": "TRPa2B9k4Lm",
+      "driver_id": "507f1f77bcf86cd799439012",
+      "school_id": "507f1f77bcf86cd799439011",
+      "trip_type": "pickup",
+      "trip_date": "2024-01-22T00:00:00.000Z",
+      "trip_status": "started",
+      "start_time": "2024-01-22T08:00:00.000Z",
+      "created_at": "2024-01-22T10:00:00.000Z",
+      "updated_at": "2024-01-22T10:00:00.000Z"
+    }
+  ],
+  "message": "Trips list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                    |
+| ------ | -------------------------------- |
+| 401    | `"User not authenticated"`       |
+| 404    | `"Driver profile not found"`     |
+
+---
+
+### Get Trip by ID
+
+Get a specific trip by its MongoDB ObjectId.
+
+**Endpoint**: `GET /api/trips/:id`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Trip's MongoDB ObjectId
+
+**Request**:
+
+```http
+GET /api/trips/507f1f77bcf86cd799439013
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439013",
+    "trip_id": "TRPa2B9k4Lm",
+    "driver_id": "507f1f77bcf86cd799439012",
+    "school_id": "507f1f77bcf86cd799439011",
+    "trip_type": "pickup",
+    "trip_date": "2024-01-22T00:00:00.000Z",
+    "trip_status": "scheduled",
+    "created_at": "2024-01-22T10:00:00.000Z",
+    "updated_at": "2024-01-22T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                    |
+| ------ | -------------------------------- |
+| 401    | `"User not authenticated"`       |
+| 404    | `"Trip not found"`               |
+
+---
+
+### Update Trip
+
+Update trip information by MongoDB ObjectId.
+
+**Endpoint**: `PUT /api/trips/:id`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Trip's MongoDB ObjectId
+
+**Request Payload**:
+
+```json
+{
+  "school_id": "507f1f77bcf86cd799439011",
+  "trip_type": "drop",
+  "trip_date": "2024-01-23T00:00:00.000Z"
+}
+```
+
+**Updatable Fields**:
+
+- `school_id` (string): Updated school ID
+- `trip_type` (string): Must be `"pickup"` or `"drop"`
+- `trip_date` (string): Updated trip date
+
+> **Important**: The following fields are NOT updatable via this endpoint:
+> - `trip_status`: Use `PATCH /api/trips/:id/status` endpoint instead
+> - `start_time` and `end_time`: Managed automatically by status transitions
+> - `total_distance`: System-calculated from route data
+> - `optimized_route_data`: System-calculated based on student locations
+
+> Note: All fields are optional. Update any combination of fields.
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439013",
+    "trip_id": "TRPa2B9k4Lm",
+    "driver_id": "507f1f77bcf86cd799439012",
+    "school_id": "507f1f77bcf86cd799439011",
+    "trip_type": "drop",
+    "trip_date": "2024-01-23T00:00:00.000Z",
+    "trip_status": "scheduled",
+    "start_time": null,
+    "end_time": null,
+    "total_distance": null,
+    "optimized_route_data": null,
+    "created_at": "2024-01-22T10:00:00.000Z",
+    "updated_at": "2024-01-22T11:00:00.000Z"
+  },
+  "message": "Trip updated successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                                                          |
+| ------ | ---------------------------------------------------------------------- |
+| 400    | `"Cannot update a completed trip"`                                     |
+| 401    | `"User not authenticated"`                                             |
+| 404    | `"Trip not found"`                                                     |
+| 409    | `"A trip for this driver, school, type, and date already exists"`      |
+
+---
+
+### Update Trip Status
+
+Update the status of a trip with automatic timestamp management.
+
+**Endpoint**: `PATCH /api/trips/:id/status`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Trip's MongoDB ObjectId
+
+**Request**:
+
+```http
+PATCH /api/trips/507f1f77bcf86cd799439013/status
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+Content-Type: application/json
+```
+
+```json
+{
+  "trip_status": "started"
+}
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439013",
+    "trip_id": "TRPa2B9k4Lm",
+    "driver_id": "507f1f77bcf86cd799439012",
+    "school_id": "507f1f77bcf86cd799439011",
+    "trip_type": "pickup",
+    "trip_date": "2024-01-22T00:00:00.000Z",
+    "trip_status": "started",
+    "start_time": "2024-01-22T08:00:00.000Z",
+    "created_at": "2024-01-22T10:00:00.000Z",
+    "updated_at": "2024-01-22T11:00:00.000Z"
+  },
+  "message": "Trip status updated successfully"
+}
+```
+
+**Valid Status Transitions**:
+
+- `scheduled` → `started`, `cancelled`
+- `started` → `in_progress`, `cancelled`
+- `in_progress` → `completed`, `cancelled`
+- `completed` → (no transitions allowed)
+- `cancelled` → (no transitions allowed)
+
+**Error Responses**:
+
+| Status | Error Message                          |
+| ------ | -------------------------------------- |
+| 400    | `"Invalid trip status transition"`     |
+| 401    | `"User not authenticated"`             |
+| 404    | `"Trip not found"`                     |
+
+---
+
+### Delete Trip
+
+Hard delete a trip by MongoDB ObjectId.
+
+**Endpoint**: `DELETE /api/trips/:id`
+
+**Authentication**: Required (Driver role)
+
+**URL Parameters**:
+
+- `id` (string): Trip's MongoDB ObjectId
+
+**Request**:
+
+```http
+DELETE /api/trips/507f1f77bcf86cd799439013
+Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Trip deleted successfully"
+}
+```
+
+**Error Responses**:
+
+| Status | Error Message                    |
+| ------ | -------------------------------- |
+| 401    | `"User not authenticated"`       |
+| 404    | `"Trip not found"`               |
+
+---
+
+
+## Trip Student Endpoints
+
+Trip student endpoints manage attendance tracking, pickup/drop recording, and student-trip relationships. These endpoints are primarily used by drivers during trips.
+
+### Get Trip Student by ID
+
+**Endpoint**: `GET /api/trip-students/:id`  
+**Authentication**: Required (Driver)
+
+Get a specific trip student record by MongoDB ObjectId.
+
+**Response** (200):
+```json
+{
+  "success": true,
+  "data": {
+    "trip_student_id": "TPSa2B9k4Lm",
+    "trip_id": "TRPx7Y3m9Pq",
+    "student_id": "STUz5W2n8Ks",
+    "attendance_status": "present",
+    "pickup_status": "picked"
+  },
+  "message": "Trip student record fetched successfully"
+}
+```
+
+---
+
+### Get Trip Students by Trip
+
+**Endpoint**: `GET /api/trip-students/trip/:tripId?ordered=true`  
+**Authentication**: Required (Driver)
+
+Get all students for a trip, optionally ordered by pickup sequence.
+
+---
+
+### Mark Student Attendance
+
+**Endpoint**: `PUT /api/trip-students/trip/:tripId/student/:studentId/attendance`  
+**Authentication**: Required (Driver)
+
+Mark student attendance (present/absent/pending).
+
+**Request Body**:
+```json
+{
+  "attendance_status": "present",
+  "notes": "Student present at pickup"
+}
+```
+
+---
+
+### Record Student Pickup
+
+**Endpoint**: `PUT /api/trip-students/trip/:tripId/student/:studentId/pickup`  
+**Authentication**: Required (Driver)
+
+Record when driver picks up student.
+
+**Request Body**:
+```json
+{
+  "pickup_latitude": 40.7128,
+  "pickup_longitude": -74.0060,
+  "notes": "Picked up on time"
+}
+```
+
+---
+
+### Record Student Drop
+
+**Endpoint**: `PUT /api/trip-students/trip/:tripId/student/:studentId/drop`  
+**Authentication**: Required (Driver)
+
+Record when driver drops off student.
+
+---
+
+## Daily QR/OTP Endpoints
+
+Daily QR/OTP endpoints manage the generation and verification of daily QR codes and OTP codes for student trips. These codes are used for secure student identification during pickup and drop-off.
+
+### Generate QR Code and OTP
+
+**Endpoint**: `POST /api/daily-qr-otp/generate`
+**Authentication**: Required
+
+Generate a QR code and OTP for a student's trip. Each student-trip combination can only have one active QR/OTP.
+
+**Request Body**:
+```json
+{
+  "student_id": "STUz5W2n8Ks",
+  "trip_id": "TRPx7Y3m9Pq",
+  "trip_type": "pickup"
+}
+```
+
+**Validation Rules**:
+- `student_id`: Required, must be a valid student ID
+- `trip_id`: Required, must be a valid trip ID
+- `trip_type`: Required, must be either "pickup" or "drop"
+
+**Success Response** (201):
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "qr_otp_id": "DQOa3B5k7Lm9Pq2Rs4Tv6Wx8Yz1Ab3Cd",
+    "student_id": "STUz5W2n8Ks",
+    "trip_id": "TRPx7Y3m9Pq",
+    "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+    "otp_code": "123456",
+    "trip_type": "pickup",
+    "valid_from": "2025-12-29T10:00:00.000Z",
+    "valid_until": "2025-12-30T10:00:00.000Z",
+    "is_used": false,
+    "created_at": "2025-12-29T10:00:00.000Z"
+  },
+  "message": "QR code and OTP generated successfully"
+}
+```
+
+**Error Responses**:
+
+- **409 Conflict** - QR/OTP already exists for this trip and student:
+```json
+{
+  "success": false,
+  "message": "QR code/OTP already generated for this trip and student"
+}
+```
+
+- **400 Bad Request** - Validation error:
+```json
+{
+  "success": false,
+  "message": "Student ID is required"
+}
+```
+
+---
+
+### Get QR/OTP by Student and Trip
+
+**Endpoint**: `GET /api/daily-qr-otp/student/:studentId/trip/:tripId`
+**Authentication**: Required
+
+Retrieve the QR code and OTP for a specific student and trip combination.
+
+**URL Parameters**:
+- `studentId`: Student ID (e.g., "STUz5W2n8Ks")
+- `tripId`: Trip ID (e.g., "TRPx7Y3m9Pq")
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "qr_otp_id": "DQOa3B5k7Lm9Pq2Rs4Tv6Wx8Yz1Ab3Cd",
+    "student_id": "STUz5W2n8Ks",
+    "trip_id": "TRPx7Y3m9Pq",
+    "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+    "otp_code": "123456",
+    "trip_type": "pickup",
+    "valid_from": "2025-12-29T10:00:00.000Z",
+    "valid_until": "2025-12-30T10:00:00.000Z",
+    "is_used": false,
+    "created_at": "2025-12-29T10:00:00.000Z"
+  },
+  "message": "QR code/OTP fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **404 Not Found** - QR/OTP not found:
+```json
+{
+  "success": false,
+  "message": "QR code/OTP not found"
+}
+```
+
+---
+
+### Verify QR Code or OTP
+
+**Endpoint**: `POST /api/daily-qr-otp/verify`
+**Authentication**: Required
+
+Verify a QR code or OTP. Either `qr_code` or `otp_code` must be provided (not both required). The code will be marked as used after successful verification.
+
+**Request Body**:
+```json
+{
+  "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+}
+```
+
+OR
+
+```json
+{
+  "otp_code": "123456"
+}
+```
+
+**Validation Rules**:
+- Either `qr_code` OR `otp_code` must be provided
+- `qr_code`: Maximum 255 characters
+- `otp_code`: Must be exactly 6 digits
+
+**Success Response** (200):
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "qr_otp_id": "DQOa3B5k7Lm9Pq2Rs4Tv6Wx8Yz1Ab3Cd",
+    "student_id": "STUz5W2n8Ks",
+    "trip_id": "TRPx7Y3m9Pq",
+    "qr_code": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA...",
+    "otp_code": "123456",
+    "trip_type": "pickup",
+    "valid_from": "2025-12-29T10:00:00.000Z",
+    "valid_until": "2025-12-30T10:00:00.000Z",
+    "is_used": true,
+    "used_at": "2025-12-29T12:30:00.000Z",
+    "created_at": "2025-12-29T10:00:00.000Z"
+  },
+  "message": "QR code/OTP verified successfully"
+}
+```
+
+**Error Responses**:
+
+- **404 Not Found** - Invalid QR code or OTP:
+```json
+{
+  "success": false,
+  "message": "Invalid QR code or OTP"
+}
+```
+
+- **400 Bad Request** - QR/OTP already used:
+```json
+{
+  "success": false,
+  "message": "QR code/OTP has already been used"
+}
+```
+
+- **400 Bad Request** - QR/OTP expired:
+```json
+{
+  "success": false,
+  "message": "QR code/OTP has expired"
+}
+```
+
+- **400 Bad Request** - QR/OTP not valid yet:
+```json
+{
+  "success": false,
+  "message": "QR code/OTP is not valid yet"
+}
+```
+
+- **400 Bad Request** - Neither provided:
+```json
+{
+  "success": false,
+  "message": "Either QR code or OTP is required"
+}
+```
+
+---
+
+
+## Notification Endpoints
+
+### Get All Notifications
+
+Retrieves all notifications for the authenticated user.
+
+**Endpoint**: `GET /api/notifications`
+
+**Authentication**: Required (Any user type - Parent/Driver)
+
+**Request**:
+
+```http
+GET /api/notifications
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "notification_id": "notif_abc123",
+      "user_id": "user_123",
+      "notification_type": "pickup_started",
+      "title": "Trip Started",
+      "message": "Your driver has started the pickup trip",
+      "data": {
+        "trip_id": "trip_123",
+        "driver_name": "John Doe"
+      },
+      "is_read": false,
+      "created_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "notification_id": "notif_abc124",
+      "user_id": "user_123",
+      "notification_type": "general",
+      "title": "System Notification",
+      "message": "Welcome to Ping Parent!",
+      "is_read": true,
+      "read_at": "2024-01-15T11:00:00Z",
+      "created_at": "2024-01-15T09:00:00Z"
+    }
+  ],
+  "message": "Notifications fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - Missing or invalid token:
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Get Unread Notifications
+
+Retrieves only unread notifications for the authenticated user.
+
+**Endpoint**: `GET /api/notifications/unread`
+
+**Authentication**: Required (Any user type - Parent/Driver)
+
+**Request**:
+
+```http
+GET /api/notifications/unread
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "notification_id": "notif_abc123",
+      "user_id": "user_123",
+      "notification_type": "pickup_started",
+      "title": "Trip Started",
+      "message": "Your driver has started the pickup trip",
+      "data": {
+        "trip_id": "trip_123",
+        "driver_name": "John Doe"
+      },
+      "is_read": false,
+      "created_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "message": "Notifications fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - Missing or invalid token:
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Get Unread Count
+
+Retrieves the count of unread notifications for the authenticated user.
+
+**Endpoint**: `GET /api/notifications/unread-count`
+
+**Authentication**: Required (Any user type - Parent/Driver)
+
+**Request**:
+
+```http
+GET /api/notifications/unread-count
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "unread_count": 5
+  }
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - Missing or invalid token:
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+
+---
+
+### Mark Notification as Read
+
+Marks a specific notification as read.
+
+**Endpoint**: `PUT /api/notifications/:id/mark-as-read`
+
+**Authentication**: Required (Any user type - Parent/Driver)
+
+**Request**:
+
+```http
+PUT /api/notifications/507f1f77bcf86cd799439011/mark-as-read
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "notification_id": "notif_abc123",
+    "user_id": "user_123",
+    "notification_type": "pickup_started",
+    "title": "Trip Started",
+    "message": "Your driver has started the pickup trip",
+    "data": {
+      "trip_id": "trip_123",
+      "driver_name": "John Doe"
+    },
+    "is_read": true,
+    "read_at": "2024-01-15T11:30:00Z",
+    "created_at": "2024-01-15T10:30:00Z"
+  },
+  "message": "Notification marked as read successfully"
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - Missing or invalid token:
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+
+- **404 Not Found** - Notification not found:
+```json
+{
+  "success": false,
+  "error": "Notification not found"
+}
+```
+
+---
+
+### Mark All Notifications as Read
+
+Marks all unread notifications as read for the authenticated user.
+
+**Endpoint**: `PUT /api/notifications/mark-all-as-read`
+
+**Authentication**: Required (Any user type - Parent/Driver)
+
+**Request**:
+
+```http
+PUT /api/notifications/mark-all-as-read
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "modified_count": 5
+  },
+  "message": "Notification marked as read successfully"
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - Missing or invalid token:
+```json
+{
+  "success": false,
+  "error": "Unauthorized"
+}
+```
+
+---
+
+## Subscription Plan Endpoints
+
+### Get All Subscription Plans
+
+Retrieves all active subscription plans available for purchase.
+
+**Endpoint**: `GET /api/subscription-plans`
+
+**Authentication**: Not required (Public endpoint)
+
+**Request**:
+
+```http
+GET /api/subscription-plans
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439011",
+      "plan_id": "SPLa2B9k4Lm",
+      "plan_name": "Monthly Basic",
+      "plan_type": "monthly",
+      "price": 299.99,
+      "features": {
+        "max_students": 2,
+        "live_tracking": true,
+        "trip_history": "30_days",
+        "notifications": true
+      },
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "plan_id": "SPLx7Y3m9Pq",
+      "plan_name": "Quarterly Premium",
+      "plan_type": "quarterly",
+      "price": 799.99,
+      "features": {
+        "max_students": 5,
+        "live_tracking": true,
+        "trip_history": "90_days",
+        "notifications": true,
+        "priority_support": true
+      },
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    },
+    {
+      "_id": "507f1f77bcf86cd799439013",
+      "plan_id": "SPLm5N8p2Qr",
+      "plan_name": "Yearly Premium Plus",
+      "plan_type": "yearly",
+      "price": 2999.99,
+      "features": {
+        "max_students": "unlimited",
+        "live_tracking": true,
+        "trip_history": "365_days",
+        "notifications": true,
+        "priority_support": true,
+        "custom_alerts": true
+      },
+      "is_active": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-15T10:30:00Z"
+    }
+  ],
+  "message": "Subscription plans fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **500 Internal Server Error** - Server error:
+```json
+{
+  "success": false,
+  "error": "Failed to fetch subscription plans"
+}
+```
+
+---
+
+### Get Subscription Plan by ID
+
+Retrieves a specific subscription plan by its MongoDB ObjectId.
+
+**Endpoint**: `GET /api/subscription-plans/:id`
+
+**Authentication**: Not required (Public endpoint)
+
+**Request**:
+
+```http
+GET /api/subscription-plans/507f1f77bcf86cd799439011
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439011",
+    "plan_id": "SPLa2B9k4Lm",
+    "plan_name": "Monthly Basic",
+    "plan_type": "monthly",
+    "price": 299.99,
+    "features": {
+      "max_students": 2,
+      "live_tracking": true,
+      "trip_history": "30_days",
+      "notifications": true
+    },
+    "is_active": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  },
+  "message": "Subscription plan fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **404 Not Found** - Subscription plan not found:
+```json
+{
+  "success": false,
+  "error": "Subscription plan not found"
+}
+```
+
+- **500 Internal Server Error** - Server error:
+```json
+{
+  "success": false,
+  "error": "Failed to fetch subscription plans"
+}
+```
+
+---
+
+## Parent Subscription Endpoints
+
+### Create Parent Subscription
+
+Creates a new subscription for the authenticated parent user.
+
+**Endpoint**: `POST /api/parent-subscriptions`
+
+**Authentication**: Required (Parent only)
+
+**Request Body**:
+
+```json
+{
+  "plan_id": "507f1f77bcf86cd799439011",
+  "start_date": "2024-01-01",
+  "end_date": "2024-01-31",
+  "auto_renew": true
+}
+```
+
+**Field Descriptions**:
+- `plan_id` (string, required): MongoDB ObjectId of the subscription plan
+- `start_date` (date, required): Start date of the subscription (YYYY-MM-DD)
+- `end_date` (date, required): End date of the subscription (YYYY-MM-DD)
+- `auto_renew` (boolean, optional): Whether to automatically renew (default: true)
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "subscription_id": "abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "plan_id": "507f1f77bcf86cd799439011",
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-01-31T23:59:59Z",
+    "subscription_status": "active",
+    "auto_renew": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  "message": "Subscription created successfully"
+}
+```
+
+**Error Responses**:
+
+- **400 Bad Request** - Validation error or invalid date range:
+```json
+{
+  "success": false,
+  "error": "End date must be after start date"
+}
+```
+
+- **401 Unauthorized** - User not authenticated:
+```json
+{
+  "success": false,
+  "error": "User not authenticated"
+}
+```
+
+- **404 Not Found** - Parent profile not found:
+```json
+{
+  "success": false,
+  "error": "Parent profile not found"
+}
+```
+
+- **409 Conflict** - Active subscription already exists:
+```json
+{
+  "success": false,
+  "error": "An active subscription already exists for this parent"
+}
+```
+
+---
+
+### Get My Subscriptions
+
+Retrieves all subscriptions for the authenticated parent user.
+
+**Endpoint**: `GET /api/parent-subscriptions/my-subscriptions`
+
+**Authentication**: Required (Parent only)
+
+**Request**:
+
+```http
+GET /api/parent-subscriptions/my-subscriptions
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "subscription_id": "abc123xyz",
+      "parent_id": "507f1f77bcf86cd799439010",
+      "plan_id": "507f1f77bcf86cd799439011",
+      "start_date": "2024-01-01T00:00:00Z",
+      "end_date": "2024-01-31T23:59:59Z",
+      "subscription_status": "active",
+      "auto_renew": true,
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "message": "Subscriptions list fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - User not authenticated:
+```json
+{
+  "success": false,
+  "error": "User not authenticated"
+}
+```
+
+- **404 Not Found** - Parent profile not found:
+```json
+{
+  "success": false,
+  "error": "Parent profile not found"
+}
+```
+
+---
+
+### Get My Active Subscription
+
+Retrieves the currently active subscription for the authenticated parent user.
+
+**Endpoint**: `GET /api/parent-subscriptions/my-active-subscription`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "subscription_id": "abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "plan_id": "507f1f77bcf86cd799439011",
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-01-31T23:59:59Z",
+    "subscription_status": "active",
+    "auto_renew": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  "message": "Subscription fetched successfully"
+}
+```
+
+---
+
+### Get Subscription by ID
+
+Retrieves a specific parent subscription by its MongoDB ObjectId.
+
+**Endpoint**: `GET /api/parent-subscriptions/:id`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "subscription_id": "abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "plan_id": "507f1f77bcf86cd799439011",
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-01-31T23:59:59Z",
+    "subscription_status": "active",
+    "auto_renew": true,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  "message": "Subscription fetched successfully"
+}
+```
+
+---
+
+### Update Subscription
+
+Updates an existing parent subscription.
+
+**Endpoint**: `PUT /api/parent-subscriptions/:id`
+
+**Authentication**: Required (Parent only)
+
+**Request Body**:
+
+```json
+{
+  "subscription_status": "active",
+  "auto_renew": false,
+  "end_date": "2024-02-28"
+}
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "subscription_id": "abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "plan_id": "507f1f77bcf86cd799439011",
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-02-28T23:59:59Z",
+    "subscription_status": "active",
+    "auto_renew": false,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  },
+  "message": "Subscription updated successfully"
+}
+```
+
+---
+
+### Cancel Subscription
+
+Cancels an active parent subscription.
+
+**Endpoint**: `POST /api/parent-subscriptions/:id/cancel`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "subscription_id": "abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "plan_id": "507f1f77bcf86cd799439011",
+    "start_date": "2024-01-01T00:00:00Z",
+    "end_date": "2024-01-31T23:59:59Z",
+    "subscription_status": "cancelled",
+    "auto_renew": false,
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  },
+  "message": "Subscription cancelled successfully"
+}
+```
+
+---
+
+### Delete Subscription
+
+Permanently deletes a parent subscription record.
+
+**Endpoint**: `DELETE /api/parent-subscriptions/:id`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Subscription deleted successfully"
+}
+```
+
+**Error Responses**:
+
+- **404 Not Found** - Subscription not found:
+```json
+{
+  "success": false,
+  "error": "Parent subscription not found"
+}
+```
+
+---
+
+## Payment Endpoints
+
+### Create Payment
+
+Creates a new payment record for the authenticated parent user.
+
+**Endpoint**: `POST /api/payments`
+
+**Authentication**: Required (Parent only)
+
+**Request Body**:
+
+```json
+{
+  "payment_type": "subscription",
+  "amount": 599.99,
+  "currency": "INR",
+  "payment_method": "upi",
+  "payment_status": "pending",
+  "subscription_id": "507f1f77bcf86cd799439011"
+}
+```
+
+**Field Descriptions**:
+- `payment_type` (string, required): Type of payment - "subscription" or "penalty"
+- `amount` (number, required): Payment amount (must be positive)
+- `currency` (string, optional): Currency code (default: "INR")
+- `payment_method` (string, required): Payment method - "card", "upi", "netbanking", "wallet", or "cash"
+- `payment_status` (string, required): Payment status - "pending", "completed", "failed", or "refunded"
+- `transaction_id` (string, optional): Gateway transaction ID
+- `gateway_response` (object, optional): Response from payment gateway
+- `subscription_id` (string, optional): Related subscription ID
+- `payment_date` (date, optional): Payment date (defaults to current time)
+
+**Success Response** (201):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "payment_id": "PAY-abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "payment_type": "subscription",
+    "amount": 599.99,
+    "currency": "INR",
+    "payment_method": "upi",
+    "payment_status": "pending",
+    "subscription_id": "507f1f77bcf86cd799439011",
+    "payment_date": "2024-01-01T00:00:00Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:00:00Z"
+  },
+  "message": "Payment created successfully"
+}
+```
+
+**Error Responses**:
+
+- **400 Bad Request** - Validation error or invalid amount:
+```json
+{
+  "success": false,
+  "error": "Amount must be a positive number"
+}
+```
+
+- **401 Unauthorized** - User not authenticated:
+```json
+{
+  "success": false,
+  "error": "User not authenticated"
+}
+```
+
+- **404 Not Found** - Parent profile not found:
+```json
+{
+  "success": false,
+  "error": "Parent profile not found"
+}
+```
+
+---
+
+### Get My Payments
+
+Retrieves all payment history for the authenticated parent user.
+
+**Endpoint**: `GET /api/payments/my-payments`
+
+**Authentication**: Required (Parent only)
+
+**Request**:
+
+```http
+GET /api/payments/my-payments
+Authorization: Bearer <token>
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "payment_id": "PAY-abc123xyz",
+      "parent_id": "507f1f77bcf86cd799439010",
+      "payment_type": "subscription",
+      "amount": 599.99,
+      "currency": "INR",
+      "payment_method": "upi",
+      "payment_status": "completed",
+      "transaction_id": "TXN123456789",
+      "subscription_id": "507f1f77bcf86cd799439011",
+      "payment_date": "2024-01-01T00:00:00Z",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:05:00Z"
+    }
+  ],
+  "message": "Payment history fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **401 Unauthorized** - User not authenticated:
+```json
+{
+  "success": false,
+  "error": "User not authenticated"
+}
+```
+
+- **404 Not Found** - Parent profile not found:
+```json
+{
+  "success": false,
+  "error": "Parent profile not found"
+}
+```
+
+---
+
+### Get My Pending Payments
+
+Retrieves all pending payments for the authenticated parent user.
+
+**Endpoint**: `GET /api/payments/my-payments/pending`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "payment_id": "PAY-abc123xyz",
+      "parent_id": "507f1f77bcf86cd799439010",
+      "payment_type": "subscription",
+      "amount": 599.99,
+      "currency": "INR",
+      "payment_method": "upi",
+      "payment_status": "pending",
+      "payment_date": "2024-01-01T00:00:00Z",
+      "created_at": "2024-01-01T00:00:00Z"
+    }
+  ],
+  "message": "Payment history fetched successfully"
+}
+```
+
+---
+
+### Get My Completed Payments
+
+Retrieves all completed payments for the authenticated parent user.
+
+**Endpoint**: `GET /api/payments/my-payments/completed`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "_id": "507f1f77bcf86cd799439012",
+      "payment_id": "PAY-abc123xyz",
+      "parent_id": "507f1f77bcf86cd799439010",
+      "payment_type": "subscription",
+      "amount": 599.99,
+      "currency": "INR",
+      "payment_method": "upi",
+      "payment_status": "completed",
+      "transaction_id": "TXN123456789",
+      "payment_date": "2024-01-01T00:00:00Z",
+      "created_at": "2024-01-01T00:00:00Z",
+      "updated_at": "2024-01-01T00:05:00Z"
+    }
+  ],
+  "message": "Payment history fetched successfully"
+}
+```
+
+---
+
+### Get Payment by ID
+
+Retrieves a specific payment by its MongoDB ObjectId.
+
+**Endpoint**: `GET /api/payments/:id`
+
+**Authentication**: Required (Parent only)
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "payment_id": "PAY-abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "payment_type": "subscription",
+    "amount": 599.99,
+    "currency": "INR",
+    "payment_method": "upi",
+    "payment_status": "completed",
+    "transaction_id": "TXN123456789",
+    "gateway_response": {
+      "status": "success",
+      "message": "Payment processed successfully"
+    },
+    "subscription_id": "507f1f77bcf86cd799439011",
+    "payment_date": "2024-01-01T00:00:00Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:05:00Z"
+  },
+  "message": "Payment fetched successfully"
+}
+```
+
+**Error Responses**:
+
+- **404 Not Found** - Payment not found:
+```json
+{
+  "success": false,
+  "error": "Payment not found"
+}
+```
+
+---
+
+### Update Payment
+
+Updates payment details. Cannot update completed payments.
+
+**Endpoint**: `PUT /api/payments/:id`
+
+**Authentication**: Required (Parent only)
+
+**Request Body**:
+
+```json
+{
+  "payment_status": "failed",
+  "transaction_id": "TXN123456789",
+  "gateway_response": {
+    "error": "Insufficient funds"
+  }
+}
+```
+
+**Field Descriptions**:
+- `payment_status` (string, optional): Payment status - "pending", "completed", "failed", or "refunded"
+- `transaction_id` (string, optional): Gateway transaction ID
+- `gateway_response` (object, optional): Response from payment gateway
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "payment_id": "PAY-abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "payment_type": "subscription",
+    "amount": 599.99,
+    "currency": "INR",
+    "payment_method": "upi",
+    "payment_status": "failed",
+    "transaction_id": "TXN123456789",
+    "gateway_response": {
+      "error": "Insufficient funds"
+    },
+    "payment_date": "2024-01-01T00:00:00Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:05:00Z"
+  },
+  "message": "Payment updated successfully"
+}
+```
+
+**Error Responses**:
+
+- **400 Bad Request** - Cannot update completed payment:
+```json
+{
+  "success": false,
+  "error": "Cannot update a completed payment"
+}
+```
+
+- **404 Not Found** - Payment not found:
+```json
+{
+  "success": false,
+  "error": "Payment not found"
+}
+```
+
+---
+
+### Complete Payment
+
+Marks a payment as completed with transaction details.
+
+**Endpoint**: `POST /api/payments/:id/complete`
+
+**Authentication**: Required (Parent only)
+
+**Request Body**:
+
+```json
+{
+  "transaction_id": "TXN123456789",
+  "gateway_response": {
+    "status": "success",
+    "message": "Payment processed successfully"
+  }
+}
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "payment_id": "PAY-abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "payment_type": "subscription",
+    "amount": 599.99,
+    "currency": "INR",
+    "payment_method": "upi",
+    "payment_status": "completed",
+    "transaction_id": "TXN123456789",
+    "gateway_response": {
+      "status": "success",
+      "message": "Payment processed successfully"
+    },
+    "payment_date": "2024-01-01T00:05:00Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-01T00:05:00Z"
+  },
+  "message": "Payment completed successfully"
+}
+```
+
+**Error Responses**:
+
+- **400 Bad Request** - Payment already completed:
+```json
+{
+  "success": false,
+  "error": "Payment is already completed"
+}
+```
+
+- **404 Not Found** - Payment not found:
+```json
+{
+  "success": false,
+  "error": "Payment not found"
+}
+```
+
+---
+
+### Refund Payment
+
+Processes a refund for a payment. Cannot refund pending payments.
+
+**Endpoint**: `POST /api/payments/:id/refund`
+
+**Authentication**: Required (Parent only)
+
+**Request Body**:
+
+```json
+{
+  "gateway_response": {
+    "refund_id": "RFD123456789",
+    "status": "refunded"
+  }
+}
+```
+
+**Success Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "_id": "507f1f77bcf86cd799439012",
+    "payment_id": "PAY-abc123xyz",
+    "parent_id": "507f1f77bcf86cd799439010",
+    "payment_type": "subscription",
+    "amount": 599.99,
+    "currency": "INR",
+    "payment_method": "upi",
+    "payment_status": "refunded",
+    "transaction_id": "TXN123456789",
+    "gateway_response": {
+      "refund_id": "RFD123456789",
+      "status": "refunded"
+    },
+    "payment_date": "2024-01-01T00:00:00Z",
+    "created_at": "2024-01-01T00:00:00Z",
+    "updated_at": "2024-01-15T10:30:00Z"
+  },
+  "message": "Payment refunded successfully"
+}
+```
+
+**Error Responses**:
+
+- **400 Bad Request** - Cannot refund pending payment:
+```json
+{
+  "success": false,
+  "error": "Cannot refund a pending payment"
+}
+```
+
+- **400 Bad Request** - Payment already refunded:
+```json
+{
+  "success": false,
+  "error": "Payment is already refunded"
+}
+```
+
+- **404 Not Found** - Payment not found:
+```json
+{
+  "success": false,
+  "error": "Payment not found"
+}
+```
 
 ---

@@ -170,7 +170,9 @@ export const VALIDATION_MESSAGES = {
 
 ### 4. Validation (`validations/student.validation.ts`)
 
-**IMPORTANT**: Use `VALIDATION_MESSAGES` from constants for all validation error messages.
+**IMPORTANT**:
+- Use `VALIDATION_MESSAGES` from constants for all validation error messages
+- **Check database schema notes** - exclude fields marked as "calculated", "derived", or "optimized" from validation schemas
 
 ```typescript
 import Joi from "joi";

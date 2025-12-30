@@ -4,14 +4,14 @@ This document contains ready-to-use prompt templates for working with AI agents 
 
 ## 📋 Quick Reference
 
-| Task | Template Section |
-|------|-----------------|
-| Create new CRUD module | [New Module](#-new-module-template) |
-| Fix bugs/errors | [Bug Fix](#-bug-fix-template) |
-| Add single endpoint | [New Endpoint](#-new-endpoint-template) |
-| Review/audit code | [Code Review](#-code-review-template) |
-| Update documentation | [Documentation](#-documentation-template) |
-| Add Swagger docs | [Swagger](#-swagger-documentation-template) |
+| Task                   | Template Section                            |
+| ---------------------- | ------------------------------------------- |
+| Create new CRUD module | [New Module](#-new-module-template)         |
+| Fix bugs/errors        | [Bug Fix](#-bug-fix-template)               |
+| Add single endpoint    | [New Endpoint](#-new-endpoint-template)     |
+| Review/audit code      | [Code Review](#-code-review-template)       |
+| Update documentation   | [Documentation](#-documentation-template)   |
+| Add Swagger docs       | [Swagger](#-swagger-documentation-template) |
 
 ---
 
@@ -30,6 +30,8 @@ FIRST - Read Project Documentation:
 
 Database Schema:
 - Check Database/ping_parent_dbdiagram.dbml for [table_name] table
+- ⚠️ CRITICAL: Check field-level notes and table Note
+- Exclude calculated fields from validation schemas (e.g., optimized_route_data, sequence_order)
 
 Implementation Steps:
 
@@ -358,6 +360,7 @@ Follow project testing patterns.
 **Ultra-short prompts for common tasks**
 
 ### Create Module
+
 ```
 New module: [Entity] - follow patterns from:
 - @docs/AI_CONTEXT.md
@@ -367,18 +370,21 @@ DB: Database/ping_parent_dbdiagram.dbml table [table_name]
 ```
 
 ### Fix Error
+
 ```
 Error: [error message]
 Check: @docs/TROUBLESHOOTING.md, @docs/AI_CONTEXT.md, @docs/FOLDER_STRUCTURE.MD
 ```
 
 ### Add Endpoint
+
 ```
 Add [METHOD] /[path]
 Follow: @docs/AI_CONTEXT.md, @docs/FOLDER_STRUCTURE.MD
 ```
 
 ### Review Code
+
 ```
 Review [file/module] against:
 - @docs/AI_CONTEXT.md
@@ -387,6 +393,7 @@ Review [file/module] against:
 ```
 
 ### Update Docs
+
 ```
 Update Swagger for [entity]
 Follow: @docs/SWAGGER_GUIDE.md, @docs/AI_CONTEXT.md
@@ -397,6 +404,7 @@ Follow: @docs/SWAGGER_GUIDE.md, @docs/AI_CONTEXT.md
 ## 📌 Important Reminders
 
 ### Always Reference These Files FIRST:
+
 - `@docs/AI_CONTEXT.md` - Core patterns and rules (READ FIRST!)
 - `@docs/FOLDER_STRUCTURE.MD` - File organization and architecture (READ FIRST!)
 - `@docs/IMPLEMENTATION_EXAMPLES.md` - Student module (complete example)
@@ -405,6 +413,7 @@ Follow: @docs/SWAGGER_GUIDE.md, @docs/AI_CONTEXT.md
 - `Database/ping_parent_dbdiagram.dbml` - Database schema
 
 ### Critical Rules (Never Forget):
+
 1. ✅ Enums in `constants/enums.ts` (NOT type unions)
 2. ✅ Validation messages from `constants/validationMessages.ts`
 3. ✅ Controller exports WITHOUT "Controller" suffix
@@ -429,6 +438,7 @@ Follow: @docs/SWAGGER_GUIDE.md, @docs/AI_CONTEXT.md
 **Last Updated**: 2025
 
 **Related Documentation**:
+
 - [AI_CONTEXT.md](./AI_CONTEXT.md) - Core patterns and conventions
 - [FOLDER_STRUCTURE.MD](./FOLDER_STRUCTURE.MD) - File organization and architecture
 - [IMPLEMENTATION_EXAMPLES.md](./IMPLEMENTATION_EXAMPLES.md) - Complete examples

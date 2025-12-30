@@ -33,6 +33,16 @@ tags:
     description: Student management endpoints
   - name: Driver-Student Assignment
     description: Driver and student assignment management
+  - name: Trip
+    description: Trip management for drivers
+  - name: Trip Student
+    description: Trip student attendance and pickup/drop tracking
+  - name: Daily QR/OTP
+    description: Daily QR code and OTP generation and verification for student trips
+  - name: Notification
+    description: User notification management endpoints
+  - name: Subscription Plan
+    description: Subscription plan management endpoints (read-only)
 
 components:
   securitySchemes:
@@ -971,6 +981,509 @@ components:
           type: string
           format: date
           description: Updated end date
+
+    # Trip Schemas
+    Trip:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB ObjectId
+        trip_id:
+          type: string
+          description: Unique trip identifier with TRP prefix
+          example: "TRPa2B9k4Lm"
+        driver_id:
+          type: string
+          description: Driver's MongoDB ObjectId
+        school_id:
+          type: string
+          description: School's MongoDB ObjectId
+        trip_type:
+          type: string
+          enum: [pickup, drop]
+          description: Type of trip
+          example: "pickup"
+        trip_date:
+          type: string
+          format: date-time
+          description: Trip date
+        trip_status:
+          type: string
+          enum: [scheduled, started, in_progress, completed, cancelled]
+          description: Current trip status
+          example: "scheduled"
+        start_time:
+          type: string
+          format: date-time
+          description: Trip start time
+        end_time:
+          type: string
+          format: date-time
+          description: Trip end time
+        total_distance:
+          type: number
+          format: decimal
+          description: Total distance in kilometers
+          example: 15.5
+        optimized_route_data:
+          type: object
+          description: Calculated optimal route data (JSON)
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CreateTripRequest:
+      type: object
+      required:
+        - school_id
+        - trip_type
+        - trip_date
+      properties:
+        school_id:
+          type: string
+          description: School's MongoDB ObjectId
+          example: "507f1f77bcf86cd799439011"
+        trip_type:
+          type: string
+          enum: [pickup, drop]
+          description: Type of trip
+          example: "pickup"
+        trip_date:
+          type: string
+          format: date-time
+          description: Trip date
+          example: "2024-01-22T00:00:00.000Z"
+      description: |
+        Note: The following fields are automatically managed and should NOT be included in the request:
+        - driver_id: Automatically derived from authenticated driver
+        - trip_status: Automatically set to 'scheduled' on creation
+        - start_time and end_time: Managed by status transitions
+        - total_distance: System-calculated from route data
+        - optimized_route_data: System-calculated based on student locations
+
+    UpdateTripRequest:
+      type: object
+      properties:
+        school_id:
+          type: string
+          description: Updated school ID
+        trip_type:
+          type: string
+          enum: [pickup, drop]
+          description: Updated trip type
+        trip_date:
+          type: string
+          format: date-time
+          description: Updated trip date
+      description: |
+        Note: The following fields are NOT updatable via this endpoint:
+        - trip_status: Use PATCH /trips/:id/status endpoint instead
+        - start_time and end_time: Managed automatically by status transitions
+        - total_distance: System-calculated from route data
+        - optimized_route_data: System-calculated based on student locations
+
+    UpdateTripStatusRequest:
+      type: object
+      required:
+        - trip_status
+      properties:
+        trip_status:
+          type: string
+          enum: [scheduled, started, in_progress, completed, cancelled]
+          description: New trip status
+          example: "started"
+
+    # Trip Student Schemas
+    TripStudent:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB internal ID
+        trip_student_id:
+          type: string
+          description: Unique trip student identifier
+          example: "TPSa2B9k4Lm"
+        trip_id:
+          type: string
+          description: Trip's ID
+          example: "TRPx7Y3m9Pq"
+        student_id:
+          type: string
+          description: Student's ID
+          example: "STUz5W2n8Ks"
+        sequence_order:
+          type: integer
+          description: Optimized pickup/drop order (system calculated)
+          example: 2
+        estimated_arrival_time:
+          type: string
+          format: time
+          description: Calculated ETA (system calculated)
+          example: "08:15:00"
+        attendance_status:
+          type: string
+          enum: [present, absent, pending]
+          description: Student attendance status
+          example: "present"
+        pickup_status:
+          type: string
+          enum: [pending, picked, dropped, no_show]
+          description: Pickup/drop status
+          example: "picked"
+        pickup_time:
+          type: string
+          format: date-time
+          description: Actual pickup time
+        pickup_latitude:
+          type: number
+          format: double
+          description: Pickup location latitude
+          example: 40.7128
+        pickup_longitude:
+          type: number
+          format: double
+          description: Pickup location longitude
+          example: -74.0060
+        pickup_qr_code:
+          type: string
+          maxLength: 100
+          description: QR code for pickup verification
+        pickup_otp:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP for pickup verification
+        drop_time:
+          type: string
+          format: date-time
+          description: Actual drop time
+        drop_latitude:
+          type: number
+          format: double
+          description: Drop location latitude
+        drop_longitude:
+          type: number
+          format: double
+          description: Drop location longitude
+        drop_qr_code:
+          type: string
+          maxLength: 100
+          description: QR code for drop verification
+        drop_otp:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP for drop verification
+        notes:
+          type: string
+          maxLength: 500
+          description: Additional notes
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    MarkAttendanceRequest:
+      type: object
+      required:
+        - attendance_status
+      properties:
+        attendance_status:
+          type: string
+          enum: [present, absent, pending]
+          description: Attendance status
+          example: "present"
+        notes:
+          type: string
+          maxLength: 500
+          description: Optional notes
+          example: "Student present at pickup location"
+      description: |
+        Mark student attendance for a trip.
+        Note: sequence_order and estimated_arrival_time are system-calculated and should NOT be included.
+
+    RecordPickupRequest:
+      type: object
+      properties:
+        pickup_latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Pickup location latitude
+          example: 40.7128
+        pickup_longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Pickup location longitude
+          example: -74.0060
+        pickup_qr_code:
+          type: string
+          maxLength: 100
+          description: QR code scanned during pickup
+        pickup_otp:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP verified during pickup
+          example: "123456"
+        notes:
+          type: string
+          maxLength: 500
+          description: Optional pickup notes
+          example: "Student picked up on time"
+
+    RecordDropRequest:
+      type: object
+      properties:
+        drop_latitude:
+          type: number
+          format: double
+          minimum: -90
+          maximum: 90
+          description: Drop location latitude
+          example: 40.7580
+        drop_longitude:
+          type: number
+          format: double
+          minimum: -180
+          maximum: 180
+          description: Drop location longitude
+          example: -73.9855
+        drop_qr_code:
+          type: string
+          maxLength: 100
+          description: QR code scanned during drop
+        drop_otp:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP verified during drop
+          example: "654321"
+        notes:
+          type: string
+          maxLength: 500
+          description: Optional drop notes
+          example: "Student dropped off at school entrance"
+
+    UpdateTripStudentRequest:
+      type: object
+      properties:
+        attendance_status:
+          type: string
+          enum: [present, absent, pending]
+          description: Updated attendance status
+        pickup_status:
+          type: string
+          enum: [pending, picked, dropped, no_show]
+          description: Updated pickup status
+        notes:
+          type: string
+          maxLength: 500
+          description: Updated notes
+
+    # Daily QR/OTP Schemas
+    DailyQrOtp:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB internal ID
+        qr_otp_id:
+          type: string
+          description: Unique QR/OTP identifier
+          example: "DQOa3B5k7Lm9Pq2Rs4Tv6Wx8Yz1Ab3Cd"
+        student_id:
+          type: string
+          description: Student's ID
+          example: "STUz5W2n8Ks"
+        trip_id:
+          type: string
+          description: Trip's ID
+          example: "TRPx7Y3m9Pq"
+        qr_code:
+          type: string
+          description: Base64 encoded QR code data URL
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+        otp_code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: 6-digit OTP code
+          example: "123456"
+        trip_type:
+          type: string
+          enum: [pickup, drop]
+          description: Type of trip
+          example: "pickup"
+        valid_from:
+          type: string
+          format: date-time
+          description: QR/OTP validity start time
+        valid_until:
+          type: string
+          format: date-time
+          description: QR/OTP validity end time (24 hours from generation)
+        is_used:
+          type: boolean
+          description: Whether QR/OTP has been used
+          example: false
+        used_at:
+          type: string
+          format: date-time
+          description: Timestamp when QR/OTP was used
+        created_at:
+          type: string
+          format: date-time
+
+    GenerateQrOtpRequest:
+      type: object
+      required:
+        - student_id
+        - trip_id
+        - trip_type
+      properties:
+        student_id:
+          type: string
+          description: Student's ID
+          example: "STUz5W2n8Ks"
+        trip_id:
+          type: string
+          description: Trip's ID
+          example: "TRPx7Y3m9Pq"
+        trip_type:
+          type: string
+          enum: [pickup, drop]
+          description: Type of trip
+          example: "pickup"
+
+    VerifyQrOtpRequest:
+      type: object
+      properties:
+        qr_code:
+          type: string
+          maxLength: 255
+          description: QR code to verify (either qr_code or otp_code required)
+          example: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+        otp_code:
+          type: string
+          pattern: '^[0-9]{6}$'
+          description: OTP code to verify (either qr_code or otp_code required)
+          example: "123456"
+      description: |
+        Either qr_code or otp_code must be provided (not both required).
+
+    # Notification Schemas
+    Notification:
+      type: object
+      properties:
+        _id:
+          type: string
+          description: MongoDB internal ID
+        notification_id:
+          type: string
+          description: Unique notification identifier
+          example: "notif_abc123"
+        user_id:
+          type: string
+          description: User's ID
+          example: "user_123"
+        notification_type:
+          type: string
+          enum: [pickup_started, approaching, picked_up, dropped, payment_due, general]
+          description: Type of notification
+          example: "pickup_started"
+        title:
+          type: string
+          maxLength: 200
+          description: Notification title
+          example: "Trip Started"
+        message:
+          type: string
+          description: Notification message
+          example: "Your driver has started the pickup trip"
+        data:
+          type: object
+          description: Additional notification data (JSON)
+          example:
+            trip_id: "trip_123"
+            driver_name: "John Doe"
+        is_read:
+          type: boolean
+          description: Whether notification has been read
+          default: false
+          example: false
+        read_at:
+          type: string
+          format: date-time
+          description: Timestamp when notification was read
+        created_at:
+          type: string
+          format: date-time
+          description: Notification creation timestamp
+
+    SubscriptionPlan:
+      type: object
+      required:
+        - plan_id
+        - plan_name
+        - plan_type
+        - price
+        - is_active
+        - created_at
+      properties:
+        _id:
+          type: string
+          description: MongoDB internal ID
+          example: "507f1f77bcf86cd799439011"
+        plan_id:
+          type: string
+          description: Unique plan identifier (SPL prefix)
+          example: "SPLa2B9k4Lm"
+        plan_name:
+          type: string
+          minLength: 3
+          maxLength: 100
+          description: Name of the subscription plan
+          example: "Monthly Basic"
+        plan_type:
+          type: string
+          enum: [monthly, quarterly, yearly]
+          description: Type of subscription plan
+          example: "monthly"
+        price:
+          type: number
+          format: double
+          minimum: 0
+          description: Price of the subscription plan
+          example: 299.99
+        features:
+          type: object
+          description: JSON object containing plan features
+          example:
+            max_students: 2
+            live_tracking: true
+            trip_history: "30_days"
+            notifications: true
+        is_active:
+          type: boolean
+          description: Whether the plan is active and available for purchase
+          default: true
+          example: true
+        created_at:
+          type: string
+          format: date-time
+          description: Plan creation timestamp
+          example: "2024-01-01T00:00:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Plan last update timestamp
+          example: "2024-01-15T10:30:00Z"
 
 paths:
   # Authentication Endpoints
@@ -2853,3 +3366,857 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+
+  # Trip Endpoints
+  /trips:
+    post:
+      tags:
+        - Trip
+      summary: Create new trip
+      description: Create a new trip for the authenticated driver. Driver ID is automatically derived from the authenticated user.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTripRequest'
+      responses:
+        '201':
+          description: Trip created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Trip'
+                  message:
+                    type: string
+                    example: "Trip created successfully"
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Driver profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - trip already exists for this driver, school, type, and date
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trips/my-trips:
+    get:
+      tags:
+        - Trip
+      summary: Get all trips for authenticated driver
+      description: Retrieve all trips belonging to the authenticated driver
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved trips
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Trip'
+                  message:
+                    type: string
+                    example: "Trips list fetched successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Driver profile not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trips/my-trips/by-date:
+    get:
+      tags:
+        - Trip
+      summary: Get trips by date
+      description: Retrieve all trips for the authenticated driver on a specific date
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: date
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date
+          description: Date to filter trips (YYYY-MM-DD)
+          example: "2024-01-22"
+      responses:
+        '200':
+          description: Successfully retrieved trips
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Trip'
+                  message:
+                    type: string
+                    example: "Trips list fetched successfully"
+        '400':
+          description: Bad request - date required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trips/my-trips/active:
+    get:
+      tags:
+        - Trip
+      summary: Get active trips
+      description: Retrieve all active trips (scheduled, started, or in_progress) for the authenticated driver
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved active trips
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Trip'
+                  message:
+                    type: string
+                    example: "Trips list fetched successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trips/{id}:
+    get:
+      tags:
+        - Trip
+      summary: Get trip by ID
+      description: Retrieve trip details by MongoDB ObjectId
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trip MongoDB ObjectId
+          example: "507f1f77bcf86cd799439013"
+      responses:
+        '200':
+          description: Successfully retrieved trip
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Trip'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags:
+        - Trip
+      summary: Update trip
+      description: Update trip information by MongoDB ObjectId
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trip MongoDB ObjectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripRequest'
+      responses:
+        '200':
+          description: Trip updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Trip'
+                  message:
+                    type: string
+                    example: "Trip updated successfully"
+        '400':
+          description: Bad request - cannot update completed trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - duplicate trip
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    delete:
+      tags:
+        - Trip
+      summary: Delete trip
+      description: Hard delete a trip by MongoDB ObjectId
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trip MongoDB ObjectId
+      responses:
+        '200':
+          description: Trip deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Trip deleted successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /trips/{id}/status:
+    patch:
+      tags:
+        - Trip
+      summary: Update trip status
+      description: |
+        Update the status of a trip with automatic timestamp management.
+
+        Valid status transitions:
+        - scheduled → started, cancelled
+        - started → in_progress, cancelled
+        - in_progress → completed, cancelled
+        - completed → (no transitions allowed)
+        - cancelled → (no transitions allowed)
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trip MongoDB ObjectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTripStatusRequest'
+      responses:
+        '200':
+          description: Trip status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Trip'
+                  message:
+                    type: string
+                    example: "Trip status updated successfully"
+        '400':
+          description: Bad request - invalid status transition
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Invalid trip status transition"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Trip not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Daily QR/OTP Endpoints
+  /daily-qr-otp/generate:
+    post:
+      tags:
+        - Daily QR/OTP
+      summary: Generate QR code and OTP
+      description: |
+        Generate a QR code and OTP for a student's trip. Each student-trip combination can only have one active QR/OTP.
+        The QR code is valid for 24 hours from generation.
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GenerateQrOtpRequest'
+      responses:
+        '201':
+          description: QR code and OTP generated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DailyQrOtp'
+                  message:
+                    type: string
+                    example: "QR code and OTP generated successfully"
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Conflict - QR/OTP already exists for this trip and student
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "QR code/OTP already generated for this trip and student"
+
+  /daily-qr-otp/student/{studentId}/trip/{tripId}:
+    get:
+      tags:
+        - Daily QR/OTP
+      summary: Get QR/OTP by student and trip
+      description: Retrieve the QR code and OTP for a specific student and trip combination
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Student ID (e.g., STUz5W2n8Ks)
+          example: "STUz5W2n8Ks"
+        - name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Trip ID (e.g., TRPx7Y3m9Pq)
+          example: "TRPx7Y3m9Pq"
+      responses:
+        '200':
+          description: QR code/OTP fetched successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DailyQrOtp'
+                  message:
+                    type: string
+                    example: "QR code/OTP fetched successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: QR code/OTP not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "QR code/OTP not found"
+
+  /daily-qr-otp/verify:
+    post:
+      tags:
+        - Daily QR/OTP
+      summary: Verify QR code or OTP
+      description: |
+        Verify a QR code or OTP. Either qr_code or otp_code must be provided (not both required).
+        The code will be marked as used after successful verification.
+
+        Validation checks:
+        - Code must not be already used
+        - Code must be within validity period (valid_from to valid_until)
+        - Code must match an existing record
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyQrOtpRequest'
+            examples:
+              qrCode:
+                summary: Verify with QR code
+                value:
+                  qr_code: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..."
+              otpCode:
+                summary: Verify with OTP
+                value:
+                  otp_code: "123456"
+      responses:
+        '200':
+          description: QR code/OTP verified successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/DailyQrOtp'
+                  message:
+                    type: string
+                    example: "QR code/OTP verified successfully"
+        '400':
+          description: Bad request - validation error or QR/OTP already used/expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              examples:
+                alreadyUsed:
+                  summary: QR/OTP already used
+                  value:
+                    success: false
+                    error: "QR code/OTP has already been used"
+                expired:
+                  summary: QR/OTP expired
+                  value:
+                    success: false
+                    error: "QR code/OTP has expired"
+                notValidYet:
+                  summary: QR/OTP not valid yet
+                  value:
+                    success: false
+                    error: "QR code/OTP is not valid yet"
+                missingBoth:
+                  summary: Neither QR code nor OTP provided
+                  value:
+                    success: false
+                    error: "Either QR code or OTP is required"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Invalid QR code or OTP
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Invalid QR code or OTP"
+
+  # Notification Endpoints
+  /notifications:
+    get:
+      tags:
+        - Notification
+      summary: Get all notifications
+      description: Retrieves all notifications for the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  message:
+                    type: string
+                    example: "Notifications fetched successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/unread:
+    get:
+      tags:
+        - Notification
+      summary: Get unread notifications
+      description: Retrieves only unread notifications for the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved unread notifications
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Notification'
+                  message:
+                    type: string
+                    example: "Notifications fetched successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/unread-count:
+    get:
+      tags:
+        - Notification
+      summary: Get unread count
+      description: Retrieves the count of unread notifications for the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved unread count
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      unread_count:
+                        type: integer
+                        example: 5
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /notifications/{id}/mark-as-read:
+    put:
+      tags:
+        - Notification
+      summary: Mark notification as read
+      description: Marks a specific notification as read
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the notification
+          example: "507f1f77bcf86cd799439011"
+      responses:
+        '200':
+          description: Successfully marked notification as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Notification'
+                  message:
+                    type: string
+                    example: "Notification marked as read successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Notification not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Notification not found"
+
+  /notifications/mark-all-as-read:
+    put:
+      tags:
+        - Notification
+      summary: Mark all notifications as read
+      description: Marks all unread notifications as read for the authenticated user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully marked all notifications as read
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      modified_count:
+                        type: integer
+                        example: 5
+                  message:
+                    type: string
+                    example: "Notification marked as read successfully"
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # Subscription Plan Endpoints
+  /subscription-plans:
+    get:
+      tags:
+        - Subscription Plan
+      summary: Get all active subscription plans
+      description: Retrieves all active subscription plans available for purchase. This is a public endpoint.
+      security: []
+      responses:
+        '200':
+          description: Successfully retrieved subscription plans
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SubscriptionPlan'
+                  message:
+                    type: string
+                    example: "Subscription plans fetched successfully"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Failed to fetch subscription plans"
+
+  /subscription-plans/{id}:
+    get:
+      tags:
+        - Subscription Plan
+      summary: Get subscription plan by ID
+      description: Retrieves a specific subscription plan by its MongoDB ObjectId. This is a public endpoint.
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: MongoDB ObjectId of the subscription plan
+          example: "507f1f77bcf86cd799439011"
+      responses:
+        '200':
+          description: Successfully retrieved subscription plan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/SubscriptionPlan'
+                  message:
+                    type: string
+                    example: "Subscription plan fetched successfully"
+        '404':
+          description: Subscription plan not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Subscription plan not found"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+              example:
+                success: false
+                error: "Failed to fetch subscription plans"

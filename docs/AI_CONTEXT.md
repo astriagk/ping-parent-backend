@@ -53,6 +53,7 @@ All types, field names, enums, and validations MUST follow the database schema. 
 - **ID fields**: Use `varchar(36)` for primary keys (UUID/nanoid)
 - **Timestamps**: Use `Date` type, default to `CURRENT_TIMESTAMP`
 - **Boolean fields**: Use `boolean` type with default values
+- **⚠️ CRITICAL**: Check field-level notes and table-level Note in schema for fields marked as "calculated", "derived", or "optimized" - these should NOT be included in validation schemas (e.g., `optimized_route_data`, `sequence_order`, `estimated_arrival_time`)
 
 ### Core Database Tables
 
@@ -593,6 +594,7 @@ When creating a new module (e.g., "schools"), follow these steps **in order**:
 
 1. **Check Database Schema** (`Database/ping_parent_dbdiagram.dbml`)
    - Note all fields, types, and constraints
+   - **Check field notes and table Note** for calculated/derived fields (exclude these from validation)
    - Identify enums and default values
    - Identify relationships (foreign keys)
 
