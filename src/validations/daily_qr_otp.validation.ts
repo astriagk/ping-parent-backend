@@ -22,7 +22,7 @@ export const generateQrOtpSchema = Joi.object({
 // Schema for verifying QR code or OTP
 // Either qr_code OR otp_code must be provided
 export const verifyQrOtpSchema = Joi.object({
-  qr_code: Joi.string().max(255).optional().messages({
+  qr_code: Joi.string().optional().messages({
     "string.max": VALIDATION_MESSAGES.DAILY_QR_OTP.QR_CODE_MAX,
   }),
   otp_code: Joi.string()

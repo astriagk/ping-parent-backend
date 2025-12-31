@@ -28,7 +28,9 @@ export const createSchool = async (
   }
 
   const schoolData: School = {
-    school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL),
+    school_id: generateUniqueCode(UniqueCodeTypes.SCHOOL, {
+      alphabetType: AlphabetType.Numbers,
+    }),
     ...data,
     created_at: new Date(),
     updated_at: new Date(),

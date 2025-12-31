@@ -48,7 +48,9 @@ export class DriverStudentAssignmentRepository extends BaseRepository<DriverStud
   ): Promise<WithId<DriverStudentAssignment>[]> {
     return await this.findMany({
       driver_id: driverId,
-      assignment_status: AssignmentStatus.PENDING,
+      assignment_status: {
+        $in: [AssignmentStatus.PENDING, AssignmentStatus.PARENT_REQUESTED],
+      },
     });
   }
 

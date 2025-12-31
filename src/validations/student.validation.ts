@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { Gender, VALIDATION_MESSAGES } from "@constants";
 
 export const createStudentSchema = Joi.object({
   school_id: Joi.string().required().messages({
@@ -27,9 +27,12 @@ export const createStudentSchema = Joi.object({
   date_of_birth: Joi.date().optional().messages({
     "date.base": VALIDATION_MESSAGES.STUDENT.DATE_OF_BIRTH_INVALID,
   }),
-  gender: Joi.string().valid("male", "female", "other").optional().messages({
-    "any.only": VALIDATION_MESSAGES.STUDENT.GENDER_INVALID,
-  }),
+  gender: Joi.string()
+    .valid(Gender.MALE, Gender.FEMALE, Gender.OTHER)
+    .optional()
+    .messages({
+      "any.only": VALIDATION_MESSAGES.STUDENT.GENDER_INVALID,
+    }),
   pickup_address_id: Joi.string().required().messages({
     "any.required": VALIDATION_MESSAGES.STUDENT.PICKUP_ADDRESS_ID_REQUIRED,
   }),
@@ -65,9 +68,12 @@ export const updateStudentSchema = Joi.object({
   date_of_birth: Joi.date().optional().messages({
     "date.base": VALIDATION_MESSAGES.STUDENT.DATE_OF_BIRTH_INVALID,
   }),
-  gender: Joi.string().valid("male", "female", "other").optional().messages({
-    "any.only": VALIDATION_MESSAGES.STUDENT.GENDER_INVALID,
-  }),
+  gender: Joi.string()
+    .valid(Gender.MALE, Gender.FEMALE, Gender.OTHER)
+    .optional()
+    .messages({
+      "any.only": VALIDATION_MESSAGES.STUDENT.GENDER_INVALID,
+    }),
   pickup_address_id: Joi.string().optional(),
   emergency_contact: Joi.string()
     .pattern(/^[+]?[0-9]{10,15}$/)
