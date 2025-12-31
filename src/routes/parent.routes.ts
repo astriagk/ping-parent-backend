@@ -6,13 +6,34 @@ import {
   updateAddress,
   updateProfile,
 } from "@controllers/parent.controller";
-import { verifyParentToken } from "@middlewares";
+import { validate, verifyParentToken } from "@middlewares";
+import {
+  updateAddressSchema,
+  updateParentProfileSchema,
+} from "@validations/parent.validation";
 
 const router = Router();
 
+// 01. Get Parent Profile
 router.get("/profile", verifyParentToken, getProfile);
-router.put("/profile", verifyParentToken, updateProfile);
+
+// 02. Update Parent Profile
+router.put(
+  "/profile",
+  verifyParentToken,
+  validate(updateParentProfileSchema),
+  updateProfile,
+);
+
+// 03. Get Parent Address
 router.get("/address", verifyParentToken, getAddress);
-router.put("/address", verifyParentToken, updateAddress);
+
+// 04. Update Parent Address
+router.put(
+  "/address",
+  verifyParentToken,
+  validate(updateAddressSchema),
+  updateAddress,
+);
 
 export default router;

@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { UserRole, VALIDATION_MESSAGES } from "@constants";
 
 export const sendOTPSchema = Joi.object({
   phone: Joi.string()
@@ -12,9 +12,12 @@ export const sendOTPSchema = Joi.object({
       "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
       "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
     }),
-  role: Joi.string().valid("parent", "driver").optional().messages({
-    "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
-  }),
+  role: Joi.string()
+    .valid(UserRole.PARENT, UserRole.DRIVER)
+    .optional()
+    .messages({
+      "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
+    }),
 });
 
 export const verifyOTPSchema = Joi.object({
@@ -31,9 +34,12 @@ export const verifyOTPSchema = Joi.object({
     "string.length": VALIDATION_MESSAGES.OTP.LENGTH,
     "any.required": VALIDATION_MESSAGES.OTP.REQUIRED,
   }),
-  role: Joi.string().valid("parent", "driver").optional().messages({
-    "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
-  }),
+  role: Joi.string()
+    .valid(UserRole.PARENT, UserRole.DRIVER)
+    .optional()
+    .messages({
+      "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
+    }),
 });
 
 // Admin user management validation
@@ -46,9 +52,12 @@ export const updateUserSchema = Joi.object({
     .messages({
       "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
     }),
-  user_type: Joi.string().valid("parent", "driver").optional().messages({
-    "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
-  }),
+  user_type: Joi.string()
+    .valid(UserRole.PARENT, UserRole.DRIVER)
+    .optional()
+    .messages({
+      "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
+    }),
   is_active: Joi.boolean().optional(),
   fcm_token: Joi.string().optional(),
 });

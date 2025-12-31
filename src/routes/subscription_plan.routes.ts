@@ -12,8 +12,11 @@ import { updateSubscriptionPlanSchema } from "@validations/subscription_plan.val
 
 const router = Router();
 
-// Public routes - no authentication required for viewing subscription plans
+// 01. Get All Subscription Plans (Public)
 router.get("/", getAllSubscriptionPlans);
+
+// Additional Routes
+// Get Subscription Plan by ID (Public)
 router.get("/:id", getSubscriptionPlan);
 
 // Admin routes - require admin authentication

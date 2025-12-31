@@ -19,20 +19,35 @@ import {
 
 const router = Router();
 
-// Admin routes
-router.get("/admin/all-payments", verifyAdminToken, getAllPaymentsController);
-
-// All other routes require parent authentication
+// All routes require parent authentication
 router.use(verifyParentToken);
 
-// Payment operations
+// 01. Make Payment
 router.post("/", validate(createPaymentSchema), createPayment);
-router.get("/my-payments", getMyPayments);
-router.get("/my-payments/pending", getMyPendingPayments);
-router.get("/my-payments/completed", getMyCompletedPayments);
-router.get("/:id", getPaymentByIdController);
-router.put("/:id", validate(updatePaymentSchema), updatePaymentById);
+
+// 02. Complete Payment
 router.post("/:id/complete", completePaymentById);
+
+// 03. Get Payment History
+router.get("/my-payments", getMyPayments);
+
+// Additional Routes
+// Get Pending Payments
+router.get("/my-payments/pending", getMyPendingPayments);
+
+// Get Completed Payments
+router.get("/my-payments/completed", getMyCompletedPayments);
+
+// Get Payment by ID
+router.get("/:id", getPaymentByIdController);
+
+// Update Payment
+router.put("/:id", validate(updatePaymentSchema), updatePaymentById);
+
+// Refund Payment
 router.post("/:id/refund", refundPaymentById);
+
+// Admin routes
+router.get("/admin/all-payments", verifyAdminToken, getAllPaymentsController);
 
 export default router;

@@ -16,13 +16,13 @@ const router = Router();
 // All routes require authentication
 router.use(verifyToken_Middleware);
 
-// Generate QR code and OTP for a student's trip
+// 01. Generate QR/OTP
 router.post("/generate", validate(generateQrOtpSchema), generateQrOtp);
 
-// Get QR/OTP by student and trip
+// 02. Get QR/OTP for Student Trip
 router.get("/student/:studentId/trip/:tripId", getQrOtp);
 
-// Verify QR code or OTP
+// 03. Verify QR/OTP
 router.post("/verify", validate(verifyQrOtpSchema), verifyQrOtp);
 
 export default router;

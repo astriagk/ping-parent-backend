@@ -995,6 +995,73 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Update Student by Student ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Emily Jane Johnson Updated\",\n  \"grade\": \"6th Grade\",\n  \"section\": \"B\",\n  \"age\": 11\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/students/by-student-id/:student_id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", "by-student-id", ":student_id"],
+              "variable": [
+                {
+                  "key": "student_id",
+                  "value": "STU001"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Student by Student ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/students/by-student-id/:student_id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["students", "by-student-id", ":student_id"],
+              "variable": [
+                {
+                  "key": "student_id",
+                  "value": "STU001"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1533,6 +1600,339 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Get Active Assignments (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/driver/my-active-assignments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", "driver", "my-active-assignments"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Assignment (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/:id/deactivate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", ":id", "deactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ASSIGNMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Assignments by Student",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/student/:studentId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", "student", ":studentId"],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Assignment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip_type\": \"pickup\",\n  \"end_date\": \"2025-05-30\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ASSIGNMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Assignment",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ASSIGNMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Assignments (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/driver-student-assignments/admin/all-assignments?page=1&limit=20",
+              "host": ["{{BASE_URL}}"],
+              "path": ["driver-student-assignments", "admin", "all-assignments"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Active Trips (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trips/my-trips/active",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", "my-trips", "active"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Details",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trips/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Trip (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_details\": {\n    \"starting_point\": \"Driver Home\",\n    \"stops\": [\"Stop 1\", \"Stop 2\", \"Stop 3\", \"School\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trips/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Trip (Driver)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trips/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get All Trips (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trips/admin/all-trips?page=1&limit=20",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trips", "admin", "all-trips"],
+              "query": [
+                {
+                  "key": "page",
+                  "value": "1"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -1805,6 +2205,205 @@
                 {
                   "key": "tripId",
                   "value": "{{TRIP1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Student by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP_STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Students by Student",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/student/:studentId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "student", ":studentId"],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Student by Trip and Student",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId/student/:studentId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId", "student", ":studentId"],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                },
+                {
+                  "key": "studentId",
+                  "value": "{{STUDENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Students by Attendance Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId/attendance?status=present",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId", "attendance"],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "present"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Trip Students by Pickup Status",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/trip/:tripId/pickup?status=picked_up",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", "trip", ":tripId", "pickup"],
+              "variable": [
+                {
+                  "key": "tripId",
+                  "value": "{{TRIP1_ID}}"
+                }
+              ],
+              "query": [
+                {
+                  "key": "status",
+                  "value": "picked_up"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Trip Student Record",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{DRIVER1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"notes\": \"Student needs special assistance\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/trip-students/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["trip-students", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{TRIP_STUDENT1_ID}}"
                 }
               ]
             }
@@ -2154,6 +2753,263 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Get Subscription Plan by ID",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/subscription-plans/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subscription-plans", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PLAN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Subscription Plan (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Premium Plan Updated\",\n  \"price\": 1299\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/subscription-plans/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subscription-plans", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PLAN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Subscription Plan (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/subscription-plans/:id/activate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subscription-plans", ":id", "activate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PLAN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Subscription Plan (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/subscription-plans/:id/deactivate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["subscription-plans", ":id", "deactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PLAN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Pending Payments (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/my-payments/pending",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", "my-payments", "pending"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Completed Payments (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/my-payments/completed",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", "my-payments", "completed"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Payment by ID (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PAYMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Payment (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"payment_method\": \"credit_card\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/payments/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PAYMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Refund Payment (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/payments/:id/refund",
+              "host": ["{{BASE_URL}}"],
+              "path": ["payments", ":id", "refund"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{PAYMENT1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -2247,6 +3103,102 @@
                 {
                   "key": "driverId",
                   "value": "{{DRIVER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Rating Review by ID (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{REVIEW1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Rating Review (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"rating\": 5,\n  \"review\": \"Excellent service updated!\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{REVIEW1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Rating Review (Parent)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{PARENT1_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/ratings-reviews/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["ratings-reviews", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{REVIEW1_ID}}"
                 }
               ]
             }
@@ -2392,6 +3344,346 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Create Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"newadmin@pingparent.com\",\n  \"password\": \"Admin@1234\",\n  \"name\": \"New Admin\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/admin",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Admin by ID",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ADMIN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Admin Name\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/admin/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ADMIN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/:id/activate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", ":id", "activate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ADMIN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate Admin",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/:id/deactivate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", ":id", "deactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ADMIN1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get User by ID (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{USER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated User Name\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{USER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Activate User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users/:id/activate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users", ":id", "activate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{USER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Deactivate User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users/:id/deactivate",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users", ":id", "deactivate"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{USER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete User (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/admin/users/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["admin", "users", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{USER1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Audit Log by ID (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/audit-logs/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["audit-logs", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{AUDIT_LOG1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -2449,6 +3741,102 @@
               "raw": "{{BASE_URL}}/roles",
               "host": ["{{BASE_URL}}"],
               "path": ["roles"]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Role by ID (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/roles/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["roles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ROLE1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Role (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Updated Role Name\",\n  \"permissions\": [\"read\", \"write\", \"delete\"]\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/roles/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["roles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ROLE1_ID}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Role (Admin)",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{ADMIN_TOKEN}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{BASE_URL}}/roles/:id",
+              "host": ["{{BASE_URL}}"],
+              "path": ["roles", ":id"],
+              "variable": [
+                {
+                  "key": "id",
+                  "value": "{{ROLE1_ID}}"
+                }
+              ]
             }
           },
           "response": []

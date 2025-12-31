@@ -17,25 +17,36 @@ import {
 
 const router = Router();
 
-// Parent routes - require parent authentication
+// 01. Submit Rating/Review (Parent)
 router.post(
   "/",
   validate(createRatingReviewSchema),
   verifyParentToken,
   submitRatingReview,
 );
+
+// 02. Get My Reviews (Parent)
 router.get("/my-reviews", verifyParentToken, getMyRatingReviews);
+
+// 03. Get Driver Reviews (Public)
+router.get("/driver/:driverId", getDriverRatingReviews);
+
+// 04. Get Driver Rating (Public)
+router.get("/driver/:driverId/rating", getDriverRating);
+
+// Additional Parent Routes
+// Get Rating Review by ID
 router.get("/:id", verifyParentToken, getRatingReview);
+
+// Update Rating Review
 router.put(
   "/:id",
   validate(updateRatingReviewSchema),
   verifyParentToken,
   updateRatingReviewById,
 );
-router.delete("/:id", verifyParentToken, deleteRatingReviewById);
 
-// Public routes - get driver ratings/reviews
-router.get("/driver/:driverId", getDriverRatingReviews);
-router.get("/driver/:driverId/rating", getDriverRating);
+// Delete Rating Review
+router.delete("/:id", verifyParentToken, deleteRatingReviewById);
 
 export default router;

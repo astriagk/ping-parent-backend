@@ -17,48 +17,62 @@ import { sendOTPSchema, verifyOTPSchema } from "@validations/auth.validation";
 
 const router = Router();
 
-// Admin routes
-router.get("/admin/users", verifyAdminToken, getAllUsersController);
-router.patch(
-  "/admin/users/:id/activate",
-  verifyAdminToken,
-  activateUserController,
-);
-router.patch(
-  "/admin/users/:id/deactivate",
-  verifyAdminToken,
-  deactivateUserController,
-);
-
+// 01. Get All Roles
 router.get("/roles", getRoles);
-// New phone-based registration (3 steps, no password)
+
+// 02. Register - Send OTP (Parent/Driver)
 router.post(
   "/register/send-otp",
   validate(sendOTPSchema),
   loginRateLimiter,
   sendPhoneOtp,
 );
+
+// 03. Register - Verify OTP (Parent/Driver)
 router.post(
   "/register/verify-otp",
   validate(verifyOTPSchema),
   loginRateLimiter,
   verifyPhoneOtp,
 );
-// Phone-based login (2 steps, OTP-based)
+
+// 04. Login - Send OTP
 router.post(
   "/login/send-otp",
   validate(sendOTPSchema),
   loginRateLimiter,
   sendLoginOtp,
 );
+
+// 05. Login - Verify OTP
 router.post(
   "/login/verify-otp",
   validate(verifyOTPSchema),
   loginRateLimiter,
   verifyLoginOtp,
 );
-// Token verification and logout
+
+// 06. Verify Token
 router.get("/verify-token", verifyAuthToken);
+
+// 07. Logout
 router.post("/logout", logout);
+
+// 08. Get All Users (Admin)
+router.get("/admin/users", verifyAdminToken, getAllUsersController);
+
+// 09. Activate User (Admin)
+router.patch(
+  "/admin/users/:id/activate",
+  verifyAdminToken,
+  activateUserController,
+);
+
+// 10. Deactivate User (Admin)
+router.patch(
+  "/admin/users/:id/deactivate",
+  verifyAdminToken,
+  deactivateUserController,
+);
 
 export default router;

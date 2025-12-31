@@ -114,7 +114,7 @@ export const createDriverDocumentsSchema = Joi.object({
     "string.max":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.DRIVING_LICENSE_NUMBER_MAX,
   }),
-  driving_license_photo_url: Joi.string().uri().optional().messages({
+  driving_license_photo_url: Joi.string().uri().required().messages({
     "string.uri":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.DRIVING_LICENSE_PHOTO_INVALID,
   }),
@@ -126,14 +126,14 @@ export const createDriverDocumentsSchema = Joi.object({
     "string.max":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_NUMBER_MAX,
   }),
-  vehicle_license_photo_url: Joi.string().uri().optional().messages({
+  vehicle_license_photo_url: Joi.string().uri().required().messages({
     "string.uri":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_PHOTO_INVALID,
   }),
-  insurance_number: Joi.string().min(1).max(50).optional().messages({
+  insurance_number: Joi.string().min(1).max(50).required().messages({
     "string.max": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_NUMBER_MAX,
   }),
-  insurance_photo_url: Joi.string().uri().optional().messages({
+  insurance_photo_url: Joi.string().uri().required().messages({
     "string.uri": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_PHOTO_INVALID,
   }),
 });

@@ -1,10 +1,10 @@
-export type UserType = "parent" | "driver";
+import { UserRole } from "@constants";
 
 export interface User {
   _id?: any; // MongoDB internal ID
   user_id: string;
   phone_number: string;
-  user_type: UserType;
+  user_type: UserRole;
   is_active: boolean;
   created_at: Date;
   updated_at?: Date;
