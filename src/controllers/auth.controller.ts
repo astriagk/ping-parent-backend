@@ -2,11 +2,11 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 import {
-  AlphabetType,
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
   UniqueCodeTypes,
+  UserRole,
 } from "@constants";
 import { ApiError, asyncHandler } from "@middlewares";
 import {
@@ -307,7 +307,7 @@ export const verifyPhoneOtp = asyncHandler(
       const newUserData = {
         user_id: generateUniqueCode(UniqueCodeTypes.USER),
         phone_number: normalizedPhone,
-        user_type: (role || "parent") as "parent" | "driver",
+        user_type: role === UserRole.DRIVER ? UserRole.DRIVER : UserRole.PARENT,
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),

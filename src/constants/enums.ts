@@ -31,6 +31,7 @@ export enum AlphabetType {
 }
 
 export enum UniqueCodeTypes {
+  DRIVER = "DRV",
   SCHOOL = "SCH",
   STUDENT = "STU",
   USER = "USR",

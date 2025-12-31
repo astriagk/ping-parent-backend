@@ -192,7 +192,7 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: users,
-    message: "Users list fetched successfully",
+    message: SUCCESS_MESSAGES.AUTH.USERS_LIST_FETCHED_SUCCESSFULLY,
   });
 });
 
@@ -233,7 +233,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: updatedUser,
-    message: "User updated successfully",
+    message: SUCCESS_MESSAGES.AUTH.USER_UPDATED_SUCCESSFULLY,
   });
 });
 
@@ -297,6 +297,6 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: null,
-    message: "User deleted successfully",
+    message: SUCCESS_MESSAGES.AUTH.USER_DELETED_SUCCESSFULLY,
   });
 });

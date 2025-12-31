@@ -6,6 +6,7 @@ import {
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
   USERS_COLLECTION,
+  UniqueCodeTypes,
 } from "@constants";
 import { User } from "@models/auth.type";
 import {
@@ -18,18 +19,7 @@ import {
   DriverInput,
   DriverProfileUpdate,
 } from "@models/driver.type";
-
-/**
- * Generate a unique driver ID (8-character alphanumeric)
- */
-const generateDriverUniqueId = (): string => {
-  const characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-  let result = "DRV";
-  for (let i = 0; i < 5; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
-  }
-  return result;
-};
+import { generateUniqueCode } from "@utils";
 
 /**
  * Get driver profile by user_id
@@ -85,7 +75,7 @@ export const createDriverProfile = async (
     const db = await getDB();
 
     // Generate unique driver ID
-    let driverUniqueId = generateDriverUniqueId();
+    let driverUniqueId = generateUniqueCode(UniqueCodeTypes.DRIVER);
     let attempts = 0;
     const maxAttempts = 10;
 
@@ -95,7 +85,7 @@ export const createDriverProfile = async (
         .collection(DRIVERS_COLLECTION)
         .findOne({ driver_unique_id: driverUniqueId });
       if (!existing) break;
-      driverUniqueId = generateDriverUniqueId();
+      driverUniqueId = generateUniqueCode(UniqueCodeTypes.DRIVER);
       attempts++;
     }
 

@@ -11,7 +11,14 @@ import {
   updateProfile,
   upsertAddress,
 } from "@controllers/driver.controller";
-import { verifyDriverToken } from "@middlewares";
+import { validate, verifyDriverToken } from "@middlewares";
+import {
+  createDriverDocumentsSchema,
+  createDriverProfileSchema,
+  updateDriverDocumentsSchema,
+  updateDriverProfileSchema,
+  upsertDriverAddressSchema,
+} from "@validations/driver.validation";
 
 const router = Router();
 
@@ -19,10 +26,20 @@ const router = Router();
 router.get("/profile", verifyDriverToken, getProfile);
 
 // 02. Create Driver Profile
-router.post("/profile", verifyDriverToken, createProfile);
+router.post(
+  "/profile",
+  verifyDriverToken,
+  validate(createDriverProfileSchema),
+  createProfile,
+);
 
 // 03. Update Driver Profile
-router.put("/profile", verifyDriverToken, updateProfile);
+router.put(
+  "/profile",
+  verifyDriverToken,
+  validate(updateDriverProfileSchema),
+  updateProfile,
+);
 
 // 04. Set Driver Availability
 router.patch("/availability", verifyDriverToken, setAvailability);
@@ -31,15 +48,30 @@ router.patch("/availability", verifyDriverToken, setAvailability);
 router.get("/address", verifyDriverToken, getAddress);
 
 // 06. Create/Update Driver Address
-router.post("/address", verifyDriverToken, upsertAddress);
+router.post(
+  "/address",
+  verifyDriverToken,
+  validate(upsertDriverAddressSchema),
+  upsertAddress,
+);
 
 // 07. Get Driver Documents
 router.get("/documents", verifyDriverToken, getDocuments);
 
 // 08. Upload Driver Documents
-router.post("/documents", verifyDriverToken, createDocuments);
+router.post(
+  "/documents",
+  verifyDriverToken,
+  validate(createDriverDocumentsSchema),
+  createDocuments,
+);
 
 // 09. Update Driver Documents
-router.put("/documents", verifyDriverToken, updateDocuments);
+router.put(
+  "/documents",
+  verifyDriverToken,
+  validate(updateDriverDocumentsSchema),
+  updateDocuments,
+);
 
 export default router;
