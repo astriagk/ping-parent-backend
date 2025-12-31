@@ -20,20 +20,38 @@ import {
 
 const router = Router();
 
-// Admin routes
-router.get("/admin/all-trips", verifyAdminToken, getAllTripsController);
-
-// All other routes require driver authentication
+// All routes require driver authentication
 router.use(verifyDriverToken);
 
-// Trip CRUD operations
+// 01. Create Trip (Driver)
 router.post("/", validate(createTripSchema), createTrip);
+
+// 02. Get My Trips (Driver)
 router.get("/my-trips", getMyTrips);
+
+// 03. Get Trips by Date
 router.get("/my-trips/by-date", getMyTripsByDate);
-router.get("/my-trips/active", getMyActiveTrips);
-router.get("/:id", getTripProfile);
-router.put("/:id", validate(updateTripSchema), updateTripProfile);
+
+// 04. Start Trip / Update Trip Status
 router.patch("/:id/status", validate(updateTripStatusSchema), updateTripStatus);
+
+// 05. Complete Trip (handled by Update Trip Status endpoint)
+// (Same as above - uses status field)
+
+// Additional Routes
+// Get Active Trips
+router.get("/my-trips/active", getMyActiveTrips);
+
+// Get Trip Details
+router.get("/:id", getTripProfile);
+
+// Update Trip
+router.put("/:id", validate(updateTripSchema), updateTripProfile);
+
+// Delete Trip
 router.delete("/:id", deleteTripProfile);
+
+// Admin routes
+router.get("/admin/all-trips", verifyAdminToken, getAllTripsController);
 
 export default router;

@@ -75,6 +75,54 @@ export const loginAdmin = async (
 };
 
 /**
+ * Create super admin (no authentication required - for initial setup)
+ * Allows creating multiple super admins without existing authentication
+ */
+export const createInitialSuperAdmin = async (
+  createData: AdminCreateInput,
+): Promise<AdminResponse> => {
+  // Check if email already exists
+  const emailExists = await adminRepository.emailExists(createData.email);
+  if (emailExists) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.ADMIN.EMAIL_ALREADY_EXISTS,
+    );
+  }
+
+  // Check if username already exists
+  const usernameExists = await adminRepository.usernameExists(
+    createData.username,
+  );
+  if (usernameExists) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.ADMIN.USERNAME_ALREADY_EXISTS,
+    );
+  }
+
+  // Hash password
+  const password_hash = await hashPassword(createData.password);
+
+  // Create super admin (force role to superadmin)
+  const adminData: Admin = {
+    admin_id: generateUniqueCode(UniqueCodeTypes.ADMIN),
+    username: createData.username,
+    email: createData.email,
+    password_hash,
+    phone_number: createData.phone_number,
+    admin_role: AdminRole.SUPERADMIN, // Always create as superadmin
+    is_active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  const newAdmin = await adminRepository.create(adminData);
+
+  return formatAdminResponse(newAdmin);
+};
+
+/**
  * Create new admin (superadmin only)
  */
 export const createAdmin = async (

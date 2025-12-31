@@ -952,22 +952,105 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
 
 ## Postman Environment Variables
 
+### Environment Variables Reference
+
+| Variable | Description | Example Value | Auto-Set After |
+|----------|-------------|---------------|----------------|
+| `BASE_URL` | API base URL | `http://localhost:3000/api` | Manual |
+| `OTP` | OTP code for testing | `123456` | Manual |
+| `PARENT1_TOKEN` | Parent 1 auth token | JWT token | Parent 1 Login |
+| `PARENT2_TOKEN` | Parent 2 auth token | JWT token | Parent 2 Login |
+| `DRIVER1_TOKEN` | Driver 1 auth token | JWT token | Driver 1 Login |
+| `DRIVER2_TOKEN` | Driver 2 auth token | JWT token | Driver 2 Login |
+| `ADMIN_TOKEN` | Admin auth token | JWT token | Admin Login |
+| `PARENT1_ID` | Parent 1 user ID | MongoDB ObjectId | Parent 1 Login |
+| `PARENT2_ID` | Parent 2 user ID | MongoDB ObjectId | Parent 2 Login |
+| `DRIVER1_ID` | Driver 1 user ID | MongoDB ObjectId | Driver 1 Login |
+| `DRIVER2_ID` | Driver 2 user ID | MongoDB ObjectId | Driver 2 Login |
+| `SCHOOL1_ID` | School 1 ID | MongoDB ObjectId | Create School 1 |
+| `SCHOOL2_ID` | School 2 ID | MongoDB ObjectId | Create School 2 |
+| `STUDENT1_ID` | Student 1 ID (Emily) | MongoDB ObjectId | Add Student 1 |
+| `STUDENT2_ID` | Student 2 ID (Michael) | MongoDB ObjectId | Add Student 2 |
+| `STUDENT3_ID` | Student 3 ID (Sophie) | MongoDB ObjectId | Add Student 3 |
+| `ASSIGNMENT1_ID` | Assignment 1 ID | MongoDB ObjectId | Create Assignment 1 |
+| `ASSIGNMENT2_ID` | Assignment 2 ID | MongoDB ObjectId | Create Assignment 2 |
+| `TRIP1_ID` | Trip 1 ID | MongoDB ObjectId | Create Trip 1 |
+| `TRIP2_ID` | Trip 2 ID | MongoDB ObjectId | Create Trip 2 |
+| `TRIP_STUDENT1_ID` | Trip-Student Record ID | MongoDB ObjectId | Manual/Auto-set |
+| `NOTIFICATION_ID` | Notification ID | MongoDB ObjectId | Manual |
+| `SUBSCRIPTION1_ID` | Subscription ID | MongoDB ObjectId | Subscribe to Plan |
+| `PLAN1_ID` | Subscription Plan ID | MongoDB ObjectId | Manual |
+| `PAYMENT1_ID` | Payment ID | MongoDB ObjectId | Make Payment |
+| `REVIEW1_ID` | Rating/Review ID | MongoDB ObjectId | Submit Review |
+| `ADMIN1_ID` | Admin User ID | MongoDB ObjectId | Create Admin/Manual |
+| `USER1_ID` | Generic User ID | MongoDB ObjectId | Manual for Admin ops |
+| `AUDIT_LOG1_ID` | Audit Log Record ID | MongoDB ObjectId | Manual |
+| `ROLE1_ID` | Role ID | MongoDB ObjectId | Create Role |
+| `PARENT1_PHONE` | Parent 1 phone | `+1234567890` | Manual |
+| `PARENT1_LAT` | Parent 1 latitude | `40.7128` | Manual |
+| `PARENT1_LNG` | Parent 1 longitude | `-74.0060` | Manual |
+| `DRIVER1_PHONE` | Driver 1 phone | `+1234567893` | Manual |
+| `DRIVER1_LAT` | Driver 1 latitude | `40.7200` | Manual |
+| `DRIVER1_LNG` | Driver 1 longitude | `-74.0100` | Manual |
+| `SCHOOL1_LAT` | School 1 latitude | `40.7589` | Manual |
+| `SCHOOL1_LNG` | School 1 longitude | `-73.9851` | Manual |
+| `GENERATED_OTP` | Generated OTP for QR/OTP testing | 6-digit code | Manual/Auto-set |
+
+### Full Environment JSON
+
 ```json
 {
   "BASE_URL": "http://localhost:3000/api",
+  "OTP": "123456",
 
   "PARENT1_PHONE": "+1234567890",
+  "PARENT1_TOKEN": "",
+  "PARENT1_ID": "",
   "PARENT1_LAT": "40.7128",
   "PARENT1_LNG": "-74.0060",
 
+  "PARENT2_PHONE": "+1234567891",
+  "PARENT2_TOKEN": "",
+  "PARENT2_ID": "",
+
   "DRIVER1_PHONE": "+1234567893",
+  "DRIVER1_TOKEN": "",
+  "DRIVER1_ID": "",
   "DRIVER1_LAT": "40.7200",
   "DRIVER1_LNG": "-74.0100",
 
+  "DRIVER2_PHONE": "+1234567894",
+  "DRIVER2_TOKEN": "",
+  "DRIVER2_ID": "",
+
+  "ADMIN_TOKEN": "",
+
+  "SCHOOL1_ID": "",
   "SCHOOL1_LAT": "40.7589",
   "SCHOOL1_LNG": "-73.9851",
+  "SCHOOL2_ID": "",
 
-  "OTP": "123456"
+  "STUDENT1_ID": "",
+  "STUDENT2_ID": "",
+  "STUDENT3_ID": "",
+
+  "ASSIGNMENT1_ID": "",
+  "ASSIGNMENT2_ID": "",
+
+  "TRIP1_ID": "",
+  "TRIP2_ID": "",
+  "TRIP_STUDENT1_ID": "",
+
+  "NOTIFICATION_ID": "",
+  "SUBSCRIPTION1_ID": "",
+  "PLAN1_ID": "",
+  "PAYMENT1_ID": "",
+  "REVIEW1_ID": "",
+  "ADMIN1_ID": "",
+  "USER1_ID": "",
+  "AUDIT_LOG1_ID": "",
+  "ROLE1_ID": "",
+  "GENERATED_OTP": ""
 }
 ```
 

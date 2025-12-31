@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { AdminRole, VALIDATION_MESSAGES } from "@constants";
 
 export const adminLoginSchema = Joi.object({
   email: Joi.string().email().required().messages({
@@ -37,10 +37,13 @@ export const createAdminSchema = Joi.object({
     .messages({
       "string.pattern.base": VALIDATION_MESSAGES.ADMIN.PHONE_PATTERN,
     }),
-  admin_role: Joi.string().valid("admin", "superadmin").required().messages({
-    "any.only": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_INVALID,
-    "any.required": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_REQUIRED,
-  }),
+  admin_role: Joi.string()
+    .valid(AdminRole.ADMIN, AdminRole.SUPERADMIN)
+    .required()
+    .messages({
+      "any.only": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_INVALID,
+      "any.required": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_REQUIRED,
+    }),
 });
 
 export const updateAdminSchema = Joi.object({

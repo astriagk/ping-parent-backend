@@ -5,6 +5,7 @@ import { ApiError, asyncHandler } from "@middlewares";
 import {
   activateAdmin as activateAdminService,
   createAdmin as createAdminService,
+  createInitialSuperAdmin as createInitialSuperAdminService,
   deactivateAdmin as deactivateAdminService,
   getAdminById,
   getAllAdmins,
@@ -32,6 +33,21 @@ export const login = asyncHandler(async (req: Request, res: Response) => {
     message: SUCCESS_MESSAGES.ADMIN.LOGIN_SUCCESSFUL,
   });
 });
+
+// Create initial super admin (one-time setup - no auth required)
+export const createInitialSuperAdmin = asyncHandler(
+  async (req: Request, res: Response) => {
+    const adminData = req.body;
+
+    const newSuperAdmin = await createInitialSuperAdminService(adminData);
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: newSuperAdmin,
+      message: SUCCESS_MESSAGES.ADMIN.CREATED_SUCCESSFULLY,
+    });
+  },
+);
 
 // Create admin (superadmin only)
 export const createAdmin = asyncHandler(async (req: Request, res: Response) => {

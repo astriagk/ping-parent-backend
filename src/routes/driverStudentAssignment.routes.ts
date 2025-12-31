@@ -27,14 +27,7 @@ import {
 
 const router = Router();
 
-// Admin routes
-router.get(
-  "/admin/all-assignments",
-  verifyAdminToken,
-  getAllDriverStudentAssignments,
-);
-
-// Routes accessible by both parents and drivers (authenticated users)
+// 01. Create Driver-Student Assignment
 router.post(
   "/",
   verifyToken_Middleware,
@@ -42,42 +35,63 @@ router.post(
   createDriverStudentAssignment,
 );
 
+// 02. Get Assignment Details
 router.get("/:id", verifyToken_Middleware, getAssignment);
 
-// Driver-specific routes
+// 03. Get My Assignments (Driver)
 router.get("/driver/my-assignments", verifyDriverToken, getMyAssignments);
-router.get(
-  "/driver/my-active-assignments",
-  verifyDriverToken,
-  getMyActiveAssignments,
-);
+
+// 04. Get Pending Assignments (Driver)
 router.get(
   "/driver/my-pending-assignments",
   verifyDriverToken,
   getMyPendingAssignments,
 );
+
+// 05. Approve Assignment (Driver)
 router.post("/:id/approve", verifyDriverToken, approveDriverStudentAssignment);
+
+// 06. Reject Assignment (Driver)
 router.post("/:id/reject", verifyDriverToken, rejectDriverStudentAssignment);
+
+// Additional Routes
+// Get Active Assignments (Driver)
+router.get(
+  "/driver/my-active-assignments",
+  verifyDriverToken,
+  getMyActiveAssignments,
+);
+
+// Deactivate Assignment (Driver)
 router.post(
   "/:id/deactivate",
   verifyDriverToken,
   deactivateDriverStudentAssignment,
 );
 
-// Routes for getting assignments by student
+// Get Assignments by Student
 router.get(
   "/student/:studentId",
   verifyToken_Middleware,
   getAssignmentsByStudent,
 );
 
-// Update and delete routes
+// Update Assignment
 router.put(
   "/:id",
   verifyToken_Middleware,
   validate(updateDriverStudentAssignmentSchema),
   updateDriverStudentAssignment,
 );
+
+// Delete Assignment
 router.delete("/:id", verifyToken_Middleware, deleteDriverStudentAssignment);
+
+// Admin routes
+router.get(
+  "/admin/all-assignments",
+  verifyAdminToken,
+  getAllDriverStudentAssignments,
+);
 
 export default router;
