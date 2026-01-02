@@ -4,6 +4,7 @@ import { getDB } from "@config";
 import {
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
+  STUDENTS_COLLECTION,
   USERS_COLLECTION,
 } from "@constants";
 import { User } from "@models/auth.type";
@@ -212,6 +213,97 @@ export const getAddressByUserId = async (
 
     return address as ParentAddress | null;
   } catch {
+    return null;
+  }
+};
+
+/**
+ * Get complete parent details by parent_id (for admin verification)
+ * Includes parent info, user info, addresses, and students
+ */
+export const getCompleteParentDetailsById = async (
+  parentId: string,
+): Promise<any> => {
+  try {
+    const db = await getDB();
+
+    const result = await db
+      .collection(PARENTS_COLLECTION)
+      .aggregate([
+        {
+          $match: {
+            _id: ObjectId.isValid(parentId) ? new ObjectId(parentId) : parentId,
+          },
+        },
+        {
+          $lookup: {
+            from: USERS_COLLECTION,
+            localField: "user_id",
+            foreignField: "user_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: {
+            path: "$user",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: PARENT_ADDRESSES_COLLECTION,
+            let: { parentId: { $toString: "$_id" } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$parent_id", "$$parentId"] },
+                },
+              },
+            ],
+            as: "addresses",
+          },
+        },
+        {
+          $lookup: {
+            from: STUDENTS_COLLECTION,
+            let: { parentId: { $toString: "$_id" } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$parent_id", "$$parentId"] },
+                },
+              },
+            ],
+            as: "students",
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            parent_id: 1,
+            user_id: 1,
+            name: 1,
+            email: 1,
+            photo_url: 1,
+            created_at: 1,
+            updated_at: 1,
+            user: {
+              phone_number: "$user.phone_number",
+              user_type: "$user.user_type",
+              is_active: "$user.is_active",
+              fcm_token: "$user.fcm_token",
+              last_login: "$user.last_login",
+            },
+            addresses: 1,
+            students: 1,
+          },
+        },
+      ])
+      .toArray();
+
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("Error getting complete parent details:", error);
     return null;
   }
 };

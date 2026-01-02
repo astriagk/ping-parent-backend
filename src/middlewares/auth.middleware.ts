@@ -133,7 +133,7 @@ export const verifyAdminToken = (
   next: NextFunction,
 ) => {
   const authHeader = req.headers.authorization;
-  console.log(authHeader);
+
   if (!authHeader) {
     return res.status(HTTP_STATUS.UNAUTHORIZED).json({
       success: false,
@@ -152,7 +152,7 @@ export const verifyAdminToken = (
 
   try {
     const payload = verifyAdminAccessToken(token);
-    console.log(payload);
+
     if (
       payload.role !== UserRole.ADMIN &&
       payload.role !== UserRole.SUPERADMIN

@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { UpdateFilter, WithId } from "mongodb";
 
 import { ADMIN_PORTAL_COLLECTION } from "@constants";
 import { Admin } from "@models/admin.type";
@@ -36,6 +36,13 @@ export class AdminRepository extends BaseRepository<Admin> {
 
   async adminIdExists(adminId: string): Promise<boolean> {
     return await this.exists({ admin_id: adminId });
+  }
+
+  async updateByAdminId(
+    adminId: string,
+    update: UpdateFilter<Admin>,
+  ): Promise<WithId<Admin> | null> {
+    return await this.updateOne({ admin_id: adminId }, update);
   }
 }
 

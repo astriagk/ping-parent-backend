@@ -2,19 +2,26 @@ import { Router } from "express";
 
 import {
   activateAdmin,
+  activateAdminByAdminId,
   activateUser,
   createAdmin,
   createInitialSuperAdmin,
   deactivateAdmin,
+  deactivateAdminByAdminId,
   deactivateUser,
   deleteUser,
   getAll,
   getAllUsers,
+  getByAdminId,
   getById,
+  getDriverCompleteDetails,
+  getParentCompleteDetails,
   getUserById,
   login,
   updateAdmin,
+  updateAdminByAdminId,
   updateUser,
+  verifyAdminAuthToken,
 } from "@controllers/admin.controller";
 import { validate, verifyAdminToken } from "@middlewares";
 import {
@@ -37,6 +44,8 @@ router.post(
   validate(createAdminSchema),
   createInitialSuperAdmin,
 );
+
+router.get("/verify-admin-token", verifyAdminAuthToken);
 
 // Protected routes - Require admin authentication
 
@@ -85,5 +94,37 @@ router.patch("/users/:id/deactivate", verifyAdminToken, deactivateUser);
 
 // Delete User
 router.delete("/users/:id", verifyAdminToken, deleteUser);
+
+// Admin Management Routes by admin_id (for frontend use - no _id exposure)
+// Get Admin by admin_id
+router.get("/by-admin-id/:admin_id", verifyAdminToken, getByAdminId);
+
+// Update Admin by admin_id
+router.put(
+  "/by-admin-id/:admin_id",
+  verifyAdminToken,
+  validate(updateAdminSchema),
+  updateAdminByAdminId,
+);
+
+// Activate Admin by admin_id
+router.patch(
+  "/by-admin-id/:admin_id/activate",
+  verifyAdminToken,
+  activateAdminByAdminId,
+);
+
+// Deactivate Admin by admin_id
+router.patch(
+  "/by-admin-id/:admin_id/deactivate",
+  verifyAdminToken,
+  deactivateAdminByAdminId,
+);
+
+// Get complete driver details by ID (for admin verification)
+router.get("/drivers/:id/details", verifyAdminToken, getDriverCompleteDetails);
+
+// Get complete parent details by ID (for admin verification)
+router.get("/parents/:id/details", verifyAdminToken, getParentCompleteDetails);
 
 export default router;

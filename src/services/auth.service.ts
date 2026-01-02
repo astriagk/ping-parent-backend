@@ -1,7 +1,7 @@
 import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@config";
-import { OTP_VERIFICATION_COLLECTION } from "@constants";
+import { OTP_VERIFICATION_COLLECTION, UserRole } from "@constants";
 import { User } from "@models/auth.type";
 import { userRepository } from "@repositories/auth.repository";
 
@@ -40,8 +40,14 @@ export const phoneExists = async (phoneNumber: string): Promise<boolean> => {
 /**
  * Get all users (admin only)
  */
-export const getAllUsers = async (): Promise<WithId<User>[]> => {
-  return await userRepository.findMany();
+export const getAllUsers = async (
+  userType?: UserRole,
+): Promise<WithId<User>[]> => {
+  const filter: Partial<User> = {};
+  if (userType) {
+    filter.user_type = userType;
+  }
+  return await userRepository.findMany(filter);
 };
 
 /**

@@ -350,3 +350,157 @@ export const deactivateAdmin = async (
 
   return formatAdminResponse(updatedAdmin);
 };
+
+/**
+ * Get admin by admin_id (for frontend use)
+ */
+export const getAdminByAdminIdFormatted = async (
+  adminId: string,
+): Promise<AdminResponse | null> => {
+  const admin = await adminRepository.findByAdminId(adminId);
+  if (!admin) {
+    return null;
+  }
+  return formatAdminResponse(admin);
+};
+
+/**
+ * Update admin by admin_id
+ */
+export const updateAdminByAdminId = async (
+  adminId: string,
+  updates: AdminUpdateInput,
+  updaterAdminId: string,
+): Promise<AdminResponse | null> => {
+  // Get admin to update
+  const adminToUpdate = await adminRepository.findByAdminId(adminId);
+
+  if (!adminToUpdate) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
+  }
+
+  // Prevent modification of superadmin by non-superadmin
+  const updater = await adminRepository.findByAdminId(updaterAdminId);
+  if (
+    adminToUpdate.admin_role === AdminRole.SUPERADMIN &&
+    updater?.admin_role !== AdminRole.SUPERADMIN
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.ADMIN.CANNOT_MODIFY_SUPERADMIN,
+    );
+  }
+
+  // Check email uniqueness if updating email
+  if (updates.email && updates.email !== adminToUpdate.email) {
+    const emailExists = await adminRepository.emailExists(updates.email);
+    if (emailExists) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.ADMIN.EMAIL_ALREADY_EXISTS,
+      );
+    }
+  }
+
+  // Check username uniqueness if updating username
+  if (updates.username && updates.username !== adminToUpdate.username) {
+    const usernameExists = await adminRepository.usernameExists(
+      updates.username,
+    );
+    if (usernameExists) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.ADMIN.USERNAME_ALREADY_EXISTS,
+      );
+    }
+  }
+
+  const updatedAdmin = await adminRepository.updateByAdminId(adminId, {
+    $set: { ...updates, updated_at: new Date() },
+  });
+
+  if (!updatedAdmin) {
+    return null;
+  }
+
+  return formatAdminResponse(updatedAdmin);
+};
+
+/**
+ * Activate admin by admin_id
+ */
+export const activateAdminByAdminId = async (
+  adminId: string,
+  activatorAdminId: string,
+): Promise<AdminResponse | null> => {
+  // Get admin to activate
+  const adminToActivate = await adminRepository.findByAdminId(adminId);
+
+  if (!adminToActivate) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
+  }
+
+  // Verify activator is superadmin for superadmin accounts
+  const activator = await adminRepository.findByAdminId(activatorAdminId);
+  if (
+    adminToActivate.admin_role === AdminRole.SUPERADMIN &&
+    activator?.admin_role !== AdminRole.SUPERADMIN
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.ADMIN.CANNOT_MODIFY_SUPERADMIN,
+    );
+  }
+
+  const updatedAdmin = await adminRepository.updateByAdminId(adminId, {
+    $set: { is_active: true, updated_at: new Date() },
+  });
+
+  if (!updatedAdmin) {
+    return null;
+  }
+
+  return formatAdminResponse(updatedAdmin);
+};
+
+/**
+ * Deactivate admin by admin_id
+ */
+export const deactivateAdminByAdminId = async (
+  adminId: string,
+  deactivatorAdminId: string,
+): Promise<AdminResponse | null> => {
+  // Get admin to deactivate
+  const adminToDeactivate = await adminRepository.findByAdminId(adminId);
+
+  if (!adminToDeactivate) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
+  }
+
+  // Prevent deactivation of superadmin
+  if (adminToDeactivate.admin_role === AdminRole.SUPERADMIN) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.ADMIN.CANNOT_MODIFY_SUPERADMIN,
+    );
+  }
+
+  // Verify deactivator is superadmin
+  const deactivator = await adminRepository.findByAdminId(deactivatorAdminId);
+  if (deactivator?.admin_role !== AdminRole.SUPERADMIN) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,
+    );
+  }
+
+  const updatedAdmin = await adminRepository.updateByAdminId(adminId, {
+    $set: { is_active: false, updated_at: new Date() },
+  });
+
+  if (!updatedAdmin) {
+    return null;
+  }
+
+  return formatAdminResponse(updatedAdmin);
+};

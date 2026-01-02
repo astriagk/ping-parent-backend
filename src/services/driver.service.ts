@@ -423,3 +423,123 @@ export const getDriverDocumentsByUserId = async (
     return null;
   }
 };
+
+/**
+ * Get complete driver details by driver_id (for admin verification)
+ * Includes driver info, user info, addresses, and documents
+ */
+export const getCompleteDriverDetailsById = async (
+  driverId: string,
+): Promise<any> => {
+  try {
+    const db = await getDB();
+
+    const result = await db
+      .collection(DRIVERS_COLLECTION)
+      .aggregate([
+        {
+          $match: {
+            user_id: driverId,
+          },
+        },
+        {
+          $addFields: {
+            user_id: { $toObjectId: "$user_id" },
+          },
+        },
+        {
+          $lookup: {
+            from: USERS_COLLECTION,
+            localField: "user_id",
+            foreignField: "_id",
+            as: "user",
+          },
+        },
+        {
+          $unwind: {
+            path: "$user",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: DRIVER_ADDRESSES_COLLECTION,
+            let: { driverId: { $toString: "$_id" } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$driver_id", "$$driverId"] },
+                },
+              },
+            ],
+            as: "addresses",
+          },
+        },
+        {
+          $unwind: {
+            path: "$addresses",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: DRIVER_DOCUMENTS_COLLECTION,
+            let: { driverId: { $toString: "$_id" } },
+            pipeline: [
+              {
+                $match: {
+                  $expr: { $eq: ["$driver_id", "$$driverId"] },
+                },
+              },
+            ],
+            as: "documents",
+          },
+        },
+        {
+          $unwind: {
+            path: "$documents",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $project: {
+            _id: 1,
+            driver_id: 1,
+            user_id: 1,
+            driver_unique_id: 1,
+            name: 1,
+            email: 1,
+            photo_url: 1,
+            vehicle_type: 1,
+            vehicle_number: 1,
+            vehicle_capacity: 1,
+            current_student_count: 1,
+            approval_status: 1,
+            approved_by: 1,
+            approved_at: 1,
+            rejection_reason: 1,
+            is_available: 1,
+            rating: 1,
+            total_trips: 1,
+            created_at: 1,
+            updated_at: 1,
+            user: {
+              phone_number: "$user.phone_number",
+              user_type: "$user.user_type",
+              is_active: "$user.is_active",
+              fcm_token: "$user.fcm_token",
+              last_login: "$user.last_login",
+            },
+            addresses: 1,
+            documents: 1,
+          },
+        },
+      ])
+      .toArray();
+
+    return result.length > 0 ? result[0] : null;
+  } catch (error) {
+    console.error("Error getting complete driver details:", error);
+    return null;
+  }
+};

@@ -56,6 +56,7 @@ export const ERROR_MESSAGES = {
     NO_UPDATES_PROVIDED: "No updates provided",
     FAILED_TO_FETCH_PARENT_PROFILE: "Failed to fetch parent profile",
     FAILED_TO_UPDATE_PARENT_PROFILE: "Failed to update parent profile",
+    DETAILS_NOT_FOUND: "Parent details not found",
   },
   ADDRESS: {
     ADDRESS_FIELDS_REQUIRED: "Street, city, state, and zipCode are required",
@@ -83,6 +84,7 @@ export const ERROR_MESSAGES = {
     DOCUMENTS_NOT_FOUND: "Driver documents not found",
     FAILED_TO_FETCH_DOCUMENTS: "Failed to fetch driver documents",
     FAILED_TO_UPDATE_DOCUMENTS: "Failed to update driver documents",
+    DETAILS_NOT_FOUND: "Driver details not found",
   },
   STUDENT: {
     NOT_FOUND: "Student not found",
@@ -326,6 +328,7 @@ export const SUCCESS_MESSAGES = {
   },
   PARENT: {
     PROFILE_UPDATED_SUCCESSFULLY: "Profile updated successfully",
+    DETAILS_FETCHED_SUCCESSFULLY: "Parent details fetched successfully",
   },
   ADDRESS: {
     ADDRESS_UPDATED_SUCCESSFULLY: "Address updated successfully",
@@ -335,6 +338,7 @@ export const SUCCESS_MESSAGES = {
     PROFILE_CREATED_SUCCESSFULLY: "Driver profile created successfully",
     ADDRESS_UPDATED_SUCCESSFULLY: "Driver address updated successfully",
     DOCUMENTS_UPDATED_SUCCESSFULLY: "Driver documents updated successfully",
+    DETAILS_FETCHED_SUCCESSFULLY: "Driver details fetched successfully",
   },
   STUDENT: {
     CREATED_SUCCESSFULLY: "Student created successfully",
