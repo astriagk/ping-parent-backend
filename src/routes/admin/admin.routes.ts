@@ -20,15 +20,16 @@ import {
   login,
   updateAdmin,
   updateAdminByAdminId,
+  updateDriverApprovalStatus,
   updateUser,
   verifyAdminAuthToken,
-} from "@controllers/admin.controller";
+} from "@controllers/admin/admin.controller";
 import { validate, verifyAdminToken } from "@middlewares";
 import {
   adminLoginSchema,
   createAdminSchema,
   updateAdminSchema,
-} from "@validations/admin.validation";
+} from "@validations/admin/admin.validation";
 import { updateUserSchema } from "@validations/auth.validation";
 
 const router = Router();
@@ -126,5 +127,12 @@ router.get("/drivers/:id/details", verifyAdminToken, getDriverCompleteDetails);
 
 // Get complete parent details by ID (for admin verification)
 router.get("/parents/:id/details", verifyAdminToken, getParentCompleteDetails);
+
+// Update driver approval status
+router.patch(
+  "/drivers/:id/approval-status",
+  verifyAdminToken,
+  updateDriverApprovalStatus,
+);
 
 export default router;

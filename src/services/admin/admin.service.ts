@@ -14,8 +14,8 @@ import {
   AdminLoginResponse,
   AdminResponse,
   AdminUpdateInput,
-} from "@models/admin.type";
-import { adminRepository } from "@repositories/admin.repository";
+} from "@models/admin/admin.type";
+import { adminRepository } from "@repositories/admin/admin.repository";
 import { generateAdminTokenPair } from "@services/token.service";
 import { comparePassword, generateUniqueCode, hashPassword } from "@utils";
 

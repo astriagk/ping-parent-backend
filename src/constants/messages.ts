@@ -268,6 +268,10 @@ export const ERROR_MESSAGES = {
     FAILED_TO_DELETE: "Failed to delete admin",
     ADMIN_ROLE_REQUIRED: "Admin role is required",
     INVALID_ADMIN_ROLE: "Admin role must be admin or superadmin",
+    INVALID_APPROVAL_STATUS:
+      "Invalid approval status. Must be 'pending', 'approved', or 'rejected'",
+    REJECTION_REASON_REQUIRED:
+      "Rejection reason is required when rejecting an admin",
   },
   ROLE: {
     NOT_FOUND: "Role not found",
@@ -339,6 +343,7 @@ export const SUCCESS_MESSAGES = {
     ADDRESS_UPDATED_SUCCESSFULLY: "Driver address updated successfully",
     DOCUMENTS_UPDATED_SUCCESSFULLY: "Driver documents updated successfully",
     DETAILS_FETCHED_SUCCESSFULLY: "Driver details fetched successfully",
+    APPROVAL_STATUS_UPDATED: "Driver approval status updated successfully",
   },
   STUDENT: {
     CREATED_SUCCESSFULLY: "Student created successfully",

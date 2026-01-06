@@ -1,6 +1,6 @@
 import { Router } from "express";
 
-import adminRoutes from "./admin.routes";
+import adminRoutes from "./admin/admin.routes";
 import auditLogsRoutes from "./audit_logs.routes";
 // Import routes in order matching Postman collection structure
 import authRoutes from "./auth.routes";

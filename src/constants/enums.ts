@@ -130,3 +130,9 @@ export enum AdminRole {
   SUPERADMIN = "superadmin",
   ADMIN = "admin",
 }
+
+export enum ApprovalStatus {
+  PENDING = "pending",
+  APPROVED = "approved",
+  REJECTED = "rejected",
+}

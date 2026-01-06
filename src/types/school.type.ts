@@ -9,6 +9,7 @@ export interface School {
   longitude: number;
   contact_number?: string;
   email?: string;
+  principal_name?: string;
   created_at: Date;
   updated_at?: Date;
 }

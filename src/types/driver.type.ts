@@ -1,3 +1,5 @@
+import { ApprovalStatus } from "@constants";
+
 // Table: drivers
 export interface Driver {
   _id?: any; // MongoDB internal ID
@@ -11,7 +13,7 @@ export interface Driver {
   vehicle_number: string;
   vehicle_capacity: number;
   current_student_count?: number;
-  approval_status?: "pending" | "approved" | "rejected";
+  approval_status?: ApprovalStatus;
   approved_by?: string;
   approved_at?: Date;
   rejection_reason?: string;

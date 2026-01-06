@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 import {
+  ApprovalStatus,
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
@@ -22,7 +23,7 @@ import {
   loginAdmin as loginAdminService,
   updateAdminByAdminId as updateAdminByAdminIdService,
   updateAdmin as updateAdminService,
-} from "@services/admin.service";
+} from "@services/admin/admin.service";
 import {
   activateUser as activateUserService,
   deactivateUser as deactivateUserService,
@@ -31,7 +32,10 @@ import {
   getUserById as getUserByIdService,
   updateUser as updateUserService,
 } from "@services/auth.service";
-import { getCompleteDriverDetailsById } from "@services/driver.service";
+import {
+  getCompleteDriverDetailsById,
+  updateDriverApprovalStatus as updateDriverApprovalStatusService,
+} from "@services/driver.service";
 import { getCompleteParentDetailsById } from "@services/parent.service";
 import {
   generateAdminAccessToken,
@@ -559,6 +563,64 @@ export const getParentCompleteDetails = asyncHandler(
       success: true,
       data: parentDetails,
       message: SUCCESS_MESSAGES.PARENT.DETAILS_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+// Update driver approval status
+export const updateDriverApprovalStatus = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params;
+    const { approval_status, rejection_reason } = req.body;
+    const adminId = req.admin?.adminId;
+
+    if (!adminId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.AUTH.ADMIN_ROLE_REQUIRED,
+      );
+    }
+
+    // Validate approval_status
+    if (
+      !approval_status ||
+      !Object.values(ApprovalStatus).includes(approval_status)
+    ) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.ADMIN.INVALID_APPROVAL_STATUS,
+      );
+    }
+
+    // If rejecting, rejection_reason should be provided
+    if (
+      approval_status === ApprovalStatus.REJECTED &&
+      !rejection_reason?.trim()
+    ) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.ADMIN.REJECTION_REASON_REQUIRED,
+      );
+    }
+
+    const updated = await updateDriverApprovalStatusService(
+      id,
+      approval_status as ApprovalStatus,
+      adminId,
+      rejection_reason,
+    );
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: null,
+      message: SUCCESS_MESSAGES.DRIVER.APPROVAL_STATUS_UPDATED,
     });
   },
 );

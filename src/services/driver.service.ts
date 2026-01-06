@@ -2,6 +2,7 @@ import { ObjectId } from "mongodb";
 
 import { getDB } from "@config";
 import {
+  ApprovalStatus,
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
@@ -541,5 +542,50 @@ export const getCompleteDriverDetailsById = async (
   } catch (error) {
     console.error("Error getting complete driver details:", error);
     return null;
+  }
+};
+
+/**
+ * Update driver approval status by user_id (for admin use)
+ */
+export const updateDriverApprovalStatus = async (
+  userId: string,
+  approvalStatus: ApprovalStatus,
+  adminId: string,
+  rejectionReason?: string,
+): Promise<boolean> => {
+  try {
+    const db = await getDB();
+
+    const updateData: any = {
+      approval_status: approvalStatus,
+      updated_at: new Date(),
+    };
+
+    if (approvalStatus === ApprovalStatus.APPROVED) {
+      updateData.approved_by = adminId;
+      updateData.approved_at = new Date();
+      updateData.rejection_reason = null;
+    } else if (approvalStatus === ApprovalStatus.REJECTED) {
+      updateData.approved_by = adminId;
+      updateData.approved_at = new Date();
+      updateData.rejection_reason = rejectionReason || null;
+    } else if (approvalStatus === ApprovalStatus.PENDING) {
+      updateData.approved_by = null;
+      updateData.approved_at = null;
+      updateData.rejection_reason = null;
+    }
+
+    const result = await db.collection(DRIVERS_COLLECTION).updateOne(
+      { user_id: userId },
+      {
+        $set: updateData,
+      },
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error("Error updating driver approval status:", error);
+    return false;
   }
 };
