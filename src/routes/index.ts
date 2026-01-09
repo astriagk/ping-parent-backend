@@ -2,23 +2,23 @@ import { Router } from "express";
 
 import { authRoutes } from "@modules/auth";
 
-import adminRoutes from "./admin/admin.routes";
-import auditLogsRoutes from "./audit_logs.routes";
+import adminRoutes from "../modules/admin/admin/admin.routes";
+import auditLogsRoutes from "../modules/admin/audit-log/audit_logs.routes";
+import roleRoutes from "../modules/admin/role/role.routes";
+import parentSubscriptionRoutes from "../modules/billing/parent-subscription/parent_subscription.routes";
+import paymentRoutes from "../modules/billing/payment/payment.routes";
+import subscriptionPlanRoutes from "../modules/billing/subscription-plan/subscription_plan.routes";
+import notificationRoutes from "../modules/notification/notification.routes";
+import ratingReviewRoutes from "../modules/reviews/rating_review.routes";
+import schoolRoutes from "../modules/school/school.routes";
 // Import routes in order matching Postman collection structure
-import dailyQrOtpRoutes from "./daily_qr_otp.routes";
-import driverRoutes from "./driver.routes";
-import driverStudentAssignmentRoutes from "./driverStudentAssignment.routes";
-import notificationRoutes from "./notification.routes";
-import parentRoutes from "./parent.routes";
-import parentSubscriptionRoutes from "./parent_subscription.routes";
-import paymentRoutes from "./payment.routes";
-import ratingReviewRoutes from "./rating_review.routes";
-import roleRoutes from "./role.routes";
-import schoolRoutes from "./school.routes";
-import studentRoutes from "./student.routes";
-import subscriptionPlanRoutes from "./subscription_plan.routes";
-import tripRoutes from "./trip.routes";
-import tripStudentRoutes from "./trip_student.routes";
+import dailyQrOtpRoutes from "../modules/trips/daily-qr-otp/daily_qr_otp.routes";
+import driverStudentAssignmentRoutes from "../modules/trips/driver-student-assignment/driverStudentAssignment.routes";
+import tripStudentRoutes from "../modules/trips/trip-student/trip_student.routes";
+import tripRoutes from "../modules/trips/trip/trip.routes";
+import driverRoutes from "../modules/users/driver/driver.routes";
+import parentRoutes from "../modules/users/parent/parent.routes";
+import studentRoutes from "../modules/users/student/student.routes";
 
 const router = Router();
 

@@ -2,11 +2,22 @@ import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import { OTP_VERIFICATION_COLLECTION, UserRole } from "@shared/constants";
-import { User } from "@shared/types/auth.type";
 
 import { userRepository } from "./auth.repository";
+import { User } from "./auth.types";
 
 // User management
+
+export const createUser = async (data: User) => {
+  return await userRepository.create(data);
+};
+
+export const getUserById = async (id: string): Promise<WithId<User> | null> => {
+  if (!ObjectId.isValid(id)) {
+    return null;
+  }
+  return await userRepository.findById(id);
+};
 
 export const getUserByEmail = async (
   email: string,

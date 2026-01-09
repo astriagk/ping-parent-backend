@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 import { ObjectId } from "mongodb";
 
+import { getAllRoles } from "@modules/admin/role/role.service";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
@@ -10,7 +11,6 @@ import {
   UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { getAllRoles } from "@shared/services/role.service";
 import {
   generateAccessToken,
   verifyAccessToken,
@@ -21,8 +21,10 @@ import { userRepository } from "./auth.repository";
 import {
   activateUser,
   createPhoneOtp,
+  createUser,
   deactivateUser,
   getAllUsers,
+  getUserById,
   getUserByPhone,
   verifyPhoneOtp as verifyOtpService,
 } from "./auth.service";
@@ -48,13 +50,7 @@ export const verifyAuthToken = asyncHandler(
     try {
       const payload = verifyAccessToken(token);
 
-      if (!ObjectId.isValid(payload.userId)) {
-        throw new ApiError(
-          HTTP_STATUS.UNAUTHORIZED,
-          ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
-        );
-      }
-      const user = await userRepository.findById(payload.userId);
+      const user = await getUserById(payload.userId);
 
       if (!user) {
         throw new ApiError(
@@ -322,7 +318,7 @@ export const verifyPhoneOtp = asyncHandler(
         updated_at: new Date(),
       };
 
-      await userRepository.create(newUserData);
+      await createUser(newUserData);
 
       // Fetch the newly created user
       user = await getUserByPhone(normalizedPhone);
