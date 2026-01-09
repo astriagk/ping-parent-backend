@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   createRatingReview as createRatingReviewService,
   deleteRatingReview,
@@ -10,7 +14,7 @@ import {
   getRatingReviewsByDriverId,
   getRatingReviewsByUserId,
   updateRatingReview,
-} from "@services/rating_review.service";
+} from "@shared/services/rating_review.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
 export const submitRatingReview = asyncHandler(

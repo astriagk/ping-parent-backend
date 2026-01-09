@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { SubscriptionStatus, VALIDATION_MESSAGES } from "@constants";
+import { SubscriptionStatus, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createParentSubscriptionSchema = Joi.object({
   // parent_id is NOT included - derived from authenticated user

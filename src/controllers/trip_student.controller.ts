@@ -6,8 +6,8 @@ import {
   HTTP_STATUS,
   PickupStatus,
   SUCCESS_MESSAGES,
-} from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   getTripStudentById,
   getTripStudentByTripAndStudent,
@@ -20,7 +20,7 @@ import {
   recordDrop,
   recordPickup,
   updateTripStudent,
-} from "@services/trip_student.service";
+} from "@shared/services/trip_student.service";
 
 /**
  * Get trip student by ID

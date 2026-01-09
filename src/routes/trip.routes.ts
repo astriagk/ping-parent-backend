@@ -11,7 +11,11 @@ import {
   updateTripProfile,
   updateTripStatus,
 } from "@controllers/trip.controller";
-import { validate, verifyAdminToken, verifyDriverToken } from "@middlewares";
+import {
+  validate,
+  verifyAdminToken,
+  verifyDriverToken,
+} from "@shared/middlewares";
 import {
   createTripSchema,
   updateTripSchema,

@@ -10,7 +10,11 @@ import {
   getSubscriptionById,
   updateSubscriptionById,
 } from "@controllers/parent_subscription.controller";
-import { validate, verifyAdminToken, verifyParentToken } from "@middlewares";
+import {
+  validate,
+  verifyAdminToken,
+  verifyParentToken,
+} from "@shared/middlewares";
 import {
   createParentSubscriptionSchema,
   updateParentSubscriptionSchema,

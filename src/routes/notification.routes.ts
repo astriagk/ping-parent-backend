@@ -7,7 +7,7 @@ import {
   markAllAsRead,
   markAsRead,
 } from "@controllers/notification.controller";
-import { verifyToken_Middleware } from "@middlewares";
+import { verifyToken_Middleware } from "@shared/middlewares";
 
 const router = Router();
 

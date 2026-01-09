@@ -9,7 +9,7 @@ import {
   submitRatingReview,
   updateRatingReviewById,
 } from "@controllers/rating_review.controller";
-import { validate, verifyParentToken } from "@middlewares";
+import { validate, verifyParentToken } from "@shared/middlewares";
 import {
   createRatingReviewSchema,
   updateRatingReviewSchema,

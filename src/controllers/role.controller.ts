@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   createRole as createRoleService,
   deleteRole as deleteRoleService,
   getAllRoles,
   getRoleById,
   updateRole as updateRoleService,
-} from "@services/role.service";
+} from "@shared/services/role.service";
 
 // Create role
 export const createRole = asyncHandler(async (req: Request, res: Response) => {

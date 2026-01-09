@@ -1,7 +1,7 @@
 import Joi from "joi";
 
-import { AttendanceStatus, PickupStatus } from "@constants";
-import { VALIDATION_MESSAGES } from "@constants";
+import { AttendanceStatus, PickupStatus } from "@shared/constants";
+import { VALIDATION_MESSAGES } from "@shared/constants";
 
 /**
  * Schema for marking attendance (driver marks student present/absent)

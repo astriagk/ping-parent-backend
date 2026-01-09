@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { AdminRole, VALIDATION_MESSAGES } from "@constants";
+import { AdminRole, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const adminLoginSchema = Joi.object({
   email: Joi.string().email().required().messages({

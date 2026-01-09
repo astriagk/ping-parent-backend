@@ -7,7 +7,7 @@ import {
   getById,
   updateRole,
 } from "@controllers/role.controller";
-import { validate, verifyAdminToken } from "@middlewares";
+import { validate, verifyAdminToken } from "@shared/middlewares";
 import {
   createRoleSchema,
   updateRoleSchema,

@@ -12,7 +12,7 @@ import {
   recordStudentPickup,
   updateTripStudentRecord,
 } from "@controllers/trip_student.controller";
-import { validate, verifyDriverToken } from "@middlewares";
+import { validate, verifyDriverToken } from "@shared/middlewares";
 import {
   markAttendanceSchema,
   recordDropSchema,

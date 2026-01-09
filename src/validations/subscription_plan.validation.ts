@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { PlanType, VALIDATION_MESSAGES } from "@constants";
+import { PlanType, VALIDATION_MESSAGES } from "@shared/constants";
 
 // Update subscription plan schema (admin only)
 export const updateSubscriptionPlanSchema = Joi.object({

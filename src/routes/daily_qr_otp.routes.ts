@@ -5,7 +5,7 @@ import {
   getQrOtp,
   verifyQrOtp,
 } from "@controllers/daily_qr_otp.controller";
-import { validate, verifyToken_Middleware } from "@middlewares";
+import { validate, verifyToken_Middleware } from "@shared/middlewares";
 import {
   generateQrOtpSchema,
   verifyQrOtpSchema,

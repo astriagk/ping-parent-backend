@@ -11,7 +11,7 @@ import {
   updateStudent,
   updateStudentByStudentId,
 } from "@controllers/student.controller";
-import { validate, verifyParentToken } from "@middlewares";
+import { validate, verifyParentToken } from "@shared/middlewares";
 import {
   createStudentSchema,
   updateStudentSchema,

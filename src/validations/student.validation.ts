@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { Gender, VALIDATION_MESSAGES } from "@constants";
+import { Gender, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createStudentSchema = Joi.object({
   school_id: Joi.string().required().messages({

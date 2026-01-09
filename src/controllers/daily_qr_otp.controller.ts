@@ -1,12 +1,16 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   generateQrOtp as generateQrOtpService,
   getQrOtpByStudentAndTrip,
   verifyQrOtp as verifyQrOtpService,
-} from "@services/daily_qr_otp.service";
+} from "@shared/services/daily_qr_otp.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
 

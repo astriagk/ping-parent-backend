@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { TripType, VALIDATION_MESSAGES } from "@constants";
+import { TripType, VALIDATION_MESSAGES } from "@shared/constants";
 
 // Schema for generating QR code and OTP
 export const generateQrOtpSchema = Joi.object({

@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { TripStatus, TripType, VALIDATION_MESSAGES } from "@constants";
+import { TripStatus, TripType, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createTripSchema = Joi.object({
   // driver_id is derived from authenticated user (NOT in request body)

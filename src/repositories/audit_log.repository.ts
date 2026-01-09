@@ -1,9 +1,8 @@
 import { WithId } from "mongodb";
 
-import { AUDIT_LOGS_COLLECTION } from "@constants";
-import { AuditLog, AuditLogFilters } from "@models/audit_log.type";
-
-import { BaseRepository } from "./base.repository";
+import { AUDIT_LOGS_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { AuditLog, AuditLogFilters } from "@shared/types/audit_log.type";
 
 export class AuditLogRepository extends BaseRepository<AuditLog> {
   constructor() {

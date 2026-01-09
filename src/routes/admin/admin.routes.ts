@@ -24,13 +24,13 @@ import {
   updateUser,
   verifyAdminAuthToken,
 } from "@controllers/admin/admin.controller";
-import { validate, verifyAdminToken } from "@middlewares";
+import { updateUserSchema } from "@modules/auth/auth.validation";
+import { validate, verifyAdminToken } from "@shared/middlewares";
 import {
   adminLoginSchema,
   createAdminSchema,
   updateAdminSchema,
 } from "@validations/admin/admin.validation";
-import { updateUserSchema } from "@validations/auth.validation";
 
 const router = Router();
 

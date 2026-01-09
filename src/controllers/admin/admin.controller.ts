@@ -1,14 +1,23 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
+import { userRepository } from "@modules/auth/auth.repository";
+import {
+  activateUser as activateUserService,
+  deactivateUser as deactivateUserService,
+  deleteUser as deleteUserService,
+  getAllUsers as getAllUsersService,
+  // getUserById as getUserByIdService,
+  updateUser as updateUserService,
+} from "@modules/auth/auth.service";
 import {
   ApprovalStatus,
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
   UserRole,
-} from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   activateAdminByAdminId as activateAdminByAdminIdService,
   activateAdmin as activateAdminService,
@@ -23,24 +32,16 @@ import {
   loginAdmin as loginAdminService,
   updateAdminByAdminId as updateAdminByAdminIdService,
   updateAdmin as updateAdminService,
-} from "@services/admin/admin.service";
-import {
-  activateUser as activateUserService,
-  deactivateUser as deactivateUserService,
-  deleteUser as deleteUserService,
-  getAllUsers as getAllUsersService,
-  getUserById as getUserByIdService,
-  updateUser as updateUserService,
-} from "@services/auth.service";
+} from "@shared/services/admin/admin.service";
 import {
   getCompleteDriverDetailsById,
   updateDriverApprovalStatus as updateDriverApprovalStatusService,
-} from "@services/driver.service";
-import { getCompleteParentDetailsById } from "@services/parent.service";
+} from "@shared/services/driver.service";
+import { getCompleteParentDetailsById } from "@shared/services/parent.service";
 import {
   generateAdminAccessToken,
   verifyAdminAccessToken,
-} from "@services/token.service";
+} from "@shared/services/token.service";
 
 // Admin login
 export const login = asyncHandler(async (req: Request, res: Response) => {
@@ -222,7 +223,7 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const user = await getUserByIdService(id);
+  const user = await userRepository.findById(id);
 
   if (!user) {
     throw new ApiError(

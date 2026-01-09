@@ -1,9 +1,10 @@
 import { Router } from "express";
 
+import { authRoutes } from "@modules/auth";
+
 import adminRoutes from "./admin/admin.routes";
 import auditLogsRoutes from "./audit_logs.routes";
 // Import routes in order matching Postman collection structure
-import authRoutes from "./auth.routes";
 import dailyQrOtpRoutes from "./daily_qr_otp.routes";
 import driverRoutes from "./driver.routes";
 import driverStudentAssignmentRoutes from "./driverStudentAssignment.routes";

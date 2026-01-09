@@ -6,7 +6,7 @@ import {
   updateAddress,
   updateProfile,
 } from "@controllers/parent.controller";
-import { validate, verifyParentToken } from "@middlewares";
+import { validate, verifyParentToken } from "@shared/middlewares";
 import {
   updateAddressSchema,
   updateParentProfileSchema,

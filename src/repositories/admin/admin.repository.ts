@@ -1,9 +1,8 @@
 import { UpdateFilter, WithId } from "mongodb";
 
-import { ADMIN_PORTAL_COLLECTION } from "@constants";
-import { Admin } from "@models/admin/admin.type";
-
-import { BaseRepository } from "../base.repository";
+import { ADMIN_PORTAL_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { Admin } from "@shared/types/admin/admin.type";
 
 export class AdminRepository extends BaseRepository<Admin> {
   constructor() {

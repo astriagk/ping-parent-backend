@@ -7,7 +7,7 @@ import {
   getSubscriptionPlan,
   updateSubscriptionPlan,
 } from "@controllers/subscription_plan.controller";
-import { validate, verifyAdminToken } from "@middlewares";
+import { validate, verifyAdminToken } from "@shared/middlewares";
 import { updateSubscriptionPlanSchema } from "@validations/subscription_plan.validation";
 
 const router = Router();

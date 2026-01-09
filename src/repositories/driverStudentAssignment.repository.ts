@@ -3,10 +3,9 @@ import { WithId } from "mongodb";
 import {
   AssignmentStatus,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
-} from "@constants";
-import { DriverStudentAssignment } from "@models/driverStudentAssignment.type";
-
-import { BaseRepository } from "./base.repository";
+} from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { DriverStudentAssignment } from "@shared/types/driverStudentAssignment.type";
 
 export class DriverStudentAssignmentRepository extends BaseRepository<DriverStudentAssignment> {
   constructor() {

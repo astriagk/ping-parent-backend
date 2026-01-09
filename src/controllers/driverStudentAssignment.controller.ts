@@ -5,8 +5,8 @@ import {
   HTTP_STATUS,
   SUCCESS_MESSAGES,
   UserRole,
-} from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   approveAssignment,
   createDriverStudentAssignment as createAssignmentService,
@@ -20,7 +20,7 @@ import {
   getPendingAssignmentsByDriverUserId,
   rejectAssignment,
   updateAssignment,
-} from "@services/driverStudentAssignment.service";
+} from "@shared/services/driverStudentAssignment.service";
 
 /**
  * Create driver-student assignment

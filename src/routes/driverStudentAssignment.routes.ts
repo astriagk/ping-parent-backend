@@ -19,7 +19,7 @@ import {
   verifyAdminToken,
   verifyDriverToken,
   verifyToken_Middleware,
-} from "@middlewares";
+} from "@shared/middlewares";
 import {
   createDriverStudentAssignmentSchema,
   updateDriverStudentAssignmentSchema,

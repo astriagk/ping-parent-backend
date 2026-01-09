@@ -2,10 +2,10 @@ import cors from "cors";
 import express, { NextFunction, Request, Response } from "express";
 import * as swaggerUi from "swagger-ui-express";
 
-import { swaggerDocument, swaggerOptions } from "@config";
-import { errorHandler, notFound } from "@middlewares";
 import apiRoutes from "@routes";
-import { logger } from "@utils";
+import { swaggerDocument, swaggerOptions } from "@shared/config";
+import { errorHandler, notFound } from "@shared/middlewares";
+import { logger } from "@shared/utils";
 
 const app = express();
 

@@ -1,10 +1,9 @@
 import { WithId } from "mongodb";
 
-import { getDB } from "@config";
-import { NOTIFICATIONS_COLLECTION } from "@constants";
-import { Notification } from "@models/notification.type";
-
-import { BaseRepository } from "./base.repository";
+import { getDB } from "@shared/config";
+import { NOTIFICATIONS_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { Notification } from "@shared/types/notification.type";
 
 export class NotificationRepository extends BaseRepository<Notification> {
   constructor() {
