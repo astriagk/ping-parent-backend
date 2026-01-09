@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createRoleSchema = Joi.object({
   role_name: Joi.string().min(2).max(50).required().messages({

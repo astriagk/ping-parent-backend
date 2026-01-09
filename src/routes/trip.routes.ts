@@ -11,7 +11,11 @@ import {
   updateTripProfile,
   updateTripStatus,
 } from "@controllers/trip.controller";
-import { validate, verifyAdminToken, verifyDriverToken } from "@middlewares";
+import {
+  validate,
+  verifyAdminToken,
+  verifyDriverToken,
+} from "@shared/middlewares";
 import {
   createTripSchema,
   updateTripSchema,
@@ -19,6 +23,9 @@ import {
 } from "@validations/trip.validation";
 
 const router = Router();
+
+// Admin routes
+router.get("/admin/all-trips", verifyAdminToken, getAllTripsController);
 
 // All routes require driver authentication
 router.use(verifyDriverToken);
@@ -50,8 +57,5 @@ router.put("/:id", validate(updateTripSchema), updateTripProfile);
 
 // Delete Trip
 router.delete("/:id", deleteTripProfile);
-
-// Admin routes
-router.get("/admin/all-trips", verifyAdminToken, getAllTripsController);
 
 export default router;

@@ -322,7 +322,7 @@ export const studentRepository = new StudentRepository();
 ```typescript
 import { WithId } from "mongodb";
 
-import { getDB } from "@config";
+import { getDB } from "@shared/config";
 import {
   AlphabetType,
   ERROR_MESSAGES,
@@ -663,7 +663,7 @@ parent_addresses.parent_id = parents._id
 
 ```typescript
 // services/student.service.ts (or create a shared service)
-import { getDB } from "@config";
+import { getDB } from "@shared/config";
 import { DRIVERS_COLLECTION, PARENTS_COLLECTION } from "@constants";
 
 /**

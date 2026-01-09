@@ -1022,7 +1022,7 @@ throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ENTITY.NOT_FOUND);
 The project uses TypeScript path aliases:
 
 ```typescript
-import { something } from "@config";
+import { something } from "@shared/config";
 // src/config
 import { HTTP_STATUS } from "@constants";
 // src/constants

@@ -3,10 +3,9 @@ import { WithId } from "mongodb";
 import {
   PARENT_SUBSCRIPTIONS_COLLECTION,
   SubscriptionStatus,
-} from "@constants";
-import { ParentSubscription } from "@models/parent_subscription.type";
-
-import { BaseRepository } from "./base.repository";
+} from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { ParentSubscription } from "@shared/types/parent_subscription.type";
 
 export class ParentSubscriptionRepository extends BaseRepository<ParentSubscription> {
   constructor() {

@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES, VehicleType } from "@constants";
+import { VALIDATION_MESSAGES, VehicleType } from "@shared/constants";
 
 export const createDriverProfileSchema = Joi.object({
   name: Joi.string().min(2).max(100).required().messages({

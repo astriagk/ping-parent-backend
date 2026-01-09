@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { VALIDATION_MESSAGES } from "@shared/constants";
 
 export const updateParentProfileSchema = Joi.object({
   name: Joi.string().min(2).max(100).optional().messages({

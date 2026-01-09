@@ -1,12 +1,16 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { asyncHandler } from "@middlewares";
-import { AuditLogFilters } from "@models/audit_log.type";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { asyncHandler } from "@shared/middlewares";
 import {
   getAuditLogById as getAuditLogByIdService,
   getAuditLogs as getAuditLogsService,
-} from "@services/audit_log.service";
+} from "@shared/services/audit_log.service";
+import { AuditLogFilters } from "@shared/types/audit_log.type";
 
 /**
  * Get all audit logs with filters

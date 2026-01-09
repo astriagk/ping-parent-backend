@@ -11,7 +11,7 @@ import {
   validate,
   verifyAdminToken,
   verifyToken_Middleware,
-} from "@middlewares";
+} from "@shared/middlewares";
 import {
   createSchoolSchema,
   updateSchoolSchema,

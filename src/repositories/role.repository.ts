@@ -1,9 +1,8 @@
 import { WithId } from "mongodb";
 
-import { ROLES_COLLECTION } from "@constants";
-import { Role } from "@models/role.type";
-
-import { BaseRepository } from "./base.repository";
+import { ROLES_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { Role } from "@shared/types/role.type";
 
 export class RoleRepository extends BaseRepository<Role> {
   constructor() {

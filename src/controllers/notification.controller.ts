@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   getNotificationsByUserId,
   getUnreadCountByUserId,
   getUnreadNotificationsByUserId,
   markAllNotificationsAsRead,
   markNotificationAsRead,
-} from "@services/notification.service";
+} from "@shared/services/notification.service";
 
 // Get all notifications for authenticated user
 export const getNotifications = asyncHandler(

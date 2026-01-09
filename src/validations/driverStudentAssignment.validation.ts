@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { AssignmentStatus, VALIDATION_MESSAGES } from "@constants";
+import { AssignmentStatus, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createDriverStudentAssignmentSchema = Joi.object({
   // driver_id is derived from authenticated user (for drivers)

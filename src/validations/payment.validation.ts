@@ -5,7 +5,7 @@ import {
   PaymentStatus,
   PaymentType,
   VALIDATION_MESSAGES,
-} from "@constants";
+} from "@shared/constants";
 
 export const createPaymentSchema = Joi.object({
   // parent_id is NOT included - derived from authenticated user

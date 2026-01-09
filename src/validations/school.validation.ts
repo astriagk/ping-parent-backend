@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createSchoolSchema = Joi.object({
   school_name: Joi.string().min(3).max(200).required().messages({

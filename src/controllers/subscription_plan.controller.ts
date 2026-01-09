@@ -1,14 +1,18 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   activateSubscriptionPlan as activateSubscriptionPlanService,
   deactivateSubscriptionPlan as deactivateSubscriptionPlanService,
   getAllSubscriptionPlans as getAllSubscriptionPlansService,
   getSubscriptionPlanById,
   updateSubscriptionPlan as updateSubscriptionPlanService,
-} from "@services/subscription_plan.service";
+} from "@shared/services/subscription_plan.service";
 
 /**
  * Get all active subscription plans

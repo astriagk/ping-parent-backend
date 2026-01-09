@@ -4,7 +4,7 @@ import {
   getAuditLogById,
   getAuditLogs,
 } from "@controllers/audit_log.controller";
-import { verifyAdminToken } from "@middlewares";
+import { verifyAdminToken } from "@shared/middlewares";
 
 const router = Router();
 

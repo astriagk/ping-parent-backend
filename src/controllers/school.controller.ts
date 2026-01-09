@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   createSchool as createSchoolService,
   deleteSchool as deleteSchoolService,
@@ -11,7 +15,7 @@ import {
   getSchoolsByState,
   searchSchools,
   updateSchool as updateSchoolService,
-} from "@services/school.service";
+} from "@shared/services/school.service";
 
 export const createSchool = asyncHandler(
   async (req: Request, res: Response) => {

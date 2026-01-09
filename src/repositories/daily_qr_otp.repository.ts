@@ -1,9 +1,8 @@
 import { WithId } from "mongodb";
 
-import { DAILY_QR_OTP_COLLECTION } from "@constants";
-import { DailyQrOtp } from "@models/daily_qr_otp.type";
-
-import { BaseRepository } from "./base.repository";
+import { DAILY_QR_OTP_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { DailyQrOtp } from "@shared/types/daily_qr_otp.type";
 
 export class DailyQrOtpRepository extends BaseRepository<DailyQrOtp> {
   constructor() {

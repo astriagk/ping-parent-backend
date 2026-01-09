@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { VALIDATION_MESSAGES } from "@shared/constants";
 
 // NOTE: parent_id is NOT included - it's derived from authenticated user
 export const createRatingReviewSchema = Joi.object({

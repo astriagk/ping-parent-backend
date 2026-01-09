@@ -11,7 +11,7 @@ import {
   updateProfile,
   upsertAddress,
 } from "@controllers/driver.controller";
-import { validate, verifyDriverToken } from "@middlewares";
+import { validate, verifyDriverToken } from "@shared/middlewares";
 import {
   createDriverDocumentsSchema,
   createDriverProfileSchema,

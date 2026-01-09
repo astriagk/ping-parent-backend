@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   cancelParentSubscription,
   createParentSubscription as createParentSubscriptionService,
@@ -11,7 +15,7 @@ import {
   getParentSubscriptionById,
   getParentSubscriptionsByUserId,
   updateParentSubscription,
-} from "@services/parent_subscription.service";
+} from "@shared/services/parent_subscription.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
 

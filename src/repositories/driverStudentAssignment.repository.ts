@@ -3,10 +3,9 @@ import { WithId } from "mongodb";
 import {
   AssignmentStatus,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
-} from "@constants";
-import { DriverStudentAssignment } from "@models/driverStudentAssignment.type";
-
-import { BaseRepository } from "./base.repository";
+} from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { DriverStudentAssignment } from "@shared/types/driverStudentAssignment.type";
 
 export class DriverStudentAssignmentRepository extends BaseRepository<DriverStudentAssignment> {
   constructor() {
@@ -48,7 +47,9 @@ export class DriverStudentAssignmentRepository extends BaseRepository<DriverStud
   ): Promise<WithId<DriverStudentAssignment>[]> {
     return await this.findMany({
       driver_id: driverId,
-      assignment_status: AssignmentStatus.PENDING,
+      assignment_status: {
+        $in: [AssignmentStatus.PENDING, AssignmentStatus.PARENT_REQUESTED],
+      },
     });
   }
 

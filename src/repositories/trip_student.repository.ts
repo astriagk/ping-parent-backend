@@ -4,10 +4,9 @@ import {
   AttendanceStatus,
   PickupStatus,
   TRIP_STUDENTS_COLLECTION,
-} from "@constants";
-import { TripStudent } from "@models/trip_student.type";
-
-import { BaseRepository } from "./base.repository";
+} from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { TripStudent } from "@shared/types/trip_student.type";
 
 export class TripStudentRepository extends BaseRepository<TripStudent> {
   constructor() {

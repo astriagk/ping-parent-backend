@@ -1,7 +1,11 @@
 import { Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS, SUCCESS_MESSAGES } from "@constants";
-import { ApiError, asyncHandler } from "@middlewares";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   createDriverProfile,
   getDriverAddressByUserId,
@@ -12,8 +16,8 @@ import {
   updateDriverProfile,
   upsertDriverAddressByUserId,
   upsertDriverDocumentsByUserId,
-} from "@services/driver.service";
-import { assignTrimmedFields } from "@utils";
+} from "@shared/services/driver.service";
+import { assignTrimmedFields } from "@shared/utils";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;

@@ -1,9 +1,8 @@
 import { WithId } from "mongodb";
 
-import { SUBSCRIPTION_PLANS_COLLECTION } from "@constants";
-import { SubscriptionPlan } from "@models/subscription_plan.type";
-
-import { BaseRepository } from "./base.repository";
+import { SUBSCRIPTION_PLANS_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+import { SubscriptionPlan } from "@shared/types/subscription_plan.type";
 
 export class SubscriptionPlanRepository extends BaseRepository<SubscriptionPlan> {
   constructor() {

@@ -1,6 +1,6 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@constants";
+import { VALIDATION_MESSAGES } from "@shared/constants";
 
 // Schema for marking notification as read
 export const markAsReadSchema = Joi.object({

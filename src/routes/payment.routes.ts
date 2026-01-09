@@ -11,7 +11,11 @@ import {
   refundPaymentById,
   updatePaymentById,
 } from "@controllers/payment.controller";
-import { validate, verifyAdminToken, verifyParentToken } from "@middlewares";
+import {
+  validate,
+  verifyAdminToken,
+  verifyParentToken,
+} from "@shared/middlewares";
 import {
   createPaymentSchema,
   updatePaymentSchema,
