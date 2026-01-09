@@ -1,4 +1,4 @@
-export type Gender = "male" | "female" | "other";
+import { Gender } from "@shared/constants";
 
 export interface Student {
   _id?: any; // MongoDB internal ID

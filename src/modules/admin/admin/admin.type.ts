@@ -1,4 +1,5 @@
-// Table: admin_portal
+import { UserRole } from "@shared/constants/enums";
+
 export interface Admin {
   _id?: any; // MongoDB internal ID
   admin_id: string;
@@ -6,29 +7,26 @@ export interface Admin {
   password_hash: string;
   email: string;
   phone_number?: string;
-  admin_role: "admin" | "superadmin";
+  admin_role: UserRole;
   is_active: boolean;
   last_login?: Date;
   created_at: Date;
   updated_at?: Date;
 }
 
-// Admin login request
 export interface AdminLoginInput {
   email: string;
   password: string;
 }
 
-// Admin creation input (for superadmin only)
 export interface AdminCreateInput {
   username: string;
   email: string;
   password: string;
   phone_number?: string;
-  admin_role: "admin" | "superadmin";
+  admin_role: UserRole;
 }
 
-// Admin update input
 export interface AdminUpdateInput {
   username?: string;
   email?: string;
@@ -36,26 +34,23 @@ export interface AdminUpdateInput {
   is_active?: boolean;
 }
 
-// Admin password change input
 export interface AdminPasswordChangeInput {
   current_password: string;
   new_password: string;
 }
 
-// Admin response (without password hash)
 export interface AdminResponse {
   admin_id: string;
   username: string;
   email: string;
   phone_number?: string;
-  admin_role: "admin" | "superadmin";
+  admin_role: UserRole;
   is_active: boolean;
   last_login?: Date;
   created_at: Date;
   updated_at?: Date;
 }
 
-// Admin login response
 export interface AdminLoginResponse {
   admin: AdminResponse;
   access_token: string;

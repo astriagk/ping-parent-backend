@@ -1,4 +1,4 @@
-import { ApprovalStatus } from "@shared/constants";
+import { ApprovalStatus, VehicleType } from "@shared/constants";
 
 // Table: drivers
 export interface Driver {
@@ -9,7 +9,7 @@ export interface Driver {
   name: string;
   email?: string;
   photo_url?: string;
-  vehicle_type: "van" | "auto" | "bus";
+  vehicle_type: VehicleType;
   vehicle_number: string;
   vehicle_capacity: number;
   current_student_count?: number;

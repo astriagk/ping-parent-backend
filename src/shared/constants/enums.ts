@@ -136,3 +136,8 @@ export enum ApprovalStatus {
   APPROVED = "approved",
   REJECTED = "rejected",
 }
+
+export enum AuditAction {
+  SUCCESS = "success",
+  FAILURE = "failure",
+}
