@@ -1,8 +1,9 @@
 import { WithId } from "mongodb";
 
-import { Payment } from "@modules/billing/payment/payment.type";
 import { PAYMENTS_COLLECTION, PaymentStatus } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
+
+import { Payment } from "./payment.type";
 
 export class PaymentRepository extends BaseRepository<Payment> {
   constructor() {

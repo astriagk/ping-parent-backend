@@ -1,16 +1,6 @@
 import { ObjectId } from "mongodb";
 
-import { User } from "@modules/auth/auth.types";
-import {
-  Driver,
-  DriverAddress,
-  DriverAddressInput,
-  DriverDocument,
-  DriverDocumentInput,
-  DriverDocumentUpdate,
-  DriverInput,
-  DriverProfileUpdate,
-} from "@modules/users/driver/driver.type";
+import { User } from "@modules/auth/auth.type";
 import { getDB } from "@shared/config";
 import {
   ApprovalStatus,
@@ -21,6 +11,17 @@ import {
   UniqueCodeTypes,
 } from "@shared/constants";
 import { generateUniqueCode } from "@shared/utils";
+
+import {
+  Driver,
+  DriverAddress,
+  DriverAddressInput,
+  DriverDocument,
+  DriverDocumentInput,
+  DriverDocumentUpdate,
+  DriverInput,
+  DriverProfileUpdate,
+} from "./driver.type";
 
 /**
  * Get driver profile by user_id

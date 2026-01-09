@@ -1,18 +1,19 @@
 import { Request, Response } from "express";
 
 import {
-  createRole as createRoleService,
-  deleteRole as deleteRoleService,
-  getAllRoles,
-  getRoleById,
-  updateRole as updateRoleService,
-} from "@modules/admin/role/role.service";
-import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
+
+import {
+  createRole as createRoleService,
+  deleteRole as deleteRoleService,
+  getRoleById as getRoleByIdService,
+  getAllRoles as rolesService,
+  updateRole as updateRoleService,
+} from "./role.service";
 
 // Create role
 export const createRole = asyncHandler(async (req: Request, res: Response) => {
@@ -28,8 +29,8 @@ export const createRole = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Get all roles
-export const getAll = asyncHandler(async (req: Request, res: Response) => {
-  const roles = await getAllRoles();
+export const getAllRoles = asyncHandler(async (req: Request, res: Response) => {
+  const roles = await rolesService();
 
   return res.status(HTTP_STATUS.OK).json({
     success: true,
@@ -39,10 +40,10 @@ export const getAll = asyncHandler(async (req: Request, res: Response) => {
 });
 
 // Get role by ID
-export const getById = asyncHandler(async (req: Request, res: Response) => {
+export const getRoleById = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params;
 
-  const role = await getRoleById(id);
+  const role = await getRoleByIdService(id);
 
   if (!role) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ROLE.NOT_FOUND);

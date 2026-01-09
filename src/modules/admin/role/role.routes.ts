@@ -1,31 +1,29 @@
 import { Router } from "express";
 
+import { validate, verifyAdminToken } from "@shared/middlewares";
+
 import {
   createRole,
   deleteRole,
-  getAll,
-  getById,
+  getAllRoles,
+  getRoleById,
   updateRole,
-} from "@modules/admin/role/role.controller";
-import {
-  createRoleSchema,
-  updateRoleSchema,
-} from "@modules/admin/role/role.validation";
-import { validate, verifyAdminToken } from "@shared/middlewares";
+} from "./role.controller";
+import { createRoleSchema, updateRoleSchema } from "./role.validation";
 
 const router = Router();
 
 // All routes require admin authentication
 
 // 01. Get All Roles
-router.get("/", verifyAdminToken, getAll);
+router.get("/", verifyAdminToken, getAllRoles);
 
 // 02. Create Role
 router.post("/", verifyAdminToken, validate(createRoleSchema), createRole);
 
 // Additional Routes
 // Get Role by ID
-router.get("/:id", verifyAdminToken, getById);
+router.get("/:id", verifyAdminToken, getRoleById);
 
 // Update Role
 router.put("/:id", verifyAdminToken, validate(updateRoleSchema), updateRole);

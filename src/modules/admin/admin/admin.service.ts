@@ -1,14 +1,5 @@
 import { WithId } from "mongodb";
 
-import { adminRepository } from "@modules/admin/admin/admin.repository";
-import {
-  Admin,
-  AdminCreateInput,
-  AdminLoginInput,
-  AdminLoginResponse,
-  AdminResponse,
-  AdminUpdateInput,
-} from "@modules/admin/admin/admin.type";
 import {
   AdminRole,
   ERROR_MESSAGES,
@@ -22,6 +13,16 @@ import {
   generateUniqueCode,
   hashPassword,
 } from "@shared/utils";
+
+import { adminRepository } from "./admin.repository";
+import {
+  Admin,
+  AdminCreateInput,
+  AdminLoginInput,
+  AdminLoginResponse,
+  AdminResponse,
+  AdminUpdateInput,
+} from "./admin.type";
 
 /**
  * Format admin response by removing sensitive fields

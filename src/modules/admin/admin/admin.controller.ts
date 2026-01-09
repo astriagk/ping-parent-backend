@@ -2,21 +2,6 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 import {
-  activateAdminByAdminId as activateAdminByAdminIdService,
-  activateAdmin as activateAdminService,
-  createAdmin as createAdminService,
-  createInitialSuperAdmin as createInitialSuperAdminService,
-  deactivateAdminByAdminId as deactivateAdminByAdminIdService,
-  deactivateAdmin as deactivateAdminService,
-  getAdminByAdminId,
-  getAdminByAdminIdFormatted,
-  getAdminById,
-  getAllAdmins,
-  loginAdmin as loginAdminService,
-  updateAdminByAdminId as updateAdminByAdminIdService,
-  updateAdmin as updateAdminService,
-} from "@modules/admin/admin/admin.service";
-import {
   activateUser as activateUserService,
   deactivateUser as deactivateUserService,
   deleteUser as deleteUserService,
@@ -41,6 +26,22 @@ import {
   generateAdminAccessToken,
   verifyAdminAccessToken,
 } from "@shared/services/token.service";
+
+import {
+  activateAdminByAdminId as activateAdminByAdminIdService,
+  activateAdmin as activateAdminService,
+  createAdmin as createAdminService,
+  createInitialSuperAdmin as createInitialSuperAdminService,
+  deactivateAdminByAdminId as deactivateAdminByAdminIdService,
+  deactivateAdmin as deactivateAdminService,
+  getAdminByAdminId,
+  getAdminByAdminIdFormatted,
+  getAdminById,
+  getAllAdmins,
+  loginAdmin as loginAdminService,
+  updateAdminByAdminId as updateAdminByAdminIdService,
+  updateAdmin as updateAdminService,
+} from "./admin.service";
 
 // Admin login
 export const login = asyncHandler(async (req: Request, res: Response) => {

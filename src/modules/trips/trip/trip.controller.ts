@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
 
 import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
+
+import {
   createTrip as createTripService,
   deleteTrip,
   getActiveTrips,
@@ -10,13 +17,7 @@ import {
   getTripsByUserId,
   updateTrip,
   updateTripStatus as updateTripStatusService,
-} from "@modules/trips/trip/trip.service";
-import {
-  ERROR_MESSAGES,
-  HTTP_STATUS,
-  SUCCESS_MESSAGES,
-} from "@shared/constants";
-import { ApiError, asyncHandler } from "@shared/middlewares";
+} from "./trip.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
 

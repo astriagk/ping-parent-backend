@@ -1,8 +1,9 @@
 import { WithId } from "mongodb";
 
-import { Trip } from "@modules/trips/trip/trip.type";
 import { TRIPS_COLLECTION, TripStatus, TripType } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
+
+import { Trip } from "./trip.type";
 
 export class TripRepository extends BaseRepository<Trip> {
   constructor() {

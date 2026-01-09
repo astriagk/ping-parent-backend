@@ -1,24 +1,22 @@
 import { Router } from "express";
 
+import { adminRoutes, auditLogRoutes, roleRoutes } from "@modules/admin";
 import { authRoutes } from "@modules/auth";
-
-import adminRoutes from "../modules/admin/admin/admin.routes";
-import auditLogsRoutes from "../modules/admin/audit-log/audit_logs.routes";
-import roleRoutes from "../modules/admin/role/role.routes";
-import parentSubscriptionRoutes from "../modules/billing/parent-subscription/parent_subscription.routes";
-import paymentRoutes from "../modules/billing/payment/payment.routes";
-import subscriptionPlanRoutes from "../modules/billing/subscription-plan/subscription_plan.routes";
-import notificationRoutes from "../modules/notification/notification.routes";
-import ratingReviewRoutes from "../modules/reviews/rating_review.routes";
-import schoolRoutes from "../modules/school/school.routes";
-// Import routes in order matching Postman collection structure
-import dailyQrOtpRoutes from "../modules/trips/daily-qr-otp/daily_qr_otp.routes";
-import driverStudentAssignmentRoutes from "../modules/trips/driver-student-assignment/driverStudentAssignment.routes";
-import tripStudentRoutes from "../modules/trips/trip-student/trip_student.routes";
-import tripRoutes from "../modules/trips/trip/trip.routes";
-import driverRoutes from "../modules/users/driver/driver.routes";
-import parentRoutes from "../modules/users/parent/parent.routes";
-import studentRoutes from "../modules/users/student/student.routes";
+import {
+  parentSubscriptionRoutes,
+  paymentRoutes,
+  subscriptionPlanRoutes,
+} from "@modules/billing";
+import { notificationRoutes } from "@modules/notification";
+import { ratingReviewRoutes } from "@modules/reviews";
+import { schoolRoutes } from "@modules/school";
+import {
+  dailyQrOtpRoutes,
+  driverStudentAssignmentRoutes,
+  tripRoutes,
+  tripStudentRoutes,
+} from "@modules/trips";
+import { driverRoutes, parentRoutes, studentRoutes } from "@modules/users";
 
 const router = Router();
 
@@ -63,6 +61,6 @@ router.use("/admin", adminRoutes);
 router.use("/roles", roleRoutes);
 
 // Audit Logs (part of Admin Portal)
-router.use("/audit-logs", auditLogsRoutes);
+router.use("/audit-logs", auditLogRoutes);
 
 export default router;

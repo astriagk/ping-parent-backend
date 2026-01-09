@@ -1,16 +1,13 @@
 import { WithId } from "mongodb";
 
 import {
-  Driver,
-  DriverAddress,
-  DriverDocument,
-} from "@modules/users/driver/driver.type";
-import {
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
+
+import { Driver, DriverAddress, DriverDocument } from "./driver.type";
 
 export class DriverRepository extends BaseRepository<Driver> {
   constructor() {

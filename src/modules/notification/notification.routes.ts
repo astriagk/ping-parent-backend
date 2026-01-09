@@ -1,13 +1,14 @@
 import { Router } from "express";
 
+import { verifyToken_Middleware } from "@shared/middlewares";
+
 import {
   getNotifications,
   getUnreadCount,
   getUnreadNotifications,
   markAllAsRead,
   markAsRead,
-} from "@modules/notification/notification.controller";
-import { verifyToken_Middleware } from "@shared/middlewares";
+} from "./notification.controller";
 
 const router = Router();
 

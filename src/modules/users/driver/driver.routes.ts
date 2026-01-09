@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { validate, verifyDriverToken } from "@shared/middlewares";
+
 import {
   createDocuments,
   createProfile,
@@ -10,15 +12,14 @@ import {
   updateDocuments,
   updateProfile,
   upsertAddress,
-} from "@modules/users/driver/driver.controller";
+} from "./driver.controller";
 import {
   createDriverDocumentsSchema,
   createDriverProfileSchema,
   updateDriverDocumentsSchema,
   updateDriverProfileSchema,
   upsertDriverAddressSchema,
-} from "@modules/users/driver/driver.validation";
-import { validate, verifyDriverToken } from "@shared/middlewares";
+} from "./driver.validation";
 
 const router = Router();
 

@@ -1,11 +1,6 @@
 import { ObjectId } from "mongodb";
 
-import { User } from "@modules/auth/auth.types";
-import {
-  Parent,
-  ParentAddress,
-  ParentAddressInput,
-} from "@modules/users/parent/parent.type";
+import { User } from "@modules/auth/auth.type";
 import { getDB } from "@shared/config";
 import {
   PARENTS_COLLECTION,
@@ -13,6 +8,8 @@ import {
   STUDENTS_COLLECTION,
   USERS_COLLECTION,
 } from "@shared/constants";
+
+import { Parent, ParentAddress, ParentAddressInput } from "./parent.type";
 
 /**
  * Get parent profile by user_id

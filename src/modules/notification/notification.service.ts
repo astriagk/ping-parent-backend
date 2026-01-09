@@ -1,7 +1,7 @@
 import { WithId } from "mongodb";
 
-import { notificationRepository } from "@modules/notification/notification.repository";
-import { Notification } from "@modules/notification/notification.type";
+import { notificationRepository } from "./notification.repository";
+import { Notification } from "./notification.type";
 
 export const getNotificationsByUserId = async (
   userId: string,

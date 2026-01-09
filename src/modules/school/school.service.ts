@@ -1,7 +1,5 @@
 import { WithId } from "mongodb";
 
-import { schoolRepository } from "@modules/school/school.repository";
-import { School } from "@modules/school/school.type";
 import {
   AlphabetType,
   ERROR_MESSAGES,
@@ -10,6 +8,9 @@ import {
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
+
+import { schoolRepository } from "./school.repository";
+import { School } from "./school.type";
 
 export const createSchool = async (
   data: Omit<School, "school_id" | "created_at">,

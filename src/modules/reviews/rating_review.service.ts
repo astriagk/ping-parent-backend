@@ -1,8 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 import { nanoid } from "nanoid";
 
-import { ratingReviewRepository } from "@modules/reviews/rating_review.repository";
-import { RatingReview } from "@modules/reviews/rating_review.type";
 import { getDB } from "@shared/config";
 import {
   DRIVERS_COLLECTION,
@@ -12,6 +10,9 @@ import {
   TRIPS_COLLECTION,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
+
+import { ratingReviewRepository } from "./rating_review.repository";
+import { RatingReview } from "./rating_review.type";
 
 /**
  * Helper function to convert userId to parent_id

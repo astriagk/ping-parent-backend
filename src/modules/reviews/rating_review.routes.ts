@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { validate, verifyParentToken } from "@shared/middlewares";
+
 import {
   deleteRatingReviewById,
   getDriverRating,
@@ -8,12 +10,11 @@ import {
   getRatingReview,
   submitRatingReview,
   updateRatingReviewById,
-} from "@modules/reviews/rating_review.controller";
+} from "./rating_review.controller";
 import {
   createRatingReviewSchema,
   updateRatingReviewSchema,
-} from "@modules/reviews/rating_review.validation";
-import { validate, verifyParentToken } from "@shared/middlewares";
+} from "./rating_review.validation";
 
 const router = Router();
 

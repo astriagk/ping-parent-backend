@@ -4,7 +4,7 @@ import { getDB } from "@shared/config";
 import { OTP_VERIFICATION_COLLECTION, UserRole } from "@shared/constants";
 
 import { userRepository } from "./auth.repository";
-import { User } from "./auth.types";
+import { User } from "./auth.type";
 
 // User management
 

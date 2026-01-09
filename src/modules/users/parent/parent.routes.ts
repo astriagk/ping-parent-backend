@@ -1,32 +1,33 @@
 import { Router } from "express";
 
+import { validate, verifyParentToken } from "@shared/middlewares";
+
 import {
-  getAddress,
-  getProfile,
+  getAddressParent,
+  getProfileParent,
   updateAddress,
-  updateProfile,
-} from "@modules/users/parent/parent.controller";
+  updateProfileParent,
+} from "./parent.controller";
 import {
   updateAddressSchema,
   updateParentProfileSchema,
-} from "@modules/users/parent/parent.validation";
-import { validate, verifyParentToken } from "@shared/middlewares";
+} from "./parent.validation";
 
 const router = Router();
 
 // 01. Get Parent Profile
-router.get("/profile", verifyParentToken, getProfile);
+router.get("/profile", verifyParentToken, getProfileParent);
 
 // 02. Update Parent Profile
 router.put(
   "/profile",
   verifyParentToken,
   validate(updateParentProfileSchema),
-  updateProfile,
+  updateProfileParent,
 );
 
 // 03. Get Parent Address
-router.get("/address", verifyParentToken, getAddress);
+router.get("/address", verifyParentToken, getAddressParent);
 
 // 04. Update Parent Address
 router.put(

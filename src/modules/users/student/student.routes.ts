@@ -1,5 +1,7 @@
 import { Router } from "express";
 
+import { validate, verifyParentToken } from "@shared/middlewares";
+
 import {
   createStudent,
   deleteStudent,
@@ -10,12 +12,8 @@ import {
   getStudentProfile,
   updateStudent,
   updateStudentByStudentId,
-} from "@modules/users/student/student.controller";
-import {
-  createStudentSchema,
-  updateStudentSchema,
-} from "@modules/users/student/student.validation";
-import { validate, verifyParentToken } from "@shared/middlewares";
+} from "./student.controller";
+import { createStudentSchema, updateStudentSchema } from "./student.validation";
 
 const router = Router();
 

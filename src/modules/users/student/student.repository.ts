@@ -1,8 +1,9 @@
 import { WithId } from "mongodb";
 
-import { Student } from "@modules/users/student/student.type";
 import { STUDENTS_COLLECTION } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
+
+import { Student } from "./student.type";
 
 export class StudentRepository extends BaseRepository<Student> {
   constructor() {

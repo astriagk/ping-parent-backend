@@ -1,7 +1,5 @@
 import { WithId } from "mongodb";
 
-import { paymentRepository } from "@modules/billing/payment/payment.repository";
-import { Payment } from "@modules/billing/payment/payment.type";
 import { getDB } from "@shared/config";
 import {
   ERROR_MESSAGES,
@@ -12,6 +10,9 @@ import {
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
+
+import { paymentRepository } from "./payment.repository";
+import { Payment } from "./payment.type";
 
 /**
  * Helper function to convert userId to parent_id

@@ -1,6 +1,12 @@
 import { Router } from "express";
 
 import {
+  validate,
+  verifyAdminToken,
+  verifyDriverToken,
+} from "@shared/middlewares";
+
+import {
   createTrip,
   deleteTripProfile,
   getAllTripsController,
@@ -10,17 +16,12 @@ import {
   getTripProfile,
   updateTripProfile,
   updateTripStatus,
-} from "@modules/trips/trip/trip.controller";
+} from "./trip.controller";
 import {
   createTripSchema,
   updateTripSchema,
   updateTripStatusSchema,
-} from "@modules/trips/trip/trip.validation";
-import {
-  validate,
-  verifyAdminToken,
-  verifyDriverToken,
-} from "@shared/middlewares";
+} from "./trip.validation";
 
 const router = Router();
 

@@ -1,7 +1,5 @@
 import { WithId } from "mongodb";
 
-import { tripRepository } from "@modules/trips/trip/trip.repository";
-import { Trip } from "@modules/trips/trip/trip.type";
 import { getDB } from "@shared/config";
 import {
   DRIVERS_COLLECTION,
@@ -12,6 +10,9 @@ import {
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
+
+import { tripRepository } from "./trip.repository";
+import { Trip } from "./trip.type";
 
 /**
  * Helper function to convert userId to driver_id

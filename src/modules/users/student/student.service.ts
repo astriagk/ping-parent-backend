@@ -1,7 +1,5 @@
 import { WithId } from "mongodb";
 
-import { studentRepository } from "@modules/users/student/student.repository";
-import { Student } from "@modules/users/student/student.type";
 import { getDB } from "@shared/config";
 import {
   ERROR_MESSAGES,
@@ -11,6 +9,9 @@ import {
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
+
+import { studentRepository } from "./student.repository";
+import { Student } from "./student.type";
 
 /**
  * Get parent_id from user_id

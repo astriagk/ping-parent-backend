@@ -1,5 +1,8 @@
 import { Router } from "express";
 
+import { updateUserSchema } from "@modules/auth/auth.validation";
+import { validate, verifyAdminToken } from "@shared/middlewares";
+
 import {
   activateAdmin,
   activateAdminByAdminId,
@@ -23,14 +26,12 @@ import {
   updateDriverApprovalStatus,
   updateUser,
   verifyAdminAuthToken,
-} from "@modules/admin/admin/admin.controller";
+} from "./admin.controller";
 import {
   adminLoginSchema,
   createAdminSchema,
   updateAdminSchema,
-} from "@modules/admin/admin/admin.validation";
-import { updateUserSchema } from "@modules/auth/auth.validation";
-import { validate, verifyAdminToken } from "@shared/middlewares";
+} from "./admin.validation";
 
 const router = Router();
 

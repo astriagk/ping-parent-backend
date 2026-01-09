@@ -1,21 +1,19 @@
 import { Router } from "express";
 
 import {
+  validate,
+  verifyAdminToken,
+  verifyToken_Middleware,
+} from "@shared/middlewares";
+
+import {
   createSchool,
   deleteSchool,
   getAllSchools,
   getSchool,
   updateSchool,
-} from "@modules/school/school.controller";
-import {
-  createSchoolSchema,
-  updateSchoolSchema,
-} from "@modules/school/school.validation";
-import {
-  validate,
-  verifyAdminToken,
-  verifyToken_Middleware,
-} from "@shared/middlewares";
+} from "./school.controller";
+import { createSchoolSchema, updateSchoolSchema } from "./school.validation";
 
 const router = Router();
 

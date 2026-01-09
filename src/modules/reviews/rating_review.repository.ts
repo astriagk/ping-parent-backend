@@ -1,9 +1,10 @@
 import { WithId } from "mongodb";
 
-import { RatingReview } from "@modules/reviews/rating_review.type";
 import { getDB } from "@shared/config";
 import { RATINGS_REVIEWS_COLLECTION } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
+
+import { RatingReview } from "./rating_review.type";
 
 export class RatingReviewRepository extends BaseRepository<RatingReview> {
   constructor() {

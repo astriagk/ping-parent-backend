@@ -1,6 +1,5 @@
 import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
-import { ObjectId } from "mongodb";
 
 import { getAllRoles } from "@modules/admin/role/role.service";
 import {
@@ -17,7 +16,6 @@ import {
 } from "@shared/services/token.service";
 import { generateUniqueCode, logger, normalizePhone } from "@shared/utils";
 
-import { userRepository } from "./auth.repository";
 import {
   activateUser,
   createPhoneOtp,

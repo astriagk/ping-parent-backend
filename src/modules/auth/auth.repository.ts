@@ -3,7 +3,7 @@ import { WithId } from "mongodb";
 import { USERS_COLLECTION } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { User } from "./auth.types";
+import { User } from "./auth.type";
 
 export class UserRepository extends BaseRepository<User> {
   constructor() {

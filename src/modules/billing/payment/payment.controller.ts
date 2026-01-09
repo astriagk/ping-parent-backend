@@ -1,6 +1,13 @@
 import { Request, Response } from "express";
 
 import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { ApiError, asyncHandler } from "@shared/middlewares";
+
+import {
   completePayment,
   createPayment as createPaymentService,
   getAllPayments,
@@ -10,13 +17,7 @@ import {
   getPendingPaymentsByUserId,
   refundPayment,
   updatePayment,
-} from "@modules/billing/payment/payment.service";
-import {
-  ERROR_MESSAGES,
-  HTTP_STATUS,
-  SUCCESS_MESSAGES,
-} from "@shared/constants";
-import { ApiError, asyncHandler } from "@shared/middlewares";
+} from "./payment.service";
 
 // NOTE: Exports WITHOUT "Controller" suffix
 

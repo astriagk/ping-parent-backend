@@ -1,12 +1,5 @@
 import { WithId } from "mongodb";
 
-import { roleRepository } from "@modules/admin/role/role.repository";
-import {
-  Role,
-  RoleCreateInput,
-  RoleResponse,
-  RoleUpdateInput,
-} from "@modules/admin/role/role.type";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
@@ -14,6 +7,14 @@ import {
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
+
+import { roleRepository } from "./role.repository";
+import {
+  Role,
+  RoleCreateInput,
+  RoleResponse,
+  RoleUpdateInput,
+} from "./role.type";
 
 /**
  * Format role response by removing MongoDB _id

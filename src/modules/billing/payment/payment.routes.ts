@@ -1,6 +1,12 @@
 import { Router } from "express";
 
 import {
+  validate,
+  verifyAdminToken,
+  verifyParentToken,
+} from "@shared/middlewares";
+
+import {
   completePaymentById,
   createPayment,
   getAllPaymentsController,
@@ -10,16 +16,8 @@ import {
   getPaymentByIdController,
   refundPaymentById,
   updatePaymentById,
-} from "@modules/billing/payment/payment.controller";
-import {
-  createPaymentSchema,
-  updatePaymentSchema,
-} from "@modules/billing/payment/payment.validation";
-import {
-  validate,
-  verifyAdminToken,
-  verifyParentToken,
-} from "@shared/middlewares";
+} from "./payment.controller";
+import { createPaymentSchema, updatePaymentSchema } from "./payment.validation";
 
 const router = Router();
 

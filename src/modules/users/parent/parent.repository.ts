@@ -1,11 +1,12 @@
 import { WithId } from "mongodb";
 
-import { Parent, ParentAddress } from "@modules/users/parent/parent.type";
 import {
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
+
+import { Parent, ParentAddress } from "./parent.type";
 
 export class ParentRepository extends BaseRepository<Parent> {
   constructor() {
