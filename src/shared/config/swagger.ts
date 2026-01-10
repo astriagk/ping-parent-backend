@@ -3,7 +3,7 @@ import YAML from "yamljs";
 
 // Load swagger.yaml file
 const swaggerDocument = YAML.load(
-  path.join(__dirname, "../../../docs/v1/api/openapi/swagger.yaml"),
+  path.join(__dirname, "../../../docs/api/openapi/PP_API_0_0_0.openapi.yaml"),
 );
 
 // Swagger UI options

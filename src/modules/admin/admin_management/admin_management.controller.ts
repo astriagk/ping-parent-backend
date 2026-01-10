@@ -41,7 +41,7 @@ import {
   loginAdmin as loginAdminService,
   updateAdminByAdminId as updateAdminByAdminIdService,
   updateAdmin as updateAdminService,
-} from "./admin.service";
+} from "./admin_management.service";
 
 // Admin login
 export const login = asyncHandler(async (req: Request, res: Response) => {

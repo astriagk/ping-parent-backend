@@ -1,10 +1,8 @@
 openapi: 3.0.0
 info:
   title: Ping Parent API
-  version: 1.0.0
-  description: "Auto-generated API documentation from route definitions
-
-Generated: 2026-01-10T06:54:28.440Z"
+  version: 0.0.0
+  description: "Auto-generated API documentation from route definitions\n\nGenerated: 2026-01-10T07:32:50.094Z"
   contact:
     name: Ping Parent Team
 servers:
@@ -33,10 +31,10 @@ components:
       description: Admin authentication token
   schemas:
 paths:
-  /login:
+  /admin/login:
     post:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Create Login
       requestBody:
         required: true
@@ -94,10 +92,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /setup/create-superadmin:
+  /admin/setup/create-superadmin:
     post:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Create Create Superadmin
       responses:
         200:
@@ -124,10 +122,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /verify-admin-token:
+  /admin/verify-admin-token:
     get:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Get Verify Admin Token
       responses:
         200:
@@ -154,11 +152,14 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:
+  /admin/:
     get:
       tags:
-        - School
-      summary: Get School
+        - Admin - Admin_management
+      summary: Get Admin Management
+      security:
+        -
+          AdminAuth: []
       responses:
         200:
           description: Successful response
@@ -186,60 +187,11 @@ paths:
           description: Internal server error
     post:
       tags:
-        - Users - Student
-      summary: Create Student
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                school_id:
-                  type: string
-                student_name:
-                  type: string
-                  minLength: 2
-                  maxLength: 100
-                class:
-                  type: string
-                  maxLength: 20
-                section:
-                  type: string
-                  maxLength: 10
-                roll_number:
-                  type: string
-                  maxLength: 20
-                photo_url:
-                  type: string
-                  format: uri
-                date_of_birth:
-                  type: string
-                gender:
-                  type: string
-                pickup_address_id:
-                  type: string
-                emergency_contact:
-                  type: string
-                  pattern: /^[+]?[0-9]{10,15}$/
-                medical_info:
-                  type: string
-                  maxLength: 500
-              required:
-                - school_id
-                - student_name
-            example:
-              school_id: string
-              student_name: John Doe
-              class: string
-              section: string
-              roll_number: string
-              photo_url: "https://example.com/photo.jpg"
-              date_of_birth: string
-              gender: string
-              pickup_address_id: 123 Main Street
-              emergency_contact: string
-              medical_info: string
+        - Admin - Admin_management
+      summary: Create Admin Management
+      security:
+        -
+          AdminAuth: []
       responses:
         200:
           description: Successful response
@@ -265,10 +217,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /users:
+  /admin/users:
     get:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Get Users
       security:
         -
@@ -298,11 +250,14 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id:
+  /admin/:id:
     get:
       tags:
-        - Users - Student
-      summary: Get Student
+        - Admin - Admin_management
+      summary: Get Admin Management
+      security:
+        -
+          AdminAuth: []
       parameters:
         -
           name: id
@@ -338,8 +293,11 @@ paths:
           description: Internal server error
     put:
       tags:
-        - Users - Student
-      summary: Update Student
+        - Admin - Admin_management
+      summary: Update Admin Management
+      security:
+        -
+          AdminAuth: []
       parameters:
         -
           name: id
@@ -373,47 +331,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-    delete:
-      tags:
-        - Users - Student
-      summary: Delete Student
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /:id/activate:
+  /admin/:id/activate:
     patch:
       tags:
-        - Billing - Subscription_plan
+        - Admin - Admin_management
       summary: Update Activate
       security:
         -
@@ -451,10 +372,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/deactivate:
+  /admin/:id/deactivate:
     patch:
       tags:
-        - Billing - Subscription_plan
+        - Admin - Admin_management
       summary: Update Deactivate
       security:
         -
@@ -492,50 +413,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-    post:
-      tags:
-        - Trips - Driver_student_assignment
-      summary: Create Deactivate
-      security:
-        -
-          DriverAuth: []
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /users/:id:
+  /admin/users/:id:
     get:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Get Users
       security:
         -
@@ -575,7 +456,7 @@ paths:
           description: Internal server error
     put:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Update Users
       security:
         -
@@ -615,7 +496,7 @@ paths:
           description: Internal server error
     delete:
       tags:
-        - Admin
+        - Admin - Admin_management
       summary: Delete Users
       security:
         -
@@ -653,679 +534,10 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /users/:id/activate:
-    patch:
-      tags:
-        - Admin
-      summary: Update Activate
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /users/:id/deactivate:
-    patch:
-      tags:
-        - Admin
-      summary: Update Deactivate
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /by-admin-id/:admin_id:
-    get:
-      tags:
-        - Admin
-      summary: Get By Admin Id
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: admin_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: admin_id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-    put:
-      tags:
-        - Admin
-      summary: Update By Admin Id
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: admin_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: admin_id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /by-admin-id/:admin_id/activate:
-    patch:
-      tags:
-        - Admin
-      summary: Update Activate
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: admin_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: admin_id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /by-admin-id/:admin_id/deactivate:
-    patch:
-      tags:
-        - Admin
-      summary: Update Deactivate
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: admin_id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: admin_id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /drivers/:id/details:
-    get:
-      tags:
-        - Admin
-      summary: Get Details
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /parents/:id/details:
-    get:
-      tags:
-        - Admin
-      summary: Get Details
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /drivers/:id/approval-status:
-    patch:
-      tags:
-        - Admin
-      summary: Update Approval Status
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: id parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /roles:
-    get:
-      tags:
-        - Auth
-      summary: Get Roles
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /register/send-otp:
-    post:
-      tags:
-        - Auth
-      summary: Create Send Otp
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                phone:
-                  type: string
-                role:
-                  type: string
-                otp:
-                  type: string
-                user_type:
-                  type: string
-                is_active:
-                  type: boolean
-                fcm_token:
-                  type: string
-              required:
-                - phone
-                - otp
-            example:
-              phone: +919876543210
-              role: string
-              otp: 123456
-              user_type: string
-              is_active: false
-              fcm_token: string
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /register/verify-otp:
-    post:
-      tags:
-        - Auth
-      summary: Create Verify Otp
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /login/send-otp:
-    post:
-      tags:
-        - Auth
-      summary: Create Send Otp
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                phone:
-                  type: string
-                role:
-                  type: string
-                otp:
-                  type: string
-                user_type:
-                  type: string
-                is_active:
-                  type: boolean
-                fcm_token:
-                  type: string
-              required:
-                - phone
-                - otp
-            example:
-              phone: +919876543210
-              role: string
-              otp: 123456
-              user_type: string
-              is_active: false
-              fcm_token: string
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /login/verify-otp:
-    post:
-      tags:
-        - Auth
-      summary: Create Verify Otp
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /verify-token:
-    get:
-      tags:
-        - Auth
-      summary: Get Verify Token
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /logout:
-    post:
-      tags:
-        - Auth
-      summary: Create Logout
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /admin/users:
-    get:
-      tags:
-        - Auth
-      summary: Get Users
-      security:
-        -
-          AdminAuth: []
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
   /admin/users/:id/activate:
     patch:
       tags:
-        - Auth
+        - Admin - Admin_management
       summary: Update Activate
       security:
         -
@@ -1366,6 +578,954 @@ paths:
   /admin/users/:id/deactivate:
     patch:
       tags:
+        - Admin - Admin_management
+      summary: Update Deactivate
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/by-admin-id/:admin_id:
+    get:
+      tags:
+        - Admin - Admin_management
+      summary: Get By Admin Id
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: admin_id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Admin - Admin_management
+      summary: Update By Admin Id
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: admin_id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/by-admin-id/:admin_id/activate:
+    patch:
+      tags:
+        - Admin - Admin_management
+      summary: Update Activate
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: admin_id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/by-admin-id/:admin_id/deactivate:
+    patch:
+      tags:
+        - Admin - Admin_management
+      summary: Update Deactivate
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: admin_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: admin_id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/drivers/:id/details:
+    get:
+      tags:
+        - Admin - Admin_management
+      summary: Get Details
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/parents/:id/details:
+    get:
+      tags:
+        - Admin - Admin_management
+      summary: Get Details
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/drivers/:id/approval-status:
+    patch:
+      tags:
+        - Admin - Admin_management
+      summary: Update Approval Status
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /audit-logs/:
+    get:
+      tags:
+        - Admin - Audit_log
+      summary: Get Audit Log
+      security:
+        -
+          AdminAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /audit-logs/:id:
+    get:
+      tags:
+        - Admin - Audit_log
+      summary: Get Audit Log
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /roles/:
+    get:
+      tags:
+        - Admin - Role
+      summary: Get Role
+      security:
+        -
+          AdminAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    post:
+      tags:
+        - Admin - Role
+      summary: Create Role
+      security:
+        -
+          AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                role_name:
+                  type: string
+                  minLength: 2
+                  maxLength: 50
+                description:
+                  type: string
+                  maxLength: 500
+              required:
+                - role_name
+            example:
+              role_name: John Doe
+              description: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /roles/:id:
+    get:
+      tags:
+        - Admin - Role
+      summary: Get Role
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Admin - Role
+      summary: Update Role
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Admin - Role
+      summary: Delete Role
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/roles:
+    get:
+      tags:
+        - Auth
+      summary: Get Roles
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/register/send-otp:
+    post:
+      tags:
+        - Auth
+      summary: Create Send Otp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                role:
+                  type: string
+                otp:
+                  type: string
+                user_type:
+                  type: string
+                is_active:
+                  type: boolean
+                fcm_token:
+                  type: string
+              required:
+                - phone
+                - otp
+            example:
+              phone: +919876543210
+              role: string
+              otp: 123456
+              user_type: string
+              is_active: false
+              fcm_token: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/register/verify-otp:
+    post:
+      tags:
+        - Auth
+      summary: Create Verify Otp
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/login/send-otp:
+    post:
+      tags:
+        - Auth
+      summary: Create Send Otp
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                role:
+                  type: string
+                otp:
+                  type: string
+                user_type:
+                  type: string
+                is_active:
+                  type: boolean
+                fcm_token:
+                  type: string
+              required:
+                - phone
+                - otp
+            example:
+              phone: +919876543210
+              role: string
+              otp: 123456
+              user_type: string
+              is_active: false
+              fcm_token: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/login/verify-otp:
+    post:
+      tags:
+        - Auth
+      summary: Create Verify Otp
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/verify-token:
+    get:
+      tags:
+        - Auth
+      summary: Get Verify Token
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Create Logout
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/admin/users:
+    get:
+      tags:
+        - Auth
+      summary: Get Users
+      security:
+        -
+          AdminAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/admin/users/:id/activate:
+    patch:
+      tags:
+        - Auth
+      summary: Update Activate
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /auth/admin/users/:id/deactivate:
+    patch:
+      tags:
         - Auth
       summary: Update Deactivate
       security:
@@ -1404,7 +1564,60 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-subscriptions:
+  /parent-subscriptions/:
+    post:
+      tags:
+        - Billing - Parent_subscription
+      summary: Create Parent Subscription
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan_id:
+                  type: string
+                start_date:
+                  type: string
+                end_date:
+                  type: string
+                auto_renew:
+                  type: boolean
+              required:
+                - plan_id
+                - start_date
+            example:
+              plan_id: string
+              start_date: string
+              end_date: string
+              auto_renew: false
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /parent-subscriptions/my-subscriptions:
     get:
       tags:
         - Billing - Parent_subscription
@@ -1434,7 +1647,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-active-subscription:
+  /parent-subscriptions/my-active-subscription:
     get:
       tags:
         - Billing - Parent_subscription
@@ -1464,7 +1677,119 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/cancel:
+  /parent-subscriptions/:id:
+    get:
+      tags:
+        - Billing - Parent_subscription
+      summary: Get Parent Subscription
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Billing - Parent_subscription
+      summary: Update Parent Subscription
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Billing - Parent_subscription
+      summary: Delete Parent Subscription
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /parent-subscriptions/:id/cancel:
     post:
       tags:
         - Billing - Parent_subscription
@@ -1502,7 +1827,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /admin/all-subscriptions:
+  /parent-subscriptions/admin/all-subscriptions:
     get:
       tags:
         - Billing - Parent_subscription
@@ -1535,7 +1860,78 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/complete:
+  /payments/:
+    post:
+      tags:
+        - Billing - Payment
+      summary: Create Payment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                payment_type:
+                  type: string
+                amount:
+                  type: number
+                currency:
+                  type: string
+                payment_method:
+                  type: string
+                payment_status:
+                  type: string
+                transaction_id:
+                  type: string
+                  maxLength: 100
+                gateway_response:
+                  type: object
+                subscription_id:
+                  type: string
+                payment_date:
+                  type: string
+              required:
+                - payment_type
+                - amount
+                - payment_method
+                - payment_status
+            example:
+              payment_type: string
+              amount: 100
+              currency: string
+              payment_method: string
+              payment_status: string
+              transaction_id: string
+              gateway_response:
+              subscription_id: string
+              payment_date: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /payments/:id/complete:
     post:
       tags:
         - Billing - Payment
@@ -1573,7 +1969,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-payments:
+  /payments/my-payments:
     get:
       tags:
         - Billing - Payment
@@ -1603,7 +1999,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-payments/pending:
+  /payments/my-payments/pending:
     get:
       tags:
         - Billing - Payment
@@ -1633,7 +2029,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-payments/completed:
+  /payments/my-payments/completed:
     get:
       tags:
         - Billing - Payment
@@ -1663,7 +2059,82 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/refund:
+  /payments/:id:
+    get:
+      tags:
+        - Billing - Payment
+      summary: Get Payment
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Billing - Payment
+      summary: Update Payment
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /payments/:id/refund:
     post:
       tags:
         - Billing - Payment
@@ -1701,7 +2172,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /admin/all-payments:
+  /payments/admin/all-payments:
     get:
       tags:
         - Billing - Payment
@@ -1734,7 +2205,250 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /unread:
+  /subscription-plans/:
+    get:
+      tags:
+        - Billing - Subscription_plan
+      summary: Get Subscription Plan
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /subscription-plans/:id:
+    get:
+      tags:
+        - Billing - Subscription_plan
+      summary: Get Subscription Plan
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Billing - Subscription_plan
+      summary: Update Subscription Plan
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                plan_name:
+                  type: string
+                  minLength: 3
+                  maxLength: 100
+                plan_type:
+                  type: string
+                price:
+                  type: number
+                  minLength: 0
+                features:
+                  type: object
+            example:
+              plan_name: John Doe
+              plan_type: string
+              price: 100
+              features:
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /subscription-plans/:id/activate:
+    patch:
+      tags:
+        - Billing - Subscription_plan
+      summary: Update Activate
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /subscription-plans/:id/deactivate:
+    patch:
+      tags:
+        - Billing - Subscription_plan
+      summary: Update Deactivate
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /notifications/:
+    get:
+      tags:
+        - Notification
+      summary: Get Notification
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /notifications/unread:
     get:
       tags:
         - Notification
@@ -1764,7 +2478,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /unread-count:
+  /notifications/unread-count:
     get:
       tags:
         - Notification
@@ -1794,7 +2508,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/mark-as-read:
+  /notifications/:id/mark-as-read:
     put:
       tags:
         - Notification
@@ -1832,11 +2546,70 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /mark-all-as-read:
+  /notifications/mark-all-as-read:
     put:
       tags:
         - Notification
       summary: Update Mark All As Read
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /:
+    post:
+      tags:
+        - Reviews
+      summary: Create Rating Review
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                trip_id:
+                  type: string
+                rating:
+                  type: number
+                  minLength: 1
+                  maxLength: 5
+                review_text:
+                  type: string
+                  maxLength: 1000
+              required:
+                - driver_id
+                - rating
+            example:
+              driver_id: string
+              trip_id: string
+              rating: 1
+              review_text: string
       responses:
         200:
           description: Successful response
@@ -1971,7 +2744,158 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:school_id:
+  /:id:
+    get:
+      tags:
+        - Reviews
+      summary: Get Rating Review
+      security:
+        -
+          ParentAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Reviews
+      summary: Update Rating Review
+      security:
+        -
+          ParentAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Reviews
+      summary: Delete Rating Review
+      security:
+        -
+          ParentAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /schools/:
+    get:
+      tags:
+        - School
+      summary: Get School
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /schools/:school_id:
     get:
       tags:
         - School
@@ -2009,7 +2933,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /admin:
+  /schools/admin:
     post:
       tags:
         - School
@@ -2085,7 +3009,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /admin/:school_id:
+  /schools/admin/:school_id:
     put:
       tags:
         - School
@@ -2166,7 +3090,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /generate:
+  /daily-qr-otp/generate:
     post:
       tags:
         - Trips - Daily_qr_otp
@@ -2220,7 +3144,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /student/:studentId/trip/:tripId:
+  /daily-qr-otp/student/:studentId/trip/:tripId:
     get:
       tags:
         - Trips - Daily_qr_otp
@@ -2265,7 +3189,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /verify:
+  /daily-qr-otp/verify:
     post:
       tags:
         - Trips - Daily_qr_otp
@@ -2295,7 +3219,185 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /driver/my-assignments:
+  /driver-student-assignments/:
+    post:
+      tags:
+        - Trips - Driver_student_assignment
+      summary: Create Driver Student Assignment
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                student_id:
+                  type: string
+                driver_unique_id:
+                  type: string
+                  maxLength: 20
+                monthly_fee:
+                  type: number
+                  minLength: 0
+                assignment_status:
+                  type: string
+                assigned_date:
+                  type: string
+                start_date:
+                  type: string
+                end_date:
+                  type: string
+                  maxLength: 20
+              required:
+                - student_id
+                - driver_unique_id
+                - assigned_date
+            example:
+              student_id: string
+              driver_unique_id: string
+              monthly_fee: 0
+              assignment_status: string
+              assigned_date: string
+              start_date: string
+              end_date: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /driver-student-assignments/:id:
+    get:
+      tags:
+        - Trips - Driver_student_assignment
+      summary: Get Driver Student Assignment
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Trips - Driver_student_assignment
+      summary: Update Driver Student Assignment
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Trips - Driver_student_assignment
+      summary: Delete Driver Student Assignment
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /driver-student-assignments/driver/my-assignments:
     get:
       tags:
         - Trips - Driver_student_assignment
@@ -2328,7 +3430,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /driver/my-pending-assignments:
+  /driver-student-assignments/driver/my-pending-assignments:
     get:
       tags:
         - Trips - Driver_student_assignment
@@ -2361,7 +3463,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/approve:
+  /driver-student-assignments/:id/approve:
     post:
       tags:
         - Trips - Driver_student_assignment
@@ -2402,7 +3504,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/reject:
+  /driver-student-assignments/:id/reject:
     post:
       tags:
         - Trips - Driver_student_assignment
@@ -2443,7 +3545,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /driver/my-active-assignments:
+  /driver-student-assignments/driver/my-active-assignments:
     get:
       tags:
         - Trips - Driver_student_assignment
@@ -2476,10 +3578,51 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /student/:studentId:
+  /driver-student-assignments/:id/deactivate:
+    post:
+      tags:
+        - Trips - Driver_student_assignment
+      summary: Create Deactivate
+      security:
+        -
+          DriverAuth: []
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /driver-student-assignments/student/:studentId:
     get:
       tags:
-        - Trips - Trip_student
+        - Trips - Driver_student_assignment
       summary: Get Student
       parameters:
         -
@@ -2514,7 +3657,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /admin/all-assignments:
+  /driver-student-assignments/admin/all-assignments:
     get:
       tags:
         - Trips - Driver_student_assignment
@@ -2547,7 +3690,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /admin/all-trips:
+  /trips/admin/all-trips:
     get:
       tags:
         - Trips - Trip
@@ -2580,7 +3723,56 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-trips:
+  /trips/:
+    post:
+      tags:
+        - Trips - Trip
+      summary: Create Trip
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                school_id:
+                  type: string
+                trip_type:
+                  type: string
+                trip_date:
+                  type: string
+              required:
+                - school_id
+            example:
+              school_id: string
+              trip_type: string
+              trip_date: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /trips/my-trips:
     get:
       tags:
         - Trips - Trip
@@ -2610,7 +3802,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-trips/by-date:
+  /trips/my-trips/by-date:
     get:
       tags:
         - Trips - Trip
@@ -2640,7 +3832,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:id/status:
+  /trips/:id/status:
     patch:
       tags:
         - Trips - Trip
@@ -2678,7 +3870,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-trips/active:
+  /trips/my-trips/active:
     get:
       tags:
         - Trips - Trip
@@ -2708,7 +3900,119 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId/student/:studentId/attendance:
+  /trips/:id:
+    get:
+      tags:
+        - Trips - Trip
+      summary: Get Trip
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Trips - Trip
+      summary: Update Trip
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Trips - Trip
+      summary: Delete Trip
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /trip-students/trip/:tripId/student/:studentId/attendance:
     put:
       tags:
         - Trips - Trip_student
@@ -2797,7 +4101,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId/student/:studentId/pickup:
+  /trip-students/trip/:tripId/student/:studentId/pickup:
     put:
       tags:
         - Trips - Trip_student
@@ -2842,7 +4146,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId/student/:studentId/drop:
+  /trip-students/trip/:tripId/student/:studentId/drop:
     put:
       tags:
         - Trips - Trip_student
@@ -2887,7 +4191,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId:
+  /trip-students/trip/:tripId:
     get:
       tags:
         - Trips - Trip_student
@@ -2925,7 +4229,120 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId/student/:studentId:
+  /trip-students/:id:
+    get:
+      tags:
+        - Trips - Trip_student
+      summary: Get Trip Student
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Trips - Trip_student
+      summary: Update Trip Student
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /trip-students/student/:studentId:
+    get:
+      tags:
+        - Trips - Trip_student
+      summary: Get Student
+      parameters:
+        -
+          name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: studentId parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /trip-students/trip/:tripId/student/:studentId:
     get:
       tags:
         - Trips - Trip_student
@@ -2970,7 +4387,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId/attendance:
+  /trip-students/trip/:tripId/attendance:
     get:
       tags:
         - Trips - Trip_student
@@ -3008,7 +4425,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /trip/:tripId/pickup:
+  /trip-students/trip/:tripId/pickup:
     get:
       tags:
         - Trips - Trip_student
@@ -3046,14 +4463,14 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /profile:
+  /driver/profile:
     get:
       tags:
-        - Users - Parent
+        - Users - Driver
       summary: Get Profile
       security:
         -
-          ParentAuth: []
+          DriverAuth: []
       responses:
         200:
           description: Successful response
@@ -3211,68 +4628,11 @@ paths:
           description: Internal server error
     put:
       tags:
-        - Users - Parent
+        - Users - Driver
       summary: Update Profile
       security:
         -
-          ParentAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                name:
-                  type: string
-                  minLength: 2
-                  maxLength: 100
-                email:
-                  type: string
-                  format: email
-                photo_url:
-                  type: string
-                  format: uri
-                  minLength: 1
-                  maxLength: 200
-                address_line2:
-                  type: string
-                  maxLength: 200
-                city:
-                  type: string
-                  minLength: 2
-                  maxLength: 100
-                state:
-                  type: string
-                  minLength: 2
-                  maxLength: 100
-                pincode:
-                  type: string
-                  pattern: /^[0-9]{5,10}$/
-                latitude:
-                  type: number
-                  maxLength: 90
-                longitude:
-                  type: number
-                  maxLength: 180
-                is_primary:
-                  type: boolean
-              required:
-                - city
-                - state
-                - latitude
-                - longitude
-            example:
-              name: John Doe
-              email: user@example.com
-              photo_url: "https://example.com/photo.jpg"
-              address_line2: 123 Main Street
-              city: Mumbai
-              state: Maharashtra
-              pincode: 400001
-              latitude: 19.076
-              longitude: 72.8777
-              is_primary: false
+          DriverAuth: []
       responses:
         200:
           description: Successful response
@@ -3298,7 +4658,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /availability:
+  /driver/availability:
     patch:
       tags:
         - Users - Driver
@@ -3331,14 +4691,14 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /address:
+  /driver/address:
     get:
       tags:
-        - Users - Parent
+        - Users - Driver
       summary: Get Address
       security:
         -
-          ParentAuth: []
+          DriverAuth: []
       responses:
         200:
           description: Successful response
@@ -3396,39 +4756,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-    put:
-      tags:
-        - Users - Parent
-      summary: Update Address
-      security:
-        -
-          ParentAuth: []
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /documents:
+  /driver/documents:
     get:
       tags:
         - Users - Driver
@@ -3525,7 +4853,276 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-students:
+  /parent/profile:
+    get:
+      tags:
+        - Users - Parent
+      summary: Get Profile
+      security:
+        -
+          ParentAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Users - Parent
+      summary: Update Profile
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                email:
+                  type: string
+                  format: email
+                photo_url:
+                  type: string
+                  format: uri
+                  minLength: 1
+                  maxLength: 200
+                address_line2:
+                  type: string
+                  maxLength: 200
+                city:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                state:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                pincode:
+                  type: string
+                  pattern: /^[0-9]{5,10}$/
+                latitude:
+                  type: number
+                  maxLength: 90
+                longitude:
+                  type: number
+                  maxLength: 180
+                is_primary:
+                  type: boolean
+              required:
+                - city
+                - state
+                - latitude
+                - longitude
+            example:
+              name: John Doe
+              email: user@example.com
+              photo_url: "https://example.com/photo.jpg"
+              address_line2: 123 Main Street
+              city: Mumbai
+              state: Maharashtra
+              pincode: 400001
+              latitude: 19.076
+              longitude: 72.8777
+              is_primary: false
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /parent/address:
+    get:
+      tags:
+        - Users - Parent
+      summary: Get Address
+      security:
+        -
+          ParentAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Users - Parent
+      summary: Update Address
+      security:
+        -
+          ParentAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /students/:
+    post:
+      tags:
+        - Users - Student
+      summary: Create Student
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                school_id:
+                  type: string
+                student_name:
+                  type: string
+                  minLength: 2
+                  maxLength: 100
+                class:
+                  type: string
+                  maxLength: 20
+                section:
+                  type: string
+                  maxLength: 10
+                roll_number:
+                  type: string
+                  maxLength: 20
+                photo_url:
+                  type: string
+                  format: uri
+                date_of_birth:
+                  type: string
+                gender:
+                  type: string
+                pickup_address_id:
+                  type: string
+                emergency_contact:
+                  type: string
+                  pattern: /^[+]?[0-9]{10,15}$/
+                medical_info:
+                  type: string
+                  maxLength: 500
+              required:
+                - school_id
+                - student_name
+            example:
+              school_id: string
+              student_name: John Doe
+              class: string
+              section: string
+              roll_number: string
+              photo_url: "https://example.com/photo.jpg"
+              date_of_birth: string
+              gender: string
+              pickup_address_id: 123 Main Street
+              emergency_contact: string
+              medical_info: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /students/my-students:
     get:
       tags:
         - Users - Student
@@ -3555,7 +5152,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /my-active-students:
+  /students/my-active-students:
     get:
       tags:
         - Users - Student
@@ -3585,7 +5182,119 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /by-student-id/:student_id:
+  /students/:id:
+    get:
+      tags:
+        - Users - Student
+      summary: Get Student
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Users - Student
+      summary: Update Student
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    delete:
+      tags:
+        - Users - Student
+      summary: Delete Student
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: id parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /students/by-student-id/:student_id:
     get:
       tags:
         - Users - Student
@@ -3699,8 +5408,8 @@ paths:
           description: Internal server error
 tags:
   -
-    name: Admin
-    description: Admin endpoints
+    name: Admin - Admin_management
+    description: Admin - Admin_management endpoints
   -
     name: Admin - Audit_log
     description: Admin - Audit_log endpoints

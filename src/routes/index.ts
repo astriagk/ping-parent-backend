@@ -1,6 +1,10 @@
 import { Router } from "express";
 
-import { adminRoutes, auditLogRoutes, roleRoutes } from "@modules/admin";
+import {
+  adminManagementRoutes,
+  auditLogRoutes,
+  roleRoutes,
+} from "@modules/admin";
 import { authRoutes } from "@modules/auth";
 import {
   parentSubscriptionRoutes,
@@ -55,7 +59,7 @@ router.use("/payments", paymentRoutes);
 router.use("/ratings-reviews", ratingReviewRoutes);
 
 // 11. Admin Portal APIs
-router.use("/admin", adminRoutes);
+router.use("/admin", adminManagementRoutes);
 
 // 12. Role Management
 router.use("/roles", roleRoutes);

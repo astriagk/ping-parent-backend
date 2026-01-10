@@ -1,158 +1,58 @@
 {
-  "current": "1.0.0",
+  "current": "0.0.0",
   "history": [
     {
-      "version": "1.0.0",
-      "timestamp": "2026-01-10T06:54:28.447Z",
+      "version": "0.0.0",
+      "timestamp": "2026-01-10T07:32:50.104Z",
       "bumpType": "patch",
       "endpoints": [
         {
           "method": "POST",
-          "route": "/login"
+          "route": "/admin/login"
         },
         {
           "method": "POST",
-          "route": "/setup/create-superadmin"
+          "route": "/admin/setup/create-superadmin"
         },
         {
           "method": "GET",
-          "route": "/verify-admin-token"
+          "route": "/admin/verify-admin-token"
         },
         {
           "method": "GET",
-          "route": "/"
-        },
-        {
-          "method": "GET",
-          "route": "/users"
-        },
-        {
-          "method": "POST",
-          "route": "/"
-        },
-        {
-          "method": "GET",
-          "route": "/:id"
-        },
-        {
-          "method": "PUT",
-          "route": "/:id"
-        },
-        {
-          "method": "PATCH",
-          "route": "/:id/activate"
-        },
-        {
-          "method": "PATCH",
-          "route": "/:id/deactivate"
-        },
-        {
-          "method": "GET",
-          "route": "/users/:id"
-        },
-        {
-          "method": "PUT",
-          "route": "/users/:id"
-        },
-        {
-          "method": "PATCH",
-          "route": "/users/:id/activate"
-        },
-        {
-          "method": "PATCH",
-          "route": "/users/:id/deactivate"
-        },
-        {
-          "method": "DELETE",
-          "route": "/users/:id"
-        },
-        {
-          "method": "GET",
-          "route": "/by-admin-id/:admin_id"
-        },
-        {
-          "method": "PUT",
-          "route": "/by-admin-id/:admin_id"
-        },
-        {
-          "method": "PATCH",
-          "route": "/by-admin-id/:admin_id/activate"
-        },
-        {
-          "method": "PATCH",
-          "route": "/by-admin-id/:admin_id/deactivate"
-        },
-        {
-          "method": "GET",
-          "route": "/drivers/:id/details"
-        },
-        {
-          "method": "GET",
-          "route": "/parents/:id/details"
-        },
-        {
-          "method": "PATCH",
-          "route": "/drivers/:id/approval-status"
-        },
-        {
-          "method": "GET",
-          "route": "/"
-        },
-        {
-          "method": "GET",
-          "route": "/:id"
-        },
-        {
-          "method": "GET",
-          "route": "/"
-        },
-        {
-          "method": "POST",
-          "route": "/"
-        },
-        {
-          "method": "GET",
-          "route": "/:id"
-        },
-        {
-          "method": "PUT",
-          "route": "/:id"
-        },
-        {
-          "method": "DELETE",
-          "route": "/:id"
-        },
-        {
-          "method": "GET",
-          "route": "/roles"
-        },
-        {
-          "method": "POST",
-          "route": "/register/send-otp"
-        },
-        {
-          "method": "POST",
-          "route": "/register/verify-otp"
-        },
-        {
-          "method": "POST",
-          "route": "/login/send-otp"
-        },
-        {
-          "method": "POST",
-          "route": "/login/verify-otp"
-        },
-        {
-          "method": "GET",
-          "route": "/verify-token"
-        },
-        {
-          "method": "POST",
-          "route": "/logout"
+          "route": "/admin/"
         },
         {
           "method": "GET",
           "route": "/admin/users"
+        },
+        {
+          "method": "POST",
+          "route": "/admin/"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/:id"
+        },
+        {
+          "method": "PUT",
+          "route": "/admin/:id"
+        },
+        {
+          "method": "PATCH",
+          "route": "/admin/:id/activate"
+        },
+        {
+          "method": "PATCH",
+          "route": "/admin/:id/deactivate"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/users/:id"
+        },
+        {
+          "method": "PUT",
+          "route": "/admin/users/:id"
         },
         {
           "method": "PATCH",
@@ -163,112 +63,212 @@
           "route": "/admin/users/:id/deactivate"
         },
         {
-          "method": "POST",
-          "route": "/"
+          "method": "DELETE",
+          "route": "/admin/users/:id"
         },
         {
           "method": "GET",
-          "route": "/my-subscriptions"
-        },
-        {
-          "method": "GET",
-          "route": "/my-active-subscription"
-        },
-        {
-          "method": "GET",
-          "route": "/:id"
+          "route": "/admin/by-admin-id/:admin_id"
         },
         {
           "method": "PUT",
-          "route": "/:id"
+          "route": "/admin/by-admin-id/:admin_id"
+        },
+        {
+          "method": "PATCH",
+          "route": "/admin/by-admin-id/:admin_id/activate"
+        },
+        {
+          "method": "PATCH",
+          "route": "/admin/by-admin-id/:admin_id/deactivate"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/drivers/:id/details"
+        },
+        {
+          "method": "GET",
+          "route": "/admin/parents/:id/details"
+        },
+        {
+          "method": "PATCH",
+          "route": "/admin/drivers/:id/approval-status"
+        },
+        {
+          "method": "GET",
+          "route": "/audit-logs/"
+        },
+        {
+          "method": "GET",
+          "route": "/audit-logs/:id"
+        },
+        {
+          "method": "GET",
+          "route": "/roles/"
         },
         {
           "method": "POST",
-          "route": "/:id/cancel"
+          "route": "/roles/"
+        },
+        {
+          "method": "GET",
+          "route": "/roles/:id"
+        },
+        {
+          "method": "PUT",
+          "route": "/roles/:id"
         },
         {
           "method": "DELETE",
-          "route": "/:id"
+          "route": "/roles/:id"
         },
         {
           "method": "GET",
-          "route": "/admin/all-subscriptions"
+          "route": "/auth/roles"
         },
         {
           "method": "POST",
-          "route": "/"
+          "route": "/auth/register/send-otp"
         },
         {
           "method": "POST",
-          "route": "/:id/complete"
-        },
-        {
-          "method": "GET",
-          "route": "/my-payments"
-        },
-        {
-          "method": "GET",
-          "route": "/my-payments/pending"
-        },
-        {
-          "method": "GET",
-          "route": "/my-payments/completed"
-        },
-        {
-          "method": "GET",
-          "route": "/:id"
-        },
-        {
-          "method": "PUT",
-          "route": "/:id"
+          "route": "/auth/register/verify-otp"
         },
         {
           "method": "POST",
-          "route": "/:id/refund"
+          "route": "/auth/login/send-otp"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/login/verify-otp"
         },
         {
           "method": "GET",
-          "route": "/admin/all-payments"
+          "route": "/auth/verify-token"
+        },
+        {
+          "method": "POST",
+          "route": "/auth/logout"
         },
         {
           "method": "GET",
-          "route": "/"
-        },
-        {
-          "method": "GET",
-          "route": "/:id"
-        },
-        {
-          "method": "PUT",
-          "route": "/:id"
+          "route": "/auth/admin/users"
         },
         {
           "method": "PATCH",
-          "route": "/:id/activate"
+          "route": "/auth/admin/users/:id/activate"
         },
         {
           "method": "PATCH",
-          "route": "/:id/deactivate"
+          "route": "/auth/admin/users/:id/deactivate"
+        },
+        {
+          "method": "POST",
+          "route": "/parent-subscriptions/"
         },
         {
           "method": "GET",
-          "route": "/"
+          "route": "/parent-subscriptions/my-subscriptions"
         },
         {
           "method": "GET",
-          "route": "/unread"
+          "route": "/parent-subscriptions/my-active-subscription"
         },
         {
           "method": "GET",
-          "route": "/unread-count"
+          "route": "/parent-subscriptions/:id"
         },
         {
           "method": "PUT",
-          "route": "/:id/mark-as-read"
+          "route": "/parent-subscriptions/:id"
+        },
+        {
+          "method": "POST",
+          "route": "/parent-subscriptions/:id/cancel"
+        },
+        {
+          "method": "DELETE",
+          "route": "/parent-subscriptions/:id"
+        },
+        {
+          "method": "GET",
+          "route": "/parent-subscriptions/admin/all-subscriptions"
+        },
+        {
+          "method": "POST",
+          "route": "/payments/"
+        },
+        {
+          "method": "POST",
+          "route": "/payments/:id/complete"
+        },
+        {
+          "method": "GET",
+          "route": "/payments/my-payments"
+        },
+        {
+          "method": "GET",
+          "route": "/payments/my-payments/pending"
+        },
+        {
+          "method": "GET",
+          "route": "/payments/my-payments/completed"
+        },
+        {
+          "method": "GET",
+          "route": "/payments/:id"
         },
         {
           "method": "PUT",
-          "route": "/mark-all-as-read"
+          "route": "/payments/:id"
+        },
+        {
+          "method": "POST",
+          "route": "/payments/:id/refund"
+        },
+        {
+          "method": "GET",
+          "route": "/payments/admin/all-payments"
+        },
+        {
+          "method": "GET",
+          "route": "/subscription-plans/"
+        },
+        {
+          "method": "GET",
+          "route": "/subscription-plans/:id"
+        },
+        {
+          "method": "PUT",
+          "route": "/subscription-plans/:id"
+        },
+        {
+          "method": "PATCH",
+          "route": "/subscription-plans/:id/activate"
+        },
+        {
+          "method": "PATCH",
+          "route": "/subscription-plans/:id/deactivate"
+        },
+        {
+          "method": "GET",
+          "route": "/notifications/"
+        },
+        {
+          "method": "GET",
+          "route": "/notifications/unread"
+        },
+        {
+          "method": "GET",
+          "route": "/notifications/unread-count"
+        },
+        {
+          "method": "PUT",
+          "route": "/notifications/:id/mark-as-read"
+        },
+        {
+          "method": "PUT",
+          "route": "/notifications/mark-all-as-read"
         },
         {
           "method": "POST",
@@ -300,253 +300,253 @@
         },
         {
           "method": "GET",
-          "route": "/"
+          "route": "/schools/"
         },
         {
           "method": "GET",
-          "route": "/:school_id"
+          "route": "/schools/:school_id"
         },
         {
           "method": "POST",
-          "route": "/admin"
+          "route": "/schools/admin"
         },
         {
           "method": "PUT",
-          "route": "/admin/:school_id"
+          "route": "/schools/admin/:school_id"
         },
         {
           "method": "DELETE",
-          "route": "/admin/:school_id"
+          "route": "/schools/admin/:school_id"
         },
         {
           "method": "POST",
-          "route": "/generate"
+          "route": "/daily-qr-otp/generate"
         },
         {
           "method": "GET",
-          "route": "/student/:studentId/trip/:tripId"
+          "route": "/daily-qr-otp/student/:studentId/trip/:tripId"
         },
         {
           "method": "POST",
-          "route": "/verify"
+          "route": "/daily-qr-otp/verify"
         },
         {
           "method": "POST",
-          "route": "/"
+          "route": "/driver-student-assignments/"
         },
         {
           "method": "GET",
-          "route": "/:id"
+          "route": "/driver-student-assignments/:id"
         },
         {
           "method": "GET",
-          "route": "/driver/my-assignments"
+          "route": "/driver-student-assignments/driver/my-assignments"
         },
         {
           "method": "GET",
-          "route": "/driver/my-pending-assignments"
+          "route": "/driver-student-assignments/driver/my-pending-assignments"
         },
         {
           "method": "POST",
-          "route": "/:id/approve"
+          "route": "/driver-student-assignments/:id/approve"
         },
         {
           "method": "POST",
-          "route": "/:id/reject"
+          "route": "/driver-student-assignments/:id/reject"
         },
         {
           "method": "GET",
-          "route": "/driver/my-active-assignments"
+          "route": "/driver-student-assignments/driver/my-active-assignments"
         },
         {
           "method": "POST",
-          "route": "/:id/deactivate"
+          "route": "/driver-student-assignments/:id/deactivate"
         },
         {
           "method": "GET",
-          "route": "/student/:studentId"
+          "route": "/driver-student-assignments/student/:studentId"
         },
         {
           "method": "PUT",
-          "route": "/:id"
+          "route": "/driver-student-assignments/:id"
         },
         {
           "method": "DELETE",
-          "route": "/:id"
+          "route": "/driver-student-assignments/:id"
         },
         {
           "method": "GET",
-          "route": "/admin/all-assignments"
+          "route": "/driver-student-assignments/admin/all-assignments"
         },
         {
           "method": "GET",
-          "route": "/admin/all-trips"
+          "route": "/trips/admin/all-trips"
         },
         {
           "method": "POST",
-          "route": "/"
+          "route": "/trips/"
         },
         {
           "method": "GET",
-          "route": "/my-trips"
+          "route": "/trips/my-trips"
         },
         {
           "method": "GET",
-          "route": "/my-trips/by-date"
+          "route": "/trips/my-trips/by-date"
         },
         {
           "method": "PATCH",
-          "route": "/:id/status"
+          "route": "/trips/:id/status"
         },
         {
           "method": "GET",
-          "route": "/my-trips/active"
+          "route": "/trips/my-trips/active"
         },
         {
           "method": "GET",
-          "route": "/:id"
+          "route": "/trips/:id"
         },
         {
           "method": "PUT",
-          "route": "/:id"
+          "route": "/trips/:id"
         },
         {
           "method": "DELETE",
-          "route": "/:id"
+          "route": "/trips/:id"
         },
         {
           "method": "PUT",
-          "route": "/trip/:tripId/student/:studentId/attendance"
+          "route": "/trip-students/trip/:tripId/student/:studentId/attendance"
         },
         {
           "method": "PUT",
-          "route": "/trip/:tripId/student/:studentId/pickup"
+          "route": "/trip-students/trip/:tripId/student/:studentId/pickup"
         },
         {
           "method": "PUT",
-          "route": "/trip/:tripId/student/:studentId/drop"
+          "route": "/trip-students/trip/:tripId/student/:studentId/drop"
         },
         {
           "method": "GET",
-          "route": "/trip/:tripId"
+          "route": "/trip-students/trip/:tripId"
         },
         {
           "method": "GET",
-          "route": "/:id"
+          "route": "/trip-students/:id"
         },
         {
           "method": "GET",
-          "route": "/student/:studentId"
+          "route": "/trip-students/student/:studentId"
         },
         {
           "method": "GET",
-          "route": "/trip/:tripId/student/:studentId"
+          "route": "/trip-students/trip/:tripId/student/:studentId"
         },
         {
           "method": "GET",
-          "route": "/trip/:tripId/attendance"
+          "route": "/trip-students/trip/:tripId/attendance"
         },
         {
           "method": "GET",
-          "route": "/trip/:tripId/pickup"
+          "route": "/trip-students/trip/:tripId/pickup"
         },
         {
           "method": "PUT",
-          "route": "/:id"
+          "route": "/trip-students/:id"
         },
         {
           "method": "GET",
-          "route": "/profile"
+          "route": "/driver/profile"
         },
         {
           "method": "POST",
-          "route": "/profile"
+          "route": "/driver/profile"
         },
         {
           "method": "PUT",
-          "route": "/profile"
+          "route": "/driver/profile"
         },
         {
           "method": "PATCH",
-          "route": "/availability"
+          "route": "/driver/availability"
         },
         {
           "method": "GET",
-          "route": "/address"
+          "route": "/driver/address"
         },
         {
           "method": "POST",
-          "route": "/address"
+          "route": "/driver/address"
         },
         {
           "method": "GET",
-          "route": "/documents"
+          "route": "/driver/documents"
         },
         {
           "method": "POST",
-          "route": "/documents"
+          "route": "/driver/documents"
         },
         {
           "method": "PUT",
-          "route": "/documents"
+          "route": "/driver/documents"
         },
         {
           "method": "GET",
-          "route": "/profile"
+          "route": "/parent/profile"
         },
         {
           "method": "PUT",
-          "route": "/profile"
+          "route": "/parent/profile"
         },
         {
           "method": "GET",
-          "route": "/address"
+          "route": "/parent/address"
         },
         {
           "method": "PUT",
-          "route": "/address"
+          "route": "/parent/address"
         },
         {
           "method": "POST",
-          "route": "/"
+          "route": "/students/"
         },
         {
           "method": "GET",
-          "route": "/my-students"
+          "route": "/students/my-students"
         },
         {
           "method": "GET",
-          "route": "/my-active-students"
+          "route": "/students/my-active-students"
         },
         {
           "method": "GET",
-          "route": "/:id"
+          "route": "/students/:id"
         },
         {
           "method": "PUT",
-          "route": "/:id"
+          "route": "/students/:id"
         },
         {
           "method": "DELETE",
-          "route": "/:id"
+          "route": "/students/:id"
         },
         {
           "method": "GET",
-          "route": "/by-student-id/:student_id"
+          "route": "/students/by-student-id/:student_id"
         },
         {
           "method": "PUT",
-          "route": "/by-student-id/:student_id"
+          "route": "/students/by-student-id/:student_id"
         },
         {
           "method": "DELETE",
-          "route": "/by-student-id/:student_id"
+          "route": "/students/by-student-id/:student_id"
         }
       ],
       "files": {
-        "postman": "PP_API_1_0_0.postman_collection.json",
-        "environment": "PP_API_1_0_0.postman_environment.json",
-        "openapi": "PP_API_1_0_0.openapi.yaml"
+        "postman": "PP_API_0_0_0.postman_collection.json",
+        "environment": "PP_API_0_0_0.postman_environment.json",
+        "openapi": "PP_API_0_0_0.openapi.yaml"
       }
     }
   ]

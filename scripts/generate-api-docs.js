@@ -58,7 +58,14 @@ function formatValue(value) {
   if (typeof value === 'string') {
     // Escape special characters and quote if necessary
     if (value.includes('\n') || value.includes(':') || value.includes('#')) {
-      return `"${value.replace(/"/g, '\\"')}"`;
+      // Escape newlines and quotes properly for YAML
+      const escaped = value
+        .replace(/\\/g, '\\\\')
+        .replace(/"/g, '\\"')
+        .replace(/\n/g, '\\n')
+        .replace(/\r/g, '\\r')
+        .replace(/\t/g, '\\t');
+      return `"${escaped}"`;
     }
     return value;
   }
@@ -68,6 +75,7 @@ function formatValue(value) {
 // Configuration
 const CONFIG = {
   MODULES_DIR: path.join(__dirname, '../src/modules'),
+  ROUTES_FILE: path.join(__dirname, '../src/routes/index.ts'),
   OUTPUT_DIR: path.join(__dirname, '../docs/api'),
   POSTMAN_DIR: path.join(__dirname, '../docs/api/postman/collections'),
   ENV_DIR: path.join(__dirname, '../docs/api/postman/environments'),
@@ -166,6 +174,38 @@ function findAllRouteFiles(dir = CONFIG.MODULES_DIR) {
 
   traverse(dir);
   return routeFiles;
+}
+
+// Parse main routes file to extract base paths for each module
+function parseMainRoutesFile() {
+  const basePaths = {};
+  
+  if (!fs.existsSync(CONFIG.ROUTES_FILE)) {
+    console.warn('⚠️  Main routes file not found, routes will not have base paths');
+    return basePaths;
+  }
+
+  const content = fs.readFileSync(CONFIG.ROUTES_FILE, 'utf-8');
+  
+  // Match patterns like: router.use("/admin", adminRoutes);
+  const routeUseRegex = /router\.use\(["']([^"']+)["'],\s*(\w+Routes)\)/g;
+  let match;
+  
+  while ((match = routeUseRegex.exec(content)) !== null) {
+    const [, basePath, routesVar] = match;
+    // Convert routesVar (e.g., "adminRoutes") to module name (e.g., "admin")
+    const moduleName = routesVar.replace(/Routes$/, '');
+    
+    // Store both camelCase and snake_case versions for flexible lookup
+    basePaths[moduleName] = basePath;
+    // Convert camelCase to snake_case (e.g., "auditLog" -> "audit_log")
+    const snakeCase = moduleName.replace(/([A-Z])/g, '_$1').toLowerCase().replace(/^_/, '');
+    if (snakeCase !== moduleName) {
+      basePaths[snakeCase] = basePath;
+    }
+  }
+  
+  return basePaths;
 }
 
 // Enhanced Route Parser with multi-line support
@@ -882,6 +922,18 @@ function main() {
     }
   });
 
+  // Parse main routes file to get base paths
+  console.log('📍 Parsing main routes file for base paths...');
+  const basePaths = parseMainRoutesFile();
+  const basePathCount = Object.keys(basePaths).length;
+  if (basePathCount > 0) {
+    console.log(`   Found ${basePathCount} route base paths:`);
+    Object.entries(basePaths).forEach(([module, path]) => {
+      console.log(`   - ${module}: ${path}`);
+    });
+  }
+  console.log('');
+
   // Find all route files
   console.log('📁 Discovering route files...');
   const routeFiles = findAllRouteFiles();
@@ -906,6 +958,19 @@ function main() {
 
     console.log(`   Processing: ${relativePath}`);
     const endpoints = parseRouteFile(file);
+    
+    // Apply base path to endpoints
+    const moduleKey = subModule || moduleName;
+    const basePath = basePaths[moduleKey] || basePaths[moduleName] || '';
+    
+    if (basePath) {
+      endpoints.forEach(endpoint => {
+        // Only add base path if route doesn't already start with it
+        if (!endpoint.route.startsWith(basePath)) {
+          endpoint.route = basePath + endpoint.route;
+        }
+      });
+    }
 
     allEndpoints = allEndpoints.concat(endpoints);
 

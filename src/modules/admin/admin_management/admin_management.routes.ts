@@ -26,12 +26,12 @@ import {
   updateDriverApprovalStatus,
   updateUser,
   verifyAdminAuthToken,
-} from "./admin.controller";
+} from "./admin_management.controller";
 import {
   adminLoginSchema,
   createAdminSchema,
   updateAdminSchema,
-} from "./admin.validation";
+} from "./admin_management.validation";
 
 const router = Router();
 
