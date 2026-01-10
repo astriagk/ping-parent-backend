@@ -16,6 +16,12 @@ export enum VehicleType {
   BUS = "bus",
 }
 
+export const VehicleTypesArray = [
+  VehicleType.VAN,
+  VehicleType.AUTO,
+  VehicleType.BUS,
+];
+
 export enum TokenType {
   ACCESS = "access",
   REFRESH = "refresh",
@@ -124,11 +130,6 @@ export enum PaymentStatus {
   COMPLETED = "completed",
   FAILED = "failed",
   REFUNDED = "refunded",
-}
-
-export enum AdminRole {
-  SUPERADMIN = "superadmin",
-  ADMIN = "admin",
 }
 
 export enum ApprovalStatus {

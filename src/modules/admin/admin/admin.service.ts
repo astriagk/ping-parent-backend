@@ -1,10 +1,10 @@
 import { WithId } from "mongodb";
 
 import {
-  AdminRole,
   ERROR_MESSAGES,
   HTTP_STATUS,
   UniqueCodeTypes,
+  UserRole,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateAdminTokenPair } from "@shared/services/token.service";
@@ -116,7 +116,7 @@ export const createInitialSuperAdmin = async (
     email: createData.email,
     password_hash,
     phone_number: createData.phone_number,
-    admin_role: AdminRole.SUPERADMIN, // Always create as superadmin
+    admin_role: UserRole.SUPERADMIN, // Always create as superadmin
     is_active: true,
     created_at: new Date(),
     updated_at: new Date(),
@@ -137,7 +137,7 @@ export const createAdmin = async (
   // Verify creator is superadmin
   const creator = await adminRepository.findByAdminId(creatorAdminId);
 
-  if (!creator || creator.admin_role !== AdminRole.SUPERADMIN) {
+  if (!creator || creator.admin_role !== UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
       ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,
@@ -233,8 +233,8 @@ export const updateAdmin = async (
   // Prevent modification of superadmin by non-superadmin
   const updater = await adminRepository.findByAdminId(updaterAdminId);
   if (
-    adminToUpdate.admin_role === AdminRole.SUPERADMIN &&
-    updater?.admin_role !== AdminRole.SUPERADMIN
+    adminToUpdate.admin_role === UserRole.SUPERADMIN &&
+    updater?.admin_role !== UserRole.SUPERADMIN
   ) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -294,8 +294,8 @@ export const activateAdmin = async (
   // Verify activator is superadmin for superadmin accounts
   const activator = await adminRepository.findByAdminId(activatorAdminId);
   if (
-    adminToActivate.admin_role === AdminRole.SUPERADMIN &&
-    activator?.admin_role !== AdminRole.SUPERADMIN
+    adminToActivate.admin_role === UserRole.SUPERADMIN &&
+    activator?.admin_role !== UserRole.SUPERADMIN
   ) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -329,7 +329,7 @@ export const deactivateAdmin = async (
   }
 
   // Prevent deactivation of superadmin
-  if (adminToDeactivate.admin_role === AdminRole.SUPERADMIN) {
+  if (adminToDeactivate.admin_role === UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
       ERROR_MESSAGES.ADMIN.CANNOT_MODIFY_SUPERADMIN,
@@ -338,7 +338,7 @@ export const deactivateAdmin = async (
 
   // Verify deactivator is superadmin
   const deactivator = await adminRepository.findByAdminId(deactivatorAdminId);
-  if (deactivator?.admin_role !== AdminRole.SUPERADMIN) {
+  if (deactivator?.admin_role !== UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
       ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,
@@ -387,8 +387,8 @@ export const updateAdminByAdminId = async (
   // Prevent modification of superadmin by non-superadmin
   const updater = await adminRepository.findByAdminId(updaterAdminId);
   if (
-    adminToUpdate.admin_role === AdminRole.SUPERADMIN &&
-    updater?.admin_role !== AdminRole.SUPERADMIN
+    adminToUpdate.admin_role === UserRole.SUPERADMIN &&
+    updater?.admin_role !== UserRole.SUPERADMIN
   ) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -448,8 +448,8 @@ export const activateAdminByAdminId = async (
   // Verify activator is superadmin for superadmin accounts
   const activator = await adminRepository.findByAdminId(activatorAdminId);
   if (
-    adminToActivate.admin_role === AdminRole.SUPERADMIN &&
-    activator?.admin_role !== AdminRole.SUPERADMIN
+    adminToActivate.admin_role === UserRole.SUPERADMIN &&
+    activator?.admin_role !== UserRole.SUPERADMIN
   ) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -483,7 +483,7 @@ export const deactivateAdminByAdminId = async (
   }
 
   // Prevent deactivation of superadmin
-  if (adminToDeactivate.admin_role === AdminRole.SUPERADMIN) {
+  if (adminToDeactivate.admin_role === UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
       ERROR_MESSAGES.ADMIN.CANNOT_MODIFY_SUPERADMIN,
@@ -492,7 +492,7 @@ export const deactivateAdminByAdminId = async (
 
   // Verify deactivator is superadmin
   const deactivator = await adminRepository.findByAdminId(deactivatorAdminId);
-  if (deactivator?.admin_role !== AdminRole.SUPERADMIN) {
+  if (deactivator?.admin_role !== UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
       ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,

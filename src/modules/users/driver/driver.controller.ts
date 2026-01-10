@@ -4,6 +4,8 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  VehicleType,
+  VehicleTypesArray,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 import { assignTrimmedFields } from "@shared/utils";
@@ -115,7 +117,7 @@ export const createProfile = asyncHandler(
     }
 
     // Validate vehicle type
-    if (!["van", "auto", "bus"].includes(vehicle_type)) {
+    if (!VehicleTypesArray.includes(vehicle_type)) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.DRIVER.INVALID_VEHICLE_TYPE,
@@ -136,7 +138,7 @@ export const createProfile = asyncHandler(
       name: String(name).trim(),
       email: email ? String(email).trim() : undefined,
       photo_url: photo_url ? String(photo_url).trim() : undefined,
-      vehicle_type: vehicle_type as "van" | "auto" | "bus",
+      vehicle_type: vehicle_type as VehicleType,
       vehicle_number: String(vehicle_number).trim(),
       vehicle_capacity: capacity,
       is_available: is_available !== undefined ? Boolean(is_available) : true,
@@ -191,7 +193,7 @@ export const updateProfile = asyncHandler(
     ]);
 
     if (vehicle_type !== undefined) {
-      if (["van", "auto", "bus"].includes(vehicle_type)) {
+      if (VehicleTypesArray.includes(vehicle_type)) {
         updates.vehicle_type = vehicle_type;
       } else {
         throw new ApiError(

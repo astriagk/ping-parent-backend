@@ -1,6 +1,7 @@
 import { Request, Response } from "express";
 
 import {
+  AuditAction,
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
@@ -37,7 +38,7 @@ export const getAuditLogs = asyncHandler(
       action: action as string,
       entity_type: entity_type as string,
       entity_id: entity_id as string,
-      status: status as "success" | "failure",
+      status: status as AuditAction,
       from_date: from_date ? new Date(from_date as string) : undefined,
       to_date: to_date ? new Date(to_date as string) : undefined,
       limit: limit ? parseInt(limit as string) : 100,
