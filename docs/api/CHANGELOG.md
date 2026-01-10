@@ -1,0 +1,184 @@
+# API Documentation Changelog
+
+> Auto-generated API endpoint version history
+
+**Current Version:** 1.0.0
+**Last Updated:** 2026-01-10
+
+---
+
+## Version 1.0.0 (PATCH)
+
+**Released:** 2026-01-10
+
+### Summary
+
+| Metric | Previous (N/A) | Current (1.0.0) | Change |
+|--------|----------|---------|--------|
+| **Total Endpoints** | 0 | 134 | +134 |
+| GET | 0 | 62 | +62 |
+| POST | 0 | 27 | +27 |
+| PUT | 0 | 23 | +23 |
+| PATCH | 0 | 13 | +13 |
+| DELETE | 0 | 9 | +9 |
+
+### Changes
+
+#### ✅ Added Endpoints (134)
+
+| Method | Path |
+|--------|------|
+| `POST` | `/login` |
+| `POST` | `/setup/create-superadmin` |
+| `GET` | `/verify-admin-token` |
+| `GET` | `/` |
+| `GET` | `/users` |
+| `POST` | `/` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `PATCH` | `/:id/activate` |
+| `PATCH` | `/:id/deactivate` |
+| `GET` | `/users/:id` |
+| `PUT` | `/users/:id` |
+| `PATCH` | `/users/:id/activate` |
+| `PATCH` | `/users/:id/deactivate` |
+| `DELETE` | `/users/:id` |
+| `GET` | `/by-admin-id/:admin_id` |
+| `PUT` | `/by-admin-id/:admin_id` |
+| `PATCH` | `/by-admin-id/:admin_id/activate` |
+| `PATCH` | `/by-admin-id/:admin_id/deactivate` |
+| `GET` | `/drivers/:id/details` |
+| `GET` | `/parents/:id/details` |
+| `PATCH` | `/drivers/:id/approval-status` |
+| `GET` | `/` |
+| `GET` | `/:id` |
+| `GET` | `/` |
+| `POST` | `/` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `DELETE` | `/:id` |
+| `GET` | `/roles` |
+| `POST` | `/register/send-otp` |
+| `POST` | `/register/verify-otp` |
+| `POST` | `/login/send-otp` |
+| `POST` | `/login/verify-otp` |
+| `GET` | `/verify-token` |
+| `POST` | `/logout` |
+| `GET` | `/admin/users` |
+| `PATCH` | `/admin/users/:id/activate` |
+| `PATCH` | `/admin/users/:id/deactivate` |
+| `POST` | `/` |
+| `GET` | `/my-subscriptions` |
+| `GET` | `/my-active-subscription` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `POST` | `/:id/cancel` |
+| `DELETE` | `/:id` |
+| `GET` | `/admin/all-subscriptions` |
+| `POST` | `/` |
+| `POST` | `/:id/complete` |
+| `GET` | `/my-payments` |
+| `GET` | `/my-payments/pending` |
+| `GET` | `/my-payments/completed` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `POST` | `/:id/refund` |
+| `GET` | `/admin/all-payments` |
+| `GET` | `/` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `PATCH` | `/:id/activate` |
+| `PATCH` | `/:id/deactivate` |
+| `GET` | `/` |
+| `GET` | `/unread` |
+| `GET` | `/unread-count` |
+| `PUT` | `/:id/mark-as-read` |
+| `PUT` | `/mark-all-as-read` |
+| `POST` | `/` |
+| `GET` | `/my-reviews` |
+| `GET` | `/driver/:driverId` |
+| `GET` | `/driver/:driverId/rating` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `DELETE` | `/:id` |
+| `GET` | `/` |
+| `GET` | `/:school_id` |
+| `POST` | `/admin` |
+| `PUT` | `/admin/:school_id` |
+| `DELETE` | `/admin/:school_id` |
+| `POST` | `/generate` |
+| `GET` | `/student/:studentId/trip/:tripId` |
+| `POST` | `/verify` |
+| `POST` | `/` |
+| `GET` | `/:id` |
+| `GET` | `/driver/my-assignments` |
+| `GET` | `/driver/my-pending-assignments` |
+| `POST` | `/:id/approve` |
+| `POST` | `/:id/reject` |
+| `GET` | `/driver/my-active-assignments` |
+| `POST` | `/:id/deactivate` |
+| `GET` | `/student/:studentId` |
+| `PUT` | `/:id` |
+| `DELETE` | `/:id` |
+| `GET` | `/admin/all-assignments` |
+| `GET` | `/admin/all-trips` |
+| `POST` | `/` |
+| `GET` | `/my-trips` |
+| `GET` | `/my-trips/by-date` |
+| `PATCH` | `/:id/status` |
+| `GET` | `/my-trips/active` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `DELETE` | `/:id` |
+| `PUT` | `/trip/:tripId/student/:studentId/attendance` |
+| `PUT` | `/trip/:tripId/student/:studentId/pickup` |
+| `PUT` | `/trip/:tripId/student/:studentId/drop` |
+| `GET` | `/trip/:tripId` |
+| `GET` | `/:id` |
+| `GET` | `/student/:studentId` |
+| `GET` | `/trip/:tripId/student/:studentId` |
+| `GET` | `/trip/:tripId/attendance` |
+| `GET` | `/trip/:tripId/pickup` |
+| `PUT` | `/:id` |
+| `GET` | `/profile` |
+| `POST` | `/profile` |
+| `PUT` | `/profile` |
+| `PATCH` | `/availability` |
+| `GET` | `/address` |
+| `POST` | `/address` |
+| `GET` | `/documents` |
+| `POST` | `/documents` |
+| `PUT` | `/documents` |
+| `GET` | `/profile` |
+| `PUT` | `/profile` |
+| `GET` | `/address` |
+| `PUT` | `/address` |
+| `POST` | `/` |
+| `GET` | `/my-students` |
+| `GET` | `/my-active-students` |
+| `GET` | `/:id` |
+| `PUT` | `/:id` |
+| `DELETE` | `/:id` |
+| `GET` | `/by-student-id/:student_id` |
+| `PUT` | `/by-student-id/:student_id` |
+| `DELETE` | `/by-student-id/:student_id` |
+
+---
+
+## Version History
+
+| Version | Date | Type | Total Endpoints | GET | POST | PUT | PATCH | DELETE | Changes |
+|---------|------|------|-----------------|-----|------|-----|-------|--------|----------|
+| **1.0.0** | 2026-01-10 | `PATCH` | 134 | 62 | 27 | 23 | 13 | 9 | - |
+
+---
+
+## Notes
+
+- **MAJOR**: Breaking changes (removed endpoints, changed signatures)
+- **MINOR**: New features (added endpoints, backwards-compatible)
+- **PATCH**: Bug fixes and documentation improvements
+
+---
+
+*Generated by API Documentation Generator v2.0*
