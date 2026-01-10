@@ -1,24 +1,22 @@
 import { Router } from "express";
 
+import { adminRoutes, auditLogRoutes, roleRoutes } from "@modules/admin";
 import { authRoutes } from "@modules/auth";
-
-import adminRoutes from "./admin/admin.routes";
-import auditLogsRoutes from "./audit_logs.routes";
-// Import routes in order matching Postman collection structure
-import dailyQrOtpRoutes from "./daily_qr_otp.routes";
-import driverRoutes from "./driver.routes";
-import driverStudentAssignmentRoutes from "./driverStudentAssignment.routes";
-import notificationRoutes from "./notification.routes";
-import parentRoutes from "./parent.routes";
-import parentSubscriptionRoutes from "./parent_subscription.routes";
-import paymentRoutes from "./payment.routes";
-import ratingReviewRoutes from "./rating_review.routes";
-import roleRoutes from "./role.routes";
-import schoolRoutes from "./school.routes";
-import studentRoutes from "./student.routes";
-import subscriptionPlanRoutes from "./subscription_plan.routes";
-import tripRoutes from "./trip.routes";
-import tripStudentRoutes from "./trip_student.routes";
+import {
+  parentSubscriptionRoutes,
+  paymentRoutes,
+  subscriptionPlanRoutes,
+} from "@modules/billing";
+import { notificationRoutes } from "@modules/notification";
+import { ratingReviewRoutes } from "@modules/reviews";
+import { schoolRoutes } from "@modules/school";
+import {
+  dailyQrOtpRoutes,
+  driverStudentAssignmentRoutes,
+  tripRoutes,
+  tripStudentRoutes,
+} from "@modules/trips";
+import { driverRoutes, parentRoutes, studentRoutes } from "@modules/users";
 
 const router = Router();
 
@@ -63,6 +61,6 @@ router.use("/admin", adminRoutes);
 router.use("/roles", roleRoutes);
 
 // Audit Logs (part of Admin Portal)
-router.use("/audit-logs", auditLogsRoutes);
+router.use("/audit-logs", auditLogRoutes);
 
 export default router;
