@@ -192,9 +192,7 @@ export const deleteStudentByStudentId = async (
 /**
  * Get students by user_id (converts user_id to parent_id internally)
  */
-export const getStudentsByUserId = async (
-  userId: string,
-): Promise<WithId<Student>[]> => {
+export const getStudentsByUserId = async (userId: string): Promise<any[]> => {
   const parentId = await getParentIdByUserId(userId);
 
   if (!parentId) {
@@ -204,7 +202,7 @@ export const getStudentsByUserId = async (
     );
   }
 
-  return await studentRepository.findByParentId(parentId);
+  return await studentRepository.findByParentIdWithPopulate(parentId);
 };
 
 /**
@@ -212,7 +210,7 @@ export const getStudentsByUserId = async (
  */
 export const getActiveStudentsByUserId = async (
   userId: string,
-): Promise<WithId<Student>[]> => {
+): Promise<any[]> => {
   const parentId = await getParentIdByUserId(userId);
 
   if (!parentId) {
@@ -222,5 +220,7 @@ export const getActiveStudentsByUserId = async (
     );
   }
 
-  return await studentRepository.findActiveStudentsByParentId(parentId);
+  return await studentRepository.findActiveStudentsByParentIdWithPopulate(
+    parentId,
+  );
 };
