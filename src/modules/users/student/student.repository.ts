@@ -1,6 +1,8 @@
 import { ObjectId, WithId } from "mongodb";
 
 import {
+  DRIVERS_COLLECTION,
+  DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
@@ -55,6 +57,34 @@ export class StudentRepository extends BaseRepository<Student> {
         {
           $unwind: {
             path: "$pickup_address",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
+            localField: "student_id",
+            foreignField: "student_id",
+            as: "driver_assignment",
+          },
+        },
+        {
+          $unwind: {
+            path: "$driver_assignment",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: DRIVERS_COLLECTION,
+            localField: "driver_assignment.driver_unique_id",
+            foreignField: "driver_unique_id",
+            as: "driver",
+          },
+        },
+        {
+          $unwind: {
+            path: "$driver",
             preserveNullAndEmptyArrays: true,
           },
         },
@@ -116,6 +146,34 @@ export class StudentRepository extends BaseRepository<Student> {
         {
           $unwind: {
             path: "$pickup_address",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
+            localField: "student_id",
+            foreignField: "student_id",
+            as: "driver_assignment",
+          },
+        },
+        {
+          $unwind: {
+            path: "$driver_assignment",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: DRIVERS_COLLECTION,
+            localField: "driver_assignment.driver_unique_id",
+            foreignField: "driver_unique_id",
+            as: "driver",
+          },
+        },
+        {
+          $unwind: {
+            path: "$driver",
             preserveNullAndEmptyArrays: true,
           },
         },

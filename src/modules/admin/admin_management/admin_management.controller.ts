@@ -41,7 +41,25 @@ import {
   loginAdmin as loginAdminService,
   updateAdminByAdminId as updateAdminByAdminIdService,
   updateAdmin as updateAdminService,
+  verifyPasswordHash as verifyPasswordHashService,
 } from "./admin_management.service";
+
+// Verify password against hash (for debugging/testing)
+export const verifyPasswordHash = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { password, password_hash } = req.body;
+
+    const result = await verifyPasswordHashService(password, password_hash);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: result,
+      message: result.isValid
+        ? "Password matches the hash"
+        : "Password does not match the hash",
+    });
+  },
+);
 
 // Admin login
 export const login = asyncHandler(async (req: Request, res: Response) => {

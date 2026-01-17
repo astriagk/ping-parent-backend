@@ -26,14 +26,23 @@ import {
   updateDriverApprovalStatus,
   updateUser,
   verifyAdminAuthToken,
+  verifyPasswordHash,
 } from "./admin_management.controller";
 import {
   adminLoginSchema,
   createAdminSchema,
   updateAdminSchema,
+  verifyPasswordHashSchema,
 } from "./admin_management.validation";
 
 const router = Router();
+
+// 00. Verify Password Hash (Public - for debugging/testing)
+router.post(
+  "/verify-password-hash",
+  validate(verifyPasswordHashSchema),
+  verifyPasswordHash,
+);
 
 // 01. Admin Login (Public)
 router.post("/login", validate(adminLoginSchema), login);

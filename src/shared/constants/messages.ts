@@ -370,6 +370,7 @@ export const SUCCESS_MESSAGES = {
     REJECTED_SUCCESSFULLY: "Assignment rejected successfully",
     ACTIVATED_SUCCESSFULLY: "Assignment activated successfully",
     DEACTIVATED_SUCCESSFULLY: "Assignment deactivated successfully",
+    DRIVERS_RETRIEVED_SUCCESSFULLY: "Drivers retrieved successfully",
   },
   TRIP: {
     CREATED_SUCCESSFULLY: "Trip created successfully",
@@ -407,6 +408,7 @@ export const SUCCESS_MESSAGES = {
     UPDATED_SUCCESSFULLY: "Subscription plan updated successfully",
     ACTIVATED_SUCCESSFULLY: "Subscription plan activated successfully",
     DEACTIVATED_SUCCESSFULLY: "Subscription plan deactivated successfully",
+    CREATED_SUCCESSFULLY: "Subscription plan created successfully",
   },
   PARENT_SUBSCRIPTION: {
     CREATED_SUCCESSFULLY: "Subscription created successfully",

@@ -11,7 +11,11 @@ export class SubscriptionPlanRepository extends BaseRepository<SubscriptionPlan>
   }
 
   async findActivePlans(): Promise<WithId<SubscriptionPlan>[]> {
-    return await this.findMany({ is_active: true });
+    const collection = this.getCollection();
+    return await collection
+      .find({ is_active: true })
+      .sort({ priority: 1 })
+      .toArray();
   }
 
   async findByPlanId(planId: string): Promise<WithId<SubscriptionPlan> | null> {

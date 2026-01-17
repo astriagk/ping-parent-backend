@@ -25,6 +25,17 @@ import {
 } from "./admin_management.type";
 
 /**
+ * Verify password against hash
+ */
+export const verifyPasswordHash = async (
+  password: string,
+  passwordHash: string,
+): Promise<{ isValid: boolean }> => {
+  const isValid = await comparePassword(password, passwordHash);
+  return { isValid };
+};
+
+/**
  * Format admin response by removing sensitive fields
  */
 const formatAdminResponse = (admin: WithId<Admin>): AdminResponse => {
