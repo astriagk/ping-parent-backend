@@ -1,4 +1,20 @@
-import { PlanType } from "@shared/constants";
+import { PlanBadgeType, PlanType, PricingModel } from "@shared/constants";
+
+export interface KidsLimit {
+  min: number;
+  max: number;
+}
+
+export interface FeatureItem {
+  key: string;
+  label: string;
+  enabled: boolean;
+}
+
+export interface PlanBadge {
+  text: string;
+  type: PlanBadgeType;
+}
 
 export interface SubscriptionPlan {
   _id?: any;
@@ -6,7 +22,13 @@ export interface SubscriptionPlan {
   plan_name: string;
   plan_type: PlanType;
   price: number;
-  features?: any;
+  currency: string;
+  kids: KidsLimit;
+  pricing_model: PricingModel;
+  per_kid_price: number | null;
+  features: FeatureItem[];
+  badge: PlanBadge | null;
+  priority: number;
   is_active: boolean;
   created_at: Date;
   updated_at?: Date;

@@ -3,7 +3,7 @@ import { UpdateFilter, WithId } from "mongodb";
 import { ADMIN_PORTAL_COLLECTION } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { Admin } from "./admin.type";
+import { Admin } from "./admin_management.type";
 
 export class AdminRepository extends BaseRepository<Admin> {
   constructor() {

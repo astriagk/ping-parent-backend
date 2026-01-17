@@ -106,6 +106,20 @@ export enum PlanType {
   YEARLY = "yearly",
 }
 
+export enum PricingModel {
+  FLAT = "flat",
+  PER_KID = "per_kid",
+  BASE_PLUS_PER_KID = "base_plus_per_kid",
+}
+
+export enum PlanBadgeType {
+  BEST_VALUE = "best_value",
+  POPULAR = "popular",
+  RECOMMENDED = "recommended",
+  LIMITED_OFFER = "limited_offer",
+  CUSTOM = "custom",
+}
+
 export enum SubscriptionStatus {
   ACTIVE = "active",
   EXPIRED = "expired",

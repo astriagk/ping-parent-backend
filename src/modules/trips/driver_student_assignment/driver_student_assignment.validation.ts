@@ -27,7 +27,7 @@ export const createDriverStudentAssignmentSchema = Joi.object({
       "any.only":
         VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.ASSIGNMENT_STATUS_INVALID,
     }),
-  assigned_date: Joi.date().required().messages({
+  assigned_date: Joi.date().required().optional().messages({
     "any.required":
       VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.ASSIGNED_DATE_REQUIRED,
     "date.base":

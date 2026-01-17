@@ -193,6 +193,21 @@ export const VALIDATION_MESSAGES = {
     PRICE_REQUIRED: "Price is required",
     PRICE_INVALID: "Price must be a valid number",
     PRICE_MIN: "Price must be at least 0",
+    CURRENCY_REQUIRED: "Currency is required",
+    CURRENCY_INVALID: "Currency must be a valid 3-letter code",
+    KIDS_REQUIRED: "Kids limit configuration is required",
+    KIDS_MIN_REQUIRED: "Minimum kids count is required",
+    KIDS_MIN_INVALID: "Minimum kids must be at least 1",
+    KIDS_MAX_REQUIRED: "Maximum kids count is required",
+    KIDS_MAX_INVALID: "Maximum kids must be at least 1",
+    PRICING_MODEL_REQUIRED: "Pricing model is required",
+    PRICING_MODEL_INVALID:
+      "Pricing model must be flat, per_kid, or base_plus_per_kid",
+    PER_KID_PRICE_INVALID: "Per kid price must be a valid number",
+    PER_KID_PRICE_MIN: "Per kid price must be at least 0",
+    PER_KID_PRICE_REQUIRED_FOR_MODEL:
+      "Per kid price is required for per_kid and base_plus_per_kid pricing models",
+    FEATURES_INVALID: "Features must be an object with boolean values",
   },
   PARENT_SUBSCRIPTION: {
     PLAN_ID_REQUIRED: "Plan ID is required",

@@ -1,7 +1,26 @@
 import { WithId } from "mongodb";
 
+import { generateUniqueCode } from "@shared/utils";
+
 import { subscriptionPlanRepository } from "./subscription_plan.repository";
 import { SubscriptionPlan } from "./subscription_plan.type";
+
+/**
+ * Create new subscription plan (admin only)
+ */
+export const createSubscriptionPlan = async (
+  planData: Omit<SubscriptionPlan, "plan_id" | "created_at" | "is_active">,
+): Promise<WithId<SubscriptionPlan>> => {
+  const plan_id = generateUniqueCode("PLAN");
+  const newPlan: SubscriptionPlan = {
+    ...planData,
+    plan_id,
+    is_active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+  return await subscriptionPlanRepository.create(newPlan);
+};
 
 /**
  * Get all active subscription plans

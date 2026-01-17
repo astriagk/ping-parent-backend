@@ -13,6 +13,7 @@ import {
   deactivateDriverStudentAssignment,
   deleteDriverStudentAssignment,
   getAllDriverStudentAssignments,
+  getAllDrivers,
   getAssignment,
   getAssignmentsByStudent,
   getMyActiveAssignments,
@@ -35,6 +36,9 @@ router.post(
   validate(createDriverStudentAssignmentSchema),
   createDriverStudentAssignment,
 );
+
+// Get all drivers
+router.get("/all-drivers", verifyToken_Middleware, getAllDrivers);
 
 // 02. Get Assignment Details
 router.get("/:id", verifyToken_Middleware, getAssignment);

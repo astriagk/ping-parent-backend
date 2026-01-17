@@ -121,6 +121,7 @@ export const createDriverStudentAssignment = async (
     driver_id: driverId,
     ...data,
     assignment_status: assignmentStatus,
+    assigned_date: new Date(),
     created_at: new Date(),
     updated_at: new Date(),
   };

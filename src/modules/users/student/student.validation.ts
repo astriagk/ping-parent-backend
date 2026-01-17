@@ -11,7 +11,7 @@ export const createStudentSchema = Joi.object({
     "string.max": VALIDATION_MESSAGES.STUDENT.NAME_MAX,
     "any.required": VALIDATION_MESSAGES.STUDENT.NAME_REQUIRED,
   }),
-  class: Joi.string().max(20).required().messages({
+  class: Joi.string().max(20).optional().required().messages({
     "string.max": VALIDATION_MESSAGES.STUDENT.CLASS_MAX,
     "any.required": VALIDATION_MESSAGES.STUDENT.CLASS_REQUIRED,
   }),

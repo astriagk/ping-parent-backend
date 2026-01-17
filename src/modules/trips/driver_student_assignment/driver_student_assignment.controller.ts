@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 
+import { DriverRepository } from "@modules/users/driver/driver.repository";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
@@ -320,6 +321,24 @@ export const deleteDriverStudentAssignment = asyncHandler(
     return res.json({
       success: true,
       message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DELETED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get all drivers
+ */
+export const getAllDrivers = asyncHandler(
+  async (req: Request, res: Response) => {
+    const driverRepo = new DriverRepository();
+    const drivers = await driverRepo.findMany();
+
+    return res.json({
+      success: true,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT
+          .DRIVERS_RETRIEVED_SUCCESSFULLY,
+      data: drivers,
     });
   },
 );

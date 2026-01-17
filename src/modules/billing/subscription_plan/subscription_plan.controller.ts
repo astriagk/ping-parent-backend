@@ -9,11 +9,30 @@ import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
   activateSubscriptionPlan as activateSubscriptionPlanService,
+  createSubscriptionPlan as createSubscriptionPlanService,
   deactivateSubscriptionPlan as deactivateSubscriptionPlanService,
   getAllSubscriptionPlans as getAllSubscriptionPlansService,
   getSubscriptionPlanById,
   updateSubscriptionPlan as updateSubscriptionPlanService,
 } from "./subscription_plan.service";
+
+/**
+ * Create new subscription plan (admin only)
+ * @route POST /api/subscription-plans
+ */
+export const createSubscriptionPlan = asyncHandler(
+  async (req: Request, res: Response) => {
+    const planData = req.body;
+
+    const plan = await createSubscriptionPlanService(planData);
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: plan,
+      message: SUCCESS_MESSAGES.SUBSCRIPTION_PLAN.CREATED_SUCCESSFULLY,
+    });
+  },
+);
 
 /**
  * Get all active subscription plans

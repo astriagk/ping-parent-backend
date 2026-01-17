@@ -14,7 +14,7 @@ import {
   hashPassword,
 } from "@shared/utils";
 
-import { adminRepository } from "./admin.repository";
+import { adminRepository } from "./admin_management.repository";
 import {
   Admin,
   AdminCreateInput,
@@ -22,7 +22,18 @@ import {
   AdminLoginResponse,
   AdminResponse,
   AdminUpdateInput,
-} from "./admin.type";
+} from "./admin_management.type";
+
+/**
+ * Verify password against hash
+ */
+export const verifyPasswordHash = async (
+  password: string,
+  passwordHash: string,
+): Promise<{ isValid: boolean }> => {
+  const isValid = await comparePassword(password, passwordHash);
+  return { isValid };
+};
 
 /**
  * Format admin response by removing sensitive fields

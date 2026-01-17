@@ -2,6 +2,15 @@ import Joi from "joi";
 
 import { UserRole, VALIDATION_MESSAGES } from "@shared/constants";
 
+export const verifyPasswordHashSchema = Joi.object({
+  password: Joi.string().required().messages({
+    "any.required": "Password is required",
+  }),
+  password_hash: Joi.string().required().messages({
+    "any.required": "Password hash is required",
+  }),
+});
+
 export const adminLoginSchema = Joi.object({
   email: Joi.string().email().required().messages({
     "string.email": VALIDATION_MESSAGES.ADMIN.EMAIL_INVALID,
