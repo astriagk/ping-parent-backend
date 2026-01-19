@@ -1,10 +1,11 @@
+/* eslint-disable no-console */
 import dotenv from "dotenv";
 import { createServer } from "http";
 import path from "path";
 
+import { connectDB } from "@shared/config";
+
 import app from "./app";
-import { connectDB } from "./config/database";
-import { connectRedis } from "./config/redis";
 
 const NODE_ENV = process.env.NODE_ENV || "dev";
 
