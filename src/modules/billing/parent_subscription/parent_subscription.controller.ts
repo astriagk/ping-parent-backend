@@ -63,7 +63,7 @@ export const createSubscription = asyncHandler(
 
 export const getSubscriptionById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const subscription = await getParentSubscriptionById(id);
 
@@ -133,7 +133,7 @@ export const getMyActiveSubscription = asyncHandler(
 
 export const updateSubscriptionById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const updates = req.body;
 
     const subscription = await updateParentSubscription(id, updates);
@@ -155,7 +155,7 @@ export const updateSubscriptionById = asyncHandler(
 
 export const cancelSubscriptionById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const subscription = await cancelParentSubscription(id);
 
@@ -176,7 +176,7 @@ export const cancelSubscriptionById = asyncHandler(
 
 export const deleteSubscriptionById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const deleted = await deleteParentSubscription(id);
 
