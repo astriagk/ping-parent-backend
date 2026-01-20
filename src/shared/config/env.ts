@@ -1,8 +1,6 @@
 import dotenv from "dotenv";
 import path from "path";
 
-import { logger } from "@shared/utils";
-
 // 1. Determine environment
 const NODE_ENV = process.env.NODE_ENV || "dev";
 
@@ -11,14 +9,8 @@ const NODE_ENV = process.env.NODE_ENV || "dev";
 const envFile = `.env.${NODE_ENV}`;
 const envPath = path.resolve(process.cwd(), "environment", envFile);
 
-logger.info("NODE_ENV:", NODE_ENV);
-logger.info("Env file:", envFile);
-logger.info("Resolved path:", envPath);
-
 // 3. Load environment variables
 dotenv.config({ path: envPath });
-
-logger.info("all env vars:", process.env);
 
 // 4. Export typed environment variables
 export const ENV = {
@@ -36,8 +28,6 @@ export const ENV = {
   EMAIL_PASSWORD: process.env.EMAIL_PASSWORD!,
   EMAIL_FROM: process.env.EMAIL_FROM!,
 } as const;
-
-logger.info("ENV", ENV);
 
 // 5. Validate required environment variables
 const requiredEnvVars = ["MONGO_URI", "DB_NAME", "JWT_SECRET"];

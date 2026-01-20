@@ -4,7 +4,7 @@
   "description": "Backend service for the **Ping Parent** application built with **Node.js** and **TypeScript**.",
   "main": "index.js",
   "scripts": {
-    "dev": "NODE_ENV=dev ts-node-dev --files --respawn -r tsconfig-paths/register src/server.ts",
+    "dev": "ts-node-dev --files --respawn -r tsconfig-paths/register src/server.ts",
     "build": "npm install && tsc && npx tsc-alias",
     "start:prod": "set NODE_ENV=production && node dist/server.js",
     "test": "jest --runInBand --detectOpenHandles",

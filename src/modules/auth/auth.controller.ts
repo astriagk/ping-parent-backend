@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 import jwt from "jsonwebtoken";
 
 import { getAllRoles } from "@modules/admin/role/role.service";
+import { createParentProfile } from "@modules/users/parent/parent.service";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
@@ -327,6 +328,15 @@ export const verifyPhoneOtp = asyncHandler(
           ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
         );
       }
+    }
+
+    let createProfile = await createParentProfile(String(user._id), {});
+
+    if (!createProfile) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
+      );
     }
 
     // Generate token
