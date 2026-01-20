@@ -38,7 +38,10 @@ export const generateQrOtp = asyncHandler(
  * GET /daily-qr-otp/student/:studentId/trip/:tripId
  */
 export const getQrOtp = asyncHandler(async (req: Request, res: Response) => {
-  const { studentId, tripId } = req.params;
+  const { studentId, tripId } = req.params as {
+    studentId: string;
+    tripId: string;
+  };
 
   const qrOtp = await getQrOtpByStudentAndTrip(studentId, tripId);
 
