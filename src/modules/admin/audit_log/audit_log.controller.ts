@@ -65,7 +65,7 @@ export const getAuditLogs = asyncHandler(
  */
 export const getAuditLogById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const log = await getAuditLogByIdService(id);
 

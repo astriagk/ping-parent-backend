@@ -56,7 +56,7 @@ export const getAllSubscriptionPlans = asyncHandler(
  */
 export const getSubscriptionPlan = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const plan = await getSubscriptionPlanById(id);
 
@@ -81,7 +81,7 @@ export const getSubscriptionPlan = asyncHandler(
  */
 export const updateSubscriptionPlan = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const updates = req.body;
 
     const plan = await updateSubscriptionPlanService(id, updates);
@@ -107,7 +107,7 @@ export const updateSubscriptionPlan = asyncHandler(
  */
 export const activateSubscriptionPlan = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const plan = await activateSubscriptionPlanService(id);
 
@@ -132,7 +132,7 @@ export const activateSubscriptionPlan = asyncHandler(
  */
 export const deactivateSubscriptionPlan = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const plan = await deactivateSubscriptionPlanService(id);
 

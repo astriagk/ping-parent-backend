@@ -82,7 +82,7 @@ export const getUnreadCount = asyncHandler(
 
 // Mark single notification as read
 export const markAsRead = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
   const userId = req.user?.userId;
 
   if (!userId) {

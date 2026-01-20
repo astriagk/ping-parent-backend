@@ -77,7 +77,7 @@ export const getAllDriverStudentAssignments = asyncHandler(
  */
 export const getAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const assignment = await getAssignmentById(id);
 
@@ -176,7 +176,7 @@ export const getMyPendingAssignments = asyncHandler(
  */
 export const getAssignmentsByStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const { studentId } = req.params as { studentId: string };
+    const { studentId } = req.params as Record<string, string>;
 
     const assignments = await getAssignmentsByStudentId(studentId);
 
@@ -194,7 +194,7 @@ export const getAssignmentsByStudent = asyncHandler(
  */
 export const updateDriverStudentAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const updates = req.body;
 
     const assignment = await updateAssignment(id, updates);
@@ -219,7 +219,7 @@ export const updateDriverStudentAssignment = asyncHandler(
  */
 export const approveDriverStudentAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -251,7 +251,7 @@ export const approveDriverStudentAssignment = asyncHandler(
  */
 export const rejectDriverStudentAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -283,7 +283,7 @@ export const rejectDriverStudentAssignment = asyncHandler(
  */
 export const deactivateDriverStudentAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const assignment = await deactivateAssignment(id);
     if (!assignment) {
@@ -307,7 +307,7 @@ export const deactivateDriverStudentAssignment = asyncHandler(
  */
 export const deleteDriverStudentAssignment = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const deleted = await deleteAssignment(id);
 

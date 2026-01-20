@@ -33,7 +33,7 @@ export const createSchool = asyncHandler(
 );
 
 export const getSchool = asyncHandler(async (req: Request, res: Response) => {
-  const { school_id } = req.params as { school_id: string };
+  const { school_id } = req.params as Record<string, string>;
 
   const school = await getSchoolService(school_id);
 
@@ -74,7 +74,7 @@ export const getAllSchools = asyncHandler(
 
 export const updateSchool = asyncHandler(
   async (req: Request, res: Response) => {
-    const { school_id } = req.params as { school_id: string };
+    const { school_id } = req.params as Record<string, string>;
     const updates = req.body;
 
     const school = await updateSchoolService(school_id, updates);
@@ -96,7 +96,7 @@ export const updateSchool = asyncHandler(
 
 export const deleteSchool = asyncHandler(
   async (req: Request, res: Response) => {
-    const { school_id } = req.params as { school_id: string };
+    const { school_id } = req.params as Record<string, string>;
 
     const deleted = await deleteSchoolService(school_id);
 
