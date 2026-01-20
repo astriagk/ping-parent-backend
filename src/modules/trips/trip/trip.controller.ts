@@ -59,7 +59,7 @@ export const createTrip = asyncHandler(async (req: Request, res: Response) => {
 
 export const getTripProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const trip = await getTripById(id);
 
@@ -154,7 +154,7 @@ export const getMyActiveTrips = asyncHandler(
 
 export const updateTripProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const updates = req.body;
 
     const trip = await updateTrip(id, updates);
@@ -173,7 +173,7 @@ export const updateTripProfile = asyncHandler(
 
 export const updateTripStatus = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const { trip_status } = req.body;
 
     const trip = await updateTripStatusService(id, trip_status);
@@ -192,7 +192,7 @@ export const updateTripStatus = asyncHandler(
 
 export const deleteTripProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const deleted = await deleteTrip(id);
 

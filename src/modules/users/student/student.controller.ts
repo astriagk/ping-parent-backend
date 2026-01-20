@@ -44,7 +44,7 @@ export const createStudent = asyncHandler(
 
 export const getStudentProfile = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const student = await getStudentById(id);
 
@@ -65,7 +65,7 @@ export const getStudentProfile = asyncHandler(
 
 export const getStudentByStudentId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { student_id } = req.params;
+    const { student_id } = req.params as { student_id: string };
 
     const student = await getStudentByStudentIdService(student_id);
 
@@ -128,7 +128,7 @@ export const getMyActiveStudents = asyncHandler(
 
 export const updateStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const updates = req.body;
 
     const student = await updateStudentService(id, updates);
@@ -150,7 +150,7 @@ export const updateStudent = asyncHandler(
 
 export const updateStudentByStudentId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { student_id } = req.params;
+    const { student_id } = req.params as { student_id: string };
     const updates = req.body;
 
     const student = await updateStudentByStudentIdService(student_id, updates);
@@ -172,7 +172,7 @@ export const updateStudentByStudentId = asyncHandler(
 
 export const deleteStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const deleted = await deleteStudentService(id);
 
@@ -192,7 +192,7 @@ export const deleteStudent = asyncHandler(
 
 export const deleteStudentByStudentId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { student_id } = req.params;
+    const { student_id } = req.params as { student_id: string };
 
     const deleted = await deleteStudentByStudentIdService(student_id);
 
