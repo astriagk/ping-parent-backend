@@ -41,7 +41,7 @@ export const getAllRoles = asyncHandler(async (req: Request, res: Response) => {
 
 // Get role by ID
 export const getRoleById = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
 
   const role = await getRoleByIdService(id);
 
@@ -58,7 +58,7 @@ export const getRoleById = asyncHandler(async (req: Request, res: Response) => {
 
 // Update role
 export const updateRole = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
   const updates = req.body;
 
   const updatedRole = await updateRoleService(id, updates);
@@ -76,7 +76,7 @@ export const updateRole = asyncHandler(async (req: Request, res: Response) => {
 
 // Delete role
 export const deleteRole = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
 
   const deleted = await deleteRoleService(id);
 

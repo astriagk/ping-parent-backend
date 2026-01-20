@@ -46,7 +46,7 @@ export const submitRatingReview = asyncHandler(
 
 export const getRatingReview = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const ratingReview = await getRatingReviewById(id);
 
@@ -88,7 +88,7 @@ export const getMyRatingReviews = asyncHandler(
 
 export const getDriverRatingReviews = asyncHandler(
   async (req: Request, res: Response) => {
-    const { driverId } = req.params as { driverId: string };
+    const { driverId } = req.params as Record<string, string>;
 
     const ratingReviews = await getRatingReviewsByDriverId(driverId);
 
@@ -102,7 +102,7 @@ export const getDriverRatingReviews = asyncHandler(
 
 export const updateRatingReviewById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const userId = req.user?.userId;
     const updates = req.body;
 
@@ -132,7 +132,7 @@ export const updateRatingReviewById = asyncHandler(
 
 export const deleteRatingReviewById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const userId = req.user?.userId;
 
     if (!userId) {
@@ -160,7 +160,7 @@ export const deleteRatingReviewById = asyncHandler(
 
 export const getDriverRating = asyncHandler(
   async (req: Request, res: Response) => {
-    const { driverId } = req.params as { driverId: string };
+    const { driverId } = req.params as Record<string, string>;
 
     const averageRating = await getDriverAverageRating(driverId);
 

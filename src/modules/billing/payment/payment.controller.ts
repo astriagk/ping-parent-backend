@@ -61,7 +61,7 @@ export const createPayment = asyncHandler(
 
 export const getPaymentByIdController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const payment = await getPaymentById(id);
 
@@ -145,7 +145,7 @@ export const getMyCompletedPayments = asyncHandler(
 
 export const updatePaymentById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const updates = req.body;
 
     const payment = await updatePayment(id, updates);
@@ -167,7 +167,7 @@ export const updatePaymentById = asyncHandler(
 
 export const completePaymentById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const { transaction_id, gateway_response } = req.body;
 
     const payment = await completePayment(id, transaction_id, gateway_response);
@@ -189,7 +189,7 @@ export const completePaymentById = asyncHandler(
 
 export const refundPaymentById = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const { gateway_response } = req.body;
 
     const payment = await refundPayment(id, gateway_response);

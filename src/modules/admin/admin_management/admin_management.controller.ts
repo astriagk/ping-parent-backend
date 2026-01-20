@@ -124,7 +124,7 @@ export const getAll = asyncHandler(async (req: Request, res: Response) => {
 
 // Get admin by ID
 export const getById = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
 
   const admin = await getAdminById(id);
 
@@ -141,7 +141,7 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
 
 // Update admin
 export const updateAdmin = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
   const updaterAdminId = req.admin?.adminId;
 
   if (!updaterAdminId) {
@@ -169,7 +169,7 @@ export const updateAdmin = asyncHandler(async (req: Request, res: Response) => {
 // Activate admin
 export const activateAdmin = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const activatorAdminId = req.admin?.adminId;
 
     if (!activatorAdminId) {
@@ -196,7 +196,7 @@ export const activateAdmin = asyncHandler(
 // Deactivate admin
 export const deactivateAdmin = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const deactivatorAdminId = req.admin?.adminId;
 
     if (!deactivatorAdminId) {
@@ -239,7 +239,7 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
 
 // Get user by ID
 export const getUserById = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
 
   const user = await getUserByIdService(id);
 
@@ -259,7 +259,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
 
 // Update user
 export const updateUser = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
   const updates = req.body;
 
   const updatedUser = await updateUserService(id, updates);
@@ -281,7 +281,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
 // Activate user
 export const activateUser = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const activatedUser = await activateUserService(id);
 
@@ -303,7 +303,7 @@ export const activateUser = asyncHandler(
 // Deactivate user
 export const deactivateUser = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const deactivatedUser = await deactivateUserService(id);
 
@@ -324,7 +324,7 @@ export const deactivateUser = asyncHandler(
 
 // Delete user (soft delete)
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
-  const { id } = req.params as { id: string };
+  const { id } = req.params as Record<string, string>;
 
   const deleted = await deleteUserService(id);
 
@@ -433,7 +433,7 @@ export const verifyAdminAuthToken = asyncHandler(
 // Get admin by admin_id
 export const getByAdminId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { admin_id } = req.params as { admin_id: string };
+    const { admin_id } = req.params as Record<string, string>;
 
     const admin = await getAdminByAdminIdFormatted(admin_id);
 
@@ -452,7 +452,7 @@ export const getByAdminId = asyncHandler(
 // Update admin by admin_id
 export const updateAdminByAdminId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { admin_id } = req.params as { admin_id: string };
+    const { admin_id } = req.params as Record<string, string>;
     const updaterAdminId = req.admin?.adminId;
 
     if (!updaterAdminId) {
@@ -485,7 +485,7 @@ export const updateAdminByAdminId = asyncHandler(
 // Activate admin by admin_id
 export const activateAdminByAdminId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { admin_id } = req.params as { admin_id: string };
+    const { admin_id } = req.params as Record<string, string>;
     const activatorAdminId = req.admin?.adminId;
 
     if (!activatorAdminId) {
@@ -515,7 +515,7 @@ export const activateAdminByAdminId = asyncHandler(
 // Deactivate admin by admin_id
 export const deactivateAdminByAdminId = asyncHandler(
   async (req: Request, res: Response) => {
-    const { admin_id } = req.params as { admin_id: string };
+    const { admin_id } = req.params as Record<string, string>;
     const deactivatorAdminId = req.admin?.adminId;
 
     if (!deactivatorAdminId) {
@@ -545,7 +545,7 @@ export const deactivateAdminByAdminId = asyncHandler(
 // Get complete driver details by ID (for admin verification)
 export const getDriverCompleteDetails = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const driverDetails = await getCompleteDriverDetailsById(id);
 
@@ -567,7 +567,7 @@ export const getDriverCompleteDetails = asyncHandler(
 // Get complete parent details by ID (for admin verification)
 export const getParentCompleteDetails = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
 
     const parentDetails = await getCompleteParentDetailsById(id);
 
@@ -589,7 +589,7 @@ export const getParentCompleteDetails = asyncHandler(
 // Update driver approval status
 export const updateDriverApprovalStatus = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params as { id: string };
+    const { id } = req.params as Record<string, string>;
     const { approval_status, rejection_reason } = req.body;
     const adminId = req.admin?.adminId;
 
