@@ -15,7 +15,7 @@ class Logger {
     return `[${timestamp}] [${level.toUpperCase()}]: ${message}${metaStr}`;
   }
 
-  info(message: string, meta?: object): void {
+  info(message: string, meta?: object | any): void {
     console.log(this.formatMessage("info", message, meta));
   }
 
