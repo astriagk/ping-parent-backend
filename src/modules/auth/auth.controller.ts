@@ -381,7 +381,7 @@ export const getAllUsersController = asyncHandler(
  */
 export const activateUserController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const user = await activateUser(id);
 
@@ -405,7 +405,7 @@ export const activateUserController = asyncHandler(
  */
 export const deactivateUserController = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const user = await deactivateUser(id);
 

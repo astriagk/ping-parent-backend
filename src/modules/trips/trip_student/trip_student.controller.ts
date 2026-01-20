@@ -28,7 +28,7 @@ import {
  */
 export const getTripStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
 
     const tripStudent = await getTripStudentById(id);
 
@@ -52,7 +52,7 @@ export const getTripStudent = asyncHandler(
  */
 export const getTripStudentsByTrip = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId } = req.params;
+    const { tripId } = req.params as { tripId: string };
     const { ordered } = req.query;
 
     let tripStudents;
@@ -75,7 +75,7 @@ export const getTripStudentsByTrip = asyncHandler(
  */
 export const getTripStudentsByStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const { studentId } = req.params;
+    const { studentId } = req.params as { studentId: string };
 
     const tripStudents = await getTripStudentsByStudentId(studentId);
 
@@ -92,7 +92,10 @@ export const getTripStudentsByStudent = asyncHandler(
  */
 export const getTripStudentByTripStudent = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId, studentId } = req.params;
+    const { tripId, studentId } = req.params as {
+      tripId: string;
+      studentId: string;
+    };
 
     const tripStudent = await getTripStudentByTripAndStudent(tripId, studentId);
 
@@ -117,7 +120,10 @@ export const getTripStudentByTripStudent = asyncHandler(
  */
 export const markStudentAttendance = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId, studentId } = req.params;
+    const { tripId, studentId } = req.params as {
+      tripId: string;
+      studentId: string;
+    };
     const { attendance_status, notes } = req.body;
 
     const tripStudent = await markAttendance(
@@ -141,7 +147,10 @@ export const markStudentAttendance = asyncHandler(
  */
 export const recordStudentPickup = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId, studentId } = req.params;
+    const { tripId, studentId } = req.params as {
+      tripId: string;
+      studentId: string;
+    };
     const pickupData = req.body;
 
     const tripStudent = await recordPickup(tripId, studentId, pickupData);
@@ -160,7 +169,10 @@ export const recordStudentPickup = asyncHandler(
  */
 export const recordStudentDrop = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId, studentId } = req.params;
+    const { tripId, studentId } = req.params as {
+      tripId: string;
+      studentId: string;
+    };
     const dropData = req.body;
 
     const tripStudent = await recordDrop(tripId, studentId, dropData);
@@ -178,7 +190,7 @@ export const recordStudentDrop = asyncHandler(
  */
 export const updateTripStudentRecord = asyncHandler(
   async (req: Request, res: Response) => {
-    const { id } = req.params;
+    const { id } = req.params as { id: string };
     const updates = req.body;
 
     const tripStudent = await updateTripStudent(id, updates);
@@ -203,7 +215,7 @@ export const updateTripStudentRecord = asyncHandler(
  */
 export const getTripStudentsByAttendance = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId } = req.params;
+    const { tripId } = req.params as { tripId: string };
     const { status } = req.query;
 
     if (!status || typeof status !== "string") {
@@ -231,7 +243,7 @@ export const getTripStudentsByAttendance = asyncHandler(
  */
 export const getTripStudentsByPickup = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId } = req.params;
+    const { tripId } = req.params as { tripId: string };
     const { status } = req.query;
 
     if (!status || typeof status !== "string") {
