@@ -1,5 +1,27 @@
 import { ApprovalStatus, VehicleType } from "@shared/constants";
 
+// Onboarding Screen Enum
+export enum DriverOnboardingScreen {
+  WELCOME = "welcome",
+  PROFILE = "profile",
+  DOCUMENTS = "documents",
+  ADDRESS = "address",
+  AVAILABILITY = "availability",
+  COMPLETE = "complete",
+}
+
+export const DriverOnboardingScreenArray = Object.values(
+  DriverOnboardingScreen,
+);
+
+// Onboarding Screen Interface
+export interface DriverOnboarding {
+  _id?: any;
+  user_id: string;
+  screen_name: DriverOnboardingScreen;
+  updated_at?: Date;
+}
+
 // Table: drivers
 export interface Driver {
   _id?: any; // MongoDB internal ID
