@@ -2,6 +2,8 @@ import Joi from "joi";
 
 import { VALIDATION_MESSAGES, VehicleType } from "@shared/constants";
 
+import { DriverOnboardingScreenArray } from "./driver.type";
+
 export const createDriverProfileSchema = Joi.object({
   name: Joi.string().min(2).max(100).required().messages({
     "string.min": VALIDATION_MESSAGES.NAME.FIRST_MIN,
@@ -161,4 +163,10 @@ export const updateDriverDocumentsSchema = Joi.object({
   insurance_photo_url: Joi.string().uri().optional().allow("").messages({
     "string.uri": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_PHOTO_INVALID,
   }),
+});
+
+export const updateDriverOnboardingScreenSchema = Joi.object({
+  screen_name: Joi.string()
+    .valid(...DriverOnboardingScreenArray)
+    .required(),
 });

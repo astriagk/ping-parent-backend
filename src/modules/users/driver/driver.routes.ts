@@ -7,9 +7,11 @@ import {
   createProfile,
   getAddress,
   getDocuments,
+  getDriverOnboardingScreen,
   getProfile,
   setAvailability,
   updateDocuments,
+  updateDriverOnboardingScreen,
   updateProfile,
   upsertAddress,
 } from "./driver.controller";
@@ -17,6 +19,7 @@ import {
   createDriverDocumentsSchema,
   createDriverProfileSchema,
   updateDriverDocumentsSchema,
+  updateDriverOnboardingScreenSchema,
   updateDriverProfileSchema,
   upsertDriverAddressSchema,
 } from "./driver.validation";
@@ -62,7 +65,7 @@ router.get("/documents", verifyDriverToken, getDocuments);
 // 08. Upload Driver Documents
 router.post(
   "/documents",
-  verifyDriverToken,
+  // verifyDriverToken,
   validate(createDriverDocumentsSchema),
   createDocuments,
 );
@@ -70,9 +73,20 @@ router.post(
 // 09. Update Driver Documents
 router.put(
   "/documents",
-  verifyDriverToken,
+  // verifyDriverToken,
   validate(updateDriverDocumentsSchema),
   updateDocuments,
+);
+
+// 10. Get Driver Onboarding Screen
+router.get("/onboarding/screen", verifyDriverToken, getDriverOnboardingScreen);
+
+// 11. Update Driver Onboarding Screen
+router.put(
+  "/onboarding/screen",
+  verifyDriverToken,
+  validate(updateDriverOnboardingScreenSchema),
+  updateDriverOnboardingScreen,
 );
 
 export default router;

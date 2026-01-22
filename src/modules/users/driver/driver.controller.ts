@@ -10,6 +10,7 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 import { assignTrimmedFields } from "@shared/utils";
 
+import { driverOnboardingRepository } from "./driver.repository";
 import {
   createDriverProfile,
   getDriverAddressByUserId,
@@ -543,6 +544,52 @@ export const setAvailability = asyncHandler(
       success: true,
       data: updatedProfile ? formatDriverProfileResponse(updatedProfile) : null,
       message: "Driver availability updated successfully",
+    });
+  },
+);
+
+/**
+ * GET /driver/onboarding/screen
+ * Get driver onboarding screen progress
+ */
+export const getDriverOnboardingScreen = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const record = await driverOnboardingRepository.findByUserId(userId);
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: record?.screen_name || null,
+    });
+  },
+);
+
+/**
+ * PUT /driver/onboarding/screen
+ * Update driver onboarding screen progress
+ */
+export const updateDriverOnboardingScreen = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = getUserIdFromRequest(req);
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const { screen_name } = req.body;
+    await driverOnboardingRepository.upsertByUserId(userId, screen_name);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: "Screen updated successfully",
     });
   },
 );

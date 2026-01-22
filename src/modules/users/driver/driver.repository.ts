@@ -4,10 +4,17 @@ import {
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
+  DRIVER_ONBOARDING_COLLECTION,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { Driver, DriverAddress, DriverDocument } from "./driver.type";
+import {
+  Driver,
+  DriverAddress,
+  DriverDocument,
+  DriverOnboarding,
+  DriverOnboardingScreen,
+} from "./driver.type";
 
 export class DriverRepository extends BaseRepository<Driver> {
   constructor() {
@@ -138,3 +145,23 @@ export class DriverDocumentRepository extends BaseRepository<DriverDocument> {
 export const driverRepository = new DriverRepository();
 export const driverAddressRepository = new DriverAddressRepository();
 export const driverDocumentRepository = new DriverDocumentRepository();
+
+export class DriverOnboardingRepository extends BaseRepository<DriverOnboarding> {
+  constructor() {
+    super(DRIVER_ONBOARDING_COLLECTION);
+  }
+
+  async findByUserId(userId: string): Promise<WithId<DriverOnboarding> | null> {
+    return this.findOne({ user_id: userId });
+  }
+
+  async upsertByUserId(userId: string, screen_name: DriverOnboardingScreen) {
+    return this.getCollection().updateOne(
+      { user_id: userId },
+      { $set: { screen_name, updated_at: new Date() } },
+      { upsert: true },
+    );
+  }
+}
+
+export const driverOnboardingRepository = new DriverOnboardingRepository();
