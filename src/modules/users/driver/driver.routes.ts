@@ -65,7 +65,7 @@ router.get("/documents", verifyDriverToken, getDocuments);
 // 08. Upload Driver Documents
 router.post(
   "/documents",
-  // verifyDriverToken,
+  verifyDriverToken,
   validate(createDriverDocumentsSchema),
   createDocuments,
 );
@@ -73,7 +73,7 @@ router.post(
 // 09. Update Driver Documents
 router.put(
   "/documents",
-  // verifyDriverToken,
+  verifyDriverToken,
   validate(updateDriverDocumentsSchema),
   updateDocuments,
 );
