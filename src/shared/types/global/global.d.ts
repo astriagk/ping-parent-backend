@@ -1,3 +1,5 @@
+import type { File } from "multer";
+
 import type { TokenPayload } from "../../services/token.service";
 
 export interface AdminTokenPayload {
@@ -10,6 +12,7 @@ declare global {
     interface Request {
       user?: TokenPayload;
       admin?: AdminTokenPayload;
+      files?: { [fieldname: string]: File[] };
     }
   }
 }

@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { validate, verifyDriverToken } from "@shared/middlewares";
+import { uploadMiddleware } from "@shared/middlewares/multer.middleware";
 
 import {
   createDocuments,
@@ -66,6 +67,11 @@ router.get("/documents", verifyDriverToken, getDocuments);
 router.post(
   "/documents",
   verifyDriverToken,
+  uploadMiddleware.fields([
+    { name: "driving_license_photo", maxCount: 1 },
+    { name: "vehicle_license_photo", maxCount: 1 },
+    { name: "insurance_photo", maxCount: 1 },
+  ]),
   validate(createDriverDocumentsSchema),
   createDocuments,
 );
@@ -74,6 +80,11 @@ router.post(
 router.put(
   "/documents",
   verifyDriverToken,
+  uploadMiddleware.fields([
+    { name: "driving_license_photo", maxCount: 1 },
+    { name: "vehicle_license_photo", maxCount: 1 },
+    { name: "insurance_photo", maxCount: 1 },
+  ]),
   validate(updateDriverDocumentsSchema),
   updateDocuments,
 );

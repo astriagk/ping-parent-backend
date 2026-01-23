@@ -8,6 +8,7 @@ import {
   VehicleTypesArray,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
+import { uploadFile } from "@shared/services/storage.factory";
 import { assignTrimmedFields } from "@shared/utils";
 
 import { driverOnboardingRepository } from "./driver.repository";
@@ -403,14 +404,8 @@ export const createDocuments = asyncHandler(
       );
     }
 
-    const {
-      driving_license_number,
-      driving_license_photo_url,
-      vehicle_license_number,
-      vehicle_license_photo_url,
-      insurance_number,
-      insurance_photo_url,
-    } = req.body;
+    const { driving_license_number, vehicle_license_number, insurance_number } =
+      req.body;
 
     // Validate required fields
     if (!driving_license_number || !vehicle_license_number) {
@@ -420,23 +415,38 @@ export const createDocuments = asyncHandler(
       );
     }
 
-    const documentsData = {
-      driver_id: "", // Will be set by service
+    const documentsData: any = {
+      driver_id: "",
       driving_license_number: String(driving_license_number).trim(),
-      driving_license_photo_url: driving_license_photo_url
-        ? String(driving_license_photo_url).trim()
-        : undefined,
       vehicle_license_number: String(vehicle_license_number).trim(),
-      vehicle_license_photo_url: vehicle_license_photo_url
-        ? String(vehicle_license_photo_url).trim()
-        : undefined,
       insurance_number: insurance_number
         ? String(insurance_number).trim()
         : undefined,
-      insurance_photo_url: insurance_photo_url
-        ? String(insurance_photo_url).trim()
-        : undefined,
     };
+
+    // Handle file uploads
+    const files = req.files as { [key: string]: Express.Multer.File[] };
+
+    if (files?.driving_license_photo?.[0]) {
+      documentsData.driving_license_photo_url = await uploadFile(
+        files.driving_license_photo[0],
+        "driver-documents/driving-licenses",
+      );
+    }
+
+    if (files?.vehicle_license_photo?.[0]) {
+      documentsData.vehicle_license_photo_url = await uploadFile(
+        files.vehicle_license_photo[0],
+        "driver-documents/vehicle-licenses",
+      );
+    }
+
+    if (files?.insurance_photo?.[0]) {
+      documentsData.insurance_photo_url = await uploadFile(
+        files.insurance_photo[0],
+        "driver-documents/insurance",
+      );
+    }
 
     const success = await upsertDriverDocumentsByUserId(userId, documentsData);
     if (!success) {
@@ -473,12 +483,33 @@ export const updateDocuments = asyncHandler(
     const documents: any = {};
     await assignTrimmedFields(documents, req.body, [
       "driving_license_number",
-      "driving_license_photo_url",
       "vehicle_license_number",
-      "vehicle_license_photo_url",
       "insurance_number",
-      "insurance_photo_url",
     ]);
+
+    // Handle file uploads
+    const files = req.files as { [key: string]: Express.Multer.File[] };
+
+    if (files?.driving_license_photo?.[0]) {
+      documents.driving_license_photo_url = await uploadFile(
+        files.driving_license_photo[0],
+        "driver-documents/driving-licenses",
+      );
+    }
+
+    if (files?.vehicle_license_photo?.[0]) {
+      documents.vehicle_license_photo_url = await uploadFile(
+        files.vehicle_license_photo[0],
+        "driver-documents/vehicle-licenses",
+      );
+    }
+
+    if (files?.insurance_photo?.[0]) {
+      documents.insurance_photo_url = await uploadFile(
+        files.insurance_photo[0],
+        "driver-documents/insurance",
+      );
+    }
 
     if (Object.keys(documents).length === 0) {
       throw new ApiError(
