@@ -4,8 +4,12 @@ import { getDB } from "@shared/config";
 import {
   AssignmentStatus,
   DRIVERS_COLLECTION,
+  DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PARENT_ADDRESSES_COLLECTION,
+  SCHOOLS_COLLECTION,
+  STUDENTS_COLLECTION,
   UniqueCodeTypes,
   UserRole,
 } from "@shared/constants";
@@ -38,7 +42,7 @@ const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
  */
 const getDriverByUniqueId = async (
   driverUniqueId: string,
-): Promise<any | null> => {
+): Promise<Record<string, unknown> | null> => {
   const db = await getDB();
   const driver = await db
     .collection(DRIVERS_COLLECTION)
@@ -350,4 +354,208 @@ export const deleteAssignment = async (id: string): Promise<boolean> => {
     },
   });
   return result !== null;
+};
+
+/**
+ * Get all parent-requested assignments with driver, student, and parent address details
+ */
+export const getParentRequestedAssignments = async (
+  assignmentStatus?: string,
+): Promise<Array<Record<string, unknown>>> => {
+  const db = await getDB();
+  const matchStage: Record<string, unknown> = {};
+
+  if (assignmentStatus) {
+    matchStage.assignment_status = assignmentStatus;
+  }
+
+  const assignments = await db
+    .collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION)
+    .aggregate([
+      {
+        $match: matchStage,
+      },
+      {
+        $lookup: {
+          from: DRIVERS_COLLECTION,
+          localField: "driver_unique_id",
+          foreignField: "driver_unique_id",
+          as: "driver",
+        },
+      },
+      {
+        $unwind: {
+          path: "$driver",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          localField: "student_id",
+          foreignField: "student_id",
+          as: "student",
+        },
+      },
+      {
+        $unwind: {
+          path: "$student",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: SCHOOLS_COLLECTION,
+          localField: "student.school_id",
+          foreignField: "school_id",
+          as: "school",
+        },
+      },
+      {
+        $unwind: {
+          path: "$school",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          pickup_address_object_id: {
+            $cond: [
+              { $ne: ["$student.pickup_address_id", null] },
+              { $toObjectId: "$student.pickup_address_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: PARENT_ADDRESSES_COLLECTION,
+          localField: "pickup_address_object_id",
+          foreignField: "_id",
+          as: "parent_address",
+        },
+      },
+      {
+        $unwind: {
+          path: "$parent_address",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          pickup_address_object_id: 0,
+        },
+      },
+    ])
+    .toArray();
+
+  return assignments;
+};
+
+/**
+ * Get parent-requested assignments for a specific driver with student and parent address details
+ */
+export const getParentRequestedAssignmentsByDriver = async (
+  userId: string,
+  assignmentStatus?: string,
+): Promise<Array<Record<string, unknown>>> => {
+  // Convert userId to driver_id
+  const driverId = await getDriverIdByUserId(userId);
+
+  if (!driverId) {
+    return [];
+  }
+
+  const db = await getDB();
+  const matchStage: Record<string, unknown> = {
+    driver_id: driverId,
+  };
+
+  if (assignmentStatus) {
+    matchStage.assignment_status = assignmentStatus;
+  }
+
+  const assignments = await db
+    .collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION)
+    .aggregate([
+      {
+        $match: matchStage,
+      },
+      {
+        $lookup: {
+          from: DRIVERS_COLLECTION,
+          localField: "driver_unique_id",
+          foreignField: "driver_unique_id",
+          as: "driver",
+        },
+      },
+      {
+        $unwind: {
+          path: "$driver",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          localField: "student_id",
+          foreignField: "student_id",
+          as: "student",
+        },
+      },
+      {
+        $unwind: {
+          path: "$student",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $lookup: {
+          from: SCHOOLS_COLLECTION,
+          localField: "student.school_id",
+          foreignField: "school_id",
+          as: "school",
+        },
+      },
+      {
+        $unwind: {
+          path: "$school",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          pickup_address_object_id: {
+            $cond: [
+              { $ne: ["$student.pickup_address_id", null] },
+              { $toObjectId: "$student.pickup_address_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: PARENT_ADDRESSES_COLLECTION,
+          localField: "pickup_address_object_id",
+          foreignField: "_id",
+          as: "parent_address",
+        },
+      },
+      {
+        $unwind: {
+          path: "$parent_address",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $project: {
+          pickup_address_object_id: 0,
+        },
+      },
+    ])
+    .toArray();
+
+  return assignments;
 };
