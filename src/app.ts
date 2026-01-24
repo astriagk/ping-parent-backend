@@ -1,5 +1,6 @@
 import cors from "cors";
 import express, { NextFunction, Request, Response } from "express";
+import * as path from "path";
 import * as swaggerUi from "swagger-ui-express";
 
 import apiRoutes from "@routes";
@@ -24,6 +25,13 @@ if (process.env.NODE_ENV !== "production") {
 }
 
 app.use(express.json());
+
+// Serve uploaded files locally (only for local storage provider)
+if (process.env.STORAGE_PROVIDER === "local") {
+  const uploadDir = path.join(process.cwd(), "uploads");
+  app.use("/uploads", express.static(uploadDir));
+  logger.info("Local file storage enabled - serving uploads from /uploads");
+}
 
 app.use((req: Request, _res: Response, next: NextFunction) => {
   const time = new Date().toISOString();

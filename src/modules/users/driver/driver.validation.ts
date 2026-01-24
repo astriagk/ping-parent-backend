@@ -2,6 +2,8 @@ import Joi from "joi";
 
 import { VALIDATION_MESSAGES, VehicleType } from "@shared/constants";
 
+import { DriverOnboardingScreenArray } from "./driver.type";
+
 export const createDriverProfileSchema = Joi.object({
   name: Joi.string().min(2).max(100).required().messages({
     "string.min": VALIDATION_MESSAGES.NAME.FIRST_MIN,
@@ -114,10 +116,6 @@ export const createDriverDocumentsSchema = Joi.object({
     "string.max":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.DRIVING_LICENSE_NUMBER_MAX,
   }),
-  driving_license_photo_url: Joi.string().uri().required().messages({
-    "string.uri":
-      VALIDATION_MESSAGES.DRIVER_DOCUMENTS.DRIVING_LICENSE_PHOTO_INVALID,
-  }),
   vehicle_license_number: Joi.string().min(1).max(50).required().messages({
     "string.empty":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_NUMBER_REQUIRED,
@@ -126,39 +124,31 @@ export const createDriverDocumentsSchema = Joi.object({
     "string.max":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_NUMBER_MAX,
   }),
-  vehicle_license_photo_url: Joi.string().uri().required().messages({
-    "string.uri":
-      VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_PHOTO_INVALID,
-  }),
-  insurance_number: Joi.string().min(1).max(50).required().messages({
+  insurance_number: Joi.string().min(1).max(50).optional().messages({
     "string.max": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_NUMBER_MAX,
   }),
-  insurance_photo_url: Joi.string().uri().required().messages({
-    "string.uri": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_PHOTO_INVALID,
-  }),
-});
+  // Note: File uploads (driving_license_photo, vehicle_license_photo, insurance_photo)
+  // are handled by multer middleware and are NOT validated by Joi schema
+}).unknown(true);
 
 export const updateDriverDocumentsSchema = Joi.object({
   driving_license_number: Joi.string().min(1).max(50).optional().messages({
     "string.max":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.DRIVING_LICENSE_NUMBER_MAX,
   }),
-  driving_license_photo_url: Joi.string().uri().optional().allow("").messages({
-    "string.uri":
-      VALIDATION_MESSAGES.DRIVER_DOCUMENTS.DRIVING_LICENSE_PHOTO_INVALID,
-  }),
   vehicle_license_number: Joi.string().min(1).max(50).optional().messages({
     "string.max":
       VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_NUMBER_MAX,
   }),
-  vehicle_license_photo_url: Joi.string().uri().optional().allow("").messages({
-    "string.uri":
-      VALIDATION_MESSAGES.DRIVER_DOCUMENTS.VEHICLE_LICENSE_PHOTO_INVALID,
-  }),
   insurance_number: Joi.string().min(1).max(50).optional().messages({
     "string.max": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_NUMBER_MAX,
   }),
-  insurance_photo_url: Joi.string().uri().optional().allow("").messages({
-    "string.uri": VALIDATION_MESSAGES.DRIVER_DOCUMENTS.INSURANCE_PHOTO_INVALID,
-  }),
+  // Note: File uploads (driving_license_photo, vehicle_license_photo, insurance_photo)
+  // are handled by multer middleware and are NOT validated by Joi schema
+}).unknown(true);
+
+export const updateDriverOnboardingScreenSchema = Joi.object({
+  screen_name: Joi.string()
+    .valid(...DriverOnboardingScreenArray)
+    .required(),
 });

@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { User } from "@modules/auth/auth.type";
 import { getDB } from "@shared/config";
 import {
+  AlphabetType,
   ApprovalStatus,
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
@@ -77,7 +78,10 @@ export const createDriverProfile = async (
     const db = await getDB();
 
     // Generate unique driver ID
-    let driverUniqueId = generateUniqueCode(UniqueCodeTypes.DRIVER);
+    let driverUniqueId = generateUniqueCode(UniqueCodeTypes.DRIVER, {
+      length: 6,
+      alphabetType: AlphabetType.Numbers,
+    });
     let attempts = 0;
     const maxAttempts = 10;
 
@@ -87,7 +91,10 @@ export const createDriverProfile = async (
         .collection(DRIVERS_COLLECTION)
         .findOne({ driver_unique_id: driverUniqueId });
       if (!existing) break;
-      driverUniqueId = generateUniqueCode(UniqueCodeTypes.DRIVER);
+      driverUniqueId = generateUniqueCode(UniqueCodeTypes.DRIVER, {
+        length: 6,
+        alphabetType: AlphabetType.Numbers,
+      });
       attempts++;
     }
 
