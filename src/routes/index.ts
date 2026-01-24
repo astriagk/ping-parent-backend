@@ -9,6 +9,7 @@ import { authRoutes } from "@modules/auth";
 import {
   parentSubscriptionRoutes,
   paymentRoutes,
+  razorpayRoutes,
   subscriptionPlanRoutes,
 } from "@modules/billing";
 import { notificationRoutes } from "@modules/notification";
@@ -54,6 +55,7 @@ router.use("/notifications", notificationRoutes);
 router.use("/subscription-plans", subscriptionPlanRoutes);
 router.use("/parent-subscriptions", parentSubscriptionRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/razorpay", razorpayRoutes);
 
 // 10. Ratings & Reviews APIs
 router.use("/ratings-reviews", ratingReviewRoutes);

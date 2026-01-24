@@ -2,12 +2,9 @@ import { ApprovalStatus, VehicleType } from "@shared/constants";
 
 // Onboarding Screen Enum
 export enum DriverOnboardingScreen {
-  WELCOME = "welcome",
+  SIGNUP = "signup",
   PROFILE = "profile",
   DOCUMENTS = "documents",
-  ADDRESS = "address",
-  AVAILABILITY = "availability",
-  COMPLETE = "complete",
 }
 
 export const DriverOnboardingScreenArray = Object.values(

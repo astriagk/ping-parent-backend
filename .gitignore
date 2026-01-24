@@ -4,3 +4,6 @@ dist
 
 # Database diagram files
 Database/ping_parent_dbdiagram.dbdiagram
+
+# Local file uploads (development only)
+uploads/
