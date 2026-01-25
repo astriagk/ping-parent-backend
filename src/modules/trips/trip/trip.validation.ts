@@ -4,7 +4,7 @@ import { TripStatus, TripType, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createTripSchema = Joi.object({
   // driver_id is derived from authenticated user (NOT in request body)
-  school_id: Joi.string().required().messages({
+  school_id: Joi.string().optional().messages({
     "any.required": VALIDATION_MESSAGES.TRIP.SCHOOL_ID_REQUIRED,
   }),
   trip_type: Joi.string()

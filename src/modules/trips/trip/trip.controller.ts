@@ -6,6 +6,7 @@ import {
   SUCCESS_MESSAGES,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
+import { logger } from "@shared/utils";
 
 import {
   createTrip as createTripService,
@@ -113,6 +114,8 @@ export const getMyTripsByDate = asyncHandler(
     }
 
     const tripDate = new Date(date as string);
+
+    logger.info("tripDate", tripDate);
 
     if (isNaN(tripDate.getTime())) {
       throw new ApiError(
