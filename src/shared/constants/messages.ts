@@ -148,7 +148,7 @@ export const ERROR_MESSAGES = {
     INVALID_TRIP_STATUS:
       "Trip status must be scheduled, started, in_progress, completed, or cancelled",
     ALREADY_EXISTS:
-      "A trip for this driver, school, type, and date already exists",
+      "A trip for this driver with the same type already exists on this date",
     CANNOT_UPDATE_COMPLETED: "Cannot update a completed trip",
     CANNOT_START_CANCELLED: "Cannot start a cancelled trip",
     INVALID_STATUS_TRANSITION: "Invalid trip status transition",

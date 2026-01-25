@@ -3,8 +3,10 @@ import { WithId } from "mongodb";
 import { getDB } from "@shared/config";
 import {
   DRIVERS_COLLECTION,
+  DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  TRIP_STUDENTS_COLLECTION,
   TripStatus,
   UniqueCodeTypes,
 } from "@shared/constants";
@@ -32,6 +34,56 @@ const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
   return String(driver._id);
 };
 
+/**
+ * Auto-create trip students for all active students assigned to this driver
+ */
+const createTripStudentsForTrip = async (
+  tripId: string,
+  driverId: string,
+): Promise<void> => {
+  const db = await getDB();
+
+  // Find all active driver-student assignments for this driver
+  const assignments = await db
+    .collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION)
+    .find({
+      driver_id: driverId,
+      assignment_status: "active",
+    })
+    .toArray();
+
+  if (assignments.length === 0) {
+    return; // No students assigned, skip
+  }
+
+  // Create trip_students for each assigned student
+  const tripStudents = assignments.map((assignment, index) => ({
+    trip_student_id: generateUniqueCode(UniqueCodeTypes.TRIP_STUDENT),
+    trip_id: tripId,
+    student_id: assignment.student_id,
+    sequence_order: index + 1,
+    attendance_status: "pending",
+    pickup_status: "pending",
+    pickup_time: null,
+    pickup_latitude: null,
+    pickup_longitude: null,
+    pickup_qr_code: null,
+    pickup_otp: null,
+    drop_time: null,
+    drop_latitude: null,
+    drop_longitude: null,
+    drop_qr_code: null,
+    drop_otp: null,
+    notes: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+  }));
+
+  if (tripStudents.length > 0) {
+    await db.collection(TRIP_STUDENTS_COLLECTION).insertMany(tripStudents);
+  }
+};
+
 export const createTrip = async (
   userId: string,
   data: Omit<Trip, "trip_id" | "driver_id" | "created_at" | "trip_status">,
@@ -47,12 +99,15 @@ export const createTrip = async (
   }
 
   // Check for duplicate trip
+  // Only check: same driver + same trip_type + same trip_date
+  // School is NOT part of duplicate check because driver can service multiple schools
   const duplicate = await tripRepository.findDuplicateTrip(
     driverId,
-    data.school_id,
     data.trip_type,
     data.trip_date,
   );
+
+  console.log(duplicate);
 
   if (duplicate) {
     throw new ApiError(
@@ -70,7 +125,19 @@ export const createTrip = async (
     updated_at: new Date(),
   };
 
-  return await tripRepository.create(tripData);
+  console.log(tripData);
+
+  const createdTrip = await tripRepository.create(tripData);
+
+  // AUTO-CREATE TRIP STUDENTS
+  try {
+    await createTripStudentsForTrip(createdTrip.trip_id, driverId);
+  } catch (error) {
+    console.error("Error creating trip students:", error);
+    // Continue even if trip students creation fails
+  }
+
+  return createdTrip;
 };
 
 export const getTripById = async (id: string): Promise<WithId<Trip> | null> => {
@@ -149,15 +216,10 @@ export const updateTrip = async (
   }
 
   // Check for duplicate if updating critical fields
-  if (
-    updates.driver_id ||
-    updates.school_id ||
-    updates.trip_type ||
-    updates.trip_date
-  ) {
+  // Only check: driver_id + trip_type + trip_date
+  if (updates.driver_id || updates.trip_type || updates.trip_date) {
     const duplicate = await tripRepository.findDuplicateTrip(
       updates.driver_id || currentTrip.driver_id,
-      updates.school_id || currentTrip.school_id,
       updates.trip_type || currentTrip.trip_type,
       updates.trip_date || currentTrip.trip_date,
     );
