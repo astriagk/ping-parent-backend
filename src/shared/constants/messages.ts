@@ -302,6 +302,18 @@ export const ERROR_MESSAGES = {
     NOT_FOUND: "Audit log not found",
     FAILED_TO_FETCH: "Failed to fetch audit logs",
   },
+  TRACKING: {
+    TRIP_NOT_FOUND: "Trip not found",
+    PERMISSION_DENIED:
+      "You do not have permission to calculate route for this trip",
+    NO_STUDENTS_ASSIGNED: "No students assigned to this trip",
+    NO_VALID_ADDRESSES: "Could not find valid addresses for students",
+    DRIVER_POSITION_OUTSIDE_CORRIDOR:
+      "Driver position is outside optimized route corridor",
+    TRIP_DETAILS_NOT_FOUND: "Trip details not found",
+    POSITION_UPDATE_ERROR: "Failed to update driver position",
+    DAYS_OLD_INVALID: "daysOld must be at least 1",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
@@ -454,6 +466,19 @@ export const SUCCESS_MESSAGES = {
   AUDIT_LOG: {
     FETCHED_SUCCESSFULLY: "Audit log fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Audit logs fetched successfully",
+  },
+  ROUTE: {
+    CALCULATED_SUCCESSFULLY: "Route calculated and optimized successfully",
+    POSITION_UPDATED_SUCCESSFULLY: "Position updated successfully",
+    TRACKING_FETCHED_SUCCESSFULLY: "Tracking data retrieved successfully",
+    DETAILS_FETCHED_SUCCESSFULLY: "Route details retrieved successfully",
+    CURRENT_POSITION_RETRIEVED_SUCCESSFULLY:
+      "Current position retrieved successfully",
+    NO_POSITION_DATA_AVAILABLE: "No position data available yet",
+    TRIP_ID_REQUIRED: "Trip ID is required",
+    CLEANUP_COMPLETED_SUCCESSFULLY:
+      "Tracking data cleanup completed successfully",
+    CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
   },
 };
 

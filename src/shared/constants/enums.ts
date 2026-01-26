@@ -55,6 +55,7 @@ export enum UniqueCodeTypes {
   ADMIN = "ADM",
   ROLE = "ROL",
   AUDIT_LOG = "AUL",
+  LOCATION = "LOC",
 }
 
 export enum AssignmentStatus {
