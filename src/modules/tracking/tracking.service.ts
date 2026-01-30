@@ -11,6 +11,7 @@ import { tomTomService } from "@shared/services/tomtom.service";
 import { generateUniqueCode, logger } from "@shared/utils";
 
 import { trackingRepository } from "./tracking.repository";
+import { TrackingSocketService } from "./tracking.socket.service";
 import {
   LocationTracking,
   RouteCalculationRequest,
@@ -145,6 +146,14 @@ export const calculateRoute = async (
     studentUpdates,
   );
 
+  // Broadcast route calculation to parents and driver
+  TrackingSocketService.broadcastRouteCalculated(trip_id, {
+    waypoints: waypointsWithMetrics,
+    total_distance: routeData.total_distance,
+    total_duration: routeGeometry.totalDuration,
+    coordinates: routeData.coordinates,
+  });
+
   return {
     success: true,
     trip_id,
@@ -218,7 +227,19 @@ export const updateDriverPosition = async (
     timestamp: new Date(),
   };
 
-  return await trackingRepository.insertTracking(tracking);
+  const result = await trackingRepository.insertTracking(tracking);
+
+  // Broadcast position update to all parents watching this trip
+  TrackingSocketService.broadcastPositionUpdate(tripId, {
+    driverId,
+    latitude,
+    longitude,
+    speed: speed || 0,
+    heading: heading || 0,
+    accuracy: accuracy || 0,
+  });
+
+  return result;
 };
 
 export const getRouteTracking = async (
