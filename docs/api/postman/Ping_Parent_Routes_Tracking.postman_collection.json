@@ -1,0 +1,159 @@
+{
+  "info": {
+    "_postman_id": "ping-parent-tracking",
+    "name": "Tracking",
+    "description": "Real-time driver tracking and route optimization with TomTom integration",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Driver Operations",
+      "description": "Driver endpoints for calculating routes and updating positions",
+      "item": [
+        {
+          "name": "Calculate Optimal Route",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip_id\": \"TRP-ABC123\",\n  \"current_latitude\": 28.6139,\n  \"current_longitude\": 77.209,\n  \"pickup_points\": [\n    {\n      \"latitude\": 28.5721,\n      \"longitude\": 77.2068,\n      \"address\": \"Student Home 1\",\n      \"student_id\": \"STU-001\"\n    },\n    {\n      \"latitude\": 28.5814,\n      \"longitude\": 77.2015,\n      \"address\": \"Student Home 2\",\n      \"student_id\": \"STU-002\"\n    }\n  ]\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/calculate",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "calculate"]
+            },
+            "description": "Calculate optimal route for a trip. Fetches students assigned to trip, optimizes pickup sequence, and returns route geometry with ETAs."
+          },
+          "response": []
+        },
+        {
+          "name": "Update Driver Position",
+          "request": {
+            "auth": {
+              "type": "bearer",
+              "bearer": [
+                {
+                  "key": "token",
+                  "value": "{{driver_token}}",
+                  "type": "string"
+                }
+              ]
+            },
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"latitude\": 28.5735,\n  \"longitude\": 77.2055,\n  \"speed\": 45.5,\n  \"heading\": 225.5,\n  \"accuracy\": 10.2\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/tracking/{{tripId}}/position",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "{{tripId}}", "position"]
+            },
+            "description": "Update driver's current position during a trip (call every 10-30 seconds). Validates position is within route corridor and creates tracking record."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tracking & Visibility",
+      "description": "Endpoints for viewing tracking data and route details",
+      "item": [
+        {
+          "name": "Get Current Driver Position",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tracking/{{tripId}}/current-position",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "{{tripId}}", "current-position"]
+            },
+            "description": "Get the latest driver position for a trip. Returns most recent location with timestamp, speed, heading, accuracy."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route Details",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tracking/{{tripId}}/details",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "{{tripId}}", "details"]
+            },
+            "description": "Get complete route details including trip info, optimized waypoints, route geometry, ETAs, and current driver position."
+          },
+          "response": []
+        },
+        {
+          "name": "Get Tracking History",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{base_url}}/tracking/{{tripId}}/tracking?limit=100",
+              "host": ["{{base_url}}"],
+              "path": ["tracking", "{{tripId}}", "tracking"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "100",
+                  "description": "Maximum number of records (default: 100)"
+                }
+              ]
+            },
+            "description": "Get all position updates for a trip. Returns array of location records with timestamps. Useful for trip replay or analyzing driver behavior."
+          },
+          "response": []
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:3000/api",
+      "type": "string"
+    },
+    {
+      "key": "tripId",
+      "value": "TRP-ABC123",
+      "type": "string"
+    },
+    {
+      "key": "driver_token",
+      "value": "your_driver_jwt_token_here",
+      "type": "string"
+    },
+    {
+      "key": "parent_token",
+      "value": "your_parent_jwt_token_here",
+      "type": "string"
+    }
+  ]
+}

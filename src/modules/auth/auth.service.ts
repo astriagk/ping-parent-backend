@@ -1,7 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 
-import { getDB } from "@shared/config";
-import { OTP_VERIFICATION_COLLECTION, UserRole } from "@shared/constants";
+import { UserRole } from "@shared/constants";
 
 import { userRepository } from "./auth.repository";
 import { User } from "./auth.type";
@@ -109,40 +108,4 @@ export const deleteUser = async (userId: string): Promise<boolean> => {
     $set: { is_active: false, updated_at: new Date() },
   });
   return result !== null;
-};
-
-// OTP management
-export const createPhoneOtp = async (
-  phone: string,
-  otp: string,
-  ttlMinutes = 10,
-) => {
-  const db = await getDB();
-  const now = new Date();
-  const doc = {
-    phone_number: phone,
-    otp_code: otp,
-    expires_at: new Date(now.getTime() + ttlMinutes * 60 * 1000),
-    is_verified: false,
-    created_at: now,
-  };
-  const res = await db.collection(OTP_VERIFICATION_COLLECTION).insertOne(doc);
-  return res.insertedId;
-};
-
-export const verifyPhoneOtp = async (phone: string, otp: string) => {
-  const db = await getDB();
-  const now = new Date();
-  const row = await db.collection(OTP_VERIFICATION_COLLECTION).findOne({
-    phone_number: phone,
-    otp_code: otp,
-    is_verified: false,
-    expires_at: { $gt: now },
-  });
-
-  if (!row) return false;
-
-  await db.collection(OTP_VERIFICATION_COLLECTION).deleteOne({ _id: row._id });
-
-  return true;
 };

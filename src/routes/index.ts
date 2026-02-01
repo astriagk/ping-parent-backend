@@ -15,6 +15,7 @@ import {
 import { notificationRoutes } from "@modules/notification";
 import { ratingReviewRoutes } from "@modules/reviews";
 import { schoolRoutes } from "@modules/school";
+import trackingRouter from "@modules/tracking";
 import {
   dailyQrOtpRoutes,
   driverStudentAssignmentRoutes,
@@ -43,6 +44,9 @@ router.use("/schools", schoolRoutes);
 // 06. Assignment & Trip APIs
 router.use("/driver-student-assignments", driverStudentAssignmentRoutes);
 router.use("/trips", tripRoutes);
+
+// 06.5 Tracking & Real-time Tracking APIs
+router.use("/tracking", trackingRouter);
 
 // 07. Attendance & QR/OTP APIs
 router.use("/daily-qr-otp", dailyQrOtpRoutes);
