@@ -39,6 +39,7 @@ export interface Driver {
   is_available?: boolean;
   rating?: number;
   total_trips?: number;
+  school_id?: string; // FK to schools - for school-employed drivers
   created_at?: Date;
   updated_at?: Date;
 }

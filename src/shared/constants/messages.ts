@@ -255,7 +255,15 @@ export const ERROR_MESSAGES = {
     CANNOT_UPDATE_COMPLETED: "Cannot update a completed payment",
     CANNOT_REFUND_PENDING: "Cannot refund a pending payment",
     ALREADY_COMPLETED: "Payment is already completed",
-    ALREADY_REFUNDED: "Payment is already refunded",
+    ALREADY_REFUNDED: "Payment has already been refunded",
+  },
+  SUBSCRIPTION: {
+    PLAN_NOT_FOUND: "Subscription plan not found",
+    NOT_FOUND: "Subscription not found",
+    INVALID_OR_EXPIRED_CODE: "Invalid or expired subscription code",
+    CODE_ALREADY_REDEEMED: "Subscription code already redeemed",
+    PARENT_NOT_FOUND: "Parent not found",
+    ALREADY_ACTIVE: "Parent already has an active subscription",
   },
   ADMIN: {
     NOT_FOUND: "Admin not found",
@@ -317,6 +325,26 @@ export const ERROR_MESSAGES = {
     TRIP_DETAILS_NOT_FOUND: "Trip details not found",
     POSITION_UPDATE_ERROR: "Failed to update driver position",
     DAYS_OLD_INVALID: "daysOld must be at least 1",
+  },
+  SCHOOL_SUBSCRIPTION: {
+    NOT_FOUND: "School subscription not found",
+    NO_ACTIVE_SUBSCRIPTION: "No active subscription found for school",
+    SCHOOL_ID_REQUIRED: "School ID is required",
+    SUBSCRIPTION_ID_REQUIRED: "Subscription ID is required",
+  },
+  SCHOOL_DRIVER: {
+    SCHOOL_ID_REQUIRED: "School ID is required",
+    DRIVER_ID_REQUIRED: "Driver ID is required",
+    DRIVER_ID_AND_SCHOOL_ID_REQUIRED: "Driver ID and School ID are required",
+    DRIVER_NOT_FOUND: "Driver not found",
+    CAPACITY_REACHED: "School has reached maximum driver capacity ({capacity})",
+  },
+  SCHOOL_ADMIN: {
+    NOT_FOUND: "School admin not found",
+    SCHOOL_ID_REQUIRED: "School ID is required",
+    ADMIN_ID_REQUIRED: "Admin ID is required",
+    ALREADY_EXISTS: "School admin with this email already exists",
+    INACTIVE: "School admin account is inactive",
   },
 };
 
@@ -388,6 +416,16 @@ export const SUCCESS_MESSAGES = {
     DEACTIVATED_SUCCESSFULLY: "Assignment deactivated successfully",
     DRIVERS_RETRIEVED_SUCCESSFULLY: "Drivers retrieved successfully",
   },
+  SUBSCRIPTION_REDEMPTION: {
+    CODE_REDEEMED_SUCCESSFULLY: "Subscription code redeemed successfully",
+    ACTIVE_SUBSCRIPTION_RETRIEVED: "Active subscription retrieved successfully",
+    SUBSCRIPTIONS_RETRIEVED: "Subscriptions retrieved successfully",
+    SUBSCRIPTION_CANCELLED: "Subscription cancelled successfully",
+    STATUS_RETRIEVED: "Subscription status retrieved successfully",
+    DETAILS_RETRIEVED: "Subscription details retrieved successfully",
+    AVAILABLE_CODES_RETRIEVED:
+      "Available redemption codes retrieved successfully",
+  },
   TRIP: {
     CREATED_SUCCESSFULLY: "Trip created successfully",
     UPDATED_SUCCESSFULLY: "Trip updated successfully",
@@ -425,6 +463,33 @@ export const SUCCESS_MESSAGES = {
     ACTIVATED_SUCCESSFULLY: "Subscription plan activated successfully",
     DEACTIVATED_SUCCESSFULLY: "Subscription plan deactivated successfully",
     CREATED_SUCCESSFULLY: "Subscription plan created successfully",
+  },
+  SCHOOL_SUBSCRIPTION: {
+    CREATED_SUCCESSFULLY: "School subscription created successfully",
+    RETRIEVED_SUCCESSFULLY: "School subscriptions retrieved successfully",
+    ACTIVE_RETRIEVED_SUCCESSFULLY:
+      "Active school subscription retrieved successfully",
+    FETCHED_SUCCESSFULLY: "School subscription retrieved successfully",
+    UPDATED_SUCCESSFULLY: "School subscription updated successfully",
+    RENEWED_SUCCESSFULLY: "School subscription renewed successfully",
+    CANCELLED_SUCCESSFULLY: "School subscription cancelled successfully",
+    EXPIRED_RETRIEVED_SUCCESSFULLY:
+      "Expired subscriptions retrieved successfully",
+  },
+  SCHOOL_DRIVER: {
+    RETRIEVED_SUCCESSFULLY: "School drivers retrieved successfully",
+    ASSIGNED_SUCCESSFULLY: "Driver assigned to school successfully",
+    REMOVED_SUCCESSFULLY: "Driver removed from school successfully",
+    DETAILS_RETRIEVED_SUCCESSFULLY: "Driver details retrieved successfully",
+  },
+  SCHOOL_ADMIN: {
+    REGISTERED_SUCCESSFULLY: "School admin registered successfully",
+    LOGIN_SUCCESSFUL: "School admin logged in successfully",
+    RETRIEVED_SUCCESSFULLY: "School admin retrieved successfully",
+    LIST_RETRIEVED_SUCCESSFULLY: "School admins retrieved successfully",
+    UPDATED_SUCCESSFULLY: "School admin updated successfully",
+    PASSWORD_CHANGED_SUCCESSFULLY: "Password changed successfully",
+    DEACTIVATED_SUCCESSFULLY: "School admin deactivated successfully",
   },
   PARENT_SUBSCRIPTION: {
     CREATED_SUCCESSFULLY: "Subscription created successfully",
