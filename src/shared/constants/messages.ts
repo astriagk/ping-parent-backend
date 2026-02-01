@@ -47,6 +47,10 @@ export const ERROR_MESSAGES = {
     INVALID_OR_EXPIRED_OTP: "Invalid or expired OTP",
     PHONE_NOT_REGISTERED: "Phone number not registered",
     PHONE_LOGIN_OTP_REQUIRED: "Phone number and OTP are required for login",
+    OTP_SENDING_FAILED: "Failed to send OTP. Please try again later.",
+    OTP_VERIFICATION_FAILED: "OTP verification failed. Please try again.",
+    LOGIN_OTP_SENDING_FAILED:
+      "Failed to send login OTP. Please try again later.",
   },
   PARENT: {
     USER_NOT_AUTHENTICATED: "User not authenticated",
@@ -479,6 +483,18 @@ export const SUCCESS_MESSAGES = {
     CLEANUP_COMPLETED_SUCCESSFULLY:
       "Tracking data cleanup completed successfully",
     CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
+  },
+};
+
+export const DEV_MESSAGES = {
+  TWILIO_OTP: {
+    DEV_MODE_ENABLED:
+      "[Twilio OTP Service] Running in DEVELOPMENT mode - OTP sending will be skipped",
+    TEST_OTP_CODE: "[Twilio OTP Service] Test OTP Code for testers: {code}",
+    OTP_WOULD_BE_SENT:
+      "[DEV MODE] OTP would be sent to {phone}. Test OTP: {code}",
+    OTP_VERIFICATION_RESULT:
+      "[DEV MODE] OTP verification for {phone}: {result} (entered: {code}, expected: {expected})",
   },
 };
 

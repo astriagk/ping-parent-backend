@@ -14,20 +14,6 @@ Table users {
   }
 }
 
-Table otp_verification {
-  otp_id int [pk, increment]
-  phone_number varchar(20) [not null]
-  otp_code varchar(6) [not null]
-  is_verified boolean [default: false]
-  expires_at timestamp [not null]
-  created_at timestamp [default: `CURRENT_TIMESTAMP`]
-  
-  indexes {
-    (phone_number, otp_code)
-    expires_at
-  }
-}
-
 Table parents {
   parent_id varchar(36) [pk]
   user_id varchar(36) [unique, not null, ref: - users.user_id]

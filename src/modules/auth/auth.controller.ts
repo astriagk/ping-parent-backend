@@ -15,18 +15,20 @@ import {
   generateAccessToken,
   verifyAccessToken,
 } from "@shared/services/token.service";
-import { generateUniqueCode, logger, normalizePhone } from "@shared/utils";
+import { sendOtp, verifyOtp } from "@shared/services/twilio-otp.service";
+import { generateUniqueCode, normalizePhone } from "@shared/utils";
 
 import {
   activateUser,
-  createPhoneOtp,
   createUser,
   deactivateUser,
   getAllUsers,
   getUserById,
   getUserByPhone,
-  verifyPhoneOtp as verifyOtpService,
 } from "./auth.service";
+
+// Default country code for phone numbers
+const DEFAULT_COUNTRY_CODE = "+91";
 
 export const verifyAuthToken = asyncHandler(
   async (req: Request, res: Response) => {
@@ -125,7 +127,8 @@ export const roles = asyncHandler(async (_req: Request, res: Response) => {
 // Step 1: Send OTP for login
 export const sendLoginOtp = asyncHandler(
   async (req: Request, res: Response) => {
-    const { phone } = req.body;
+    const { phone, countryCode } = req.body;
+    const code = countryCode || DEFAULT_COUNTRY_CODE;
 
     if (!phone) {
       throw new ApiError(
@@ -152,14 +155,15 @@ export const sendLoginOtp = asyncHandler(
       );
     }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Save OTP to database
-    await createPhoneOtp(normalizedPhone, otp, 10);
-
-    // TODO: Send OTP via SMS service (Twilio, AWS SNS, etc.)
-    logger.info(`Login OTP for ${normalizedPhone}: ${otp}`);
+    // Send OTP via Twilio
+    try {
+      await sendOtp(code + normalizedPhone);
+    } catch (_error) {
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.PHONE.LOGIN_OTP_SENDING_FAILED,
+      );
+    }
 
     return res.json({
       success: true,
@@ -171,7 +175,8 @@ export const sendLoginOtp = asyncHandler(
 // Step 2: Verify OTP and login
 export const verifyLoginOtp = asyncHandler(
   async (req: Request, res: Response) => {
-    const { phone, otp } = req.body;
+    const { phone, otp, countryCode } = req.body;
+    const code = countryCode || DEFAULT_COUNTRY_CODE;
 
     if (!phone || !otp) {
       throw new ApiError(
@@ -188,9 +193,20 @@ export const verifyLoginOtp = asyncHandler(
       );
     }
 
-    const verified = await verifyOtpService(normalizedPhone, otp);
+    // Verify OTP via Twilio
+    let isOtpValid = false;
 
-    if (!verified) {
+    try {
+      const twilioResult = await verifyOtp(code + normalizedPhone, otp);
+      isOtpValid = twilioResult.valid;
+    } catch (_error) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.OTP_VERIFICATION_FAILED,
+      );
+    }
+
+    if (!isOtpValid) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
@@ -230,7 +246,8 @@ export const verifyLoginOtp = asyncHandler(
 // Step 1: Send OTP to phone number
 export const sendPhoneOtp = asyncHandler(
   async (req: Request, res: Response) => {
-    const { phone } = req.body;
+    const { phone, countryCode } = req.body;
+    const code = countryCode || DEFAULT_COUNTRY_CODE;
 
     if (!phone) {
       throw new ApiError(
@@ -256,14 +273,15 @@ export const sendPhoneOtp = asyncHandler(
       );
     }
 
-    // Generate 6-digit OTP
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-
-    // Save OTP to database
-    await createPhoneOtp(normalizedPhone, otp, 10);
-
-    // TODO: Send OTP via SMS service (Twilio, AWS SNS, etc.)
-    logger.info(`OTP for ${normalizedPhone}: ${otp}`);
+    // Send OTP via Twilio
+    try {
+      await sendOtp(code + normalizedPhone);
+    } catch (_error) {
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.PHONE.OTP_SENDING_FAILED,
+      );
+    }
 
     return res.json({
       success: true,
@@ -275,7 +293,8 @@ export const sendPhoneOtp = asyncHandler(
 // Step 2: Verify OTP
 export const verifyPhoneOtp = asyncHandler(
   async (req: Request, res: Response) => {
-    const { phone, otp, role } = req.body;
+    const { phone, otp, role, countryCode } = req.body;
+    const code = countryCode || DEFAULT_COUNTRY_CODE;
 
     if (!phone || !otp) {
       throw new ApiError(
@@ -292,9 +311,20 @@ export const verifyPhoneOtp = asyncHandler(
       );
     }
 
-    const verified = await verifyOtpService(normalizedPhone, otp);
+    // Verify OTP via Twilio
+    let isOtpValid = false;
 
-    if (!verified) {
+    try {
+      const twilioResult = await verifyOtp(code + normalizedPhone, otp);
+      isOtpValid = twilioResult.valid;
+    } catch (_error) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.OTP_VERIFICATION_FAILED,
+      );
+    }
+
+    if (!isOtpValid) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.PHONE.INVALID_OR_EXPIRED_OTP,
