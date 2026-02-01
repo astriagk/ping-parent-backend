@@ -43,7 +43,6 @@ export class TripRepository extends BaseRepository<Trip> {
 
   async findDuplicateTrip(
     driverId: string,
-    schoolId: string,
     tripType: TripType,
     tripDate: Date,
   ): Promise<WithId<Trip> | null> {
@@ -55,7 +54,6 @@ export class TripRepository extends BaseRepository<Trip> {
 
     return await this.findOne({
       driver_id: driverId,
-      school_id: schoolId,
       trip_type: tripType,
       trip_date: {
         $gte: startOfDay,

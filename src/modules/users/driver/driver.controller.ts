@@ -427,25 +427,41 @@ export const createDocuments = asyncHandler(
     // Handle file uploads
     const files = req.files as { [key: string]: Express.Multer.File[] };
 
+    // Original uploadFile code (commented out)
+    // if (files?.driving_license_photo?.[0]) {
+    //   documentsData.driving_license_photo_url = await uploadFile(
+    //     files.driving_license_photo[0],
+    //     "driver-documents/driving-licenses",
+    //   );
+    // }
+    //
+    // if (files?.vehicle_license_photo?.[0]) {
+    //   documentsData.vehicle_license_photo_url = await uploadFile(
+    //     files.vehicle_license_photo[0],
+    //     "driver-documents/vehicle-licenses",
+    //   );
+    // }
+    //
+    // if (files?.insurance_photo?.[0]) {
+    //   documentsData.insurance_photo_url = await uploadFile(
+    //     files.insurance_photo[0],
+    //     "driver-documents/insurance",
+    //   );
+    // }
+
+    // New code: Using placeholder URL
+    const placeholderUrl = "https://picsum.photos/seed/picsum/200/300";
+
     if (files?.driving_license_photo?.[0]) {
-      documentsData.driving_license_photo_url = await uploadFile(
-        files.driving_license_photo[0],
-        "driver-documents/driving-licenses",
-      );
+      documentsData.driving_license_photo_url = placeholderUrl;
     }
 
     if (files?.vehicle_license_photo?.[0]) {
-      documentsData.vehicle_license_photo_url = await uploadFile(
-        files.vehicle_license_photo[0],
-        "driver-documents/vehicle-licenses",
-      );
+      documentsData.vehicle_license_photo_url = placeholderUrl;
     }
 
     if (files?.insurance_photo?.[0]) {
-      documentsData.insurance_photo_url = await uploadFile(
-        files.insurance_photo[0],
-        "driver-documents/insurance",
-      );
+      documentsData.insurance_photo_url = placeholderUrl;
     }
 
     const success = await upsertDriverDocumentsByUserId(userId, documentsData);
@@ -490,25 +506,41 @@ export const updateDocuments = asyncHandler(
     // Handle file uploads
     const files = req.files as { [key: string]: Express.Multer.File[] };
 
+    // Original uploadFile code (commented out)
+    // if (files?.driving_license_photo?.[0]) {
+    //   documents.driving_license_photo_url = await uploadFile(
+    //     files.driving_license_photo[0],
+    //     "driver-documents/driving-licenses",
+    //   );
+    // }
+    //
+    // if (files?.vehicle_license_photo?.[0]) {
+    //   documents.vehicle_license_photo_url = await uploadFile(
+    //     files.vehicle_license_photo[0],
+    //     "driver-documents/vehicle-licenses",
+    //   );
+    // }
+    //
+    // if (files?.insurance_photo?.[0]) {
+    //   documents.insurance_photo_url = await uploadFile(
+    //     files.insurance_photo[0],
+    //     "driver-documents/insurance",
+    //   );
+    // }
+
+    // New code: Using placeholder URL
+    const placeholderUrl = "https://picsum.photos/seed/picsum/200/300";
+
     if (files?.driving_license_photo?.[0]) {
-      documents.driving_license_photo_url = await uploadFile(
-        files.driving_license_photo[0],
-        "driver-documents/driving-licenses",
-      );
+      documents.driving_license_photo_url = placeholderUrl;
     }
 
     if (files?.vehicle_license_photo?.[0]) {
-      documents.vehicle_license_photo_url = await uploadFile(
-        files.vehicle_license_photo[0],
-        "driver-documents/vehicle-licenses",
-      );
+      documents.vehicle_license_photo_url = placeholderUrl;
     }
 
     if (files?.insurance_photo?.[0]) {
-      documents.insurance_photo_url = await uploadFile(
-        files.insurance_photo[0],
-        "driver-documents/insurance",
-      );
+      documents.insurance_photo_url = placeholderUrl;
     }
 
     if (Object.keys(documents).length === 0) {

@@ -16,9 +16,11 @@ import {
   getAllDrivers,
   getAssignment,
   getAssignmentsByStudent,
+  getDriverParentRequestedAssignments,
   getMyActiveAssignments,
   getMyAssignments,
   getMyPendingAssignments,
+  getParentRequestedAssignmentsData,
   rejectDriverStudentAssignment,
   updateDriverStudentAssignment,
 } from "./driver_student_assignment.controller";
@@ -67,6 +69,13 @@ router.get(
   getMyActiveAssignments,
 );
 
+// Get parent-requested assignments for driver
+router.get(
+  "/driver/my-parent-requested",
+  verifyDriverToken,
+  getDriverParentRequestedAssignments,
+);
+
 // Deactivate Assignment (Driver)
 router.post(
   "/:id/deactivate",
@@ -97,6 +106,13 @@ router.get(
   "/admin/all-assignments",
   verifyAdminToken,
   getAllDriverStudentAssignments,
+);
+
+// Get parent-requested assignments with driver, student, and parent address
+router.get(
+  "/admin/my-assignments",
+  verifyAdminToken,
+  getParentRequestedAssignmentsData,
 );
 
 export default router;

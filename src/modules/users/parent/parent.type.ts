@@ -6,6 +6,8 @@ export interface Parent {
   name: string;
   email?: string;
   photo_url?: string;
+  has_active_subscription?: boolean; // Query optimization field
+  subscription_id?: string; // FK to parent_subscriptions - current active subscription
   created_at?: Date;
   updated_at?: Date;
 }

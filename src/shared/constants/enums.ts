@@ -6,6 +6,7 @@ export enum Gender {
 export enum UserRole {
   ADMIN = "admin",
   SUPERADMIN = "superadmin",
+  SCHOOL_ADMIN = "school_admin",
   PARENT = "parent",
   DRIVER = "driver",
 }
@@ -55,6 +56,7 @@ export enum UniqueCodeTypes {
   ADMIN = "ADM",
   ROLE = "ROL",
   AUDIT_LOG = "AUL",
+  LOCATION = "LOC",
 }
 
 export enum AssignmentStatus {
@@ -63,6 +65,12 @@ export enum AssignmentStatus {
   PENDING = "pending",
   PARENT_REQUESTED = "parent_requested",
   REJECTED = "rejected",
+}
+
+export enum AssignmentSource {
+  PARENT = "parent",
+  SCHOOL_ADMIN = "school_admin",
+  SYSTEM = "system",
 }
 
 export enum TripType {
@@ -155,4 +163,11 @@ export enum ApprovalStatus {
 export enum AuditAction {
   SUCCESS = "success",
   FAILURE = "failure",
+}
+
+export enum SchoolSubscriptionStatus {
+  ACTIVE = "active",
+  EXPIRED = "expired",
+  CANCELLED = "cancelled",
+  PENDING = "pending",
 }

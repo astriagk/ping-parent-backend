@@ -2,6 +2,7 @@ import { Request, Response } from "express";
 
 import { DriverRepository } from "@modules/users/driver/driver.repository";
 import {
+  AssignmentStatus,
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
@@ -19,6 +20,8 @@ import {
   getAssignmentById,
   getAssignmentsByDriverUserId,
   getAssignmentsByStudentId,
+  getParentRequestedAssignments,
+  getParentRequestedAssignmentsByDriver,
   getPendingAssignmentsByDriverUserId,
   rejectAssignment,
   updateAssignment,
@@ -62,6 +65,79 @@ export const createDriverStudentAssignment = asyncHandler(
 export const getAllDriverStudentAssignments = asyncHandler(
   async (req: Request, res: Response) => {
     const assignments = await getAllAssignments();
+
+    return res.json({
+      success: true,
+      data: assignments,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get parent-requested assignments with driver, student, and parent address details
+ */
+export const getParentRequestedAssignmentsData = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { assignment_status } = req.query;
+    let assignmentStatus: string | undefined;
+
+    if (assignment_status) {
+      assignmentStatus = String(assignment_status);
+      // Validate against AssignmentStatus enum values
+      const validStatuses = Object.values(AssignmentStatus);
+      if (!validStatuses.includes(assignmentStatus as AssignmentStatus)) {
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          `Invalid assignment_status. Valid values are: ${validStatuses.join(", ")}`,
+        );
+      }
+    }
+
+    const assignments = await getParentRequestedAssignments(assignmentStatus);
+
+    return res.json({
+      success: true,
+      data: assignments,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get parent-requested assignments for authenticated driver
+ */
+export const getDriverParentRequestedAssignments = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+    const { assignment_status } = req.query;
+    let assignmentStatus: string | undefined;
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    if (assignment_status) {
+      assignmentStatus = String(assignment_status);
+      // Validate against AssignmentStatus enum values
+      const validStatuses = Object.values(AssignmentStatus);
+      if (!validStatuses.includes(assignmentStatus as AssignmentStatus)) {
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          `Invalid assignment_status. Valid values are: ${validStatuses.join(", ")}`,
+        );
+      }
+    }
+
+    const assignments = await getParentRequestedAssignmentsByDriver(
+      userId,
+      assignmentStatus,
+    );
 
     return res.json({
       success: true,

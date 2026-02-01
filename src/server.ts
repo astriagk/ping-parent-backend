@@ -4,6 +4,7 @@ import { createServer } from "http";
 import path from "path";
 
 import { connectDB } from "@shared/config";
+import { initializeSocket } from "@shared/services/socket.service";
 
 import app from "./app";
 
@@ -25,11 +26,16 @@ async function startServer() {
   try {
     await connectDB();
     // await connectRedis();
-    const server = createServer(app);
-    server.listen(PORT, HOST, () => {
+    const httpServer = createServer(app);
+
+    // Initialize Socket.IO for real-time tracking
+    initializeSocket(httpServer);
+
+    httpServer.listen(PORT, HOST, () => {
       console.log(`🚀 Server running on http://${HOST}:${PORT}`);
       console.log(`🌱 Environment: ${NODE_ENV}`);
       console.log("📱 Accessible from network devices");
+      console.log("🔌 WebSocket (Socket.IO) enabled for real-time tracking");
     });
   } catch (err) {
     console.error("❌ Failed to start server:", err);

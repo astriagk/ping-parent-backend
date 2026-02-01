@@ -1,0 +1,544 @@
+{
+  "info": {
+    "name": "School Transport System",
+    "description": "API endpoints for school-based transport system with driver assignment and subscription management",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "School Authentication",
+      "item": [
+        {
+          "name": "Register School Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"SecurePass123\",\n  \"school_id\": \"SCHOOL123\",\n  \"phone_number\": \"+919876543210\",\n  \"name\": \"School Admin Name\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/auth/register",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "auth", "register"]
+            }
+          }
+        },
+        {
+          "name": "Login School Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@school.com\",\n  \"password\": \"SecurePass123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/auth/login",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "auth", "login"]
+            }
+          }
+        },
+        {
+          "name": "Logout School Admin",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/auth/logout",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "auth", "logout"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "School Driver Management",
+      "item": [
+        {
+          "name": "List School Drivers",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/drivers",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "drivers"]
+            }
+          }
+        },
+        {
+          "name": "Assign Driver to School",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driver_id\": \"DRIVER123\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/drivers/:driverId/assign",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "drivers", ":driverId", "assign"],
+              "variable": [
+                {
+                  "key": "driverId",
+                  "value": "DRIVER123"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Remove Driver from School",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/drivers/:driverId/remove",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "drivers", ":driverId", "remove"],
+              "variable": [
+                {
+                  "key": "driverId",
+                  "value": "DRIVER123"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "School Student Management",
+      "item": [
+        {
+          "name": "List School Students",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/students?subscription_status=active&limit=20&offset=0",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "students"],
+              "query": [
+                {
+                  "key": "subscription_status",
+                  "value": "active"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Student Details",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/students/:studentId",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "students", ":studentId"],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "STUDENT123"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "School Assignment Management",
+      "item": [
+        {
+          "name": "Assign Driver to Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driver_id\": \"DRIVER123\",\n  \"monthly_fee\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/students/:studentId/assign-driver",
+              "host": ["{{BASE_URL}}"],
+              "path": [
+                "api",
+                "v1",
+                "school",
+                "students",
+                ":studentId",
+                "assign-driver"
+              ],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "STUDENT123"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get School Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/assignments?assignment_status=active&limit=20&offset=0",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "assignments"],
+              "query": [
+                {
+                  "key": "assignment_status",
+                  "value": "active"
+                },
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "School Subscription Code Management",
+      "item": [
+        {
+          "name": "Generate Subscription Codes",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"plan_id\": \"PLAN123\",\n  \"parent_list\": [\"PARENT1\", \"PARENT2\", \"PARENT3\"],\n  \"start_date\": \"2026-02-01\",\n  \"end_date\": \"2026-03-01\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/subscriptions/generate-code",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "subscriptions", "generate-code"]
+            }
+          }
+        },
+        {
+          "name": "List Subscription Codes",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/subscriptions?limit=20&offset=0",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "subscriptions"],
+              "query": [
+                {
+                  "key": "limit",
+                  "value": "20"
+                },
+                {
+                  "key": "offset",
+                  "value": "0"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Subscription Analytics",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{SCHOOL_ADMIN_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/school/subscriptions/analytics",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "school", "subscriptions", "analytics"]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Parent - School Subscription Redemption",
+      "item": [
+        {
+          "name": "Redeem Subscription Code",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{PARENT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"subscription_code\": \"SCH-ABC123XYZ\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/parent/school-subscriptions/redeem",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "parent", "school-subscriptions", "redeem"]
+            }
+          }
+        },
+        {
+          "name": "Get Parent School Subscriptions",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{PARENT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/parent/school-subscriptions",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "parent", "school-subscriptions"]
+            }
+          }
+        },
+        {
+          "name": "Cancel School Subscription",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{PARENT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/parent/school-subscriptions/:subscriptionId/cancel",
+              "host": ["{{BASE_URL}}"],
+              "path": [
+                "api",
+                "v1",
+                "parent",
+                "school-subscriptions",
+                ":subscriptionId",
+                "cancel"
+              ],
+              "variable": [
+                {
+                  "key": "subscriptionId",
+                  "value": "SUBSCRIPTION123"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Modified Assignment Endpoints",
+      "item": [
+        {
+          "name": "Parent - Assign Driver to Student",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{PARENT_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"driver_unique_id\": \"DRV-ABC123\",\n  \"monthly_fee\": 5000\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/students/:studentId/assign-driver",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "students", ":studentId", "assign-driver"],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "STUDENT123"
+                }
+              ]
+            }
+          }
+        },
+        {
+          "name": "Get Student Assignments",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{PARENT_TOKEN}}"
+              }
+            ],
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/students/:studentId/assignments",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "students", ":studentId", "assignments"],
+              "variable": [
+                {
+                  "key": "studentId",
+                  "value": "STUDENT123"
+                }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "name": "Trip Generation",
+      "item": [
+        {
+          "name": "Generate Daily Trips",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Authorization",
+                "value": "Bearer {{ADMIN_TOKEN}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"trip_date\": \"2026-02-01\",\n  \"assignment_source\": \"both\"\n}"
+            },
+            "url": {
+              "raw": "{{BASE_URL}}/api/v1/trips/generate-daily",
+              "host": ["{{BASE_URL}}"],
+              "path": ["api", "v1", "trips", "generate-daily"]
+            }
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "BASE_URL",
+      "value": "http://localhost:3000",
+      "type": "string"
+    },
+    {
+      "key": "SCHOOL_ADMIN_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "PARENT_TOKEN",
+      "value": "",
+      "type": "string"
+    },
+    {
+      "key": "ADMIN_TOKEN",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}

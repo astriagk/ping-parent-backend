@@ -10,18 +10,28 @@ import {
   parentSubscriptionRoutes,
   paymentRoutes,
   razorpayRoutes,
+  redemptionRoutes,
+  schoolSubscriptionRoutes,
   subscriptionPlanRoutes,
 } from "@modules/billing";
 import { notificationRoutes } from "@modules/notification";
 import { ratingReviewRoutes } from "@modules/reviews";
 import { schoolRoutes } from "@modules/school";
+import { schoolAdminRoutes } from "@modules/school_admin";
+import trackingRouter from "@modules/tracking";
 import {
   dailyQrOtpRoutes,
   driverStudentAssignmentRoutes,
+  schoolAssignmentRoutes,
   tripRoutes,
   tripStudentRoutes,
 } from "@modules/trips";
-import { driverRoutes, parentRoutes, studentRoutes } from "@modules/users";
+import {
+  driverRoutes,
+  parentRoutes,
+  schoolDriverRoutes,
+  studentRoutes,
+} from "@modules/users";
 
 const router = Router();
 
@@ -34,15 +44,25 @@ router.use("/parent", parentRoutes);
 // 03. Driver APIs
 router.use("/driver", driverRoutes);
 
+// 03.5 School Driver APIs
+router.use("/school-driver", schoolDriverRoutes);
+
 // 04. Student APIs
 router.use("/students", studentRoutes);
 
 // 05. School APIs
 router.use("/schools", schoolRoutes);
 
+// 05.5 School Admin APIs
+router.use("/school-admin", schoolAdminRoutes);
+
 // 06. Assignment & Trip APIs
 router.use("/driver-student-assignments", driverStudentAssignmentRoutes);
+router.use("/school-assignments", schoolAssignmentRoutes);
 router.use("/trips", tripRoutes);
+
+// 06.5 Tracking & Real-time Tracking APIs
+router.use("/tracking", trackingRouter);
 
 // 07. Attendance & QR/OTP APIs
 router.use("/daily-qr-otp", dailyQrOtpRoutes);
@@ -54,7 +74,9 @@ router.use("/notifications", notificationRoutes);
 // 09. Subscription & Payment APIs
 router.use("/subscription-plans", subscriptionPlanRoutes);
 router.use("/parent-subscriptions", parentSubscriptionRoutes);
+router.use("/school-subscriptions", schoolSubscriptionRoutes);
 router.use("/payments", paymentRoutes);
+router.use("/redemptions", redemptionRoutes);
 router.use("/razorpay", razorpayRoutes);
 
 // 10. Ratings & Reviews APIs
