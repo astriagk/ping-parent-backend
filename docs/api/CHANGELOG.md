@@ -2,83 +2,29 @@
 
 > Auto-generated API endpoint version history
 
-**Current Version:** 1.0.0
+**Current Version:** 3.0.0
 **Last Updated:** 2026-02-01
 
 ---
 
-## Version 1.0.0 (MAJOR)
+## Version 3.0.0 (MAJOR)
 
 **Released:** 2026-02-01
 
 ### Summary
 
-| Metric | Previous (0.0.0) | Current (1.0.0) | Change |
+| Metric | Previous (2.0.0) | Current (3.0.0) | Change |
 |--------|----------|---------|--------|
-| **Total Endpoints** | 134 | 186 | +52 |
-| GET | 62 | 88 | +26 |
-| POST | 27 | 49 | +22 |
-| PUT | 23 | 24 | +1 |
-| PATCH | 13 | 16 | +3 |
+| **Total Endpoints** | 186 | 186 | +0 |
+| GET | 88 | 88 | +0 |
+| POST | 49 | 49 | +0 |
+| PUT | 24 | 24 | +0 |
+| PATCH | 16 | 16 | +0 |
 | DELETE | 9 | 9 | +0 |
 
 ### Changes
 
-#### ✅ Added Endpoints (51)
-
-| Method | Path |
-|--------|------|
-| `POST` | `/admin/verify-password-hash` |
-| `GET` | `/razorpay/config` |
-| `POST` | `/razorpay/orders` |
-| `POST` | `/razorpay/verify` |
-| `POST` | `/razorpay/capture` |
-| `POST` | `/razorpay/refunds` |
-| `GET` | `/razorpay/orders/:orderId` |
-| `GET` | `/razorpay/payments/:paymentId` |
-| `POST` | `/redeem` |
-| `GET` | `/active` |
-| `GET` | `/` |
-| `GET` | `/:subscriptionId` |
-| `POST` | `/cancel` |
-| `GET` | `/status/check` |
-| `GET` | `/available/codes` |
-| `GET` | `/school/:schoolId` |
-| `GET` | `/school/:schoolId/active` |
-| `GET` | `/:subscriptionId` |
-| `PATCH` | `/:subscriptionId` |
-| `POST` | `/:subscriptionId/renew` |
-| `POST` | `/:subscriptionId/cancel` |
-| `GET` | `/expired/list` |
-| `POST` | `/subscription-plans/` |
-| `POST` | `/register` |
-| `POST` | `/login` |
-| `GET` | `/me` |
-| `PATCH` | `/update` |
-| `POST` | `/change-password` |
-| `GET` | `/:schoolId` |
-| `POST` | `/:adminId/deactivate` |
-| `POST` | `/calculate` |
-| `PATCH` | `/:tripId/position` |
-| `GET` | `/:tripId/tracking` |
-| `GET` | `/:tripId/current-position` |
-| `GET` | `/:tripId/details` |
-| `POST` | `/admin/cleanup` |
-| `GET` | `/driver-student-assignments/all-drivers` |
-| `GET` | `/driver-student-assignments/driver/my-parent-requested` |
-| `GET` | `/driver-student-assignments/admin/my-assignments` |
-| `GET` | `/:schoolId` |
-| `GET` | `/:schoolId/pending` |
-| `GET` | `/:schoolId/driver/:driverId` |
-| `POST` | `/:schoolId/create` |
-| `POST` | `/:assignmentId/approve` |
-| `POST` | `/:assignmentId/reject` |
-| `GET` | `/driver/onboarding/screen` |
-| `PUT` | `/driver/onboarding/screen` |
-| `GET` | `/:schoolId` |
-| `POST` | `/assign` |
-| `POST` | `/:driverId/remove` |
-| `GET` | `/:driverId/details` |
+No endpoint changes. This is a patch update (documentation/examples improved).
 
 ---
 
@@ -86,6 +32,8 @@
 
 | Version | Date | Type | Total Endpoints | GET | POST | PUT | PATCH | DELETE | Changes |
 |---------|------|------|-----------------|-----|------|-----|-------|--------|----------|
+| **3.0.0** | 2026-02-01 | `MAJOR` | 186 | 88 | 49 | 24 | 16 | 9 | No change |
+| **2.0.0** | 2026-02-01 | `MAJOR` | 186 | 88 | 49 | 24 | 16 | 9 | No change |
 | **1.0.0** | 2026-02-01 | `MAJOR` | 186 | 88 | 49 | 24 | 16 | 9 | +52 |
 | **0.0.0** | 2026-01-10 | `PATCH` | 134 | 62 | 27 | 23 | 13 | 9 | - |
 

@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Ping Parent API v1.0.0",
-    "description": "Auto-generated API collection from route definitions\n\nVersion: 1.0.0\nGenerated: 2026-02-01T10:43:05.068Z",
+    "name": "Ping Parent API v3.0.0",
+    "description": "Auto-generated API collection from route definitions\n\nVersion: 3.0.0\nGenerated: 2026-02-01T10:55:48.323Z",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.0"
+    "version": "3.0.0"
   },
   "auth": {
     "type": "bearer",
@@ -2070,11 +2070,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/redeem",
+              "raw": "{{BASE_URL}}/redemptions/redeem",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "redemptions",
                 "redeem"
               ]
             },
@@ -2101,11 +2102,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/active",
+              "raw": "{{BASE_URL}}/redemptions/active",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "redemptions",
                 "active"
               ]
             },
@@ -2128,11 +2130,13 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/",
+              "raw": "{{BASE_URL}}/redemptions/",
               "host": [
                 "{{BASE_URL}}"
               ],
-              "path": []
+              "path": [
+                "redemptions"
+              ]
             },
             "auth": {
               "type": "bearer",
@@ -2153,11 +2157,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:subscriptionId",
+              "raw": "{{BASE_URL}}/redemptions/:subscriptionId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "redemptions",
                 ":subscriptionId"
               ],
               "variable": [
@@ -2191,11 +2196,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/cancel",
+              "raw": "{{BASE_URL}}/redemptions/cancel",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "redemptions",
                 "cancel"
               ]
             },
@@ -2222,11 +2228,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/status/check",
+              "raw": "{{BASE_URL}}/redemptions/status/check",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "redemptions",
                 "status",
                 "check"
               ]
@@ -2250,11 +2257,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/available/codes",
+              "raw": "{{BASE_URL}}/redemptions/available/codes",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "redemptions",
                 "available",
                 "codes"
               ]
@@ -2278,11 +2286,13 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/",
+              "raw": "{{BASE_URL}}/school-subscriptions/",
               "host": [
                 "{{BASE_URL}}"
               ],
-              "path": []
+              "path": [
+                "school-subscriptions"
+              ]
             },
             "auth": {
               "type": "bearer",
@@ -2307,11 +2317,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/school/:schoolId",
+              "raw": "{{BASE_URL}}/school-subscriptions/school/:schoolId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 "school",
                 ":schoolId"
               ],
@@ -2341,11 +2352,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/school/:schoolId/active",
+              "raw": "{{BASE_URL}}/school-subscriptions/school/:schoolId/active",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 "school",
                 ":schoolId",
                 "active"
@@ -2376,11 +2388,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:subscriptionId",
+              "raw": "{{BASE_URL}}/school-subscriptions/:subscriptionId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 ":subscriptionId"
               ],
               "variable": [
@@ -2414,11 +2427,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:subscriptionId",
+              "raw": "{{BASE_URL}}/school-subscriptions/:subscriptionId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 ":subscriptionId"
               ],
               "variable": [
@@ -2456,11 +2470,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:subscriptionId/renew",
+              "raw": "{{BASE_URL}}/school-subscriptions/:subscriptionId/renew",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 ":subscriptionId",
                 "renew"
               ],
@@ -2499,11 +2514,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:subscriptionId/cancel",
+              "raw": "{{BASE_URL}}/school-subscriptions/:subscriptionId/cancel",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 ":subscriptionId",
                 "cancel"
               ],
@@ -2537,11 +2553,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/expired/list",
+              "raw": "{{BASE_URL}}/school-subscriptions/expired/list",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-subscriptions",
                 "expired",
                 "list"
               ]
@@ -3292,11 +3309,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/register",
+              "raw": "{{BASE_URL}}/school-admin/register",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 "register"
               ]
             },
@@ -3318,11 +3336,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/login",
+              "raw": "{{BASE_URL}}/school-admin/login",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 "login"
               ]
             },
@@ -3339,11 +3358,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/me",
+              "raw": "{{BASE_URL}}/school-admin/me",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 "me"
               ]
             },
@@ -3371,11 +3391,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/update",
+              "raw": "{{BASE_URL}}/school-admin/update",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 "update"
               ]
             },
@@ -3407,11 +3428,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/change-password",
+              "raw": "{{BASE_URL}}/school-admin/change-password",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 "change-password"
               ]
             },
@@ -3438,11 +3460,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:schoolId",
+              "raw": "{{BASE_URL}}/school-admin/:schoolId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 ":schoolId"
               ],
               "variable": [
@@ -3476,11 +3499,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:adminId/deactivate",
+              "raw": "{{BASE_URL}}/school-admin/:adminId/deactivate",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-admin",
                 ":adminId",
                 "deactivate"
               ],
@@ -4323,11 +4347,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:schoolId",
+              "raw": "{{BASE_URL}}/school-assignments/:schoolId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-assignments",
                 ":schoolId"
               ],
               "variable": [
@@ -4356,11 +4381,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:schoolId/pending",
+              "raw": "{{BASE_URL}}/school-assignments/:schoolId/pending",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-assignments",
                 ":schoolId",
                 "pending"
               ],
@@ -4390,11 +4416,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:schoolId/driver/:driverId",
+              "raw": "{{BASE_URL}}/school-assignments/:schoolId/driver/:driverId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-assignments",
                 ":schoolId",
                 "driver",
                 ":driverId"
@@ -4434,11 +4461,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:schoolId/create",
+              "raw": "{{BASE_URL}}/school-assignments/:schoolId/create",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-assignments",
                 ":schoolId",
                 "create"
               ],
@@ -4477,11 +4505,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:assignmentId/approve",
+              "raw": "{{BASE_URL}}/school-assignments/:assignmentId/approve",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-assignments",
                 ":assignmentId",
                 "approve"
               ],
@@ -4520,11 +4549,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:assignmentId/reject",
+              "raw": "{{BASE_URL}}/school-assignments/:assignmentId/reject",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-assignments",
                 ":assignmentId",
                 "reject"
               ],
@@ -5625,11 +5655,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:schoolId",
+              "raw": "{{BASE_URL}}/school-driver/:schoolId",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-driver",
                 ":schoolId"
               ],
               "variable": [
@@ -5663,11 +5694,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/assign",
+              "raw": "{{BASE_URL}}/school-driver/assign",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-driver",
                 "assign"
               ]
             },
@@ -5699,11 +5731,12 @@
               }
             ],
             "url": {
-              "raw": "{{BASE_URL}}/:driverId/remove",
+              "raw": "{{BASE_URL}}/school-driver/:driverId/remove",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-driver",
                 ":driverId",
                 "remove"
               ],
@@ -5737,11 +5770,12 @@
             "method": "GET",
             "header": [],
             "url": {
-              "raw": "{{BASE_URL}}/:driverId/details",
+              "raw": "{{BASE_URL}}/school-driver/:driverId/details",
               "host": [
                 "{{BASE_URL}}"
               ],
               "path": [
+                "school-driver",
                 ":driverId",
                 "details"
               ],
