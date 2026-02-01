@@ -1,8 +1,8 @@
 openapi: 3.0.0
 info:
   title: Ping Parent API
-  version: 1.0.0
-  description: "Auto-generated API documentation from route definitions\n\nGenerated: 2026-02-01T10:43:05.071Z"
+  version: 3.0.0
+  description: "Auto-generated API documentation from route definitions\n\nGenerated: 2026-02-01T10:55:48.327Z"
   contact:
     name: Ping Parent Team
 servers:
@@ -2500,7 +2500,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /redeem:
+  /redemptions/redeem:
     post:
       tags:
         - Billing - Redemption
@@ -2546,7 +2546,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /active:
+  /redemptions/active:
     get:
       tags:
         - Billing - Redemption
@@ -2579,7 +2579,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:
+  /redemptions/:
     get:
       tags:
         - Billing - Redemption
@@ -2612,39 +2612,22 @@ paths:
           description: Not found
         500:
           description: Internal server error
-    post:
+  /redemptions/:subscriptionId:
+    get:
       tags:
-        - Reviews
-      summary: Create Rating Review
+        - Billing - Redemption
+      summary: Get Redemption
       security:
         -
           ParentAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                driver_id:
-                  type: string
-                trip_id:
-                  type: string
-                rating:
-                  type: number
-                  minLength: 1
-                  maxLength: 5
-                review_text:
-                  type: string
-                  maxLength: 1000
-              required:
-                - driver_id
-                - rating
-            example:
-              driver_id: string
-              trip_id: string
-              rating: 1
-              review_text: string
+      parameters:
+        -
+          name: subscriptionId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: subscriptionId parameter
       responses:
         200:
           description: Successful response
@@ -2670,7 +2653,259 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:subscriptionId:
+  /redemptions/cancel:
+    post:
+      tags:
+        - Billing - Redemption
+      summary: Create Cancel
+      security:
+        -
+          ParentAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /redemptions/status/check:
+    get:
+      tags:
+        - Billing - Redemption
+      summary: Get Check
+      security:
+        -
+          ParentAuth: []
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /redemptions/available/codes:
+    get:
+      tags:
+        - Billing - Redemption
+      summary: Get Codes
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /school-subscriptions/:
+    post:
+      tags:
+        - Billing - School_subscription
+      summary: Create School Subscription
+      security:
+        -
+          AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                school_id:
+                  type: string
+                plan_id:
+                  type: string
+                start_date:
+                  type: string
+                end_date:
+                  type: string
+                auto_renew:
+                  type: boolean
+                max_drivers:
+                  type: number
+                  minLength: 1
+                max_students:
+                  type: number
+                  minLength: 1
+                billing_contact:
+                  type: string
+                subscription_status:
+                  type: string
+              required:
+                - school_id
+                - plan_id
+                - start_date
+            example:
+              school_id: string
+              plan_id: string
+              start_date: string
+              end_date: string
+              auto_renew: false
+              max_drivers: 1
+              max_students: 1
+              billing_contact: string
+              subscription_status: string
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /school-subscriptions/school/:schoolId:
+    get:
+      tags:
+        - Billing - School_subscription
+      summary: Get School
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: schoolId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: schoolId parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /school-subscriptions/school/:schoolId/active:
+    get:
+      tags:
+        - Billing - School_subscription
+      summary: Get Active
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: schoolId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: schoolId parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /school-subscriptions/:subscriptionId:
     get:
       tags:
         - Billing - School_subscription
@@ -2751,185 +2986,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /cancel:
-    post:
-      tags:
-        - Billing - Redemption
-      summary: Create Cancel
-      security:
-        -
-          ParentAuth: []
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /status/check:
-    get:
-      tags:
-        - Billing - Redemption
-      summary: Get Check
-      security:
-        -
-          ParentAuth: []
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /available/codes:
-    get:
-      tags:
-        - Billing - Redemption
-      summary: Get Codes
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /school/:schoolId:
-    get:
-      tags:
-        - Billing - School_subscription
-      summary: Get School
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: schoolId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: schoolId parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /school/:schoolId/active:
-    get:
-      tags:
-        - Billing - School_subscription
-      summary: Get Active
-      security:
-        -
-          AdminAuth: []
-      parameters:
-        -
-          name: schoolId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: schoolId parameter
-      responses:
-        200:
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  success:
-                    type: boolean
-                    example: true
-                  data:
-                    type: object
-                  message:
-                    type: string
-        201:
-          description: Created successfully
-        400:
-          description: Bad request - Validation error
-        401:
-          description: Unauthorized - Invalid or missing token
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /:subscriptionId/renew:
+  /school-subscriptions/:subscriptionId/renew:
     post:
       tags:
         - Billing - School_subscription
@@ -2970,7 +3027,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:subscriptionId/cancel:
+  /school-subscriptions/:subscriptionId/cancel:
     post:
       tags:
         - Billing - School_subscription
@@ -3011,7 +3068,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /expired/list:
+  /school-subscriptions/expired/list:
     get:
       tags:
         - Billing - School_subscription
@@ -3446,6 +3503,65 @@ paths:
       tags:
         - Notification
       summary: Update Mark All As Read
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /:
+    post:
+      tags:
+        - Reviews
+      summary: Create Rating Review
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                trip_id:
+                  type: string
+                rating:
+                  type: number
+                  minLength: 1
+                  maxLength: 5
+                review_text:
+                  type: string
+                  maxLength: 1000
+              required:
+                - driver_id
+                - rating
+            example:
+              driver_id: string
+              trip_id: string
+              rating: 1
+              review_text: string
       responses:
         200:
           description: Successful response
@@ -3926,7 +4042,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /register:
+  /school-admin/register:
     post:
       tags:
         - School_admin
@@ -3992,7 +4108,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /login:
+  /school-admin/login:
     post:
       tags:
         - School_admin
@@ -4022,7 +4138,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /me:
+  /school-admin/me:
     get:
       tags:
         - School_admin
@@ -4055,7 +4171,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /update:
+  /school-admin/update:
     patch:
       tags:
         - School_admin
@@ -4088,7 +4204,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /change-password:
+  /school-admin/change-password:
     post:
       tags:
         - School_admin
@@ -4121,11 +4237,11 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:schoolId:
+  /school-admin/:schoolId:
     get:
       tags:
-        - Users - School_driver
-      summary: Get School Driver
+        - School_admin
+      summary: Get School Admin
       security:
         -
           AdminAuth: []
@@ -4162,7 +4278,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:adminId/deactivate:
+  /school-admin/:adminId/deactivate:
     post:
       tags:
         - School_admin
@@ -5177,7 +5293,48 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:schoolId/pending:
+  /school-assignments/:schoolId:
+    get:
+      tags:
+        - Trips - School_assignment
+      summary: Get School Assignment
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: schoolId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: schoolId parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /school-assignments/:schoolId/pending:
     get:
       tags:
         - Trips - School_assignment
@@ -5218,7 +5375,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:schoolId/driver/:driverId:
+  /school-assignments/:schoolId/driver/:driverId:
     get:
       tags:
         - Trips - School_assignment
@@ -5266,7 +5423,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:schoolId/create:
+  /school-assignments/:schoolId/create:
     post:
       tags:
         - Trips - School_assignment
@@ -5307,7 +5464,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:assignmentId/approve:
+  /school-assignments/:assignmentId/approve:
     post:
       tags:
         - Trips - School_assignment
@@ -5348,7 +5505,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:assignmentId/reject:
+  /school-assignments/:assignmentId/reject:
     post:
       tags:
         - Trips - School_assignment
@@ -6790,7 +6947,48 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /assign:
+  /school-driver/:schoolId:
+    get:
+      tags:
+        - Users - School_driver
+      summary: Get School Driver
+      security:
+        -
+          AdminAuth: []
+      parameters:
+        -
+          name: schoolId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: schoolId parameter
+      responses:
+        200:
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                  message:
+                    type: string
+        201:
+          description: Created successfully
+        400:
+          description: Bad request - Validation error
+        401:
+          description: Unauthorized - Invalid or missing token
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /school-driver/assign:
     post:
       tags:
         - Users - School_driver
@@ -6823,7 +7021,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:driverId/remove:
+  /school-driver/:driverId/remove:
     post:
       tags:
         - Users - School_driver
@@ -6864,7 +7062,7 @@ paths:
           description: Not found
         500:
           description: Internal server error
-  /:driverId/details:
+  /school-driver/:driverId/details:
     get:
       tags:
         - Users - School_driver
