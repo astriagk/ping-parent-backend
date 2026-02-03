@@ -167,7 +167,39 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 6: Lookup school details
+        // Stage 6: Lookup parent details
+        {
+          $lookup: {
+            from: "parents",
+            let: { parentId: { $toObjectId: "$studentDetails.parent_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$parentId"] } } }],
+            as: "parentDetails",
+          },
+        },
+        // Stage 7: Unwind parent details (preserve if no match found)
+        {
+          $unwind: {
+            path: "$parentDetails",
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        // Stage 8: Lookup user details
+        {
+          $lookup: {
+            from: "users",
+            let: { userId: { $toObjectId: "$parentDetails.user_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
+            as: "userDetails",
+          },
+        },
+        // Stage 9: Unwind user details (preserve if no match found)
+        {
+          $unwind: {
+            path: "$userDetails",
+            preserveNullAndEmptyArrays: false,
+          },
+        },
+        // Stage 10: Lookup school details
         {
           $lookup: {
             from: SCHOOLS_COLLECTION,
@@ -176,14 +208,14 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             as: "schoolDetails",
           },
         },
-        // Stage 7: Unwind school details
+        // Stage 11: Unwind school details
         {
           $unwind: {
             path: "$schoolDetails",
             preserveNullAndEmptyArrays: true,
           },
         },
-        // Stage 8: Project and transform to waypoint format
+        // Stage 12: Project and transform to waypoint format
         {
           $project: {
             _id: 0,
@@ -191,7 +223,14 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             student_name: "$studentDetails.student_name",
             student_roll_number: "$studentDetails.roll_number",
             student_grade: "$studentDetails.grade",
+            student_section: "$studentDetails.section",
+            student_class: "$studentDetails.class",
+            student_photo_url: "$studentDetails.photo_url",
+            student_gender: "$studentDetails.gender",
             student_parent_id: "$studentDetails.parent_id",
+            parent_name: "$parentDetails.name",
+            parent_email: "$parentDetails.email",
+            parent_phone_number: "$userDetails.phone_number",
             latitude: "$addressDetails.latitude",
             longitude: "$addressDetails.longitude",
             address: {

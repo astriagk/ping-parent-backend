@@ -8,6 +8,13 @@ export interface RouteWaypoint {
   student_names?: string[]; // array of student names (after grouping)
   student_roll_number?: string;
   student_grade?: string;
+  student_section?: string;
+  student_class?: string;
+  student_photo_url?: string;
+  student_gender?: string;
+  parent_name?: string;
+  parent_email?: string;
+  parent_phone_number?: string;
   duration_from_previous?: number; // in seconds
   distance_from_previous?: number; // in kilometers
   estimated_arrival_time?: Date;
@@ -77,6 +84,7 @@ export interface RouteCalculationRequest {
 
 export interface RouteCalculationResponse {
   success: boolean;
+  _id?: string;
   trip_id: string;
   route_geometry: RouteGeometry;
   total_distance: number;

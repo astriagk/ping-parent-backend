@@ -99,12 +99,6 @@ class TomTomService {
         0,
       );
 
-      logger.info("TomTom Optimization Result:", {
-        sequence,
-        distances,
-        totalDistance,
-      });
-
       return {
         sequence,
         distances,
