@@ -8,11 +8,13 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
+  calculateOptimalRouteWithTomTom,
   calculateRoute,
   cleanOldTrackingData,
   getLatestDriverPosition,
   getRouteDetails,
   getRouteTracking,
+  recalculateRoute,
   updateDriverPosition,
 } from "./tracking.service";
 
@@ -170,6 +172,48 @@ export const cleanTrackingDataHandler = asyncHandler(
         ),
       },
       message: SUCCESS_MESSAGES.ROUTE.CLEANUP_COMPLETED_SUCCESSFULLY,
+    });
+  },
+);
+
+export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
+      );
+    }
+
+    const result = await calculateOptimalRouteWithTomTom(userId, req.body);
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES.ROUTE.TOMTOM_ROUTE_CALCULATED,
+    });
+  },
+);
+
+export const recalculateRouteHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
+      );
+    }
+
+    const result = await recalculateRoute(userId, req.body);
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES.ROUTE.RECALCULATED_SUCCESSFULLY,
     });
   },
 );

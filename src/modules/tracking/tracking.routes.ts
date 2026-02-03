@@ -7,26 +7,46 @@ import {
 } from "@shared/middlewares";
 
 import {
+  calculateOptimalRouteWithTomTomHandler,
   calculateRouteHandler,
   cleanTrackingDataHandler,
   getCurrentPositionHandler,
   getRouteDetailsHandler,
   getTrackingHandler,
+  recalculateRouteHandler,
   updatePositionHandler,
 } from "./tracking.controller";
 import {
+  calculateOptimalRouteWithTomTomSchema,
   calculateRouteSchema,
   updatePositionSchema,
 } from "./tracking.validation";
 
 const router = Router();
 
-// Calculate optimal route for a trip
+// Calculate optimal route (free version - simple distance-based optimization)
 router.post(
   "/calculate",
   verifyDriverToken,
   validate(calculateRouteSchema),
   calculateRouteHandler,
+);
+
+// Calculate optimal route using TomTom Matrix API (premium - includes navigation & alternatives)
+router.post(
+  "/tomtom",
+  verifyDriverToken,
+  validate(calculateOptimalRouteWithTomTomSchema),
+  calculateOptimalRouteWithTomTomHandler,
+);
+
+// Recalculate route from current position (when driver changes route)
+// Works with both free and TomTom versions based on initial optimization
+router.post(
+  "/:tripId/recalculate",
+  verifyDriverToken,
+  validate(calculateOptimalRouteWithTomTomSchema),
+  recalculateRouteHandler,
 );
 
 // Update driver's current position during trip
