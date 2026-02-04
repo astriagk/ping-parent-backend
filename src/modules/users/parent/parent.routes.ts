@@ -4,6 +4,8 @@ import { validate, verifyParentToken } from "@shared/middlewares";
 
 import {
   getAddressParent,
+  getMyActiveTrips,
+  getMyAllTrips,
   getProfileParent,
   updateAddress,
   updateProfileParent,
@@ -36,5 +38,11 @@ router.put(
   validate(updateAddressSchema),
   updateAddress,
 );
+
+// 05. Get Active Trips for Parent's Children
+router.get("/trips/active", verifyParentToken, getMyActiveTrips);
+
+// 06. Get All Trips for Parent's Children
+router.get("/trips", verifyParentToken, getMyAllTrips);
 
 export default router;

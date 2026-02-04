@@ -6,8 +6,14 @@ import {
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
   STUDENTS_COLLECTION,
+  TRIPS_COLLECTION,
+  TRIP_STUDENTS_COLLECTION,
+  TripStatus,
   USERS_COLLECTION,
 } from "@shared/constants";
+import { HTTP_STATUS } from "@shared/constants";
+import { ERROR_MESSAGES } from "@shared/constants";
+import { ApiError } from "@shared/middlewares";
 
 import { Parent, ParentAddress, ParentAddressInput } from "./parent.type";
 
@@ -303,8 +309,186 @@ export const getCompleteParentDetailsById = async (
       .toArray();
 
     return result.length > 0 ? result[0] : null;
-  } catch (error) {
-    console.error("Error getting complete parent details:", error);
+  } catch (_) {
     return null;
   }
+};
+
+/**
+ * Get active trips for a parent's children
+ * Flow: user_id -> parent_id -> students -> trip_students -> trips (with status = in_progress/started)
+ */
+export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
+  const db = await getDB();
+
+  // Step 1: Get parent_id from user_id
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ user_id: userId });
+
+  if (!parent) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT?.PARENT_PROFILE_NOT_FOUND || "Parent not found",
+    );
+  }
+
+  const parentId = parent.parent_id || String(parent._id);
+
+  // Step 2: Get all students for this parent
+  const students = await db
+    .collection(STUDENTS_COLLECTION)
+    .find({ parent_id: parentId })
+    .toArray();
+
+  if (students.length === 0) {
+    return []; // Parent has no students
+  }
+
+  const studentIds = students.map((s) => s.student_id || String(s._id));
+
+  // Step 3: Get trip_students records for these students
+  const tripStudents = await db
+    .collection(TRIP_STUDENTS_COLLECTION)
+    .find({ student_id: { $in: studentIds } })
+    .toArray();
+
+  if (tripStudents.length === 0) {
+    return []; // No trips assigned to these students
+  }
+
+  const tripIds = tripStudents.map((ts) => ts.trip_id);
+
+  // Step 4: Get active trips
+  const activeTrips = await db
+    .collection(TRIPS_COLLECTION)
+    .find({
+      trip_id: { $in: tripIds },
+      trip_status: { $in: [TripStatus.STARTED, TripStatus.IN_PROGRESS] },
+    })
+    .toArray();
+
+  // Step 5: Enrich trips with student info
+  const enrichedTrips = activeTrips.map((trip) => {
+    const tripStudentRecords = tripStudents.filter(
+      (ts) => ts.trip_id === trip.trip_id,
+    );
+    const tripStudentIds = tripStudentRecords.map((ts) => ts.student_id);
+    const tripStudentsData = students.filter((s) =>
+      tripStudentIds.includes(s.student_id || String(s._id)),
+    );
+
+    return {
+      _id: trip._id,
+      trip_id: trip.trip_id,
+      trip_type: trip.trip_type,
+      trip_status: trip.trip_status,
+      trip_date: trip.trip_date,
+      start_time: trip.start_time,
+      end_time: trip.end_time,
+      driver_id: trip.driver_id,
+      school_id: trip.school_id,
+      total_distance: trip.total_distance,
+      optimized_route_data: trip.optimized_route_data,
+      students: tripStudentsData.map((s) => ({
+        student_id: s.student_id || String(s._id),
+        student_name: s.student_name,
+        class: s.class,
+        section: s.section,
+        roll_number: s.roll_number,
+      })),
+      created_at: trip.created_at,
+      updated_at: trip.updated_at,
+    };
+  });
+
+  return enrichedTrips;
+};
+
+/**
+ * Get all trips (active + completed) for a parent's children
+ */
+export const getParentAllTrips = async (userId: string): Promise<any[]> => {
+  const db = await getDB();
+
+  // Step 1: Get parent_id from user_id
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ user_id: userId });
+
+  if (!parent) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT?.PARENT_PROFILE_NOT_FOUND || "Parent not found",
+    );
+  }
+
+  const parentId = parent.parent_id || String(parent._id);
+
+  // Step 2: Get all students for this parent
+  const students = await db
+    .collection(STUDENTS_COLLECTION)
+    .find({ parent_id: parentId })
+    .toArray();
+
+  if (students.length === 0) {
+    return [];
+  }
+
+  const studentIds = students.map((s) => s.student_id || String(s._id));
+
+  // Step 3: Get trip_students records for these students
+  const tripStudents = await db
+    .collection(TRIP_STUDENTS_COLLECTION)
+    .find({ student_id: { $in: studentIds } })
+    .toArray();
+
+  if (tripStudents.length === 0) {
+    return [];
+  }
+
+  const tripIds = tripStudents.map((ts) => ts.trip_id);
+
+  // Step 4: Get all trips (not filtering by status)
+  const trips = await db
+    .collection(TRIPS_COLLECTION)
+    .find({ trip_id: { $in: tripIds } })
+    .sort({ trip_date: -1 })
+    .toArray();
+
+  // Step 5: Enrich trips with student info
+  const enrichedTrips = trips.map((trip) => {
+    const tripStudentRecords = tripStudents.filter(
+      (ts) => ts.trip_id === trip.trip_id,
+    );
+    const tripStudentIds = tripStudentRecords.map((ts) => ts.student_id);
+    const tripStudentsData = students.filter((s) =>
+      tripStudentIds.includes(s.student_id || String(s._id)),
+    );
+
+    return {
+      _id: trip._id,
+      trip_id: trip.trip_id,
+      trip_type: trip.trip_type,
+      trip_status: trip.trip_status,
+      trip_date: trip.trip_date,
+      start_time: trip.start_time,
+      end_time: trip.end_time,
+      driver_id: trip.driver_id,
+      school_id: trip.school_id,
+      total_distance: trip.total_distance,
+      optimized_route_data: trip.optimized_route_data,
+      students: tripStudentsData.map((s) => ({
+        student_id: s.student_id || String(s._id),
+        student_name: s.student_name,
+        class: s.class,
+        section: s.section,
+        roll_number: s.roll_number,
+      })),
+      created_at: trip.created_at,
+      updated_at: trip.updated_at,
+    };
+  });
+
+  return enrichedTrips;
 };

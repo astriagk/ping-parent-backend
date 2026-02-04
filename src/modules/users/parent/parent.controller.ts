@@ -10,6 +10,8 @@ import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   createParentProfile,
   getAddressByUserId,
+  getParentActiveTrips,
+  getParentAllTrips,
   getParentProfile,
   updateParentProfile,
   upsertAddressByUserId,
@@ -215,6 +217,58 @@ export const getAddressParent = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: address,
+    });
+  },
+);
+
+/**
+ * Get active trips for parent's children
+ * Active = trip_status is STARTED or IN_PROGRESS
+ */
+export const getMyActiveTrips = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = getUserIdFromRequest(req);
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const trips = await getParentActiveTrips(userId);
+
+    return res.json({
+      success: true,
+      data: trips,
+      count: trips.length,
+      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get all trips for parent's children
+ * Includes all statuses (active, completed, scheduled, cancelled)
+ */
+export const getMyAllTrips = asyncHandler(
+  async (req: Request, res: Response) => {
+    const userId = getUserIdFromRequest(req);
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const trips = await getParentAllTrips(userId);
+
+    return res.json({
+      success: true,
+      data: trips,
+      count: trips.length,
+      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
     });
   },
 );
