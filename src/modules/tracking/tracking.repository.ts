@@ -3,11 +3,13 @@ import { WithId } from "mongodb";
 import { getDB } from "@shared/config";
 import {
   LOCATION_TRACKING_COLLECTION,
+  PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
   TRIP_STUDENTS_COLLECTION,
+  USERS_COLLECTION,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
@@ -170,7 +172,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         // Stage 6: Lookup parent details
         {
           $lookup: {
-            from: "parents",
+            from: PARENTS_COLLECTION,
             let: { parentId: { $toObjectId: "$studentDetails.parent_id" } },
             pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$parentId"] } } }],
             as: "parentDetails",
@@ -186,7 +188,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         // Stage 8: Lookup user details
         {
           $lookup: {
-            from: "users",
+            from: USERS_COLLECTION,
             let: { userId: { $toObjectId: "$parentDetails.user_id" } },
             pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
             as: "userDetails",
