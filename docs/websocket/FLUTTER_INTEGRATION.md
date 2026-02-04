@@ -1,1289 +1,1257 @@
-# Flutter Integration Guide - Driver & Parent Apps
+# Flutter Integration Guide - Step-by-Step Implementation
 
-**Version**: 1.0.0  
-**Last Updated**: January 26, 2026  
-**Framework**: Flutter / Dart
+**Version**: 3.0.0  
+**Last Updated**: February 3, 2026  
+**Framework**: Flutter / Dart  
+**Status**: ✅ Production Ready
 
 ---
 
 ## Table of Contents
 
-1. [Setup](#setup)
-2. [Driver App Implementation](#driver-app-implementation)
-3. [Parent App Implementation](#parent-app-implementation)
-4. [Helper Classes](#helper-classes)
-5. [Example Screens](#example-screens)
-6. [Testing](#testing)
+1. [Overview](#overview)
+2. [Architecture](#architecture)
+3. [Driver App - Step-by-Step](#driver-app---step-by-step)
+4. [Parent App - Step-by-Step](#parent-app---step-by-step)
+5. [API Reference](#api-reference)
+6. [Quick Code Reference](#quick-code-reference)
 
 ---
 
-## Setup
+## Overview
 
-### Install Dependencies
+This guide teaches you how to integrate real-time tracking in your Flutter app using three systems:
 
-```yaml
-# pubspec.yaml
-dependencies:
-  flutter:
-    sdk: flutter
+| System                  | Use Case                                                     | When                                                  |
+| ----------------------- | ------------------------------------------------------------ | ----------------------------------------------------- |
+| **REST API - Trips**    | Start/end trips, pickup/dropoff students                     | Immediately (direct action)                           |
+| **REST API - Tracking** | Calculate route, update position                             | When starting trip or every 15s                       |
+| **WebSocket**           | Real-time position streaming to parents, event notifications | Background, continuous (driver) or listening (parent) |
 
-  # WebSocket
-  socket_io_client: ^1.0.2
+---
 
-  # HTTP for REST API
-  http: ^0.13.5
+## Architecture
 
-  # Geolocation
-  geolocator: ^9.0.2
+### How the Three Systems Work Together
 
-  # Maps
-  google_maps_flutter: ^2.5.0
-
-  # State Management (recommended)
-  provider: ^6.0.5
-
-  # JSON serialization
-  json_annotation: ^4.8.1
-
-  # Logging
-  logger: ^1.3.0
 ```
-
-```bash
-flutter pub get
-```
-
-### Location Permissions (Android/iOS)
-
-**android/app/src/main/AndroidManifest.xml**:
-
-```xml
-<uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-<uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
-```
-
-**ios/Runner/Info.plist**:
-
-```xml
-<key>NSLocationWhenInUseUsageDescription</key>
-<string>We need your location to track the trip</string>
-<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
-<string>We need your location to track the trip</string>
+┌─────────────────────────────────────────────────────────┐
+│                    DRIVER APP                            │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  1. Start Trip (REST API)                              │
+│     PATCH /api/trips/{tripId}/start                    │
+│                                                          │
+│  2. Calculate Route (REST API)                         │
+│     POST /api/tracking/calculate                       │
+│     or POST /api/tracking/tomtom                       │
+│                                                          │
+│  3. Stream Position (WebSocket + REST Backup)          │
+│     Every 15 seconds:                                  │
+│     - emit('driver:update_position') → WebSocket      │
+│     - PATCH /api/tracking/{tripId}/position → REST    │
+│                                                          │
+│  4. Pickup/Dropoff Student (WebSocket + REST)          │
+│     - emit('driver:student_picked') → WebSocket       │
+│     - PATCH /api/trips/{tripId}/students/{id}/pickup → │
+│                                                          │
+│  5. End Trip (REST API)                                │
+│     PATCH /api/trips/{tripId}/end                      │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
+                          ↓
+        ┌───────────────────────────────────┐
+        │   WebSocket + REST APIs           │
+        │   (Backend Server)                │
+        └───────────────────────────────────┘
+                          ↓
+┌─────────────────────────────────────────────────────────┐
+│                   PARENT APP                             │
+├─────────────────────────────────────────────────────────┤
+│                                                          │
+│  1. Get Initial Route (REST API)                       │
+│     GET /api/tracking/{tripId}/details                 │
+│                                                          │
+│  2. Subscribe to Trip (WebSocket)                      │
+│     emit('parent:subscribe_trip', {tripId})            │
+│                                                          │
+│  3. Listen to Events (WebSocket)                       │
+│     - trip:position_update (every 15s)                 │
+│     - student:picked_up                                │
+│     - student:dropped_off                              │
+│     - trip:route_updated                               │
+│     - trip:completed                                   │
+│                                                          │
+│  4. Manual Check (Optional REST API)                   │
+│     GET /api/tracking/{tripId}/current-position        │
+│                                                          │
+└─────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Driver App Implementation
+## Independent WebSocket Events (Separate from REST APIs)
 
-### 1. Create Driver Tracking Service
+### Keeping REST & WebSocket Separate
 
-**lib/services/driver_tracking_service.dart**:
+If your REST APIs and WebSocket are **completely separate** (recommended for clean architecture):
+
+```
+Architecture:
+┌──────────────────────────────┐
+│     REST APIs (Database)     │  ← Persists data
+│  PATCH /api/trips/{id}/start │
+│  POST /api/trips/{id}/pickup │
+└──────────────────────────────┘
+           (separate)
+┌──────────────────────────────┐
+│   WebSocket Events (Real-time)│  ← Notifies subscribers
+│  emit('driver:trip_started')  │
+│  emit('driver:student_picked')│
+└──────────────────────────────┘
+```
+
+### Driver App: WebSocket-Only Approach
+
+**Example 1: Emit trip started WITHOUT REST call**
 
 ```dart
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:logger/logger.dart';
+// Option A: WebSocket only (no REST API)
+void startTripViaWebSocket(String tripId) {
+  socket.emit('driver:trip_started', {
+    'tripId': tripId,
+  }, (response) {
+    print('✓ Trip started broadcasted to parents');
+    // Parents notified immediately
+    // Database update happens separately (via REST or other system)
+  });
+}
+```
 
-class DriverTrackingService {
-  final String serverUrl;
-  final String token;
-  final String userId;
+**Example 2: REST call separate, WebSocket separate**
 
-  late IO.Socket socket;
-  final logger = Logger();
+```dart
+// Step 1: Update database via REST
+Future<void> updateTripStatusToStarted(String tripId) async {
+  await http.patch(
+    Uri.parse('$baseUrl/api/trips/$tripId/status'),
+    headers: {'Authorization': 'Bearer $token'},
+    body: jsonEncode({'trip_status': 'STARTED'}),
+  );
+  // Database updated, but no parents notified yet
+}
 
-  DriverTrackingService({
-    required this.serverUrl,
-    required this.token,
-    required this.userId,
+// Step 2: Notify parents via WebSocket (completely separate)
+void notifyParentsTripStarted(String tripId) {
+  socket.emit('driver:trip_started', {'tripId': tripId});
+  // Now parents are notified
+}
+
+// Use together but separately:
+Future<void> startTrip(String tripId) async {
+  // Update database
+  await updateTripStatusToStarted(tripId);
+
+  // Then notify (separate step)
+  notifyParentsTripStarted(tripId);
+}
+```
+
+**Example 3: Independent position streaming (WebSocket only)**
+
+```dart
+// Stream position WITHOUT saving to database
+// (saving to database happens via separate REST endpoint)
+Future<void> streamPositionViaWebSocket(String tripId) async {
+  final positionStream = Geolocator.getPositionStream(
+    locationSettings: LocationSettings(
+      accuracy: LocationAccuracy.best,
+      distanceFilter: 10, // 10 meters
+    ),
+  );
+
+  positionStream.listen((Position position) {
+    // Send to WebSocket only (real-time to parents)
+    socket.emit('driver:update_position', {
+      'tripId': tripId,
+      'latitude': position.latitude,
+      'longitude': position.longitude,
+      'speed': position.speed ?? 0,
+      'heading': position.heading ?? 0,
+      'accuracy': position.accuracy ?? 0,
+    });
+    // Database save is SEPARATE (via background REST call or scheduled job)
+  });
+}
+
+// Database save happens separately:
+Future<void> savePositionToDatabase(String tripId, Position pos) async {
+  // This is independent - called separately, maybe every 30 seconds
+  await http.patch(
+    Uri.parse('$baseUrl/api/tracking/$tripId/position'),
+    body: jsonEncode({
+      'latitude': pos.latitude,
+      'longitude': pos.longitude,
+      'speed': pos.speed,
+      'heading': pos.heading,
+      'accuracy': pos.accuracy,
+    }),
+  );
+}
+```
+
+### Parent App: WebSocket-Only Approach
+
+**Example: Listen to WebSocket WITHOUT making REST calls**
+
+```dart
+void setupParentTracking(String tripId) {
+  // Just subscribe and listen
+  socket.emit('parent:subscribe_trip', {'tripId': tripId});
+
+  // Listen to position updates (WebSocket only)
+  socket.on('trip:position_update', (data) {
+    print('✓ Driver position: ${data['latitude']}, ${data['longitude']}');
+    updateMapMarker(data);
+    // No REST API call needed
   });
 
-  /// Connect to WebSocket server
-  Future<void> connect() async {
-    try {
-      socket = IO.io(
-        serverUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .setAuth({
-              'token': token,
-              'userId': userId,
-              'role': 'driver'
-            })
-            .setReconnectionDelay(1000)
-            .setReconnectionDelayMax(5000)
-            .setReconnectionAttempts(5)
-            .build(),
-      );
+  // Listen to pickup events (WebSocket only)
+  socket.on('student:picked_up', (data) {
+    print('✓ Student ${data['studentId']} picked up');
+    updateWaypointMarker(data['studentId'], 'PICKED_UP');
+    // No REST API call needed
+  });
 
-      socket.onConnect((_) {
-        logger.i('✓ Driver connected to tracking server');
-      });
+  // Listen to trip completion (WebSocket only)
+  socket.on('trip:completed', (data) {
+    print('✓ Trip completed');
+    showCompletionScreen(data);
+    // If you need full details, THEN make REST call
+    fetchTripSummary(tripId); // Optional: separate REST call if needed
+  });
+}
+```
 
-      socket.onConnectError((error) {
-        logger.e('✗ Connection error: $error');
-      });
+### Backend: Broadcast WebSocket Events Separately
 
-      socket.onDisconnect((_) {
-        logger.w('✗ Driver disconnected from server');
-      });
+**Create separate broadcast endpoints** that DON'T update database:
 
-      socket.onError((data) {
-        logger.e('Socket error: $data');
-      });
-    } catch (e) {
-      logger.e('Failed to connect: $e');
-      rethrow;
+```dart
+// In your backend (Dart/Flutter isn't used for backend, but concept applies)
+// This would be in your Node.js/Express backend
+
+// POST /api/broadcast/trip-started (WebSocket only, no DB update)
+// POST /api/broadcast/student-pickup (WebSocket only, no DB update)
+// POST /api/broadcast/position-update (WebSocket only, no DB update)
+
+// These endpoints ONLY emit WebSocket events
+// Database updates are handled by SEPARATE endpoints:
+// PATCH /api/trips/{id}/status (DB update only, no WebSocket)
+// PATCH /api/trips/{id}/students/{id}/pickup (DB update only, no WebSocket)
+```
+
+Then in your Flutter app, you can call them separately:
+
+```dart
+Future<void> syncTripStarted(String tripId, String driverId) async {
+  // Step 1: Update database
+  await http.patch(
+    Uri.parse('$baseUrl/api/trips/$tripId/status'),
+    body: jsonEncode({'trip_status': 'STARTED'}),
+  );
+
+  // Step 2: Broadcast to parents (separate call)
+  await http.post(
+    Uri.parse('$baseUrl/api/broadcast/trip-started'),
+    body: jsonEncode({'tripId': tripId, 'driverId': driverId}),
+  );
+}
+
+Future<void> syncStudentPickup(String tripId, String studentId, String driverId) async {
+  // Step 1: Update database
+  await http.patch(
+    Uri.parse('$baseUrl/api/trips/$tripId/students/$studentId/pickup'),
+    body: jsonEncode({'picked_up_timestamp': DateTime.now().toIso8601String()}),
+  );
+
+  // Step 2: Broadcast to parents (separate call)
+  await http.post(
+    Uri.parse('$baseUrl/api/broadcast/student-pickup'),
+    body: jsonEncode({'tripId': tripId, 'studentId': studentId, 'driverId': driverId}),
+  );
+}
+```
+
+### Summary: Independent Calling Patterns
+
+| Pattern            | When                    | How                                 |
+| ------------------ | ----------------------- | ----------------------------------- |
+| **WebSocket Only** | Real-time notifications | `socket.emit('driver:...')`         |
+| **REST Only**      | Database updates        | `http.patch('/api/trips/...')`      |
+| **Separate Calls** | Both DB + notify        | Call REST, then call broadcast API  |
+| **Async Separate** | Decouple operations     | Emit WebSocket first, save DB later |
+
+---
+
+## Driver App - Step-by-Step
+
+### Step 1: Setup (One Time)
+
+**What you need to install:**
+
+```yaml
+dependencies:
+  socket_io_client: ^1.0.2
+  http: ^0.13.5
+  geolocator: ^9.0.2
+  google_maps_flutter: ^2.5.0
+  provider: ^6.0.5
+```
+
+**Permissions needed:**
+
+- Android: `ACCESS_FINE_LOCATION`, `ACCESS_COARSE_LOCATION`
+- iOS: `NSLocationWhenInUseUsageDescription`
+
+**Initialize WebSocket once when app starts:**
+
+```dart
+// main.dart or app.dart
+void initializeTracking() {
+  final socket = IO.io('https://your-server.com', IO.OptionBuilder()
+    .setAuth({'token': userToken, 'userId': userId, 'role': 'driver'})
+    .enableAutoConnect()
+    .build());
+
+  socket.onConnect((_) => print('✓ Connected to tracking'));
+  socket.onDisconnect((_) => print('✗ Disconnected'));
+}
+```
+
+---
+
+### Step 2: Start Trip
+
+**When: Driver clicks "Start Trip" button**
+
+**What to do:**
+
+1. Call REST API to start trip (persists to database)
+2. Subscribe to trip via WebSocket (joins room)
+3. Start getting location permissions
+
+**Code outline:**
+
+```dart
+Future<void> startTrip(String tripId) async {
+  try {
+    // Step 1: REST API - Start trip
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/trips/$tripId/start'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode != 200) {
+      throw Exception('Failed to start trip');
     }
-  }
 
-  /// Subscribe to trip
-  Future<bool> subscribeToTrip(String tripId) async {
-    return Future((complete) {
-      socket.emit('driver:subscribe_trip', {'tripId': tripId}, (response) {
-        if (response != null && response['success'] == true) {
-          logger.i('✓ Subscribed to trip: $tripId');
-          complete(true);
-        } else {
-          logger.e('✗ Failed to subscribe: ${response?['error']}');
-          complete(false);
-        }
-      });
+    // Step 2: WebSocket - Subscribe to trip
+    socket.emit('driver:subscribe_trip', {'tripId': tripId}, (ack) {
+      if (ack != null && ack['success'] == true) {
+        print('✓ Subscribed to trip via WebSocket');
+      }
     });
-  }
 
-  /// Send position update
-  Future<bool> sendPosition({
-    required String tripId,
-    required double latitude,
-    required double longitude,
-    required double speed,
-    required double heading,
-    required double accuracy,
-  }) async {
-    return Future((complete) {
+    // Step 3: Request location permissions
+    final permission = await Geolocator.requestPermission();
+    if (permission == LocationPermission.denied) {
+      throw Exception('Location permission denied');
+    }
+
+  } catch (e) {
+    showError('Failed to start trip: $e');
+  }
+}
+```
+
+---
+
+### Step 3: Calculate Route
+
+**When: Immediately after starting trip**
+
+**What to do:**
+
+1. Get list of students to pick up
+2. Call ONE of two route calculation APIs
+3. Display route on map with waypoints
+
+**Choose your method:**
+
+| Method        | Speed  | Accuracy | Cost     | When to Use   |
+| ------------- | ------ | -------- | -------- | ------------- |
+| **Haversine** | <100ms | Lower    | Free     | Quick preview |
+| **TomTom**    | 1-3s   | Higher   | API cost | Production    |
+
+**Code outline - Haversine (Fast):**
+
+```dart
+Future<Map<String, dynamic>> calculateHaversineRoute(
+  String tripId,
+  List<Student> students,
+) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/tracking/calculate'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'tripId': tripId,
+      'students': students.map((s) => {
+        'id': s.id,
+        'pickupLat': s.pickupLatitude,
+        'pickupLng': s.pickupLongitude,
+      }).toList(),
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    final data = jsonDecode(response.body);
+    return data['data']; // Returns: routeGeometry, waypoints, estimatedDistance
+  }
+  throw Exception('Failed to calculate route');
+}
+```
+
+**Code outline - TomTom (Accurate):**
+
+```dart
+Future<Map<String, dynamic>> calculateTomTomRoute(
+  String tripId,
+  List<Student> students,
+) async {
+  final response = await http.post(
+    Uri.parse('$baseUrl/api/tracking/tomtom'),
+    headers: {
+      'Authorization': 'Bearer $token',
+      'Content-Type': 'application/json',
+    },
+    body: jsonEncode({
+      'tripId': tripId,
+      'students': students.map((s) => {
+        'id': s.id,
+        'pickupLat': s.pickupLatitude,
+        'pickupLng': s.pickupLongitude,
+      }).toList(),
+    }),
+  );
+
+  if (response.statusCode == 201) {
+    final data = jsonDecode(response.body);
+    return data['data'];
+  }
+  throw Exception('Failed to calculate TomTom route');
+}
+```
+
+**Response format (from both methods):**
+
+```dart
+{
+  "routeGeometry": [
+    {"latitude": 12.9716, "longitude": 77.5946},
+    {"latitude": 12.9720, "longitude": 77.5950},
+    // ... more points
+  ],
+  "waypoints": [
+    {
+      "id": "student_1",
+      "studentName": "John",
+      "latitude": 12.98,
+      "longitude": 77.60,
+      "eta": "10 mins",
+      "address": "Home Address"
+    },
+    // ... more students
+  ],
+  "estimatedDistance": 15.5,
+  "estimatedDuration": 1800
+}
+```
+
+---
+
+### Step 4: Display Route on Map
+
+**When: After receiving route response**
+
+**What to do:**
+
+1. Draw blue polyline for route
+2. Add numbered markers for each student (sequence)
+3. Update map view to show entire route
+
+**Code outline:**
+
+```dart
+void displayRoute(Map<String, dynamic> route) {
+  // 1. Extract data
+  final routePoints = route['routeGeometry'] as List;
+  final waypoints = route['waypoints'] as List;
+
+  // 2. Convert to LatLng for map
+  final routePath = routePoints.map<LatLng>((p) {
+    return LatLng(
+      (p['latitude'] as num).toDouble(),
+      (p['longitude'] as num).toDouble(),
+    );
+  }).toList();
+
+  // 3. Draw polyline (blue line)
+  setState(() {
+    polylines.add(Polyline(
+      polylineId: PolylineId('route'),
+      points: routePath,
+      color: Colors.blue,
+      width: 3,
+    ));
+  });
+
+  // 4. Add waypoint markers (with numbers 1, 2, 3...)
+  waypoints.asMap().forEach((index, waypoint) {
+    final marker = Marker(
+      markerId: MarkerId('waypoint_${waypoint['id']}'),
+      position: LatLng(
+        (waypoint['latitude'] as num).toDouble(),
+        (waypoint['longitude'] as num).toDouble(),
+      ),
+      infoWindow: InfoWindow(
+        title: waypoint['studentName'],
+        snippet: 'ETA: ${waypoint['eta']}',
+      ),
+      icon: BitmapDescriptor.defaultMarkerWithHue(
+        BitmapDescriptor.hueBlue,
+      ),
+    );
+
+    setState(() {
+      markers.add(marker);
+    });
+  });
+
+  // 5. Fit map to show entire route
+  final bounds = LatLngBounds(
+    southwest: LatLng(
+      routePath.map((p) => p.latitude).reduce((a, b) => a < b ? a : b),
+      routePath.map((p) => p.longitude).reduce((a, b) => a < b ? a : b),
+    ),
+    northeast: LatLng(
+      routePath.map((p) => p.latitude).reduce((a, b) => a > b ? a : b),
+      routePath.map((p) => p.longitude).reduce((a, b) => a > b ? a : b),
+    ),
+  );
+
+  mapController.animateCamera(CameraUpdateOptions(bounds: bounds));
+}
+```
+
+---
+
+### Step 5: Stream Position (Background)
+
+**When: After displaying route, runs continuously**
+
+**What to do:**
+
+1. Get device location every 10-30 seconds
+2. Send via WebSocket (real-time to parents)
+3. Also send via REST API (backup to database)
+4. Continue until trip ends
+
+**Code outline:**
+
+```dart
+Future<void> startPositionStreaming(String tripId) async {
+  // Stream location every 10 meters OR every 30 seconds
+  final positionStream = Geolocator.getPositionStream(
+    locationSettings: LocationSettings(
+      accuracy: LocationAccuracy.bestForNavigation,
+      distanceFilter: 10, // Update every 10 meters
+      timeLimit: Duration(seconds: 30), // Or max 30 seconds
+    ),
+  );
+
+  positionStream.listen((Position position) async {
+    try {
+      // WebSocket: Real-time to parents
       socket.emit('driver:update_position', {
         'tripId': tripId,
-        'latitude': latitude,
-        'longitude': longitude,
-        'speed': speed,
-        'heading': heading,
-        'accuracy': accuracy,
-      }, (response) {
-        if (response != null && response['success'] == true) {
-          complete(true);
-        } else {
-          logger.e('Position update failed');
-          complete(false);
-        }
+        'latitude': position.latitude,
+        'longitude': position.longitude,
+        'speed': position.speed,
+        'heading': position.heading,
+        'accuracy': position.accuracy,
       });
-    });
-  }
 
-  /// Notify trip started
-  Future<void> notifyTripStarted(String tripId) async {
-    socket.emit('driver:trip_started', {'tripId': tripId}, (response) {
-      logger.i('Trip started notification sent');
-    });
-  }
+      // REST API: Backup to database (in background, don't wait)
+      _updatePositionViaRest(tripId, position);
 
-  /// Notify student pickup
-  Future<void> notifyStudentPickup(String tripId, String studentId) async {
+    } catch (e) {
+      print('Error updating position: $e');
+    }
+  });
+}
+
+Future<void> _updatePositionViaRest(String tripId, Position pos) async {
+  try {
+    await http.patch(
+      Uri.parse('$baseUrl/api/tracking/$tripId/position'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
+        'speed': pos.speed,
+        'heading': pos.heading,
+        'accuracy': pos.accuracy,
+      }),
+    );
+  } catch (e) {
+    print('Failed to update position via REST: $e');
+  }
+}
+```
+
+---
+
+### Step 6: Handle Student Pickup
+
+**When: Driver arrives at first waypoint and taps "Pickup" button**
+
+**What to do:**
+
+1. Send WebSocket event (real-time notification to parents)
+2. Send REST API call (persist pickup time)
+3. Update UI (mark student as picked up)
+
+**Code outline:**
+
+```dart
+Future<void> pickupStudent(String tripId, String studentId) async {
+  try {
+    // 1. WebSocket notification (parents see immediately)
     socket.emit('driver:student_picked', {
       'tripId': tripId,
       'studentId': studentId,
-    }, (response) {
-      logger.i('✓ Pickup confirmed: $studentId');
     });
-  }
 
-  /// Notify student dropoff
-  Future<void> notifyStudentDropoff(String tripId, String studentId) async {
+    // 2. REST API call (save to database)
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/trips/$tripId/students/$studentId/pickup'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'picked_up_timestamp': DateTime.now().toIso8601String(),
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      // 3. Update UI
+      setState(() {
+        // Mark student as picked up in your UI
+        _updateStudentStatus(studentId, 'PICKED_UP');
+      });
+
+      showNotification('Student ${studentId} picked up');
+    }
+  } catch (e) {
+    showError('Failed to pickup student: $e');
+  }
+}
+```
+
+---
+
+### Step 7: Handle Student Dropoff
+
+**When: Driver arrives at destination and taps "Dropoff" button**
+
+**Similar to pickup - same pattern:**
+
+```dart
+Future<void> dropoffStudent(String tripId, String studentId) async {
+  try {
+    // 1. WebSocket
     socket.emit('driver:student_dropped', {
       'tripId': tripId,
       'studentId': studentId,
-    }, (response) {
-      logger.i('✓ Dropoff confirmed: $studentId');
     });
-  }
 
-  /// Notify approaching waypoint
-  Future<void> notifyApproachingWaypoint({
-    required String tripId,
-    required String studentId,
-    required DateTime eta,
-    required int distance,
-  }) async {
-    socket.emit('driver:approaching_waypoint', {
-      'tripId': tripId,
-      'studentId': studentId,
-      'eta': eta.toIso8601String(),
-      'distance': distance,
-    }, (response) {
-      logger.i('ETA notification sent');
-    });
-  }
-
-  /// Notify trip completed
-  Future<void> notifyTripCompleted(String tripId) async {
-    socket.emit('driver:trip_completed', {'tripId': tripId}, (response) {
-      logger.i('Trip completed notification sent');
-    });
-  }
-
-  /// Disconnect
-  void disconnect() {
-    socket.disconnect();
-  }
-
-  /// Check if connected
-  bool isConnected() => socket.connected;
-}
-```
-
-### 2. Create Driver State Management
-
-**lib/providers/driver_tracking_provider.dart**:
-
-```dart
-import 'package:flutter/foundation.dart';
-import 'package:geolocator/geolocator.dart';
-import '../services/driver_tracking_service.dart';
-
-class DriverTrackingProvider with ChangeNotifier {
-  final DriverTrackingService trackingService;
-
-  bool isConnected = false;
-  bool isTracking = false;
-  String? currentTripId;
-  Position? currentPosition;
-  String? error;
-
-  DriverTrackingProvider(this.trackingService);
-
-  /// Initialize and connect
-  Future<void> initialize() async {
-    try {
-      await trackingService.connect();
-      isConnected = true;
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  /// Start tracking trip
-  Future<void> startTracking(String tripId) async {
-    try {
-      currentTripId = tripId;
-
-      // Subscribe to trip
-      final subscribed = await trackingService.subscribeToTrip(tripId);
-      if (!subscribed) {
-        error = 'Failed to subscribe to trip';
-        notifyListeners();
-        return;
-      }
-
-      // Notify trip started
-      await trackingService.notifyTripStarted(tripId);
-
-      // Start sending positions
-      _startPositionUpdates();
-
-      isTracking = true;
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  /// Stop tracking
-  Future<void> stopTracking() async {
-    try {
-      _positionStream?.cancel();
-
-      if (currentTripId != null) {
-        await trackingService.notifyTripCompleted(currentTripId!);
-      }
-
-      isTracking = false;
-      currentTripId = null;
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  /// Pickup student
-  Future<void> pickupStudent(String studentId) async {
-    if (currentTripId == null) return;
-
-    try {
-      await trackingService.notifyStudentPickup(currentTripId!, studentId);
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  /// Dropoff student
-  Future<void> dropoffStudent(String studentId) async {
-    if (currentTripId == null) return;
-
-    try {
-      await trackingService.notifyStudentDropoff(currentTripId!, studentId);
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  StreamSubscription<Position>? _positionStream;
-
-  /// Start continuous position updates
-  void _startPositionUpdates() {
-    _positionStream = Geolocator.getPositionStream(
-      locationSettings: const LocationSettings(
-        accuracy: LocationAccuracy.bestForNavigation,
-        distanceFilter: 10, // Update every 10 meters
-      ),
-    ).listen(
-      (Position position) async {
-        currentPosition = position;
-
-        if (currentTripId != null && isTracking) {
-          await trackingService.sendPosition(
-            tripId: currentTripId!,
-            latitude: position.latitude,
-            longitude: position.longitude,
-            speed: position.speed,
-            heading: position.heading,
-            accuracy: position.accuracy,
-          );
-        }
-
-        notifyListeners();
+    // 2. REST API
+    await http.patch(
+      Uri.parse('$baseUrl/api/trips/$tripId/students/$studentId/dropoff'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
       },
-      onError: (e) {
-        error = 'Location error: $e';
-        notifyListeners();
-      },
+      body: jsonEncode({
+        'dropped_off_timestamp': DateTime.now().toIso8601String(),
+      }),
     );
-  }
 
-  @override
-  void dispose() {
-    _positionStream?.cancel();
-    trackingService.disconnect();
-    super.dispose();
-  }
-}
-```
+    // 3. Update UI
+    _updateStudentStatus(studentId, 'DROPPED_OFF');
+    showNotification('Student ${studentId} dropped off');
 
-### 3. Driver App Screen
-
-**lib/screens/driver/active_trip_screen.dart**:
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../providers/driver_tracking_provider.dart';
-
-class ActiveTripScreen extends StatefulWidget {
-  final String tripId;
-  final List<Map<String, dynamic>> students;
-
-  const ActiveTripScreen({
-    required this.tripId,
-    required this.students,
-  });
-
-  @override
-  _ActiveTripScreenState createState() => _ActiveTripScreenState();
-}
-
-class _ActiveTripScreenState extends State<ActiveTripScreen> {
-  late GoogleMapController mapController;
-
-  @override
-  void initState() {
-    super.initState();
-
-    // Start tracking on load
-    Future.microtask(() {
-      context.read<DriverTrackingProvider>().startTracking(widget.tripId);
-    });
-  }
-
-  @override
-  void dispose() {
-    mapController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Active Trip')),
-      body: Consumer<DriverTrackingProvider>(
-        builder: (context, provider, child) {
-          return Column(
-            children: [
-              // Map
-              Expanded(
-                flex: 2,
-                child: provider.currentPosition != null
-                    ? GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            provider.currentPosition!.latitude,
-                            provider.currentPosition!.longitude,
-                          ),
-                          zoom: 15,
-                        ),
-                        onMapCreated: (controller) {
-                          mapController = controller;
-                        },
-                        markers: {
-                          // Driver marker
-                          Marker(
-                            markerId: const MarkerId('driver'),
-                            position: LatLng(
-                              provider.currentPosition!.latitude,
-                              provider.currentPosition!.longitude,
-                            ),
-                            infoWindow: InfoWindow(
-                              title: 'You',
-                              snippet: 'Speed: ${provider.currentPosition!.speed.toStringAsFixed(1)} m/s',
-                            ),
-                          ),
-                          // Student markers
-                          ...widget.students.map((student) {
-                            return Marker(
-                              markerId: MarkerId(student['id']),
-                              position: LatLng(
-                                student['latitude'],
-                                student['longitude'],
-                              ),
-                              infoWindow: InfoWindow(
-                                title: student['name'],
-                                snippet: 'Sequence: ${student['sequence']}',
-                              ),
-                            );
-                          }),
-                        },
-                      )
-                    : const Center(child: CircularProgressIndicator()),
-              ),
-
-              // Status and controls
-              Expanded(
-                flex: 1,
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    children: [
-                      // Status
-                      Chip(
-                        label: Text(
-                          provider.isConnected ? '✓ Connected' : '✗ Disconnected',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        backgroundColor: provider.isConnected ? Colors.green : Colors.red,
-                      ),
-
-                      // Error message
-                      if (provider.error != null)
-                        Padding(
-                          padding: const EdgeInsets.all(8.0),
-                          child: Text(
-                            '⚠️ ${provider.error}',
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                        ),
-
-                      const SizedBox(height: 8),
-
-                      // Student buttons
-                      Expanded(
-                        child: ListView.builder(
-                          itemCount: widget.students.length,
-                          itemBuilder: (context, index) {
-                            final student = widget.students[index];
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: Row(
-                                children: [
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        provider.pickupStudent(student['id']);
-                                      },
-                                      child: Text('Pickup: ${student['name']}'),
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        provider.dropoffStudent(student['id']);
-                                      },
-                                      child: Text('Dropoff: ${student['name']}'),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // Stop tracking button
-                      ElevatedButton(
-                        onPressed: () async {
-                          await provider.stopTracking();
-                          Navigator.pop(context);
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.red,
-                        ),
-                        child: const Text(
-                          'Stop Tracking',
-                          style: TextStyle(color: Colors.white),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
+  } catch (e) {
+    showError('Failed to dropoff student: $e');
   }
 }
 ```
 
 ---
 
-## Parent App Implementation
+### Step 8: Recalculate Route (When Needed)
 
-### 1. Create Parent Tracking Service
+**When: Driver takes a different route (accident, traffic, etc.)**
 
-**lib/services/parent_tracking_service.dart**:
+**What to do:**
+
+1. Get list of remaining students (not yet picked up)
+2. Call route calculation API again
+3. Update map with new route
+
+**Code outline:**
 
 ```dart
-import 'package:socket_io_client/socket_io_client.dart' as IO;
-import 'package:logger/logger.dart';
+Future<void> recalculateRoute(String tripId) async {
+  try {
+    // 1. Get remaining students
+    final remaining = _getRemainingStudents(); // Your logic
 
-typedef TripUpdateCallback = void Function(TripUpdate update);
+    // 2. Call API (same as Step 3, but with remaining students only)
+    final response = await http.post(
+      Uri.parse('$baseUrl/api/tracking/$tripId/recalculate'),
+      headers: {
+        'Authorization': 'Bearer $token',
+        'Content-Type': 'application/json',
+      },
+      body: jsonEncode({
+        'students': remaining.map((s) => {
+          'id': s.id,
+          'pickupLat': s.pickupLatitude,
+          'pickupLng': s.pickupLongitude,
+        }).toList(),
+      }),
+    );
 
-class TripUpdate {
-  final String tripId;
-  final String driverId;
-  final String eventType; // 'position', 'started', 'pickup', 'dropoff', 'approaching', 'completed'
-  final double? latitude;
-  final double? longitude;
-  final double? speed;
-  final String? studentId;
-  final int? distance;
-  final String? eta;
-  final DateTime timestamp;
+    if (response.statusCode == 200) {
+      final newRoute = jsonDecode(response.body)['data'];
 
-  TripUpdate({
-    required this.tripId,
-    required this.driverId,
-    required this.eventType,
-    this.latitude,
-    this.longitude,
-    this.speed,
-    this.studentId,
-    this.distance,
-    this.eta,
-    required this.timestamp,
+      // 3. Update map
+      displayRoute(newRoute);
+
+      showNotification('Route recalculated');
+    }
+  } catch (e) {
+    showError('Failed to recalculate route: $e');
+  }
+}
+```
+
+---
+
+### Step 9: End Trip
+
+**When: All students dropped off, driver clicks "Complete Trip"**
+
+**What to do:**
+
+1. Stop position streaming
+2. Send completion event via WebSocket
+3. End trip via REST API
+4. Show summary
+
+**Code outline:**
+
+```dart
+Future<void> endTrip(String tripId) async {
+  try {
+    // 1. Stop position streaming
+    _positionStreamSubscription?.cancel();
+
+    // 2. WebSocket notification
+    socket.emit('driver:trip_completed', {'tripId': tripId});
+
+    // 3. REST API
+    final response = await http.patch(
+      Uri.parse('$baseUrl/api/trips/$tripId/end'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final tripSummary = jsonDecode(response.body)['data'];
+
+      // 4. Show summary
+      showTripSummary(tripSummary);
+      // Shows: actualDistance, actualDuration, allPickupDropoffTimes
+    }
+  } catch (e) {
+    showError('Failed to end trip: $e');
+  }
+}
+```
+
+---
+
+## Parent App - Step-by-Step
+
+### Step 1: Setup (One Time)
+
+**Initialize WebSocket once when app starts:**
+
+```dart
+void initializeParentTracking() {
+  final socket = IO.io('https://your-server.com', IO.OptionBuilder()
+    .setAuth({'token': userToken, 'userId': userId, 'role': 'parent'})
+    .enableAutoConnect()
+    .build());
+
+  socket.onConnect((_) => print('✓ Connected to tracking'));
+}
+```
+
+---
+
+### Step 2: Load Initial Route
+
+**When: Parent clicks on an active trip to track**
+
+**What to do:**
+
+1. Fetch route details via REST API
+2. Display route on map
+3. Then subscribe to WebSocket for real-time updates
+
+**Code outline:**
+
+```dart
+Future<void> loadTripRoute(String tripId) async {
+  try {
+    // 1. Get initial route data
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/tracking/$tripId/details'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final tripDetails = jsonDecode(response.body)['data'];
+
+      // 2. Display route
+      displayRoute(tripDetails['route'], tripDetails['waypoints']);
+
+      // 3. Show initial driver position
+      if (tripDetails['currentPosition'] != null) {
+        showDriverMarker(tripDetails['currentPosition']);
+      }
+    }
+  } catch (e) {
+    showError('Failed to load route: $e');
+  }
+}
+
+void displayRoute(Map<String, dynamic> route, List<dynamic> waypoints) {
+  // Draw blue polyline
+  final coordinates = route['coordinates'] as List;
+  final points = coordinates.map<LatLng>((c) {
+    return LatLng(
+      (c['latitude'] as num).toDouble(),
+      (c['longitude'] as num).toDouble(),
+    );
+  }).toList();
+
+  setState(() {
+    polylines.add(Polyline(
+      polylineId: PolylineId('route'),
+      points: points,
+      color: Colors.blue,
+      width: 2,
+    ));
+  });
+
+  // Add waypoint markers (blue = pending, yellow = picked, green = dropped)
+  waypoints.forEach((waypoint) {
+    final color = waypoint['status'] == 'DROPPED_OFF'
+        ? Colors.green
+        : waypoint['status'] == 'PICKED_UP'
+            ? Colors.yellow
+            : Colors.blue;
+
+    setState(() {
+      markers.add(Marker(
+        markerId: MarkerId('waypoint_${waypoint['id']}'),
+        position: LatLng(
+          (waypoint['latitude'] as num).toDouble(),
+          (waypoint['longitude'] as num).toDouble(),
+        ),
+        infoWindow: InfoWindow(
+          title: waypoint['studentName'],
+          snippet: 'Status: ${waypoint['status']}',
+        ),
+        icon: BitmapDescriptor.defaultMarkerWithHue(
+          color == Colors.green
+              ? BitmapDescriptor.hueGreen
+              : color == Colors.yellow
+                  ? BitmapDescriptor.hueYellow
+                  : BitmapDescriptor.hueBlue,
+        ),
+      ));
+    });
+  });
+}
+```
+
+---
+
+### Step 3: Subscribe to Trip via WebSocket
+
+**When: After loading initial route**
+
+**What to do:**
+
+1. Subscribe to trip (join WebSocket room)
+2. Setup event listeners
+3. Ready to receive real-time updates
+
+**Code outline:**
+
+```dart
+void subscribeToDri Trip(String tripId) {
+  // Subscribe to trip
+  socket.emit('parent:subscribe_trip', {'tripId': tripId}, (response) {
+    if (response != null && response['success'] == true) {
+      print('✓ Subscribed to trip via WebSocket');
+
+      // Setup listeners
+      setupEventListeners(tripId);
+    }
   });
 }
 
-class ParentTrackingService {
-  final String serverUrl;
-  final String token;
-  final String userId;
-
-  late IO.Socket socket;
-  final logger = Logger();
-
-  final Map<String, List<TripUpdateCallback>> listeners = {};
-  final Set<String> watchedTrips = {};
-
-  ParentTrackingService({
-    required this.serverUrl,
-    required this.token,
-    required this.userId,
+void setupEventListeners(String tripId) {
+  // Position update every 15 seconds
+  socket.on('trip:position_update', (data) {
+    if (data['tripId'] == tripId) {
+      updateDriverMarker(data);
+    }
   });
 
-  /// Connect to WebSocket server
-  Future<void> connect() async {
-    try {
-      socket = IO.io(
-        serverUrl,
-        IO.OptionBuilder()
-            .setTransports(['websocket'])
-            .setAuth({
-              'token': token,
-              'userId': userId,
-              'role': 'parent'
-            })
-            .setReconnectionDelay(1000)
-            .setReconnectionDelayMax(5000)
-            .setReconnectionAttempts(5)
-            .build(),
-      );
-
-      socket.onConnect((_) {
-        logger.i('✓ Parent connected to tracking server');
-        // Resubscribe to watched trips
-        for (final tripId in watchedTrips) {
-          _subscribeToTrip(tripId);
-        }
-      });
-
-      socket.onConnectError((error) {
-        logger.e('✗ Connection error: $error');
-      });
-
-      socket.onDisconnect((_) {
-        logger.w('✗ Parent disconnected from server');
-      });
-
-      _setupEventListeners();
-    } catch (e) {
-      logger.e('Failed to connect: $e');
-      rethrow;
+  // Student picked up
+  socket.on('student:picked_up', (data) {
+    if (data['tripId'] == tripId) {
+      updateWaypointMarker(data['studentId'], 'PICKED_UP');
+      showNotification('✓ ${data['studentName']} picked up!');
     }
+  });
+
+  // Student dropped off
+  socket.on('student:dropped_off', (data) {
+    if (data['tripId'] == tripId) {
+      updateWaypointMarker(data['studentId'], 'DROPPED_OFF');
+      showNotification('✓ ${data['studentName']} dropped off!');
+    }
+  });
+
+  // Trip completed
+  socket.on('trip:completed', (data) {
+    if (data['tripId'] == tripId) {
+      showNotification('✓ Trip completed!');
+      showTripSummary(data); // Shows total distance, time, etc.
+      unsubscribeFromTrip(tripId);
+    }
+  });
+
+  // Route recalculated (if driver takes different route)
+  socket.on('trip:route_updated', (data) {
+    if (data['tripId'] == tripId) {
+      // Update map with new route
+      displayRoute(data['routeGeometry'], data['waypoints']);
+      showNotification('Route updated');
+    }
+  });
+
+  // Driver approaching waypoint
+  socket.on('waypoint:approaching', (data) {
+    if (data['tripId'] == tripId) {
+      showNotification(
+        '📍 Driver is ${data['distance']}m away - ETA: ${data['eta']}'
+      );
+    }
+  });
+}
+```
+
+---
+
+### Step 4: Handle Real-Time Updates
+
+**When: WebSocket events arrive (every 15 seconds for position)**
+
+**Update driver marker on map (position_update event):**
+
+```dart
+void updateDriverMarker(Map<String, dynamic> positionData) {
+  final position = LatLng(
+    (positionData['latitude'] as num).toDouble(),
+    (positionData['longitude'] as num).toDouble(),
+  );
+
+  setState(() {
+    markers.removeWhere((m) => m.markerId.value == 'driver');
+
+    markers.add(Marker(
+      markerId: MarkerId('driver'),
+      position: position,
+      infoWindow: InfoWindow(
+        title: 'Driver',
+        snippet: 'Speed: ${positionData['speed']} m/s',
+      ),
+      icon: BitmapDescriptor.defaultMarkerWithHue(
+        BitmapDescriptor.hueGreen,
+      ),
+    ));
+  });
+
+  // Auto-center on driver (optional)
+  mapController.animateCamera(
+    CameraUpdateOptions(target: position),
+  );
+}
+
+// Update waypoint marker when student picked up or dropped off
+void updateWaypointMarker(String studentId, String newStatus) {
+  setState(() {
+    markers = markers.map((marker) {
+      if (marker.markerId.value == 'waypoint_$studentId') {
+        final color = newStatus == 'DROPPED_OFF'
+            ? BitmapDescriptor.hueGreen
+            : BitmapDescriptor.hueYellow;
+
+        return marker.copyWith(
+          iconParam: BitmapDescriptor.defaultMarkerWithHue(color),
+          infoWindowParam: InfoWindow(
+            title: marker.infoWindow.title,
+            snippet: 'Status: $newStatus',
+          ),
+        );
+      }
+      return marker;
+    }).toList();
+  });
+}
+```
+
+---
+
+### Step 5: Manual Checks (Optional)
+
+**When: Parent wants to manually check current driver position or history**
+
+**Get current driver position:**
+
+```dart
+Future<void> checkCurrentPosition(String tripId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/tracking/$tripId/current-position'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
+
+    if (response.statusCode == 200) {
+      final position = jsonDecode(response.body)['data'];
+      print('Current position: ${position['latitude']}, ${position['longitude']}');
+    }
+  } catch (e) {
+    showError('Failed to get position: $e');
   }
+}
+```
 
-  /// Setup event listeners for all trip events
-  void _setupEventListeners() {
-    // Position updates
-    socket.on('trip:position_update', (data) {
-      _notifyListeners(data['tripId'], TripUpdate(
-        tripId: data['tripId'],
-        driverId: data['driverId'],
-        eventType: 'position',
-        latitude: (data['latitude'] as num).toDouble(),
-        longitude: (data['longitude'] as num).toDouble(),
-        speed: (data['speed'] as num).toDouble(),
-        timestamp: DateTime.parse(data['timestamp']),
-      ));
-    });
+**Get full tracking history (after trip completes):**
 
-    // Trip started
-    socket.on('trip:started', (data) {
-      _notifyListeners(data['tripId'], TripUpdate(
-        tripId: data['tripId'],
-        driverId: data['driverId'],
-        eventType: 'started',
-        timestamp: DateTime.parse(data['timestamp']),
-      ));
-    });
+```dart
+Future<void> getTripHistory(String tripId) async {
+  try {
+    final response = await http.get(
+      Uri.parse('$baseUrl/api/tracking/$tripId/tracking?limit=100'),
+      headers: {'Authorization': 'Bearer $token'},
+    );
 
-    // Trip completed
-    socket.on('trip:completed', (data) {
-      _notifyListeners(data['tripId'], TripUpdate(
-        tripId: data['tripId'],
-        driverId: data['driverId'],
-        eventType: 'completed',
-        timestamp: DateTime.parse(data['timestamp']),
-      ));
-    });
-
-    // Student picked up
-    socket.on('student:picked_up', (data) {
-      _notifyListeners(data['tripId'], TripUpdate(
-        tripId: data['tripId'],
-        driverId: data['driverId'],
-        eventType: 'pickup',
-        studentId: data['studentId'],
-        timestamp: DateTime.parse(data['timestamp']),
-      ));
-    });
-
-    // Student dropped off
-    socket.on('student:dropped_off', (data) {
-      _notifyListeners(data['tripId'], TripUpdate(
-        tripId: data['tripId'],
-        driverId: data['driverId'],
-        eventType: 'dropoff',
-        studentId: data['studentId'],
-        timestamp: DateTime.parse(data['timestamp']),
-      ));
-    });
-
-    // Waypoint approaching
-    socket.on('waypoint:approaching', (data) {
-      _notifyListeners(data['tripId'], TripUpdate(
-        tripId: data['tripId'],
-        driverId: data['driverId'],
-        eventType: 'approaching',
-        studentId: data['studentId'],
-        distance: data['distance'],
-        eta: data['eta'],
-        timestamp: DateTime.parse(data['timestamp']),
-      ));
-    });
+    if (response.statusCode == 200) {
+      final history = jsonDecode(response.body)['data'] as List;
+      // Show replay or full journey
+      replayTripPath(history);
+    }
+  } catch (e) {
+    showError('Failed to get history: $e');
   }
+}
+```
 
-  /// Watch trip for updates
-  Future<bool> watchTrip(String tripId) async {
-    return Future((complete) {
-      socket.emit('parent:subscribe_trip', {'tripId': tripId}, (response) {
-        if (response != null && response['success'] == true) {
-          watchedTrips.add(tripId);
-          logger.i('✓ Watching trip: $tripId');
-          complete(true);
-        } else {
-          logger.e('✗ Failed to watch trip: ${response?['error']}');
-          complete(false);
-        }
+---
+
+### Step 6: Unsubscribe from Trip
+
+**When: Trip completes or parent exits tracking screen**
+
+**Code outline:**
+
+```dart
+void unsubscribeFromTrip(String tripId) {
+  socket.emit('parent:unsubscribe_trip', {'tripId': tripId}, (response) {
+    if (response != null && response['success'] == true) {
+      print('✓ Unsubscribed from trip');
+    }
+  });
+
+  // Cleanup
+  setState(() {
+    markers.clear();
+    polylines.clear();
+  });
+}
+```
+
+---
+
+## API Reference
+
+### Trip Management (REST APIs)
+
+| Endpoint                                           | Method | When            | Request                   | Response                                                        |
+| -------------------------------------------------- | ------ | --------------- | ------------------------- | --------------------------------------------------------------- |
+| `/api/trips/{tripId}/start`                        | PATCH  | Start trip      | empty                     | `{tripId, status: "STARTED"}`                                   |
+| `/api/trips/{tripId}/end`                          | PATCH  | Complete trip   | empty                     | `{tripId, status: "COMPLETED", actualDistance, actualDuration}` |
+| `/api/trips/{tripId}/students/{studentId}/pickup`  | PATCH  | Pickup student  | `{picked_up_timestamp}`   | `{studentId, status: "PICKED_UP"}`                              |
+| `/api/trips/{tripId}/students/{studentId}/dropoff` | PATCH  | Dropoff student | `{dropped_off_timestamp}` | `{studentId, status: "DROPPED_OFF"}`                            |
+
+### Tracking - Route Calculation (REST APIs)
+
+| Endpoint                             | Method | When                                | Speed   | Request                                            | Response                                                           |
+| ------------------------------------ | ------ | ----------------------------------- | ------- | -------------------------------------------------- | ------------------------------------------------------------------ |
+| `/api/tracking/calculate`            | POST   | Calculate fast route                | <100ms  | `{tripId, students: [{id, pickupLat, pickupLng}]}` | `{routeGeometry, waypoints, estimatedDistance, estimatedDuration}` |
+| `/api/tracking/tomtom`               | POST   | Calculate accurate route            | 1-3s    | Same as above                                      | Same as above                                                      |
+| `/api/tracking/{tripId}/recalculate` | POST   | Recalculate with remaining students | Depends | Same body                                          | Same response                                                      |
+
+### Tracking - Position & Details (REST APIs)
+
+| Endpoint                                  | Method | Who    | Response                                                            |
+| ----------------------------------------- | ------ | ------ | ------------------------------------------------------------------- |
+| `/api/tracking/{tripId}/position`         | PATCH  | Driver | Save current position                                               |
+| `/api/tracking/{tripId}/details`          | GET    | Parent | `{route, waypoints, currentPosition, totalDistance, totalDuration}` |
+| `/api/tracking/{tripId}/current-position` | GET    | Parent | `{latitude, longitude, speed, heading, timestamp}`                  |
+| `/api/tracking/{tripId}/tracking`         | GET    | Parent | `[{latitude, longitude, speed, timestamp}, ...]`                    |
+
+### WebSocket Events
+
+**Driver emits:**
+
+- `driver:subscribe_trip` → Subscribe to trip room
+- `driver:update_position` → Send position (every 15s)
+- `driver:student_picked` → Student picked up
+- `driver:student_dropped` → Student dropped off
+- `driver:trip_completed` → Trip finished
+
+**Parent listens:**
+
+- `trip:position_update` → Driver position (every 15s)
+- `student:picked_up` → Student picked up event
+- `student:dropped_off` → Student dropped off event
+- `trip:completed` → Trip finished
+- `trip:route_updated` → Route recalculated
+- `waypoint:approaching` → Driver approaching waypoint
+
+---
+
+## Quick Code Reference
+
+### Minimal Driver Example
+
+```dart
+class DriverApp {
+  final socket = IO.io('https://server.com',
+    IO.OptionBuilder()
+      .setAuth({'token': token, 'role': 'driver'})
+      .build());
+
+  void startTracking(String tripId) async {
+    // 1. Start trip
+    await http.patch('/api/trips/$tripId/start');
+    socket.emit('driver:subscribe_trip', {'tripId': tripId});
+
+    // 2. Get route
+    final route = await http.post('/api/tracking/calculate', ...);
+    displayRoute(route);
+
+    // 3. Stream position
+    Geolocator.getPositionStream(...).listen((pos) {
+      socket.emit('driver:update_position', {
+        'tripId': tripId,
+        'latitude': pos.latitude,
+        'longitude': pos.longitude,
       });
     });
-  }
 
-  /// Stop watching trip
-  Future<bool> unwatchTrip(String tripId) async {
-    return Future((complete) {
-      socket.emit('parent:unsubscribe_trip', {'tripId': tripId}, (response) {
-        if (response != null && response['success'] == true) {
-          watchedTrips.remove(tripId);
-          logger.i('✓ Unwatched trip: $tripId');
-          complete(true);
-        } else {
-          logger.e('✗ Failed to unwatch trip');
-          complete(false);
-        }
-      });
-    });
-  }
+    // 4. Pickup/Dropoff
+    socket.emit('driver:student_picked', {'tripId': tripId, 'studentId': sid});
 
-  /// Private subscription (used on reconnect)
-  void _subscribeToTrip(String tripId) {
+    // 5. End
+    await http.patch('/api/trips/$tripId/end');
+  }
+}
+```
+
+### Minimal Parent Example
+
+```dart
+class ParentApp {
+  final socket = IO.io('https://server.com',
+    IO.OptionBuilder()
+      .setAuth({'token': token, 'role': 'parent'})
+      .build());
+
+  void watchTrip(String tripId) async {
+    // 1. Load initial route
+    final route = await http.get('/api/tracking/$tripId/details');
+    displayRoute(route);
+
+    // 2. Subscribe
     socket.emit('parent:subscribe_trip', {'tripId': tripId});
-  }
 
-  /// Register update listener
-  void onTripUpdate(String tripId, TripUpdateCallback callback) {
-    if (!listeners.containsKey(tripId)) {
-      listeners[tripId] = [];
-    }
-    listeners[tripId]!.add(callback);
-  }
-
-  /// Notify listeners
-  void _notifyListeners(String tripId, TripUpdate update) {
-    final callbacks = listeners[tripId];
-    if (callbacks != null) {
-      for (final callback in callbacks) {
-        try {
-          callback(update);
-        } catch (e) {
-          logger.e('Error notifying listener: $e');
-        }
-      }
-    }
-  }
-
-  /// Get trip details via REST API
-  Future<Map<String, dynamic>?> getTripDetails(String tripId) async {
-    try {
-      final response = await http.get(
-        Uri.parse('$serverUrl/api/tracking/$tripId/details'),
-      );
-
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        if (data['success'] == true) {
-          logger.i('✓ Trip details loaded');
-          return data['data'];
-        }
-      }
-      return null;
-    } catch (e) {
-      logger.e('Error fetching trip details: $e');
-      return null;
-    }
-  }
-
-  /// Disconnect
-  void disconnect() {
-    watchedTrips.forEach((tripId) {
-      socket.emit('parent:unsubscribe_trip', {'tripId': tripId});
-    });
-    socket.disconnect();
-  }
-
-  /// Check if connected
-  bool isConnected() => socket.connected;
-}
-```
-
-Add HTTP import:
-
-```dart
-import 'package:http/http.dart' as http;
-import 'dart:convert';
-```
-
-### 2. Create Parent State Management
-
-**lib/providers/parent_tracking_provider.dart**:
-
-```dart
-import 'package:flutter/foundation.dart';
-import '../services/parent_tracking_service.dart';
-
-class ParentTrackingProvider with ChangeNotifier {
-  final ParentTrackingService trackingService;
-
-  bool isConnected = false;
-  Map<String, dynamic>? tripDetails;
-  Map<String, List<TripUpdate>> tripUpdates = {};
-  String? error;
-
-  ParentTrackingProvider(this.trackingService);
-
-  /// Initialize and connect
-  Future<void> initialize() async {
-    try {
-      await trackingService.connect();
-      isConnected = true;
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-      rethrow;
-    }
-  }
-
-  /// Start watching trip
-  Future<void> watchTrip(String tripId) async {
-    try {
-      // Load trip details
-      tripDetails = await trackingService.getTripDetails(tripId);
-
-      // Subscribe to updates
-      final watching = await trackingService.watchTrip(tripId);
-
-      if (watching) {
-        // Listen to updates
-        tripUpdates[tripId] = [];
-        trackingService.onTripUpdate(tripId, (update) {
-          tripUpdates[tripId]!.insert(0, update);
-          if (tripUpdates[tripId]!.length > 100) {
-            tripUpdates[tripId]!.removeLast();
-          }
-          error = null;
-          notifyListeners();
-        });
-      }
-
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  /// Stop watching trip
-  Future<void> unwatchTrip(String tripId) async {
-    try {
-      await trackingService.unwatchTrip(tripId);
-      tripUpdates.remove(tripId);
-      error = null;
-      notifyListeners();
-    } catch (e) {
-      error = e.toString();
-      notifyListeners();
-    }
-  }
-
-  @override
-  void dispose() {
-    trackingService.disconnect();
-    super.dispose();
-  }
-}
-```
-
-### 3. Parent App Screen
-
-**lib/screens/parent/tracking_screen.dart**:
-
-```dart
-import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
-import 'package:provider/provider.dart';
-import '../../providers/parent_tracking_provider.dart';
-import '../../services/parent_tracking_service.dart';
-
-class TrackingScreen extends StatefulWidget {
-  final String tripId;
-
-  const TrackingScreen({required this.tripId});
-
-  @override
-  _TrackingScreenState createState() => _TrackingScreenState();
-}
-
-class _TrackingScreenState extends State<TrackingScreen> {
-  late GoogleMapController mapController;
-
-  @override
-  void initState() {
-    super.initState();
-    Future.microtask(() {
-      context.read<ParentTrackingProvider>().watchTrip(widget.tripId);
-    });
-  }
-
-  @override
-  void dispose() {
-    mapController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(title: const Text('Track Trip')),
-      body: Consumer<ParentTrackingProvider>(
-        builder: (context, provider, child) {
-          final updates = provider.tripUpdates[widget.tripId] ?? [];
-          final lastPosition = updates
-              .firstWhere(
-                (u) => u.eventType == 'position',
-                orElse: () => null,
-              );
-
-          return Column(
-            children: [
-              // Map
-              Expanded(
-                flex: 2,
-                child: lastPosition != null
-                    ? GoogleMap(
-                        initialCameraPosition: CameraPosition(
-                          target: LatLng(
-                            lastPosition.latitude!,
-                            lastPosition.longitude!,
-                          ),
-                          zoom: 15,
-                        ),
-                        onMapCreated: (controller) {
-                          mapController = controller;
-                        },
-                        markers: {
-                          // Driver marker
-                          Marker(
-                            markerId: const MarkerId('driver'),
-                            position: LatLng(
-                              lastPosition.latitude!,
-                              lastPosition.longitude!,
-                            ),
-                            infoWindow: const InfoWindow(title: 'Driver'),
-                          ),
-                        },
-                      )
-                    : const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-              ),
-
-              // Updates feed
-              Expanded(
-                flex: 1,
-                child: Column(
-                  children: [
-                    // Status
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Chip(
-                        label: Text(
-                          provider.isConnected ? '✓ Connected' : '✗ Disconnected',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        backgroundColor: provider.isConnected
-                            ? Colors.green
-                            : Colors.red,
-                      ),
-                    ),
-
-                    // Error
-                    if (provider.error != null)
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Text(
-                          '⚠️ ${provider.error}',
-                          style: const TextStyle(color: Colors.red),
-                        ),
-                      ),
-
-                    // Updates
-                    Expanded(
-                      child: ListView.builder(
-                        itemCount: updates.length,
-                        itemBuilder: (context, index) {
-                          final update = updates[index];
-                          return ListTile(
-                            leading: _getEventIcon(update.eventType),
-                            title: Text(_getEventTitle(update)),
-                            subtitle: Text(
-                              update.timestamp.toString().split('.')[0],
-                              style: const TextStyle(fontSize: 12),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
-    );
-  }
-
-  Icon _getEventIcon(String eventType) {
-    switch (eventType) {
-      case 'position':
-        return const Icon(Icons.location_on, color: Colors.blue);
-      case 'started':
-        return const Icon(Icons.directions_run, color: Colors.green);
-      case 'pickup':
-        return const Icon(Icons.person_add, color: Colors.orange);
-      case 'dropoff':
-        return const Icon(Icons.person_remove, color: Colors.purple);
-      case 'approaching':
-        return const Icon(Icons.notifications, color: Colors.red);
-      case 'completed':
-        return const Icon(Icons.check_circle, color: Colors.green);
-      default:
-        return const Icon(Icons.info);
-    }
-  }
-
-  String _getEventTitle(TripUpdate update) {
-    switch (update.eventType) {
-      case 'position':
-        return 'Speed: ${update.speed?.toStringAsFixed(1)} m/s';
-      case 'started':
-        return '🚗 Trip Started';
-      case 'pickup':
-        return '✓ Student picked up';
-      case 'dropoff':
-        return '✓ Student dropped off';
-      case 'approaching':
-        return '📍 Arriving in ${update.distance}m';
-      case 'completed':
-        return '✓ Trip Completed';
-      default:
-        return update.eventType;
-    }
-  }
-}
-```
-
----
-
-## Helper Classes
-
-### Models
-
-**lib/models/trip.dart**:
-
-```dart
-class Trip {
-  final String id;
-  final String driverId;
-  final String type; // 'pickup' or 'dropoff'
-  final String status; // 'pending', 'in_progress', 'completed'
-  final double totalDistance;
-  final int totalDuration;
-  final List<Waypoint> waypoints;
-
-  Trip({
-    required this.id,
-    required this.driverId,
-    required this.type,
-    required this.status,
-    required this.totalDistance,
-    required this.totalDuration,
-    required this.waypoints,
-  });
-
-  factory Trip.fromJson(Map<String, dynamic> json) {
-    return Trip(
-      id: json['trip_id'],
-      driverId: json['driver_id'],
-      type: json['trip_type'],
-      status: json['trip_status'],
-      totalDistance: (json['total_distance'] as num).toDouble(),
-      totalDuration: json['optimized_route_data']['total_duration'],
-      waypoints: (json['optimized_route_data']['waypoints'] as List)
-          .map((w) => Waypoint.fromJson(w))
-          .toList(),
-    );
-  }
-}
-
-class Waypoint {
-  final double latitude;
-  final double longitude;
-  final String? address;
-  final String? studentId;
-  final int sequenceOrder;
-  final DateTime estimatedArrivalTime;
-
-  Waypoint({
-    required this.latitude,
-    required this.longitude,
-    this.address,
-    this.studentId,
-    required this.sequenceOrder,
-    required this.estimatedArrivalTime,
-  });
-
-  factory Waypoint.fromJson(Map<String, dynamic> json) {
-    return Waypoint(
-      latitude: (json['latitude'] as num).toDouble(),
-      longitude: (json['longitude'] as num).toDouble(),
-      address: json['address'],
-      studentId: json['student_id'],
-      sequenceOrder: json['sequence_order'] ?? 0,
-      estimatedArrivalTime: DateTime.parse(json['estimated_arrival_time']),
-    );
-  }
-}
-```
-
----
-
-## Example Screens
-
-See implementation examples above in:
-
-- Driver App: `ActiveTripScreen`
-- Parent App: `TrackingScreen`
-
----
-
-## Testing
-
-### Unit Test Example
-
-```dart
-// test/services/driver_tracking_service_test.dart
-
-void main() {
-  group('DriverTrackingService', () {
-    late DriverTrackingService service;
-
-    setUp(() {
-      service = DriverTrackingService(
-        serverUrl: 'http://localhost:3000',
-        token: 'test_token',
-        userId: 'test_user',
-      );
+    // 3. Listen to updates
+    socket.on('trip:position_update', (data) {
+      updateDriverMarker(data);
     });
 
-    test('Connect successfully', () async {
-      await service.connect();
-      expect(service.isConnected(), isTrue);
+    socket.on('student:picked_up', (data) {
+      showNotification('Student picked up!');
     });
 
-    test('Subscribe to trip', () async {
-      await service.connect();
-      final result = await service.subscribeToTrip('trip_123');
-      expect(result, isTrue);
+    socket.on('trip:completed', (data) {
+      unsubscribeFromTrip(tripId);
     });
-  });
+  }
 }
 ```
-
-### Integration Test Example
-
-```dart
-// test/integration/tracking_flow_test.dart
-
-void main() {
-  group('Driver-Parent Tracking Flow', () {
-    test('Driver sends position, parent receives update', () async {
-      // Setup
-      final driverService = DriverTrackingService(...);
-      final parentService = ParentTrackingService(...);
-
-      // Connect
-      await driverService.connect();
-      await parentService.connect();
-
-      // Driver subscribes
-      await driverService.subscribeToTrip('trip_123');
-
-      // Parent watches
-      await parentService.watchTrip('trip_123');
-
-      // Driver sends position
-      final sent = await driverService.sendPosition(
-        tripId: 'trip_123',
-        latitude: 12.9716,
-        longitude: 77.5946,
-        speed: 45,
-        heading: 180,
-        accuracy: 10,
-      );
-
-      expect(sent, isTrue);
-
-      // Verify parent received update
-      await Future.delayed(const Duration(seconds: 1));
-      // Assert parent got the update
-    });
-  });
-}
-```
-
----
-
-## References
-
-- **WebSocket Events**: See `docs/websocket/WEBSOCKET.md`
-- **REST API**: See `docs/tracking/TRACKING.md`
-- **Socket.IO Client**: https://pub.dev/packages/socket_io_client
-- **Geolocator**: https://pub.dev/packages/geolocator
-- **Google Maps**: https://pub.dev/packages/google_maps_flutter
 
 ---
 
 **Status**: ✅ Production Ready  
-**Last Updated**: January 26, 2026
+**Last Updated**: February 3, 2026  
+**Version**: 3.0.0

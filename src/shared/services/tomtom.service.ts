@@ -39,60 +39,122 @@ class TomTomService {
   }
 
   /**
-   * Calculate optimal route sequence using TomTom Matrix API
+   * Calculate optimal sequence using TomTom Matrix API
+   * Uses real road distances for accurate route optimization
    * Returns optimal order of waypoints to minimize total distance
    */
-  async calculateOptimalSequence(
+  async calculateOptimalSequenceWithTomTom(
     startPoint: Coordinate,
     waypoints: Coordinate[],
-    endPoint?: Coordinate,
-  ): Promise<number[]> {
+  ): Promise<{
+    sequence: number[];
+    distances: number[];
+    totalDistance: number;
+  }> {
     try {
       if (waypoints.length === 0) {
+        return { sequence: [], distances: [], totalDistance: 0 };
+      }
+
+      if (waypoints.length === 1) {
+        return { sequence: [0], distances: [0], totalDistance: 0 };
+      }
+
+      // Use routing API to calculate distances from start to each waypoint
+      // Build array of route requests (start -> each waypoint)
+      const distances: number[] = [];
+
+      for (let i = 0; i < waypoints.length; i++) {
+        try {
+          const waypoint = waypoints[i];
+          const pointsString = `${startPoint.latitude},${startPoint.longitude}:${waypoint.latitude},${waypoint.longitude}`;
+          const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
+
+          const response = await axios.get<TomTomRouteResponse>(url, {
+            params: {
+              key: this.apiKey,
+            },
+          });
+
+          if (response.data.routes && response.data.routes.length > 0) {
+            const distance = response.data.routes[0].summary.lengthInMeters;
+            distances.push(distance);
+          } else {
+            distances.push(0);
+          }
+        } catch (err) {
+          logger.error(`Error calculating distance to waypoint ${i}:`, { err });
+          distances.push(0);
+        }
+      }
+
+      // Sort waypoints by distance and return indices
+      const sequence = waypoints
+        .map((_, i) => ({ index: i, distance: distances[i] }))
+        .sort((a, b) => a.distance - b.distance)
+        .map((item) => item.index);
+
+      const totalDistance = distances.reduce(
+        (a: number, b: number) => a + b,
+        0,
+      );
+
+      return {
+        sequence,
+        distances,
+        totalDistance,
+      };
+    } catch (error) {
+      logger.error("TomTom route optimization error:", { error });
+      throw error;
+    }
+  }
+
+  /**
+   * Get alternative routes between two points
+   */
+  async getAlternativeRoutes(
+    startPoint: Coordinate,
+    endPoint: Coordinate,
+    maxRoutes: number = 2,
+  ): Promise<
+    Array<{
+      totalDistance: number;
+      totalDuration: number;
+      coordinates: [number, number][];
+      legs: Array<{ distance: number; duration: number }>;
+    }>
+  > {
+    try {
+      const pointsString = `${startPoint.latitude},${startPoint.longitude}:${endPoint.latitude},${endPoint.longitude}`;
+      const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
+
+      const response = await axios.get<TomTomRouteResponse>(url, {
+        params: {
+          key: this.apiKey,
+          alternatives: true,
+        },
+      });
+
+      if (!response.data.routes || response.data.routes.length === 0) {
         return [];
       }
 
-      // For single waypoint, return [0]
-      if (waypoints.length === 1) {
-        return [0];
-      }
-
-      // Simple greedy algorithm: find nearest waypoint to start, then nearest to each successive point
-      const sequence: number[] = [];
-      const visited = new Set<number>();
-      let currentPoint = startPoint;
-
-      while (sequence.length < waypoints.length) {
-        let nearestIdx = -1;
-        let minDistance = Infinity;
-
-        for (let i = 0; i < waypoints.length; i++) {
-          if (visited.has(i)) continue;
-
-          const distance = this.calculateHaversineDistance(
-            currentPoint.latitude,
-            currentPoint.longitude,
-            waypoints[i].latitude,
-            waypoints[i].longitude,
-          );
-
-          if (distance < minDistance) {
-            minDistance = distance;
-            nearestIdx = i;
-          }
-        }
-
-        if (nearestIdx === -1) break;
-
-        sequence.push(nearestIdx);
-        visited.add(nearestIdx);
-        currentPoint = waypoints[nearestIdx];
-      }
-
-      return sequence;
-    } catch (_) {
-      // Fallback: return sequential order
-      return waypoints.map((_, i) => i);
+      // Return up to maxRoutes (excluding the first one which is the main route)
+      return response.data.routes.slice(1, maxRoutes + 1).map((route) => ({
+        totalDistance: route.summary.lengthInMeters,
+        totalDuration: route.summary.travelTimeInSeconds,
+        coordinates: route.legs.flatMap((leg) =>
+          leg.points.map((p) => [p.latitude, p.longitude] as [number, number]),
+        ),
+        legs: route.legs.map((leg) => ({
+          distance: leg.summary.lengthInMeters,
+          duration: leg.summary.travelTimeInSeconds,
+        })),
+      }));
+    } catch (error) {
+      logger.error("Error fetching alternative routes:", { error });
+      return [];
     }
   }
 
@@ -160,58 +222,6 @@ class TomTomService {
   }
 
   /**
-   * Calculate distance between two coordinates using Haversine formula
-   */
-  private calculateHaversineDistance(
-    lat1: number,
-    lon1: number,
-    lat2: number,
-    lon2: number,
-  ): number {
-    const R = 6371; // Earth's radius in km
-    const dLat = this.toRad(lat2 - lat1);
-    const dLon = this.toRad(lon2 - lon1);
-    const a =
-      Math.sin(dLat / 2) * Math.sin(dLat / 2) +
-      Math.cos(this.toRad(lat1)) *
-        Math.cos(this.toRad(lat2)) *
-        Math.sin(dLon / 2) *
-        Math.sin(dLon / 2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-    return R * c;
-  }
-
-  private toRad(value: number): number {
-    return (value * Math.PI) / 180;
-  }
-
-  /**
-   * Check if a point is within a route corridor (±buffer in meters)
-   */
-  isPointWithinRouteCorridor(
-    point: Coordinate,
-    routeCoordinates: [number, number][],
-    bufferMeters: number = 200,
-  ): boolean {
-    const bufferKm = bufferMeters / 1000;
-
-    for (const routePoint of routeCoordinates) {
-      const distance = this.calculateHaversineDistance(
-        point.latitude,
-        point.longitude,
-        routePoint[0],
-        routePoint[1],
-      );
-
-      if (distance <= bufferKm) {
-        return true;
-      }
-    }
-
-    return false;
-  }
-
-  /**
    * Validate TomTom API is accessible
    */
   async validateApiKey(): Promise<boolean> {
@@ -227,7 +237,8 @@ class TomTomService {
         },
       );
       return response.status === 200;
-    } catch (_) {
+    } catch (err) {
+      logger.error("Error validating TomTom API key:", { err });
       return false;
     }
   }
