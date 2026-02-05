@@ -1,51 +1,38 @@
+import { BroadcastSocketEvent } from "@shared/constants";
 import { socketService } from "@shared/services/socket.service";
 
-/**
- * Service for handling socket events related to tracking
- */
 export class TrackingSocketService {
-  /**
-   * Emit position update to parents watching a trip
-   */
   static broadcastPositionUpdate(tripId: string, positionData: any) {
-    socketService.broadcastToTrip(tripId, "trip:position_update", {
-      ...positionData,
-      timestamp: new Date(),
-    });
+    socketService.broadcastToTrip(
+      tripId,
+      BroadcastSocketEvent.POSITION_UPDATE,
+      { ...positionData, timestamp: new Date() },
+    );
   }
 
-  /**
-   * Emit trip started event
-   */
   static broadcastTripStarted(tripId: string, driverId: string) {
-    socketService.broadcastToTrip(tripId, "trip:started", {
+    socketService.broadcastToTrip(tripId, BroadcastSocketEvent.TRIP_STARTED, {
       tripId,
       driverId,
       timestamp: new Date(),
     });
   }
 
-  /**
-   * Emit trip completed event
-   */
   static broadcastTripCompleted(tripId: string, driverId: string) {
-    socketService.broadcastToTrip(tripId, "trip:completed", {
+    socketService.broadcastToTrip(tripId, BroadcastSocketEvent.TRIP_COMPLETED, {
       tripId,
       driverId,
       timestamp: new Date(),
     });
   }
 
-  /**
-   * Emit approaching waypoint event
-   */
   static broadcastApproachingWaypoint(
     tripId: string,
     driverId: string,
     studentId: string,
     eta: number,
   ) {
-    socketService.broadcastToTrip(tripId, "trip:approaching", {
+    socketService.broadcastToTrip(tripId, BroadcastSocketEvent.APPROACHING, {
       tripId,
       driverId,
       studentId,
@@ -54,15 +41,12 @@ export class TrackingSocketService {
     });
   }
 
-  /**
-   * Emit student picked up event
-   */
   static broadcastStudentPicked(
     tripId: string,
     driverId: string,
     studentId: string,
   ) {
-    socketService.broadcastToTrip(tripId, "trip:student_picked", {
+    socketService.broadcastToTrip(tripId, BroadcastSocketEvent.STUDENT_PICKED, {
       tripId,
       driverId,
       studentId,
@@ -70,36 +54,26 @@ export class TrackingSocketService {
     });
   }
 
-  /**
-   * Emit student dropped off event
-   */
   static broadcastStudentDropped(
     tripId: string,
     driverId: string,
     studentId: string,
   ) {
-    socketService.broadcastToTrip(tripId, "trip:student_dropped", {
+    socketService.broadcastToTrip(
       tripId,
-      driverId,
-      studentId,
-      timestamp: new Date(),
-    });
+      BroadcastSocketEvent.STUDENT_DROPPED,
+      { tripId, driverId, studentId, timestamp: new Date() },
+    );
   }
 
-  /**
-   * Emit route calculated event
-   */
   static broadcastRouteCalculated(tripId: string, routeData: any) {
-    socketService.broadcastToTrip(tripId, "trip:route_calculated", {
+    socketService.broadcastToTrip(
       tripId,
-      routeData,
-      timestamp: new Date(),
-    });
+      BroadcastSocketEvent.ROUTE_CALCULATED,
+      { tripId, routeData, timestamp: new Date() },
+    );
   }
 
-  /**
-   * Notify driver of an event
-   */
   static notifyDriverEvent(tripId: string, event: string, data: any) {
     socketService.notifyDriver(tripId, event, {
       ...data,

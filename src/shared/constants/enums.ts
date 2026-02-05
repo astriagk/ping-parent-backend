@@ -171,3 +171,30 @@ export enum SchoolSubscriptionStatus {
   CANCELLED = "cancelled",
   PENDING = "pending",
 }
+
+export enum DriverSocketEvent {
+  SUBSCRIBE_TRIP = "driver:subscribe_trip",
+  UNSUBSCRIBE_TRIP = "driver:unsubscribe_trip",
+  UPDATE_POSITION = "driver:update_position",
+  TRIP_STARTED = "driver:trip_started",
+  TRIP_COMPLETED = "driver:trip_completed",
+  STUDENT_PICKED = "driver:student_picked",
+  STUDENT_DROPPED = "driver:student_dropped",
+  APPROACHING_WAYPOINT = "driver:approaching_waypoint",
+}
+
+export enum ParentSocketEvent {
+  SUBSCRIBE_TRIP = "parent:subscribe_trip",
+  UNSUBSCRIBE_TRIP = "parent:unsubscribe_trip",
+}
+
+export enum BroadcastSocketEvent {
+  POSITION_UPDATE = "trip:position_update",
+  TRIP_STARTED = "trip:started",
+  TRIP_COMPLETED = "trip:completed",
+  ROUTE_CALCULATED = "trip:route_calculated",
+  APPROACHING = "trip:approaching",
+  STUDENT_PICKED = "trip:student_picked",
+  STUDENT_DROPPED = "trip:student_dropped",
+  ERROR = "socket:error",
+}

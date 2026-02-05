@@ -1,7 +1,7 @@
 # Tracking Module - REST API Documentation
 
-**Version**: 2.0.0  
-**Last Updated**: February 3, 2026  
+**Version**: 3.0.0  
+**Last Updated**: February 5, 2026  
 **Status**: ✅ Production Ready
 
 ---
@@ -12,10 +12,11 @@
 2. [Setup](#setup)
 3. [Route Calculation Methods](#route-calculation-methods)
 4. [REST API Endpoints](#rest-api-endpoints)
-5. [Authentication](#authentication)
-6. [Database Schema](#database-schema)
-7. [Common Issues & Solutions](#common-issues--solutions)
-8. [References](#references)
+5. [WebSocket Integration](#websocket-integration)
+6. [Authentication](#authentication)
+7. [Database Schema](#database-schema)
+8. [Common Issues & Solutions](#common-issues--solutions)
+9. [References](#references)
 
 ---
 
@@ -266,6 +267,125 @@ Remove tracking records older than a specified number of days. Helps manage data
 
 ---
 
+## WebSocket Integration
+
+Real-time tracking uses WebSocket connections for live position updates. See [WEBSOCKET.md](../websocket/WEBSOCKET.md) for complete documentation.
+
+### Security Features (v3.0.0)
+
+| Feature                | Description                                            |
+| ---------------------- | ------------------------------------------------------ |
+| **JWT Authentication** | All connections require valid JWT token                |
+| **Trip Authorization** | Drivers must own trip, parents must have child on trip |
+| **Rate Limiting**      | Position updates limited to 1 per 5 seconds            |
+| **Centralized Errors** | All errors via `socket:error` event                    |
+
+### Quick Connection Example
+
+**Driver Connection**:
+
+```javascript
+const socket = io("http://localhost:3000", {
+  auth: {
+    token: "driver_jwt_token", // Required
+    userId: "driver_123", // Required - must match token
+    role: "driver", // Required - must match token
+  },
+});
+
+// Subscribe to trip (server verifies driver owns trip)
+socket.emit("driver:subscribe_trip", tripId, (success) => {
+  if (success) {
+    // Start sending positions
+    socket.emit("driver:update_position", {
+      tripId,
+      latitude: 12.9716,
+      longitude: 77.5946,
+      speed: 45,
+      heading: 180,
+      accuracy: 10,
+    });
+  }
+});
+```
+
+**Parent Connection**:
+
+```javascript
+const socket = io("http://localhost:3000", {
+  auth: {
+    token: "parent_jwt_token", // Required
+    userId: "parent_123", // Required - must match token
+    role: "parent", // Required - must match token
+  },
+});
+
+// Subscribe to trip (server verifies parent has child on trip)
+socket.emit("parent:subscribe_trip", tripId, (success) => {
+  if (success) {
+    // Listen for position updates
+    socket.on("trip:position_update", (data) => {
+      updateMapMarker(data.latitude, data.longitude);
+    });
+  }
+});
+```
+
+### Event Flow
+
+```
+Driver App                    Server                      Parent App
+    │                           │                            │
+    ├── driver:subscribe_trip ─→│ (verify ownership)         │
+    │                           │                            │
+    ├── driver:trip_started ───→│─── trip:started ─────────→│
+    │                           │                            │
+    ├── driver:update_position→│─── trip:position_update ─→│
+    │   (rate limited: 5s)      │                            │
+    │                           │                            │
+    ├── driver:student_picked ─→│─── trip:student_picked ──→│
+    │                           │                            │
+    ├── driver:trip_completed ─→│─── trip:completed ───────→│
+    │                           │                            │
+```
+
+### Error Handling
+
+All authorization errors are sent via `socket:error` event:
+
+```javascript
+socket.on("socket:error", (data) => {
+  console.error(data.message);
+  // Possible messages:
+  // - "Missing authentication credentials"
+  // - "Invalid or expired token"
+  // - "Not authorized to access this trip"
+  // - "Not authorized to track this trip"
+  // - "Invalid coordinates"
+  // - "Rate limited"
+});
+```
+
+### Integration Order (Quick Reference)
+
+| Step | Driver                                       | Parent                                       |
+| ---- | -------------------------------------------- | -------------------------------------------- |
+| 1    | Connect with JWT (role: driver)              | Connect with JWT (role: parent)              |
+| 2    | Wait for `connect` event                     | Wait for `connect` event                     |
+| 3    | Emit `driver:subscribe_trip` → wait callback | Emit `parent:subscribe_trip` → wait callback |
+| 4    | REST: POST /api/tracking/calculate           | Register listeners (trip:\*, socket:error)   |
+| 5    | Emit `driver:trip_started`                   | Wait for events (automatic from driver)      |
+| 6    | Emit `driver:update_position` (every 10s)    | Handle `trip:position_update`                |
+| 7    | Emit `driver:approaching_waypoint`           | Handle `trip:approaching`                    |
+| 8    | Emit `driver:student_picked`                 | Handle `trip:student_picked`                 |
+| 9    | Emit `driver:student_dropped`                | Handle `trip:student_dropped`                |
+| 10   | Emit `driver:trip_completed`                 | Handle `trip:completed`                      |
+| 11   | Emit `driver:unsubscribe_trip`               | Emit `parent:unsubscribe_trip`               |
+
+> 📖 **Full Details**: See [WEBSOCKET.md](../websocket/WEBSOCKET.md) for complete step-by-step code examples
+
+---
+
 ## Authentication
 
 | Endpoint                         | Auth Required | Who Can Use                           |
@@ -372,5 +492,5 @@ src/shared/services/
 ---
 
 **Status**: ✅ Production Ready  
-**Last Updated**: February 3, 2026  
-**Changes in v2.0.0**: Consolidated to 2 route calculation methods (Haversine & TomTom), enhanced coordinate generation with SLERP interpolation for smooth visualization
+**Last Updated**: February 5, 2026  
+**Changes in v3.0.0**: Added WebSocket security (JWT auth, trip authorization, rate limiting), updated event names to use enums, added Admin socket events section

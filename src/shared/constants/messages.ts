@@ -348,6 +348,19 @@ export const ERROR_MESSAGES = {
     ALREADY_EXISTS: "School admin with this email already exists",
     INACTIVE: "School admin account is inactive",
   },
+  SOCKET: {
+    MISSING_AUTH_CREDENTIALS: "Missing authentication credentials",
+    INVALID_ROLE: "Invalid role",
+    USER_ID_MISMATCH: "User ID mismatch",
+    ROLE_MISMATCH: "Role mismatch",
+    INVALID_OR_EXPIRED_TOKEN: "Invalid or expired token",
+    ONLY_DRIVERS_CAN_SUBSCRIBE: "Only drivers can subscribe as driver",
+    ONLY_PARENTS_CAN_SUBSCRIBE: "Only parents can subscribe as parent",
+    NOT_AUTHORIZED_TO_ACCESS_TRIP: "Not authorized to access this trip",
+    NOT_AUTHORIZED_TO_TRACK_TRIP: "Not authorized to track this trip",
+    INVALID_COORDINATES: "Invalid coordinates",
+    RATE_LIMITED: "Position update rate limited",
+  },
 };
 
 export const SUCCESS_MESSAGES = {
