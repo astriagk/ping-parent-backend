@@ -427,7 +427,7 @@ export const updateDriverPosition = async (
     }
   }
 
-  const tracking: Omit<LocationTracking, "_id"> = {
+  const trackingData: Omit<LocationTracking, "_id"> = {
     tracking_id: generateUniqueCode(UniqueCodeTypes.LOCATION),
     trip_id: tripId,
     driver_id: driverId,
@@ -439,7 +439,14 @@ export const updateDriverPosition = async (
     timestamp: new Date(),
   };
 
-  const result = await trackingRepository.insertTracking(tracking);
+  const result = await trackingRepository.upsertTracking(tripId, trackingData);
+
+  if (!result) {
+    throw new ApiError(
+      HTTP_STATUS.INTERNAL_SERVER_ERROR,
+      ERROR_MESSAGES.TRACKING.POSITION_UPDATE_ERROR,
+    );
+  }
 
   TrackingSocketService.broadcastPositionUpdate(tripId, {
     driverId,
@@ -450,7 +457,17 @@ export const updateDriverPosition = async (
     accuracy: accuracy || 0,
   });
 
-  return result;
+  return {
+    tracking_id: result.tracking_id,
+    trip_id: result.trip_id,
+    driver_id: result.driver_id,
+    latitude: result.latitude,
+    longitude: result.longitude,
+    speed: result.speed,
+    heading: result.heading,
+    accuracy: result.accuracy,
+    timestamp: result.timestamp,
+  };
 };
 
 export const getRouteTracking = async (

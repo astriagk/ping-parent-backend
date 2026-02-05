@@ -7,6 +7,7 @@ import {
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
+import { trackingRepository } from "./tracking.repository";
 import {
   calculateOptimalRouteWithTomTom,
   calculateRoute,
@@ -179,12 +180,38 @@ export const cleanTrackingDataHandler = asyncHandler(
 export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
+    const { trip_id } = req.body;
 
     if (!userId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
         ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
       );
+    }
+
+    if (!trip_id) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+      );
+    }
+
+    // Check if trip exists
+    const existingTrip = await trackingRepository.getTripById(trip_id);
+
+    if (existingTrip && existingTrip.optimized_route_data) {
+      // Trip exists and has optimized route data, return it
+      return res.status(HTTP_STATUS.OK).json({
+        success: true,
+        data: {
+          _id: existingTrip._id?.toString(),
+          trip_id: existingTrip.trip_id,
+          route_geometry: existingTrip.optimized_route_data,
+          total_distance: existingTrip.optimized_route_data.total_distance,
+          total_duration: existingTrip.optimized_route_data.total_duration,
+        },
+        message: SUCCESS_MESSAGES.ROUTE.DETAILS_FETCHED_SUCCESSFULLY,
+      });
     }
 
     const result = await calculateOptimalRouteWithTomTom(userId, req.body);

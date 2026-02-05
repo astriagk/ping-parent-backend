@@ -71,6 +71,43 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     } as WithId<LocationTracking>;
   }
 
+  async upsertTracking(
+    tripId: string,
+    tracking: Omit<LocationTracking, "_id">,
+  ): Promise<WithId<LocationTracking>> {
+    const db = await getDB();
+    const result = await db
+      .collection(LOCATION_TRACKING_COLLECTION)
+      .findOneAndUpdate(
+        { trip_id: tripId },
+        {
+          $set: tracking,
+          $setOnInsert: {
+            created_at: new Date(),
+          },
+        },
+        {
+          upsert: true,
+          returnDocument: "after",
+        },
+      );
+
+    // If result.value is null, fetch the document directly
+    if (result?.value) {
+      return result.value as WithId<LocationTracking>;
+    }
+
+    const doc = await db
+      .collection(LOCATION_TRACKING_COLLECTION)
+      .findOne({ trip_id: tripId });
+
+    if (!doc) {
+      throw new Error(`Failed to upsert tracking for trip: ${tripId}`);
+    }
+
+    return doc as WithId<LocationTracking>;
+  }
+
   async updateTripRouteData(
     tripId: string,
     routeData: any,
