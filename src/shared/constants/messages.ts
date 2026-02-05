@@ -325,6 +325,8 @@ export const ERROR_MESSAGES = {
     TRIP_DETAILS_NOT_FOUND: "Trip details not found",
     POSITION_UPDATE_ERROR: "Failed to update driver position",
     DAYS_OLD_INVALID: "daysOld must be at least 1",
+    RECALCULATION_FAILED: "Failed to recalculate route",
+    TRACKING_DATA_NOT_FOUND: "No tracking data found",
   },
   SCHOOL_SUBSCRIPTION: {
     NOT_FOUND: "School subscription not found",
@@ -345,6 +347,19 @@ export const ERROR_MESSAGES = {
     ADMIN_ID_REQUIRED: "Admin ID is required",
     ALREADY_EXISTS: "School admin with this email already exists",
     INACTIVE: "School admin account is inactive",
+  },
+  SOCKET: {
+    MISSING_AUTH_CREDENTIALS: "Missing authentication credentials",
+    INVALID_ROLE: "Invalid role",
+    USER_ID_MISMATCH: "User ID mismatch",
+    ROLE_MISMATCH: "Role mismatch",
+    INVALID_OR_EXPIRED_TOKEN: "Invalid or expired token",
+    ONLY_DRIVERS_CAN_SUBSCRIBE: "Only drivers can subscribe as driver",
+    ONLY_PARENTS_CAN_SUBSCRIBE: "Only parents can subscribe as parent",
+    NOT_AUTHORIZED_TO_ACCESS_TRIP: "Not authorized to access this trip",
+    NOT_AUTHORIZED_TO_TRACK_TRIP: "Not authorized to track this trip",
+    INVALID_COORDINATES: "Invalid coordinates",
+    RATE_LIMITED: "Position update rate limited",
   },
 };
 
@@ -548,6 +563,8 @@ export const SUCCESS_MESSAGES = {
     CLEANUP_COMPLETED_SUCCESSFULLY:
       "Tracking data cleanup completed successfully",
     CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
+    RECALCULATED_SUCCESSFULLY: "Route recalculated successfully",
+    TOMTOM_ROUTE_CALCULATED: "Optimal route calculated using TomTom Matrix API",
   },
 };
 

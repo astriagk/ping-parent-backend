@@ -1,11 +1,26 @@
 import { Server as HTTPServer } from "http";
 import { Socket, Server as SocketIOServer } from "socket.io";
 
+import { getDB } from "@shared/config";
+import {
+  BroadcastSocketEvent,
+  DriverSocketEvent,
+  ERROR_MESSAGES,
+  PARENTS_COLLECTION,
+  ParentSocketEvent,
+  STUDENTS_COLLECTION,
+  TRIPS_COLLECTION,
+  TRIP_STUDENTS_COLLECTION,
+  UserRole,
+} from "@shared/constants";
+import { verifyAccessToken } from "@shared/services/token.service";
 import { logger } from "@shared/utils";
+
+const POSITION_UPDATE_INTERVAL_MS = 5000;
+const positionUpdateTimestamps = new Map<string, number>();
 
 export class SocketService {
   private io: SocketIOServer;
-  private activeTrips = new Map<string, Set<string>>(); // tripId -> Set of connected parent/driver socketIds
 
   constructor(server: HTTPServer) {
     this.io = new SocketIOServer(server, {
@@ -14,6 +29,8 @@ export class SocketService {
         methods: ["GET", "POST"],
         credentials: true,
       },
+      pingTimeout: 60000,
+      pingInterval: 25000,
     });
 
     this.setupMiddleware();
@@ -21,59 +38,166 @@ export class SocketService {
   }
 
   private setupMiddleware() {
-    // Authenticate socket connections
-    this.io.use((socket, next) => {
-      const token = socket.handshake.auth.token;
-      const userId = socket.handshake.auth.userId;
-      const role = socket.handshake.auth.role; // 'driver' or 'parent'
+    this.io.use(async (socket, next) => {
+      try {
+        const token = socket.handshake.auth.token;
+        const userId = socket.handshake.auth.userId;
+        const role = socket.handshake.auth.role as UserRole;
 
-      if (!token || !userId || !role) {
-        return next(new Error("Invalid authentication"));
+        if (!token || !userId || !role) {
+          return next(
+            new Error(ERROR_MESSAGES.SOCKET.MISSING_AUTH_CREDENTIALS),
+          );
+        }
+
+        const allowedRoles = [UserRole.DRIVER, UserRole.PARENT, UserRole.ADMIN];
+        if (!allowedRoles.includes(role)) {
+          return next(new Error(ERROR_MESSAGES.SOCKET.INVALID_ROLE));
+        }
+
+        const payload = verifyAccessToken(token);
+
+        if (payload.userId !== userId) {
+          return next(new Error(ERROR_MESSAGES.SOCKET.USER_ID_MISMATCH));
+        }
+
+        if (payload.role !== role) {
+          return next(new Error(ERROR_MESSAGES.SOCKET.ROLE_MISMATCH));
+        }
+
+        socket.data = { userId, role, token, verified: true };
+        next();
+      } catch (error: unknown) {
+        logger.error("Socket auth failed:", error as object);
+        return next(new Error(ERROR_MESSAGES.SOCKET.INVALID_OR_EXPIRED_TOKEN));
       }
-
-      socket.data = { userId, role, token };
-      next();
     });
+  }
+
+  private async verifyDriverOwnsTrip(
+    userId: string,
+    tripId: string,
+  ): Promise<boolean> {
+    try {
+      const db = await getDB();
+      const driver = await db
+        .collection("drivers")
+        .findOne({ user_id: userId });
+
+      if (!driver) return false;
+
+      const trip = await db
+        .collection(TRIPS_COLLECTION)
+        .findOne({ trip_id: tripId, driver_id: String(driver._id) });
+
+      return !!trip;
+    } catch {
+      return false;
+    }
+  }
+
+  private async verifyParentHasStudentOnTrip(
+    userId: string,
+    tripId: string,
+  ): Promise<boolean> {
+    try {
+      const db = await getDB();
+      const parent = await db
+        .collection(PARENTS_COLLECTION)
+        .findOne({ user_id: userId });
+
+      if (!parent) return false;
+
+      const students = await db
+        .collection(STUDENTS_COLLECTION)
+        .find({ parent_id: String(parent._id) })
+        .toArray();
+
+      if (students.length === 0) return false;
+
+      const studentIds = students.map((s) => s.student_id);
+      const tripStudent = await db
+        .collection(TRIP_STUDENTS_COLLECTION)
+        .findOne({ trip_id: tripId, student_id: { $in: studentIds } });
+
+      return !!tripStudent;
+    } catch {
+      return false;
+    }
+  }
+
+  private checkPositionRateLimit(tripId: string): boolean {
+    const now = Date.now();
+    const lastUpdate = positionUpdateTimestamps.get(tripId) || 0;
+
+    if (now - lastUpdate < POSITION_UPDATE_INTERVAL_MS) {
+      return false;
+    }
+
+    positionUpdateTimestamps.set(tripId, now);
+    return true;
   }
 
   private setupConnectionHandlers() {
     this.io.on("connection", (socket: Socket) => {
       const { userId, role } = socket.data;
-      logger.info(
-        `User ${userId} (${role}) connected with socket ${socket.id}`,
-      );
+      logger.info(`Socket connected: ${userId} (${role})`);
 
-      // Driver subscribes to trip
       socket.on(
-        "driver:subscribe_trip",
-        (tripId: string, callback: (success: boolean) => void) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+        DriverSocketEvent.SUBSCRIBE_TRIP,
+        async (tripId: string, callback?: (success: boolean) => void) => {
+          if (socket.data.role !== UserRole.DRIVER) {
+            socket.emit(BroadcastSocketEvent.ERROR, {
+              message: ERROR_MESSAGES.SOCKET.ONLY_DRIVERS_CAN_SUBSCRIBE,
+            });
+            if (callback) callback(false);
+            return;
+          }
+
+          const isAuthorized = await this.verifyDriverOwnsTrip(userId, tripId);
+          if (!isAuthorized) {
+            socket.emit(BroadcastSocketEvent.ERROR, {
+              message: ERROR_MESSAGES.SOCKET.NOT_AUTHORIZED_TO_ACCESS_TRIP,
+            });
+            if (callback) callback(false);
+            return;
           }
 
           socket.join(`trip:${tripId}:driver`);
-          logger.info(`Driver ${userId} subscribed to trip ${tripId}`);
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Parent subscribes to trip tracking
       socket.on(
-        "parent:subscribe_trip",
-        (tripId: string, callback: (success: boolean) => void) => {
-          if (socket.data.role !== "parent") {
-            return callback(false);
+        ParentSocketEvent.SUBSCRIBE_TRIP,
+        async (tripId: string, callback?: (success: boolean) => void) => {
+          if (socket.data.role !== UserRole.PARENT) {
+            socket.emit(BroadcastSocketEvent.ERROR, {
+              message: ERROR_MESSAGES.SOCKET.ONLY_PARENTS_CAN_SUBSCRIBE,
+            });
+            if (callback) callback(false);
+            return;
+          }
+
+          const isAuthorized = await this.verifyParentHasStudentOnTrip(
+            userId,
+            tripId,
+          );
+          if (!isAuthorized) {
+            socket.emit(BroadcastSocketEvent.ERROR, {
+              message: ERROR_MESSAGES.SOCKET.NOT_AUTHORIZED_TO_TRACK_TRIP,
+            });
+            if (callback) callback(false);
+            return;
           }
 
           socket.join(`trip:${tripId}:tracking`);
-          logger.info(`Parent ${userId} subscribed to trip tracking ${tripId}`);
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Driver sends current position
       socket.on(
-        "driver:update_position",
+        DriverSocketEvent.UPDATE_POSITION,
         (
           data: {
             tripId: string;
@@ -83,194 +207,209 @@ export class SocketService {
             heading?: number;
             accuracy?: number;
           },
-          callback: (success: boolean) => void,
+          callback?: (success: boolean) => void,
         ) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+          if (socket.data.role !== UserRole.DRIVER) {
+            if (callback) callback(false);
+            return;
           }
 
           const { tripId, latitude, longitude, speed, heading, accuracy } =
             data;
 
-          // Broadcast position to all parents tracking this trip
-          this.io.to(`trip:${tripId}:tracking`).emit("trip:position_update", {
-            tripId,
-            driverId: userId,
-            latitude,
-            longitude,
-            speed: speed || 0,
-            heading: heading || 0,
-            accuracy: accuracy || 0,
-            timestamp: new Date(),
-          });
+          if (!this.checkPositionRateLimit(tripId)) {
+            if (callback) callback(false);
+            return;
+          }
 
-          logger.debug(
-            `Position update for trip ${tripId}: ${latitude}, ${longitude}`,
-          );
-          callback(true);
+          if (
+            latitude < -90 ||
+            latitude > 90 ||
+            longitude < -180 ||
+            longitude > 180
+          ) {
+            socket.emit(BroadcastSocketEvent.ERROR, {
+              message: ERROR_MESSAGES.SOCKET.INVALID_COORDINATES,
+            });
+            if (callback) callback(false);
+            return;
+          }
+
+          this.io
+            .to(`trip:${tripId}:tracking`)
+            .emit(BroadcastSocketEvent.POSITION_UPDATE, {
+              tripId,
+              driverId: userId,
+              latitude,
+              longitude,
+              speed: speed || 0,
+              heading: heading || 0,
+              accuracy: accuracy || 0,
+              timestamp: new Date(),
+            });
+
+          if (callback) callback(true);
         },
       );
 
-      // Driver signals trip started
       socket.on(
-        "driver:trip_started",
-        (tripId: string, callback: (success: boolean) => void) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+        DriverSocketEvent.TRIP_STARTED,
+        (tripId: string, callback?: (success: boolean) => void) => {
+          if (socket.data.role !== UserRole.DRIVER) {
+            if (callback) callback(false);
+            return;
           }
 
-          this.io.to(`trip:${tripId}:tracking`).emit("trip:started", {
-            tripId,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          this.io
+            .to(`trip:${tripId}:tracking`)
+            .emit(BroadcastSocketEvent.TRIP_STARTED, {
+              tripId,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
-          logger.info(`Trip ${tripId} started by driver ${userId}`);
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Driver signals trip completed
       socket.on(
-        "driver:trip_completed",
-        (tripId: string, callback: (success: boolean) => void) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+        DriverSocketEvent.TRIP_COMPLETED,
+        (tripId: string, callback?: (success: boolean) => void) => {
+          if (socket.data.role !== UserRole.DRIVER) {
+            if (callback) callback(false);
+            return;
           }
 
-          this.io.to(`trip:${tripId}:tracking`).emit("trip:completed", {
-            tripId,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          this.io
+            .to(`trip:${tripId}:tracking`)
+            .emit(BroadcastSocketEvent.TRIP_COMPLETED, {
+              tripId,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
+          positionUpdateTimestamps.delete(tripId);
           socket.leave(`trip:${tripId}:driver`);
-          logger.info(`Trip ${tripId} completed by driver ${userId}`);
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Driver signals approaching waypoint/student
       socket.on(
-        "driver:approaching_waypoint",
+        DriverSocketEvent.APPROACHING_WAYPOINT,
         (
           data: { tripId: string; studentId: string; eta: number },
-          callback: (success: boolean) => void,
+          callback?: (success: boolean) => void,
         ) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+          if (socket.data.role !== UserRole.DRIVER) {
+            if (callback) callback(false);
+            return;
           }
 
           const { tripId, studentId, eta } = data;
 
-          this.io.to(`trip:${tripId}:tracking`).emit("trip:approaching", {
-            tripId,
-            studentId,
-            eta,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          this.io
+            .to(`trip:${tripId}:tracking`)
+            .emit(BroadcastSocketEvent.APPROACHING, {
+              tripId,
+              studentId,
+              eta,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
-          logger.info(
-            `Driver ${userId} approaching student ${studentId} on trip ${tripId}`,
-          );
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Driver signals student picked up
       socket.on(
-        "driver:student_picked",
+        DriverSocketEvent.STUDENT_PICKED,
         (
           data: { tripId: string; studentId: string },
-          callback: (success: boolean) => void,
+          callback?: (success: boolean) => void,
         ) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+          if (socket.data.role !== UserRole.DRIVER) {
+            if (callback) callback(false);
+            return;
           }
 
           const { tripId, studentId } = data;
 
-          this.io.to(`trip:${tripId}:tracking`).emit("trip:student_picked", {
-            tripId,
-            studentId,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          this.io
+            .to(`trip:${tripId}:tracking`)
+            .emit(BroadcastSocketEvent.STUDENT_PICKED, {
+              tripId,
+              studentId,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
-          logger.info(`Student ${studentId} picked up on trip ${tripId}`);
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Driver signals student dropped off
       socket.on(
-        "driver:student_dropped",
+        DriverSocketEvent.STUDENT_DROPPED,
         (
           data: { tripId: string; studentId: string },
-          callback: (success: boolean) => void,
+          callback?: (success: boolean) => void,
         ) => {
-          if (socket.data.role !== "driver") {
-            return callback(false);
+          if (socket.data.role !== UserRole.DRIVER) {
+            if (callback) callback(false);
+            return;
           }
 
           const { tripId, studentId } = data;
 
-          this.io.to(`trip:${tripId}:tracking`).emit("trip:student_dropped", {
-            tripId,
-            studentId,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          this.io
+            .to(`trip:${tripId}:tracking`)
+            .emit(BroadcastSocketEvent.STUDENT_DROPPED, {
+              tripId,
+              studentId,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
-          logger.info(`Student ${studentId} dropped off on trip ${tripId}`);
-          callback(true);
+          if (callback) callback(true);
         },
       );
 
-      // Parent unsubscribes from trip
-      socket.on("parent:unsubscribe_trip", (tripId: string) => {
+      socket.on(ParentSocketEvent.UNSUBSCRIBE_TRIP, (tripId: string) => {
         socket.leave(`trip:${tripId}:tracking`);
-        logger.info(`Parent ${userId} unsubscribed from trip ${tripId}`);
       });
 
-      // Driver unsubscribes from trip
-      socket.on("driver:unsubscribe_trip", (tripId: string) => {
+      socket.on(DriverSocketEvent.UNSUBSCRIBE_TRIP, (tripId: string) => {
         socket.leave(`trip:${tripId}:driver`);
-        logger.info(`Driver ${userId} unsubscribed from trip ${tripId}`);
+        positionUpdateTimestamps.delete(tripId);
       });
 
-      // Handle disconnection
       socket.on("disconnect", () => {
-        logger.info(
-          `User ${userId} (${socket.data.role}) disconnected from socket ${socket.id}`,
-        );
+        logger.info(`Socket disconnected: ${userId}`);
       });
 
-      // Error handling
       socket.on("error", (error) => {
-        logger.error(`Socket error for user ${userId}:`, error);
+        logger.error(`Socket error: ${userId}`, error);
       });
     });
   }
 
-  /**
-   * Emit event to all parents tracking a specific trip
-   */
-  public broadcastToTrip(tripId: string, event: string, data: any) {
+  public broadcastToTrip(
+    tripId: string,
+    event: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>,
+  ) {
     this.io.to(`trip:${tripId}:tracking`).emit(event, data);
   }
 
-  /**
-   * Emit event to driver of a specific trip
-   */
-  public notifyDriver(tripId: string, event: string, data: any) {
+  public notifyDriver(
+    tripId: string,
+    event: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>,
+  ) {
     this.io.to(`trip:${tripId}:driver`).emit(event, data);
   }
 
-  /**
-   * Get Socket.IO instance
-   */
   public getIO(): SocketIOServer {
     return this.io;
   }

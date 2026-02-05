@@ -1,7 +1,7 @@
 # Tracking Module - REST API Documentation
 
-**Version**: 1.0.0  
-**Last Updated**: January 26, 2026  
+**Version**: 3.0.0  
+**Last Updated**: February 5, 2026  
 **Status**: ✅ Production Ready
 
 ---
@@ -10,11 +10,13 @@
 
 1. [Quick Overview](#quick-overview)
 2. [Setup](#setup)
-3. [REST API Endpoints](#rest-api-endpoints)
-4. [Authentication](#authentication)
-5. [Database Schema](#database-schema)
-6. [Common Issues & Solutions](#common-issues--solutions)
-7. [References](#references)
+3. [Route Calculation Methods](#route-calculation-methods)
+4. [REST API Endpoints](#rest-api-endpoints)
+5. [WebSocket Integration](#websocket-integration)
+6. [Authentication](#authentication)
+7. [Database Schema](#database-schema)
+8. [Common Issues & Solutions](#common-issues--solutions)
+9. [References](#references)
 
 ---
 
@@ -22,10 +24,11 @@
 
 The Tracking module provides REST APIs for:
 
-- **Route Optimization**: Calculate optimal pickup/drop sequence using TomTom API
-- **Position Tracking**: Store driver positions during trips
-- **Trip Details**: Get complete route information with waypoints and geometry
-- **Tracking History**: Retrieve all position updates for a trip
+- **Route Optimization**: Two calculation methods - Haversine (fast, simple) or TomTom (accurate, API-based)
+- **Position Tracking**: Store driver positions during trips with route corridor validation
+- **Trip Details**: Get complete route information with waypoints, detailed geometry, and real-time position
+- **Tracking History**: Retrieve all position updates for a trip with pagination
+- **Route Recalculation**: Recalculate optimal sequence when driver changes route
 - **Data Cleanup**: Delete old tracking records (admin only)
 - **WebSocket Real-time**: See `docs/websocket/WEBSOCKET.md` for live updates
 
@@ -51,287 +54,350 @@ npm start
 
 ---
 
+## Route Calculation Methods
+
+### Haversine Method (Fast, Simple)
+
+**What it does**: Uses simple Haversine formula to calculate straight-line distances between waypoints without external API calls.
+
+**How it works**:
+
+- Calculates direct distance between pickup points using geodesic math
+- Estimates travel duration based on 40 km/h average urban speed
+- Generates 10+ smooth coordinate points per segment using Spherical Linear Interpolation (SLERP)
+- Orders waypoints greedily (nearest neighbor algorithm)
+- No external API dependency - very fast response time
+
+**Best for**:
+
+- Quick route estimation without API costs
+- Trips with few students (< 10)
+- Areas with simple road networks
+- Development and testing
+
+**Output**: Route with all intermediate coordinates for smooth map visualization, but distances are as-the-crow-flies, not actual road distances.
+
+---
+
+### TomTom Method (Accurate, Premium)
+
+**What it does**: Uses TomTom's Matrix and Routing APIs for real road-based calculations.
+
+**How it works**:
+
+- Calculates actual road distances using TomTom's routing engine
+- Optimizes sequence based on real travel times (traffic-aware)
+- Retrieves detailed route geometry with precise coordinates
+- Validates against actual road networks
+- Orders waypoints using optimization matrix
+
+**Best for**:
+
+- Production use with accurate ETAs
+- Trips with many students (10+)
+- Complex road networks (highways, congested areas)
+- Minimizing actual travel time and distance
+
+**Output**: Highly accurate route with real road distances, traffic-aware durations, and detailed routing geometry matching navigation apps.
+
+---
+
 ## REST API Endpoints
 
-### 1️⃣ Calculate Optimal Route
+### 1️⃣ Calculate Optimal Route (Haversine)
 
 **POST** `/api/tracking/calculate`
 
-Calculate the best route sequence for a trip.
+Calculate the best route sequence using simple distance-based optimization. Provides quick results without external API dependency.
 
 **Authentication**: ✅ Driver token required
 
-**Request**:
+**What happens**:
 
-```json
-{
-  "trip_id": "TRP-ABC123",
-  "current_latitude": 28.6139,
-  "current_longitude": 77.209,
-  "pickup_points": [
-    {
-      "latitude": 28.5721,
-      "longitude": 77.2068,
-      "student_id": "STU-001"
-    }
-  ]
-}
-```
+1. Validates driver owns the trip
+2. Fetches all assigned students and their pickup addresses
+3. Calculates distances between all combinations using Haversine formula
+4. Orders waypoints using nearest-neighbor greedy algorithm
+5. Generates 10+ smooth intermediate coordinates per segment using SLERP
+6. Calculates estimated arrival time for each student
+7. Saves route data and sequence order to database
+8. Broadcasts updated route to all parents watching this trip via WebSocket
 
-**Response (201)**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "trip_id": "TRP-ABC123",
-    "total_distance": 15.8,
-    "total_duration": 1200,
-    "waypoints_optimized": [
-      {
-        "latitude": 28.5721,
-        "longitude": 77.2068,
-        "student_id": "STU-001",
-        "sequence_order": 1,
-        "estimated_arrival_time": "2024-01-26T10:35:00Z",
-        "distance_from_previous": 2.5,
-        "duration_from_previous": 450
-      }
-    ],
-    "route_geometry": {
-      "coordinates": [
-        [28.6139, 77.209],
-        [28.5721, 77.2068]
-      ],
-      "total_distance": 15.8,
-      "total_duration": 1200
-    },
-    "trip_students_updated": 2
-  },
-  "message": "Route calculated and optimized successfully"
-}
-```
-
-**What it does**:
-
-1. Fetches students assigned to trip
-2. Gets their pickup addresses
-3. Calls TomTom to find optimal sequence
-4. Calculates ETA for each student
-5. Broadcasts to parents via WebSocket
+**Outcome**: Route optimization completes in milliseconds. Parents see the route on their map with smooth curves between pickup points. Driver gets the optimized sequence to follow.
 
 ---
 
-### 2️⃣ Update Driver Position
+### 2️⃣ Calculate Optimal Route (TomTom)
+
+**POST** `/api/tracking/tomtom`
+
+Calculate the most accurate route using TomTom's real-world routing data. Takes longer but provides traffic-aware ETAs and actual road distances.
+
+**Authentication**: ✅ Driver token required
+
+**What happens**:
+
+1. Validates driver owns the trip
+2. Fetches all assigned students and their pickup addresses
+3. Calls TomTom Matrix API to calculate distances between all point combinations
+4. Uses matrix results to find optimal sequence minimizing total distance
+5. Retrieves detailed routing geometry from TomTom for the optimized path
+6. Generates estimated arrival times based on actual road speeds
+7. Saves route data with precise geometry to database
+8. Updates trip students with correct sequence order and ETA
+9. Broadcasts updated route to all parents via WebSocket
+
+**Outcome**: After 1-3 seconds, the system returns the truly optimal route with accurate distances and traffic-aware ETAs. Parents see the exact road-based route on their map. Driver follows navigation-quality directions.
+
+---
+
+### 3️⃣ Recalculate Route
+
+**POST** `/api/tracking/{tripId}/recalculate`
+
+Recalculate the optimal route from the driver's current position. Use when driver needs to change the route or finds an error in the sequence.
+
+**Authentication**: ✅ Driver token required
+
+**What happens**:
+
+1. Validates driver owns the trip
+2. Fetches currently assigned students
+3. Uses driver's current location as new starting point (instead of original start)
+4. Recalculates optimal sequence from current position using TomTom's matrix optimization
+5. Generates new route geometry from current location
+6. Updates database with new sequence order and recalculated ETAs
+7. Broadcasts the recalculation event and new route to all parents via WebSocket
+
+**Outcome**: Parents see the route update in real-time with new ETAs based on current position. The driver can continue following the new optimized sequence without starting over.
+
+---
+
+### 4️⃣ Update Driver Position
 
 **PATCH** `/api/tracking/{tripId}/position`
 
-Send current driver position (every 10-30 seconds).
+Send current driver position during the trip. Should be called every 10-30 seconds for real-time tracking.
 
 **Authentication**: ✅ Driver token required
 
-**Request**:
+**What happens**:
 
-```json
-{
-  "latitude": 28.5735,
-  "longitude": 77.2055,
-  "speed": 45.5,
-  "heading": 225.5,
-  "accuracy": 10.2
-}
-```
+1. Validates driver owns the trip and position is valid
+2. Checks if position is within 200 meters of the calculated route (corridor validation)
+3. If outside corridor, logs warning but still accepts the position
+4. Creates location tracking record with timestamp
+5. Saves position to database
+6. Immediately broadcasts new position to all parents watching this trip via WebSocket
 
-**Response (200)**:
-
-```json
-{
-  "success": true,
-  "data": {
-    "tracking_id": "LOC-ABC123",
-    "trip_id": "TRP-ABC123",
-    "driver_id": "DRIV-001",
-    "latitude": 28.5735,
-    "longitude": 77.2055,
-    "speed": 45.5,
-    "timestamp": "2024-01-26T10:30:45Z"
-  },
-  "message": "Position updated successfully"
-}
-```
-
-**What it does**:
-
-1. Validates position is within route corridor (±200m buffer)
-2. Creates location_tracking record
-3. Stores in database
-4. Broadcasts to parents via WebSocket
+**Outcome**: Parents see the driver's real-time location updating on their map. The system maintains a full history of driver positions throughout the trip.
 
 ---
 
-### 3️⃣ Get Current Driver Position
+### 5️⃣ Get Current Driver Position
 
 **GET** `/api/tracking/{tripId}/current-position`
 
-Get latest driver position for a trip.
+Get the latest known position of the driver for a trip.
 
-**Authentication**: ❌ None required
+**Authentication**: ❌ None required (public tracking)
 
-**Response (200)**:
+**What happens**:
 
-```json
-{
-  "success": true,
-  "data": {
-    "tracking_id": "LOC-ABC123",
-    "trip_id": "TRP-ABC123",
-    "driver_id": "DRIV-001",
-    "latitude": 28.5735,
-    "longitude": 77.2055,
-    "speed": 45.5,
-    "heading": 225.5,
-    "accuracy": 10.2,
-    "timestamp": "2024-01-26T10:30:45Z"
-  },
-  "message": "Current position retrieved successfully"
-}
-```
+1. Fetches the most recent position record from the location_tracking collection
+2. Returns the latest position with timestamp
+
+**Outcome**: Parents can check where the driver currently is at any time. If no position exists yet (trip not started), returns null.
 
 ---
 
-### 4️⃣ Get Route Details
+### 6️⃣ Get Route Details
 
 **GET** `/api/tracking/{tripId}/details`
 
-Get complete route with waypoints and current position.
+Get the complete trip information including the optimized route, all waypoints with ETAs, full route geometry, and current driver position.
 
-**Authentication**: ❌ None required
+**Authentication**: ❌ None required (public tracking)
 
-**Response (200)**:
+**What happens**:
 
-```json
-{
-  "success": true,
-  "data": {
-    "trip_id": "TRP-ABC123",
-    "trip_type": "pickup",
-    "trip_status": "in_progress",
-    "trip_date": "2024-01-26",
-    "total_distance": 15.8,
-    "optimized_route_data": {
-      "waypoints": [
-        {
-          "latitude": 28.5721,
-          "longitude": 77.2068,
-          "address": "Student Home 1, Delhi",
-          "student_id": "STU-001",
-          "distance_from_previous": 2.5,
-          "duration_from_previous": 450,
-          "estimated_arrival_time": "2024-01-26T10:35:00Z"
-        }
-      ],
-      "coordinates": [
-        [28.6139, 77.209],
-        [28.5721, 77.2068]
-      ],
-      "total_distance": 15.8,
-      "total_duration": 1200
-    },
-    "current_position": {
-      "tracking_id": "LOC-ABC123",
-      "trip_id": "TRP-ABC123",
-      "driver_id": "DRIV-001",
-      "latitude": 28.5735,
-      "longitude": 77.2055,
-      "speed": 45.5,
-      "heading": 225.5,
-      "accuracy": 10.2,
-      "timestamp": "2024-01-26T10:30:45Z"
-    }
-  },
-  "message": "Route details retrieved successfully"
-}
-```
+1. Fetches the trip record including stored route geometry
+2. Fetches all assigned students with their waypoint details
+3. Retrieves the latest driver position
+4. Assembles complete picture with route coordinates, waypoint sequence, and live position
+
+**Outcome**: Parents see the full route with all waypoints labeled with addresses and student names, current driver position, total distance and duration, and each student's estimated arrival time.
 
 ---
 
-### 5️⃣ Get Tracking History
+### 7️⃣ Get Tracking History
 
-**GET** `/api/tracking/{tripId}/tracking`
+**GET** `/api/tracking/{tripId}/tracking?limit=100`
 
-Get all position updates for a trip.
+Get all position updates recorded during this trip.
 
-**Authentication**: ❌ None required
+**Authentication**: ❌ None required (public tracking)
 
-**Query Parameters**:
+**What happens**:
 
-- `limit` (optional, default: 100)
+1. Fetches all position records for the trip sorted by most recent first
+2. Limits results to the specified amount (default 100)
+3. Returns full position history
 
-**Response (200)**:
-
-```json
-{
-  "success": true,
-  "data": [
-    {
-      "tracking_id": "LOC-ABC123",
-      "trip_id": "TRP-ABC123",
-      "driver_id": "DRIV-001",
-      "latitude": 28.5735,
-      "longitude": 77.2055,
-      "speed": 45.5,
-      "heading": 225.5,
-      "accuracy": 10.2,
-      "timestamp": "2024-01-26T10:30:45Z"
-    }
-  ],
-  "count": 45,
-  "message": "Tracking data retrieved successfully"
-}
-```
+**Outcome**: Parents can see the complete journey map showing where the driver has been throughout the trip. Useful for analysis, playback, or investigating any issues.
 
 ---
 
-### 6️⃣ Delete Old Tracking Data (Admin)
+### 8️⃣ Delete Old Tracking Data (Admin)
 
 **POST** `/api/tracking/admin/cleanup`
 
-Delete old tracking records.
+Remove tracking records older than a specified number of days. Helps manage database size and complies with data retention policies.
 
 **Authentication**: ✅ Admin token required
 
-**Request**:
+**What happens**:
 
-```json
-{
-  "days_old": 30
-}
-```
+1. Validates user has admin role
+2. Finds all tracking records older than the specified days
+3. Deletes them from the database
+4. Returns count of deleted records
 
-**Response (200)**:
+**Outcome**: Database storage is reduced by removing stale tracking data. System remains performant with manageable data volume.
 
-```json
-{
-  "success": true,
-  "data": {
-    "deleted_count": 15234
+---
+
+## WebSocket Integration
+
+Real-time tracking uses WebSocket connections for live position updates. See [WEBSOCKET.md](../websocket/WEBSOCKET.md) for complete documentation.
+
+### Security Features (v3.0.0)
+
+| Feature                | Description                                            |
+| ---------------------- | ------------------------------------------------------ |
+| **JWT Authentication** | All connections require valid JWT token                |
+| **Trip Authorization** | Drivers must own trip, parents must have child on trip |
+| **Rate Limiting**      | Position updates limited to 1 per 5 seconds            |
+| **Centralized Errors** | All errors via `socket:error` event                    |
+
+### Quick Connection Example
+
+**Driver Connection**:
+
+```javascript
+const socket = io("http://localhost:3000", {
+  auth: {
+    token: "driver_jwt_token", // Required
+    userId: "driver_123", // Required - must match token
+    role: "driver", // Required - must match token
   },
-  "message": "Deleted 15234 old tracking records"
-}
+});
+
+// Subscribe to trip (server verifies driver owns trip)
+socket.emit("driver:subscribe_trip", tripId, (success) => {
+  if (success) {
+    // Start sending positions
+    socket.emit("driver:update_position", {
+      tripId,
+      latitude: 12.9716,
+      longitude: 77.5946,
+      speed: 45,
+      heading: 180,
+      accuracy: 10,
+    });
+  }
+});
 ```
+
+**Parent Connection**:
+
+```javascript
+const socket = io("http://localhost:3000", {
+  auth: {
+    token: "parent_jwt_token", // Required
+    userId: "parent_123", // Required - must match token
+    role: "parent", // Required - must match token
+  },
+});
+
+// Subscribe to trip (server verifies parent has child on trip)
+socket.emit("parent:subscribe_trip", tripId, (success) => {
+  if (success) {
+    // Listen for position updates
+    socket.on("trip:position_update", (data) => {
+      updateMapMarker(data.latitude, data.longitude);
+    });
+  }
+});
+```
+
+### Event Flow
+
+```
+Driver App                    Server                      Parent App
+    │                           │                            │
+    ├── driver:subscribe_trip ─→│ (verify ownership)         │
+    │                           │                            │
+    ├── driver:trip_started ───→│─── trip:started ─────────→│
+    │                           │                            │
+    ├── driver:update_position→│─── trip:position_update ─→│
+    │   (rate limited: 5s)      │                            │
+    │                           │                            │
+    ├── driver:student_picked ─→│─── trip:student_picked ──→│
+    │                           │                            │
+    ├── driver:trip_completed ─→│─── trip:completed ───────→│
+    │                           │                            │
+```
+
+### Error Handling
+
+All authorization errors are sent via `socket:error` event:
+
+```javascript
+socket.on("socket:error", (data) => {
+  console.error(data.message);
+  // Possible messages:
+  // - "Missing authentication credentials"
+  // - "Invalid or expired token"
+  // - "Not authorized to access this trip"
+  // - "Not authorized to track this trip"
+  // - "Invalid coordinates"
+  // - "Rate limited"
+});
+```
+
+### Integration Order (Quick Reference)
+
+| Step | Driver                                       | Parent                                       |
+| ---- | -------------------------------------------- | -------------------------------------------- |
+| 1    | Connect with JWT (role: driver)              | Connect with JWT (role: parent)              |
+| 2    | Wait for `connect` event                     | Wait for `connect` event                     |
+| 3    | Emit `driver:subscribe_trip` → wait callback | Emit `parent:subscribe_trip` → wait callback |
+| 4    | REST: POST /api/tracking/calculate           | Register listeners (trip:\*, socket:error)   |
+| 5    | Emit `driver:trip_started`                   | Wait for events (automatic from driver)      |
+| 6    | Emit `driver:update_position` (every 10s)    | Handle `trip:position_update`                |
+| 7    | Emit `driver:approaching_waypoint`           | Handle `trip:approaching`                    |
+| 8    | Emit `driver:student_picked`                 | Handle `trip:student_picked`                 |
+| 9    | Emit `driver:student_dropped`                | Handle `trip:student_dropped`                |
+| 10   | Emit `driver:trip_completed`                 | Handle `trip:completed`                      |
+| 11   | Emit `driver:unsubscribe_trip`               | Emit `parent:unsubscribe_trip`               |
+
+> 📖 **Full Details**: See [WEBSOCKET.md](../websocket/WEBSOCKET.md) for complete step-by-step code examples
 
 ---
 
 ## Authentication
 
-| Endpoint                         | Auth Required | Who Can Use                    |
-| -------------------------------- | ------------- | ------------------------------ |
-| POST `/calculate`                | ✅ Driver JWT | Drivers only (for their trips) |
-| PATCH `/{tripId}/position`       | ✅ Driver JWT | Drivers only (for their trips) |
-| GET `/{tripId}/current-position` | ❌ None       | Anyone (parents can track)     |
-| GET `/{tripId}/details`          | ❌ None       | Anyone (parents can view)      |
-| GET `/{tripId}/tracking`         | ❌ None       | Anyone (view history)          |
-| POST `/admin/cleanup`            | ✅ Admin JWT  | Admins only                    |
+| Endpoint                         | Auth Required | Who Can Use                           |
+| -------------------------------- | ------------- | ------------------------------------- |
+| POST `/calculate`                | ✅ Driver JWT | Drivers only (for their trips)        |
+| POST `/tomtom`                   | ✅ Driver JWT | Drivers only (for their trips)        |
+| POST `/{tripId}/recalculate`     | ✅ Driver JWT | Drivers only (for their trips)        |
+| PATCH `/{tripId}/position`       | ✅ Driver JWT | Drivers only (for their trips)        |
+| GET `/{tripId}/current-position` | ❌ None       | Anyone (public - for parent tracking) |
+| GET `/{tripId}/details`          | ❌ None       | Anyone (public - for parent tracking) |
+| GET `/{tripId}/tracking`         | ❌ None       | Anyone (public - view history)        |
+| POST `/admin/cleanup`            | ✅ Admin JWT  | Admins only                           |
 
 ---
 
@@ -339,38 +405,39 @@ Delete old tracking records.
 
 ### location_tracking Collection
 
-```json
-{
-  "_id": ObjectId,
-  "tracking_id": "LOC-ABC123",
-  "trip_id": "TRP-ABC123",
-  "driver_id": "DRIV-001",
-  "latitude": 28.5735,
-  "longitude": 77.2055,
-  "speed": 45.5,
-  "heading": 225.5,
-  "accuracy": 10.2,
-  "timestamp": "2024-01-26T10:30:45Z"
-}
-```
+Stores every driver position update during a trip.
+
+**Fields**:
+
+- `tracking_id`: Unique identifier for this tracking record
+- `trip_id`: Which trip this position belongs to
+- `driver_id`: Which driver sent this position
+- `latitude` & `longitude`: Position coordinates
+- `speed`: Current speed in km/h
+- `heading`: Direction in degrees (0-360)
+- `accuracy`: GPS accuracy in meters
+- `timestamp`: When this position was recorded
 
 **Indexes**:
 
-- `trip_id, timestamp` (for fast trip lookups)
-- `driver_id, timestamp` (for driver tracking)
-- TTL: Auto-delete after 30 days
+- Composite index on `trip_id` and `timestamp` for fast trip lookups
+- Separate index on `driver_id` and `timestamp` for driver history
+- TTL (Time-To-Live) index: Auto-delete records older than 30 days
 
 ---
 
 ## Common Issues & Solutions
 
-| Issue                         | Cause               | Solution                                |
-| ----------------------------- | ------------------- | --------------------------------------- |
-| **TomTom API 401**            | Invalid API key     | Check TOMTOM_API_KEY in .env            |
-| **Trip not found**            | Invalid trip_id     | Verify trip exists in database          |
-| **Permission denied**         | Not trip owner      | Driver can only update own trips        |
-| **No students assigned**      | Empty trip_students | Create student assignments first        |
-| **Position outside corridor** | Driver deviated     | Service logs warning but accepts update |
+| Issue                              | Cause                      | Solution                                              |
+| ---------------------------------- | -------------------------- | ----------------------------------------------------- |
+| **TomTom API 401 error**           | Invalid or missing API key | Verify TOMTOM_API_KEY in environment file             |
+| **Trip not found**                 | Wrong trip_id provided     | Check trip exists and tripId is correct               |
+| **Permission denied**              | Driver doesn't own trip    | Drivers can only calculate/update own trips           |
+| **No students assigned**           | Empty trip_students list   | Assign students to trip before calculating route      |
+| **Position outside corridor**      | Driver deviated from route | Service logs warning but still records position       |
+| **No position data available**     | Trip hasn't started yet    | Driver hasn't sent first position - is trip started?  |
+| **TomTom request timeout**         | Network or API overload    | Retry with exponential backoff, fallback to Haversine |
+| **Coordinates missing/incomplete** | Route not calculated yet   | Calculate route first before getting details          |
 
 ---
 
@@ -378,17 +445,39 @@ Delete old tracking records.
 
 ```
 src/modules/tracking/
-├── tracking.type.ts          → TypeScript interfaces
-├── tracking.validation.ts    → Joi schemas
-├── tracking.repository.ts    → Database queries
-├── tracking.service.ts       → Business logic
-├── tracking.controller.ts    → HTTP handlers
-├── tracking.routes.ts        → Express routes
-└── index.ts                  → Module exports
+├── tracking.type.ts              → TypeScript interfaces
+├── tracking.validation.ts        → Request validation schemas
+├── tracking.repository.ts        → Database operations
+├── tracking.service.ts           → Business logic (Haversine & TomTom)
+├── tracking.socket.service.ts    → WebSocket broadcasting
+├── tracking.controller.ts        → HTTP request handlers
+├── tracking.routes.ts            → Express route definitions
+└── index.ts                      → Module exports
 
 src/shared/services/
-└── tomtom.service.ts        → TomTom API calls
+├── geo-util.service.ts          → Geolocation utilities (Haversine, SLERP, etc)
+└── tomtom.service.ts            → TomTom API integration
 ```
+
+---
+
+## How Route Calculation Works
+
+### Behind the Scenes: Haversine Flow
+
+1. **Distance Calculation**: Uses Haversine formula to compute direct distances between all waypoints
+2. **Coordinate Interpolation**: Applies Spherical Linear Interpolation (SLERP) to create smooth intermediate points every ~0.5km
+3. **Sequence Optimization**: Orders waypoints using greedy nearest-neighbor algorithm
+4. **ETA Computation**: Estimates arrival times based on 40 km/h average urban speed
+5. **Visualization**: Returns dense coordinate array (100+ points) for smooth map rendering
+
+### Behind the Scenes: TomTom Flow
+
+1. **Matrix Calculation**: Sends all waypoints to TomTom Matrix API to get real-world distances between every pair
+2. **Optimization**: Uses matrix distances to find the sequence that minimizes total travel time
+3. **Routing**: Retrieves detailed routing geometry for the optimized path from TomTom's routing engine
+4. **ETA Computation**: Calculates arrival times based on actual road speeds and traffic
+5. **Visualization**: Returns precise route geometry with all turns and actual road paths
 
 ---
 
@@ -396,10 +485,12 @@ src/shared/services/
 
 - **WebSocket Integration**: See `docs/websocket/WEBSOCKET.md`
 - **Flutter Implementation**: See `docs/websocket/FLUTTER_INTEGRATION.md`
+- **School Transport System**: See `docs/schools/SCHOOL_TRANSPORT_SYSTEM.md`
 - **TomTom API**: https://developer.tomtom.com/
-- **Database**: See `Database/ping_parent_dbdiagram.dbml`
+- **Database Design**: See `Database/ping_parent_dbdiagram.dbml`
 
 ---
 
 **Status**: ✅ Production Ready  
-**Last Updated**: January 26, 2026
+**Last Updated**: February 5, 2026  
+**Changes in v3.0.0**: Added WebSocket security (JWT auth, trip authorization, rate limiting), updated event names to use enums, added Admin socket events section
