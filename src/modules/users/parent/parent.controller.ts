@@ -225,7 +225,7 @@ export const getAddressParent = asyncHandler(
  * Get active trips for parent's children
  * Active = trip_status is STARTED or IN_PROGRESS
  */
-export const getMyActiveTrips = asyncHandler(
+export const getMyActiveTripsParent = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = getUserIdFromRequest(req);
 
