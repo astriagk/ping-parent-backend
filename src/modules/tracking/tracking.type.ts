@@ -15,6 +15,7 @@ export interface RouteWaypoint {
   parent_name?: string;
   parent_email?: string;
   parent_phone_number?: string;
+  parent_user_id?: string;
   duration_from_previous?: number; // in seconds
   distance_from_previous?: number; // in kilometers
   estimated_arrival_time?: Date;

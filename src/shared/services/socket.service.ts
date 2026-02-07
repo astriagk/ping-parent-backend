@@ -235,6 +235,10 @@ export class SocketService {
             return;
           }
 
+          console.log(
+            `[Socket] Sending position update - Trip: ${tripId}, Driver: ${userId}, Lat: ${latitude}, Lng: ${longitude}`,
+          );
+
           this.io
             .to(`trip:${tripId}:tracking`)
             .emit(BroadcastSocketEvent.POSITION_UPDATE, {
