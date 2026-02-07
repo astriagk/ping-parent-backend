@@ -96,6 +96,7 @@ const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
       parent_name: firstStudent.parent_name,
       parent_email: firstStudent.parent_email,
       parent_phone_number: firstStudent.parent_phone_number,
+      parent_user_id: firstStudent.parent_user_id,
     });
   }
 
