@@ -235,7 +235,7 @@ export class SocketService {
             return;
           }
 
-          console.log(
+          logger.info(
             `[Socket] Sending position update - Trip: ${tripId}, Driver: ${userId}, Lat: ${latitude}, Lng: ${longitude}`,
           );
 
