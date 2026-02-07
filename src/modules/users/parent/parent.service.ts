@@ -3,6 +3,7 @@ import { ObjectId } from "mongodb";
 import { User } from "@modules/auth/auth.type";
 import { getDB } from "@shared/config";
 import {
+  DRIVERS_COLLECTION,
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
   STUDENTS_COLLECTION,
@@ -316,179 +317,454 @@ export const getCompleteParentDetailsById = async (
 
 /**
  * Get active trips for a parent's children
+ * Uses aggregation pipeline for efficient querying
  * Flow: user_id -> parent_id -> students -> trip_students -> trips (with status = in_progress/started)
  */
 export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
   const db = await getDB();
 
-  // Step 1: Get parent_id from user_id
-  const parent = await db
+  const result = await db
     .collection(PARENTS_COLLECTION)
-    .findOne({ user_id: userId });
+    .aggregate([
+      // Match parent by user_id
+      {
+        $match: { user_id: userId },
+      },
+      // Lookup students for this parent
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          let: { parentId: { $toString: "$_id" } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$parent_id", "$$parentId"] },
+              },
+            },
+          ],
+          as: "students",
+        },
+      },
+      // Check if parent exists (parent is the starting point)
+      {
+        $facet: {
+          parentData: [{ $limit: 1 }],
+          studentsWithTrips: [
+            // If no students, this will be empty
+            {
+              $unwind: {
+                path: "$students",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            // Lookup trip_students for each student
+            {
+              $lookup: {
+                from: TRIP_STUDENTS_COLLECTION,
+                let: { studentId: "$students.student_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: ["$student_id", "$$studentId"] },
+                    },
+                  },
+                ],
+                as: "tripStudentRecords",
+              },
+            },
+            {
+              $unwind: {
+                path: "$tripStudentRecords",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            // Lookup trips with status filter
+            {
+              $lookup: {
+                from: TRIPS_COLLECTION,
+                let: { tripId: "$tripStudentRecords.trip_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: ["$trip_id", "$$tripId"] },
+                      trip_status: {
+                        $in: [TripStatus.STARTED, TripStatus.IN_PROGRESS],
+                      },
+                    },
+                  },
+                ],
+                as: "trip",
+              },
+            },
+            {
+              $unwind: {
+                path: "$trip",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            // Group by trip to consolidate students
+            {
+              $group: {
+                _id: "$trip.trip_id",
+                trip: { $first: "$trip" },
+                students: {
+                  $addToSet: {
+                    student_id: "$students.student_id",
+                    student_name: "$students.student_name",
+                    class: "$students.class",
+                    section: "$students.section",
+                    roll_number: "$students.roll_number",
+                  },
+                },
+              },
+            },
+            // Lookup driver details by driver_id with user data
+            {
+              $lookup: {
+                from: DRIVERS_COLLECTION,
+                let: { driverId: "$trip.driver_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: [
+                          { $convert: { input: "$_id", to: "string" } },
+                          "$$driverId",
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "driver",
+              },
+            },
+            {
+              $unwind: {
+                path: "$driver",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            // Lookup user details for driver by user_id
+            {
+              $lookup: {
+                from: USERS_COLLECTION,
+                let: { userId: "$driver.user_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: [
+                          { $convert: { input: "$_id", to: "string" } },
+                          "$$userId",
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "driverUser",
+              },
+            },
+            {
+              $unwind: {
+                path: "$driverUser",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            // Shape the final response for active trips
+            {
+              $project: {
+                _id: "$trip._id",
+                trip_id: "$trip.trip_id",
+                trip_type: "$trip.trip_type",
+                trip_status: "$trip.trip_status",
+                trip_date: "$trip.trip_date",
+                start_time: "$trip.start_time",
+                end_time: "$trip.end_time",
+                driver_id: "$trip.driver_id",
+                school_id: "$trip.school_id",
+                total_distance: "$trip.total_distance",
+                optimized_route_data: "$trip.optimized_route_data",
+                students: 1,
+                driver: {
+                  _id: "$driver._id",
+                  driver_id: "$driver.driver_id",
+                  driver_unique_id: "$driver.driver_unique_id",
+                  name: "$driver.name",
+                  email: "$driver.email",
+                  photo_url: "$driver.photo_url",
+                  vehicle_type: "$driver.vehicle_type",
+                  vehicle_number: "$driver.vehicle_number",
+                  vehicle_capacity: "$driver.vehicle_capacity",
+                  current_student_count: "$driver.current_student_count",
+                  approval_status: "$driver.approval_status",
+                  is_available: "$driver.is_available",
+                  rating: "$driver.rating",
+                  total_trips: "$driver.total_trips",
+                  user: {
+                    _id: "$driverUser._id",
+                    user_id: "$driverUser.user_id",
+                    phone_number: "$driverUser.phone_number",
+                    user_type: "$driverUser.user_type",
+                    is_active: "$driverUser.is_active",
+                  },
+                },
+                created_at: "$trip.created_at",
+                updated_at: "$trip.updated_at",
+              },
+            },
+          ],
+        },
+      },
+      // Check if parent was found
+      {
+        $replaceRoot: {
+          newRoot: {
+            $cond: [
+              { $eq: [{ $size: "$parentData" }, 0] },
+              { error: "PARENT_NOT_FOUND" },
+              { trips: "$studentsWithTrips" },
+            ],
+          },
+        },
+      },
+    ])
+    .toArray();
 
-  if (!parent) {
+  const faceTResult = result[0];
+
+  if (faceTResult.error === "PARENT_NOT_FOUND") {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
       ERROR_MESSAGES.PARENT?.PARENT_PROFILE_NOT_FOUND || "Parent not found",
     );
   }
 
-  const parentId = parent.parent_id || String(parent._id);
-
-  // Step 2: Get all students for this parent
-  const students = await db
-    .collection(STUDENTS_COLLECTION)
-    .find({ parent_id: parentId })
-    .toArray();
-
-  if (students.length === 0) {
-    return []; // Parent has no students
-  }
-
-  const studentIds = students.map((s) => s.student_id || String(s._id));
-
-  // Step 3: Get trip_students records for these students
-  const tripStudents = await db
-    .collection(TRIP_STUDENTS_COLLECTION)
-    .find({ student_id: { $in: studentIds } })
-    .toArray();
-
-  if (tripStudents.length === 0) {
-    return []; // No trips assigned to these students
-  }
-
-  const tripIds = tripStudents.map((ts) => ts.trip_id);
-
-  // Step 4: Get active trips
-  const activeTrips = await db
-    .collection(TRIPS_COLLECTION)
-    .find({
-      trip_id: { $in: tripIds },
-      trip_status: { $in: [TripStatus.STARTED, TripStatus.IN_PROGRESS] },
-    })
-    .toArray();
-
-  // Step 5: Enrich trips with student info
-  const enrichedTrips = activeTrips.map((trip) => {
-    const tripStudentRecords = tripStudents.filter(
-      (ts) => ts.trip_id === trip.trip_id,
-    );
-    const tripStudentIds = tripStudentRecords.map((ts) => ts.student_id);
-    const tripStudentsData = students.filter((s) =>
-      tripStudentIds.includes(s.student_id || String(s._id)),
-    );
-
-    return {
-      _id: trip._id,
-      trip_id: trip.trip_id,
-      trip_type: trip.trip_type,
-      trip_status: trip.trip_status,
-      trip_date: trip.trip_date,
-      start_time: trip.start_time,
-      end_time: trip.end_time,
-      driver_id: trip.driver_id,
-      school_id: trip.school_id,
-      total_distance: trip.total_distance,
-      optimized_route_data: trip.optimized_route_data,
-      students: tripStudentsData.map((s) => ({
-        student_id: s.student_id || String(s._id),
-        student_name: s.student_name,
-        class: s.class,
-        section: s.section,
-        roll_number: s.roll_number,
-      })),
-      created_at: trip.created_at,
-      updated_at: trip.updated_at,
-    };
-  });
-
-  return enrichedTrips;
+  return faceTResult.trips || [];
 };
 
 /**
  * Get all trips (active + completed) for a parent's children
+ * Uses aggregation pipeline for efficient querying
  */
 export const getParentAllTrips = async (userId: string): Promise<any[]> => {
   const db = await getDB();
 
-  // Step 1: Get parent_id from user_id
-  const parent = await db
+  const result = await db
     .collection(PARENTS_COLLECTION)
-    .findOne({ user_id: userId });
+    .aggregate([
+      // Match parent by user_id
+      {
+        $match: { user_id: userId },
+      },
+      // Lookup students for this parent
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          let: { parentId: { $toString: "$_id" } },
+          pipeline: [
+            {
+              $match: {
+                $expr: { $eq: ["$parent_id", "$$parentId"] },
+              },
+            },
+          ],
+          as: "students",
+        },
+      },
+      // Check if parent exists and has students
+      {
+        $facet: {
+          parentData: [{ $limit: 1 }],
+          studentsWithTrips: [
+            // If no students, this will be empty
+            {
+              $unwind: {
+                path: "$students",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            // Lookup trip_students for each student
+            {
+              $lookup: {
+                from: TRIP_STUDENTS_COLLECTION,
+                let: { studentId: "$students.student_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: ["$student_id", "$$studentId"] },
+                    },
+                  },
+                ],
+                as: "tripStudentRecords",
+              },
+            },
+            {
+              $unwind: {
+                path: "$tripStudentRecords",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            // Lookup all trips (no status filter)
+            {
+              $lookup: {
+                from: TRIPS_COLLECTION,
+                let: { tripId: "$tripStudentRecords.trip_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: { $eq: ["$trip_id", "$$tripId"] },
+                    },
+                  },
+                ],
+                as: "trip",
+              },
+            },
+            {
+              $unwind: {
+                path: "$trip",
+                preserveNullAndEmptyArrays: false,
+              },
+            },
+            // Group by trip to consolidate students
+            {
+              $group: {
+                _id: "$trip.trip_id",
+                trip: { $first: "$trip" },
+                students: {
+                  $addToSet: {
+                    student_id: "$students.student_id",
+                    student_name: "$students.student_name",
+                    class: "$students.class",
+                    section: "$students.section",
+                    roll_number: "$students.roll_number",
+                  },
+                },
+              },
+            },
+            // Sort by trip_date descending
+            {
+              $sort: { "trip.trip_date": -1 },
+            },
+            // Lookup driver details by driver_id with user data
+            {
+              $lookup: {
+                from: DRIVERS_COLLECTION,
+                let: { driverId: "$trip.driver_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: [
+                          { $convert: { input: "$_id", to: "string" } },
+                          "$$driverId",
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "driver",
+              },
+            },
+            {
+              $unwind: {
+                path: "$driver",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            // Lookup user details for driver by user_id
+            {
+              $lookup: {
+                from: USERS_COLLECTION,
+                let: { userId: "$driver.user_id" },
+                pipeline: [
+                  {
+                    $match: {
+                      $expr: {
+                        $eq: [
+                          { $convert: { input: "$_id", to: "string" } },
+                          "$$userId",
+                        ],
+                      },
+                    },
+                  },
+                ],
+                as: "driverUser",
+              },
+            },
+            {
+              $unwind: {
+                path: "$driverUser",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            // Shape the final response for all trips
+            {
+              $project: {
+                _id: "$trip._id",
+                trip_id: "$trip.trip_id",
+                trip_type: "$trip.trip_type",
+                trip_status: "$trip.trip_status",
+                trip_date: "$trip.trip_date",
+                start_time: "$trip.start_time",
+                end_time: "$trip.end_time",
+                driver_id: "$trip.driver_id",
+                school_id: "$trip.school_id",
+                total_distance: "$trip.total_distance",
+                optimized_route_data: "$trip.optimized_route_data",
+                students: 1,
+                driver: {
+                  _id: "$driver._id",
+                  driver_id: "$driver.driver_id",
+                  driver_unique_id: "$driver.driver_unique_id",
+                  name: "$driver.name",
+                  email: "$driver.email",
+                  photo_url: "$driver.photo_url",
+                  vehicle_type: "$driver.vehicle_type",
+                  vehicle_number: "$driver.vehicle_number",
+                  vehicle_capacity: "$driver.vehicle_capacity",
+                  current_student_count: "$driver.current_student_count",
+                  approval_status: "$driver.approval_status",
+                  is_available: "$driver.is_available",
+                  rating: "$driver.rating",
+                  total_trips: "$driver.total_trips",
+                  user: {
+                    _id: "$driverUser._id",
+                    user_id: "$driverUser.user_id",
+                    phone_number: "$driverUser.phone_number",
+                    user_type: "$driverUser.user_type",
+                    is_active: "$driverUser.is_active",
+                  },
+                },
+                created_at: "$trip.created_at",
+                updated_at: "$trip.updated_at",
+              },
+            },
+          ],
+        },
+      },
+      // Check if parent was found
+      {
+        $replaceRoot: {
+          newRoot: {
+            $cond: [
+              { $eq: [{ $size: "$parentData" }, 0] },
+              { error: "PARENT_NOT_FOUND" },
+              { trips: "$studentsWithTrips" },
+            ],
+          },
+        },
+      },
+    ])
+    .toArray();
 
-  if (!parent) {
+  const facetResult = result[0];
+
+  if (facetResult.error === "PARENT_NOT_FOUND") {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
       ERROR_MESSAGES.PARENT?.PARENT_PROFILE_NOT_FOUND || "Parent not found",
     );
   }
 
-  const parentId = parent.parent_id || String(parent._id);
-
-  // Step 2: Get all students for this parent
-  const students = await db
-    .collection(STUDENTS_COLLECTION)
-    .find({ parent_id: parentId })
-    .toArray();
-
-  if (students.length === 0) {
-    return [];
-  }
-
-  const studentIds = students.map((s) => s.student_id || String(s._id));
-
-  // Step 3: Get trip_students records for these students
-  const tripStudents = await db
-    .collection(TRIP_STUDENTS_COLLECTION)
-    .find({ student_id: { $in: studentIds } })
-    .toArray();
-
-  if (tripStudents.length === 0) {
-    return [];
-  }
-
-  const tripIds = tripStudents.map((ts) => ts.trip_id);
-
-  // Step 4: Get all trips (not filtering by status)
-  const trips = await db
-    .collection(TRIPS_COLLECTION)
-    .find({ trip_id: { $in: tripIds } })
-    .sort({ trip_date: -1 })
-    .toArray();
-
-  // Step 5: Enrich trips with student info
-  const enrichedTrips = trips.map((trip) => {
-    const tripStudentRecords = tripStudents.filter(
-      (ts) => ts.trip_id === trip.trip_id,
-    );
-    const tripStudentIds = tripStudentRecords.map((ts) => ts.student_id);
-    const tripStudentsData = students.filter((s) =>
-      tripStudentIds.includes(s.student_id || String(s._id)),
-    );
-
-    return {
-      _id: trip._id,
-      trip_id: trip.trip_id,
-      trip_type: trip.trip_type,
-      trip_status: trip.trip_status,
-      trip_date: trip.trip_date,
-      start_time: trip.start_time,
-      end_time: trip.end_time,
-      driver_id: trip.driver_id,
-      school_id: trip.school_id,
-      total_distance: trip.total_distance,
-      optimized_route_data: trip.optimized_route_data,
-      students: tripStudentsData.map((s) => ({
-        student_id: s.student_id || String(s._id),
-        student_name: s.student_name,
-        class: s.class,
-        section: s.section,
-        roll_number: s.roll_number,
-      })),
-      created_at: trip.created_at,
-      updated_at: trip.updated_at,
-    };
-  });
-
-  return enrichedTrips;
+  return facetResult.trips || [];
 };
