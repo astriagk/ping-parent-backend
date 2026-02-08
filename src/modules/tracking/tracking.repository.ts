@@ -270,6 +270,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             parent_name: "$parentDetails.name",
             parent_email: "$parentDetails.email",
             parent_phone_number: "$userDetails.phone_number",
+            parent_user_id: "$parentDetails.user_id",
             latitude: "$addressDetails.latitude",
             longitude: "$addressDetails.longitude",
             address: {

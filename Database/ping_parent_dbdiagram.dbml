@@ -244,7 +244,25 @@ Table trip_students {
     (trip_id, sequence_order)
   }
   
-  Note: 'sequence_order is auto-calculated using routing algorithm based on student home addresses and school location'
+  Note: '''sequence_order is auto-calculated using routing algorithm based on student home addresses and school location.
+  
+  Bulk Stop Action (POST /trip-students/trip/:tripId/bulk-stop-action):
+  - Works for both PICKUP (morning) and DROP (evening) trips based on trip.trip_type
+  - Request body: student_ids[], absent_student_ids[], otp_code/qr_code, latitude, longitude
+  - PICKUP trip: sets pickup_status=PICKED, pickup_time, pickup_lat/long
+  - DROP trip: validates PICKED status, sets pickup_status=DROPPED, drop_time, drop_lat/long
+  - Updates daily_qr_otp verified_student_ids/absent_student_ids
+  - OTP required only for pickup/drop, not for marking absent
+  
+  Bulk School Action (POST /trip-students/trip/:tripId/bulk-school-action):
+  - Used at school location - NO OTP required
+  - Request body: student_ids[], latitude, longitude
+  - PICKUP trip: marks PICKED students as DROPPED at school (drop_time, drop_lat/long)
+  - DROP trip: marks PENDING students as PICKED from school (pickup_time, pickup_lat/long)
+  
+  Complete Flow:
+  PICKUP (morning): bulk-stop-action at home (OTP) → bulk-school-action at school (no OTP)
+  DROP (evening): bulk-school-action at school (no OTP) → bulk-stop-action at home (OTP)'''
 }
 
 Table location_tracking {
@@ -267,7 +285,8 @@ Table location_tracking {
 
 Table daily_qr_otp {
   qr_otp_id varchar(36) [pk]
-  student_id varchar(36) [not null, ref: > students.student_id]
+  parent_id varchar(36) [not null, ref: > parents.parent_id, note: 'One OTP per parent per trip']
+  student_ids json [not null, note: 'Array of student_ids covered by this OTP']
   trip_id varchar(36) [not null, ref: > trips.trip_id]
   qr_code varchar(255) [unique, not null]
   otp_code varchar(6) [not null]
@@ -276,14 +295,23 @@ Table daily_qr_otp {
   valid_until timestamp [not null]
   is_used boolean [default: false]
   used_at timestamp
+  verified_student_ids json [note: 'Students who were picked up/dropped via bulk-stop-action or individual pickup']
+  absent_student_ids json [note: 'Students marked absent via bulk-stop-action or markAttendance']
   created_at timestamp [default: `CURRENT_TIMESTAMP`]
   
   indexes {
-    (student_id, valid_from)
+    (parent_id, trip_id)
     qr_code
     otp_code
     valid_until
   }
+  
+  Note: '''Parent-grouped OTP: One OTP covers all children of same parent in a trip.
+  Updated by:
+  - bulk-stop-action: student_ids → verified_student_ids, absent_student_ids → absent_student_ids
+  - Individual pickup/drop: adds to verified_student_ids
+  - markAttendance(absent): adds to absent_student_ids
+  is_used becomes true when all student_ids are in verified_student_ids OR absent_student_ids'''
 }
 
 Table notifications {

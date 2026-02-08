@@ -9,12 +9,16 @@ import {
   getTripStudentsByPickup,
   getTripStudentsByStudent,
   getTripStudentsByTrip,
+  handleBulkSchoolAction,
+  handleBulkStopAction,
   markStudentAttendance,
   recordStudentDrop,
   recordStudentPickup,
   updateTripStudentRecord,
 } from "./trip_student.controller";
 import {
+  bulkSchoolActionSchema,
+  bulkStopActionSchema,
   markAttendanceSchema,
   recordDropSchema,
   recordPickupSchema,
@@ -47,7 +51,21 @@ router.put(
   recordStudentDrop,
 );
 
-// 04. Get Trip Students
+// 04. Bulk Stop Action - handle multiple students at one stop (OTP required)
+router.post(
+  "/trip/:tripId/bulk-stop-action",
+  validate(bulkStopActionSchema),
+  handleBulkStopAction,
+);
+
+// 05. Bulk School Action - handle students at school (No OTP)
+router.post(
+  "/trip/:tripId/bulk-school-action",
+  validate(bulkSchoolActionSchema),
+  handleBulkSchoolAction,
+);
+
+// 06. Get Trip Students
 router.get("/trip/:tripId", getTripStudentsByTrip);
 
 // Additional Routes
