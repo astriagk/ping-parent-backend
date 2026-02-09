@@ -52,6 +52,7 @@ const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
   const uniqueWaypoints: RouteWaypoint[] = [];
   for (const [parentId, studentList] of grouped.entries()) {
     const firstStudent = studentList[0];
+    console.log(firstStudent);
 
     const studentIds = studentList.flatMap((s) => {
       if (Array.isArray(s.student_id)) {

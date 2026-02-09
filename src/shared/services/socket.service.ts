@@ -126,6 +126,21 @@ export class SocketService {
     }
   }
 
+  /**
+   * Get parent_id (MongoDB _id) from user_id for room joining
+   */
+  private async getParentIdFromUserId(userId: string): Promise<string | null> {
+    try {
+      const db = await getDB();
+      const parent = await db
+        .collection(PARENTS_COLLECTION)
+        .findOne({ user_id: userId });
+      return parent ? String(parent._id) : null;
+    } catch {
+      return null;
+    }
+  }
+
   private checkPositionRateLimit(tripId: string): boolean {
     const now = Date.now();
     const lastUpdate = positionUpdateTimestamps.get(tripId) || 0;
@@ -139,10 +154,19 @@ export class SocketService {
   }
 
   private setupConnectionHandlers() {
-    this.io.on("connection", (socket: Socket) => {
+    this.io.on("connection", async (socket: Socket) => {
       const { userId, role } = socket.data;
       logger.info(`Socket connected: ${userId} (${role})`);
 
+      // Auto-join parents to their personal room for direct notifications
+      if (role === UserRole.PARENT) {
+        const parentId = await this.getParentIdFromUserId(userId);
+        if (parentId) {
+          socket.join(`parent:${parentId}`);
+          socket.data.parentId = parentId;
+          logger.info(`Parent ${userId} joined room parent:${parentId}`);
+        }
+      }
       socket.on(
         DriverSocketEvent.SUBSCRIBE_TRIP,
         async (tripId: string, callback?: (success: boolean) => void) => {
@@ -412,6 +436,19 @@ export class SocketService {
     data: Record<string, any>,
   ) {
     this.io.to(`trip:${tripId}:driver`).emit(event, data);
+  }
+
+  /**
+   * Send event to a specific parent by their parent_id (MongoDB _id from parents collection)
+   * Used for parent-specific notifications like their child's pickup/drop
+   */
+  public emitToParent(
+    parentId: string,
+    event: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    data: Record<string, any>,
+  ) {
+    this.io.to(`parent:${parentId}`).emit(event, data);
   }
 
   public getIO(): SocketIOServer {

@@ -9,12 +9,16 @@ import {
   getTripStudentsByPickup,
   getTripStudentsByStudent,
   getTripStudentsByTrip,
+  handleBulkSchoolAction,
+  handleBulkStopAction,
   markStudentAttendance,
   recordStudentDrop,
   recordStudentPickup,
   updateTripStudentRecord,
 } from "./trip_student.controller";
 import {
+  bulkSchoolActionSchema,
+  bulkStopActionSchema,
   markAttendanceSchema,
   recordDropSchema,
   recordPickupSchema,
@@ -47,7 +51,21 @@ router.put(
   recordStudentDrop,
 );
 
-// 04. Get Trip Students
+// 04. Pickup Point - pickup/drop students at parent location (OTP required)
+router.post(
+  "/trip/:tripId/pickup-point",
+  validate(bulkStopActionSchema),
+  handleBulkStopAction,
+);
+
+// 05. School Point - pickup/drop students at school (No OTP)
+router.post(
+  "/trip/:tripId/school-point",
+  validate(bulkSchoolActionSchema),
+  handleBulkSchoolAction,
+);
+
+// 06. Get Trip Students
 router.get("/trip/:tripId", getTripStudentsByTrip);
 
 // Additional Routes

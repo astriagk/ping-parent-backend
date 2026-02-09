@@ -180,6 +180,7 @@ export const ERROR_MESSAGES = {
     ATTENDANCE_STATUS_REQUIRED: "Attendance status is required",
     PICKUP_STATUS_REQUIRED: "Pickup status is required",
     MUST_BE_PICKED_BEFORE_DROP: "Student must be picked up before dropping off",
+    NO_STUDENTS_PROVIDED: "At least one student must be provided",
   },
   DAILY_QR_OTP: {
     NOT_FOUND: "QR code/OTP not found",
@@ -461,6 +462,8 @@ export const SUCCESS_MESSAGES = {
     ATTENDANCE_MARKED_SUCCESSFULLY: "Attendance marked successfully",
     PICKUP_RECORDED_SUCCESSFULLY: "Student pickup recorded successfully",
     DROP_RECORDED_SUCCESSFULLY: "Student drop recorded successfully",
+    BULK_STOP_ACTION_SUCCESSFUL: "Bulk stop action completed successfully",
+    BULK_SCHOOL_ACTION_SUCCESSFUL: "Bulk school action completed successfully",
   },
   DAILY_QR_OTP: {
     GENERATED_SUCCESSFULLY: "QR code and OTP generated successfully",

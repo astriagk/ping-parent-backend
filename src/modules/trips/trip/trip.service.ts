@@ -8,11 +8,13 @@ import {
   HTTP_STATUS,
   TRIP_STUDENTS_COLLECTION,
   TripStatus,
+  TripType,
   UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
 
+import { generateBulkQrOtp } from "../daily_qr_otp/daily_qr_otp.service";
 import { tripRepository } from "./trip.repository";
 import { Trip } from "./trip.type";
 
@@ -36,10 +38,12 @@ const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
 
 /**
  * Auto-create trip students for all active students assigned to this driver
+ * and generate QR/OTP for each student using bulk insert
  */
 const createTripStudentsForTrip = async (
   tripId: string,
   driverId: string,
+  tripType: TripType,
 ): Promise<void> => {
   const db = await getDB();
 
@@ -80,7 +84,12 @@ const createTripStudentsForTrip = async (
   }));
 
   if (tripStudents.length > 0) {
+    // Insert all trip students
     await db.collection(TRIP_STUDENTS_COLLECTION).insertMany(tripStudents);
+
+    // Generate QR/OTP for all students in bulk
+    const studentIds = tripStudents.map((ts) => ts.student_id);
+    await generateBulkQrOtp(studentIds, tripId, tripType);
   }
 };
 
@@ -129,9 +138,13 @@ export const createTrip = async (
 
   const createdTrip = await tripRepository.create(tripData);
 
-  // AUTO-CREATE TRIP STUDENTS
+  // AUTO-CREATE TRIP STUDENTS AND GENERATE QR/OTP
   try {
-    await createTripStudentsForTrip(createdTrip.trip_id, driverId);
+    await createTripStudentsForTrip(
+      createdTrip.trip_id,
+      driverId,
+      tripData.trip_type,
+    );
   } catch (error) {
     console.error("Error creating trip students:", error);
     // Continue even if trip students creation fails

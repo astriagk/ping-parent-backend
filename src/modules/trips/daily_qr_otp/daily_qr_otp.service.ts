@@ -1,10 +1,14 @@
 import { WithId } from "mongodb";
 import QRCode from "qrcode";
 
+import { getDB } from "@shared/config";
 import {
   AlphabetType,
+  DAILY_QR_OTP_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PARENTS_COLLECTION,
+  STUDENTS_COLLECTION,
   TripType,
   UniqueCodeTypes,
 } from "@shared/constants";
@@ -15,46 +19,81 @@ import { dailyQrOtpRepository } from "./daily_qr_otp.repository";
 import { DailyQrOtp } from "./daily_qr_otp.type";
 
 /**
- * Generate a 6-digit OTP code
+ * Generate a 4-digit OTP code
  */
 const generateOtpCode = (): string => {
-  return Math.floor(100000 + Math.random() * 900000).toString();
+  return Math.floor(1000 + Math.random() * 9000).toString();
 };
 
 /**
- * Generate QR code and OTP for a student's trip
+ * Student info with parent mapping for OTP generation
  */
-export const generateQrOtp = async (
-  studentId: string,
-  tripId: string,
-  tripType: TripType,
-): Promise<WithId<DailyQrOtp>> => {
-  // Check if QR/OTP already exists for this student and trip
-  const existingQrOtp = await dailyQrOtpRepository.findByStudentAndTrip(
-    studentId,
-    tripId,
-  );
+interface StudentWithParent {
+  student_id: string;
+  parent_id: string;
+}
 
-  if (existingQrOtp) {
-    throw new ApiError(
-      HTTP_STATUS.CONFLICT,
-      ERROR_MESSAGES.DAILY_QR_OTP.ALREADY_EXISTS,
-    );
+/**
+ * Get parent_id for each student from the students collection
+ */
+const getStudentsWithParents = async (
+  studentIds: string[],
+): Promise<StudentWithParent[]> => {
+  const db = await getDB();
+  const students = await db
+    .collection(STUDENTS_COLLECTION)
+    .find({ student_id: { $in: studentIds } })
+    .project({ student_id: 1, parent_id: 1 })
+    .toArray();
+
+  return students.map((s) => ({
+    student_id: s.student_id,
+    parent_id: s.parent_id,
+  }));
+};
+
+/**
+ * Group students by parent_id
+ */
+const groupStudentsByParent = (
+  students: StudentWithParent[],
+): Map<string, string[]> => {
+  const grouped = new Map<string, string[]>();
+
+  for (const student of students) {
+    const parentId = student.parent_id;
+    if (!grouped.has(parentId)) {
+      grouped.set(parentId, []);
+    }
+    grouped.get(parentId)!.push(student.student_id);
   }
 
+  return grouped;
+};
+
+/**
+ * Generate QR/OTP data for a parent group (one OTP for all children of same parent)
+ */
+const generateParentGroupQrOtpData = async (
+  parentId: string,
+  studentIds: string[],
+  tripId: string,
+  tripType: TripType,
+): Promise<DailyQrOtp> => {
   // Generate OTP code
   const otpCode = generateOtpCode();
 
-  // Generate unique QR code identifier using generateUniqueCode
+  // Generate unique QR code identifier
   const qrCodeId = generateUniqueCode(UniqueCodeTypes.DAILY_QR_OTP, {
     length: 32,
     alphabetType: AlphabetType.Alphanumeric,
   });
 
-  // Create QR code data object
+  // Create QR code data object with parent and all student IDs
   const qrCodeData = {
     qr_code_id: qrCodeId,
-    student_id: studentId,
+    parent_id: parentId,
+    student_ids: studentIds,
     trip_id: tripId,
     trip_type: tripType,
     otp_code: otpCode,
@@ -63,14 +102,15 @@ export const generateQrOtp = async (
   // Generate QR code string (base64 data URL)
   const qrCodeString = await QRCode.toDataURL(JSON.stringify(qrCodeData));
 
-  // Set validity period (e.g., valid for 24 hours)
+  // Set validity period (valid for 24 hours)
   const validFrom = new Date();
   const validUntil = new Date();
   validUntil.setHours(validUntil.getHours() + 24);
 
-  const dailyQrOtpData: DailyQrOtp = {
+  return {
     qr_otp_id: generateUniqueCode(UniqueCodeTypes.DAILY_QR_OTP),
-    student_id: studentId,
+    parent_id: parentId,
+    student_ids: studentIds,
     trip_id: tripId,
     qr_code: qrCodeString,
     otp_code: otpCode,
@@ -80,17 +120,167 @@ export const generateQrOtp = async (
     is_used: false,
     created_at: new Date(),
   };
-
-  return await dailyQrOtpRepository.create(dailyQrOtpData);
 };
 
 /**
- * Get QR/OTP by student and trip
+ * Bulk generate QR/OTP for multiple students in a single trip
+ * Groups students by parent_id - ONE OTP per parent covering all their children
+ * Uses Promise.all for parallel QR generation and insertMany for single DB operation
+ */
+export const generateBulkQrOtp = async (
+  studentIds: string[],
+  tripId: string,
+  tripType: TripType,
+): Promise<void> => {
+  if (studentIds.length === 0) {
+    return;
+  }
+
+  const db = await getDB();
+
+  // Get parent_id for each student
+  const studentsWithParents = await getStudentsWithParents(studentIds);
+
+  // Group students by parent
+  const parentGroups = groupStudentsByParent(studentsWithParents);
+
+  // Generate QR/OTP for each parent group in parallel
+  const qrOtpDataPromises: Promise<DailyQrOtp>[] = [];
+  for (const [parentId, groupStudentIds] of parentGroups.entries()) {
+    qrOtpDataPromises.push(
+      generateParentGroupQrOtpData(parentId, groupStudentIds, tripId, tripType),
+    );
+  }
+
+  const qrOtpDataArray = await Promise.all(qrOtpDataPromises);
+
+  // Insert all in a single operation
+  await db.collection(DAILY_QR_OTP_COLLECTION).insertMany(qrOtpDataArray);
+};
+
+/**
+ * Helper function to get parent_id from user_id
+ * This is needed to verify parent ownership of a student
+ */
+const getParentIdByUserId = async (userId: string): Promise<string | null> => {
+  const db = await getDB();
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ user_id: userId });
+
+  if (!parent) {
+    return null;
+  }
+
+  return String(parent._id);
+};
+
+/**
+ * Helper function to verify that a parent owns a student
+ */
+const verifyParentOwnsStudent = async (
+  userId: string,
+  studentId: string,
+): Promise<boolean> => {
+  const parentId = await getParentIdByUserId(userId);
+
+  if (!parentId) {
+    return false;
+  }
+
+  const db = await getDB();
+  const student = await db
+    .collection(STUDENTS_COLLECTION)
+    .findOne({ student_id: studentId, parent_id: parentId });
+
+  return !!student;
+};
+
+/**
+ * Generate QR code and OTP for a parent's children in a trip
+ * This creates a single OTP for all children of the parent in the specified trip
+ */
+export const generateQrOtp = async (
+  studentId: string,
+  tripId: string,
+  tripType: TripType,
+): Promise<WithId<DailyQrOtp>> => {
+  const db = await getDB();
+
+  // Get the student's parent_id
+  const student = await db
+    .collection(STUDENTS_COLLECTION)
+    .findOne({ student_id: studentId });
+
+  if (!student) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.STUDENT.NOT_FOUND);
+  }
+
+  const parentId = student.parent_id;
+
+  // Check if QR/OTP already exists for this parent and trip
+  const existingQrOtp = await dailyQrOtpRepository.findByParentAndTrip(
+    parentId,
+    tripId,
+  );
+
+  if (existingQrOtp) {
+    // If exists and student is already included, return existing
+    if (existingQrOtp.student_ids.includes(studentId)) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.DAILY_QR_OTP.ALREADY_EXISTS,
+      );
+    }
+    // Add student to existing OTP
+    const updatedRecord = await dailyQrOtpRepository.updateById(
+      existingQrOtp._id.toString(),
+      { $push: { student_ids: studentId } },
+    );
+    return updatedRecord!;
+  }
+
+  // Generate new OTP for this parent
+  const qrOtpData = await generateParentGroupQrOtpData(
+    parentId,
+    [studentId],
+    tripId,
+    tripType,
+  );
+
+  return await dailyQrOtpRepository.create(qrOtpData);
+};
+
+/**
+ * Get QR/OTP by student and trip (any authenticated user)
  */
 export const getQrOtpByStudentAndTrip = async (
   studentId: string,
   tripId: string,
 ): Promise<WithId<DailyQrOtp> | null> => {
+  return await dailyQrOtpRepository.findByStudentAndTrip(studentId, tripId);
+};
+
+/**
+ * Get QR/OTP by parent for their student's trip (parent-only)
+ * Verifies that the parent owns the student before returning QR/OTP
+ */
+export const getQrOtpByParentForStudent = async (
+  userId: string,
+  studentId: string,
+  tripId: string,
+): Promise<WithId<DailyQrOtp> | null> => {
+  // Verify that parent owns this student
+  const ownsStudent = await verifyParentOwnsStudent(userId, studentId);
+
+  if (!ownsStudent) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.COMMON.UNAUTHORIZED,
+    );
+  }
+
+  // Return QR/OTP if it exists
   return await dailyQrOtpRepository.findByStudentAndTrip(studentId, tripId);
 };
 
@@ -113,17 +303,60 @@ export const getQrOtpsByStudentId = async (
 };
 
 /**
- * Verify QR code or OTP
+ * Get QR/OTP by parent for a trip
+ */
+export const getQrOtpByParentAndTrip = async (
+  userId: string,
+  tripId: string,
+): Promise<WithId<DailyQrOtp> | null> => {
+  const parentId = await getParentIdByUserId(userId);
+  if (!parentId) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  return await dailyQrOtpRepository.findByParentAndTrip(parentId, tripId);
+};
+
+/**
+ * Verify QR code or OTP - returns the OTP record with all students covered
+ * Does NOT mark as used - use verifyAndRecordAttendance for that
+ * Uses parent_id + trip_id for optimized indexed lookup
  */
 export const verifyQrOtp = async (
+  parentId: string,
+  tripId: string,
   qrCode?: string,
   otpCode?: string,
 ): Promise<WithId<DailyQrOtp>> => {
-  // Find the QR/OTP record
-  const qrOtpRecord = await dailyQrOtpRepository.findValidQrOtp(
-    qrCode,
-    otpCode,
-  );
+  const now = new Date();
+
+  // Build optimized query using parent_id + trip_id (indexed)
+  const query: any = {
+    parent_id: parentId,
+    trip_id: tripId,
+    is_used: false,
+    valid_from: { $lte: now },
+    valid_until: { $gte: now },
+  };
+
+  if (otpCode) {
+    query.otp_code = otpCode;
+  } else if (qrCode) {
+    query.qr_code = qrCode;
+  } else {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DAILY_QR_OTP.INVALID,
+    );
+  }
+
+  const db = await getDB();
+  const qrOtpRecord = await db
+    .collection(DAILY_QR_OTP_COLLECTION)
+    .findOne(query);
 
   if (!qrOtpRecord) {
     throw new ApiError(
@@ -132,48 +365,88 @@ export const verifyQrOtp = async (
     );
   }
 
+  // Return the record - driver app will show list of students
+  return qrOtpRecord as unknown as WithId<DailyQrOtp>;
+};
+
+/**
+ * Verify OTP and record which students are present/absent
+ * This is the main verification endpoint for pickup/drop
+ * Uses parent_id + trip_id for optimized indexed lookup
+ */
+export const verifyAndRecordAttendance = async (
+  parentId: string,
+  tripId: string,
+  otpCode?: string,
+  qrCode?: string,
+  verifiedStudentIds?: string[],
+  absentStudentIds?: string[],
+): Promise<WithId<DailyQrOtp>> => {
+  const db = await getDB();
   const now = new Date();
 
-  // Check if already used
-  if (qrOtpRecord.is_used) {
+  // Find valid OTP using parent_id + trip_id (indexed)
+  const query: any = {
+    parent_id: parentId,
+    trip_id: tripId,
+    is_used: false,
+    valid_from: { $lte: now },
+    valid_until: { $gte: now },
+  };
+
+  if (otpCode) {
+    query.otp_code = otpCode;
+  } else if (qrCode) {
+    query.qr_code = qrCode;
+  } else {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.DAILY_QR_OTP.ALREADY_USED,
+      ERROR_MESSAGES.DAILY_QR_OTP.INVALID,
     );
   }
 
-  // Check validity period
-  if (now < qrOtpRecord.valid_from) {
+  const qrOtpRecord = await db
+    .collection(DAILY_QR_OTP_COLLECTION)
+    .findOne(query);
+
+  if (!qrOtpRecord) {
     throw new ApiError(
-      HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.DAILY_QR_OTP.NOT_VALID_YET,
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DAILY_QR_OTP.INVALID,
     );
   }
 
-  if (now > qrOtpRecord.valid_until) {
-    throw new ApiError(
-      HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.DAILY_QR_OTP.EXPIRED,
-    );
-  }
-
-  // Mark as used
-  const updatedRecord = await dailyQrOtpRepository.updateById(
-    qrOtpRecord._id.toString(),
-    {
-      $set: {
-        is_used: true,
-        used_at: now,
-      },
-    },
+  // Validate that verified/absent students belong to this OTP
+  const allStudentIds = qrOtpRecord.student_ids as string[];
+  const validVerified = (verifiedStudentIds || []).filter((id) =>
+    allStudentIds.includes(id),
+  );
+  const validAbsent = (absentStudentIds || []).filter((id) =>
+    allStudentIds.includes(id),
   );
 
-  if (!updatedRecord) {
+  // Update the record
+  const updateResult = await db
+    .collection(DAILY_QR_OTP_COLLECTION)
+    .findOneAndUpdate(
+      { _id: qrOtpRecord._id },
+      {
+        $set: {
+          is_used: true,
+          used_at: now,
+          verified_student_ids: validVerified,
+          absent_student_ids: validAbsent,
+        },
+      },
+      { returnDocument: "after" },
+    );
+
+  if (!updateResult) {
     throw new ApiError(
       HTTP_STATUS.INTERNAL_SERVER_ERROR,
       ERROR_MESSAGES.DAILY_QR_OTP.FAILED_TO_GENERATE,
     );
   }
 
-  return updatedRecord;
+  return updateResult as unknown as WithId<DailyQrOtp>;
 };
