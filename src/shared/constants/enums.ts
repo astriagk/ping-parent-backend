@@ -188,6 +188,13 @@ export enum ParentSocketEvent {
   UNSUBSCRIBE_TRIP = "parent:unsubscribe_trip",
 }
 
+// Events sent to specific parent only (not broadcast to all trip subscribers)
+export enum ParentNotificationEvent {
+  MY_STUDENT_PICKED = "parent:my_student_picked",
+  MY_STUDENT_DROPPED = "parent:my_student_dropped",
+  MY_STUDENT_APPROACHING = "parent:my_student_approaching",
+}
+
 export enum BroadcastSocketEvent {
   POSITION_UPDATE = "trip:position_update",
   TRIP_STARTED = "trip:started",
@@ -197,4 +204,11 @@ export enum BroadcastSocketEvent {
   STUDENT_PICKED = "trip:student_picked",
   STUDENT_DROPPED = "trip:student_dropped",
   ERROR = "socket:error",
+}
+
+// Room types for socket.io
+export enum SocketRoom {
+  TRIP_TRACKING = "trip", // trip:{tripId}:tracking - for parents watching a trip
+  TRIP_DRIVER = "driver", // trip:{tripId}:driver - for driver of a trip
+  PARENT = "parent", // parent:{parentId} - for sending to specific parent
 }

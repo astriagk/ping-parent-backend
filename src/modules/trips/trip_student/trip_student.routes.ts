@@ -51,16 +51,16 @@ router.put(
   recordStudentDrop,
 );
 
-// 04. Bulk Stop Action - handle multiple students at one stop (OTP required)
+// 04. Pickup Point - pickup/drop students at parent location (OTP required)
 router.post(
-  "/trip/:tripId/bulk-stop-action",
+  "/trip/:tripId/pickup-point",
   validate(bulkStopActionSchema),
   handleBulkStopAction,
 );
 
-// 05. Bulk School Action - handle students at school (No OTP)
+// 05. School Point - pickup/drop students at school (No OTP)
 router.post(
-  "/trip/:tripId/bulk-school-action",
+  "/trip/:tripId/school-point",
   validate(bulkSchoolActionSchema),
   handleBulkSchoolAction,
 );

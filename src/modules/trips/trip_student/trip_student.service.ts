@@ -1,5 +1,6 @@
 import { WithId } from "mongodb";
 
+import { TrackingSocketService } from "@modules/tracking/tracking.socket.service";
 import { getDB } from "@shared/config";
 import {
   AttendanceStatus,
@@ -297,9 +298,40 @@ export const recordPickup = async (
     ...pickupData,
   };
 
-  return await tripStudentRepository.updateById(tripStudent._id.toString(), {
-    $set: updates,
-  });
+  const result = await tripStudentRepository.updateById(
+    tripStudent._id.toString(),
+    {
+      $set: updates,
+    },
+  );
+
+  // Emit parent-specific notification for pickup
+  // Get student info for notification
+  try {
+    const db = await getDB();
+    const student = await db
+      .collection(STUDENTS_COLLECTION)
+      .findOne({ student_id: studentId });
+
+    if (student && student.parent_id) {
+      const trip = await db
+        .collection(TRIPS_COLLECTION)
+        .findOne({ trip_id: tripId });
+
+      TrackingSocketService.notifyParentStudentPicked(
+        student.parent_id,
+        tripId,
+        studentId,
+        student.name || student.first_name || "Your child",
+        trip?.driver_id,
+      );
+    }
+  } catch (error) {
+    // Don't fail the pickup if notification fails
+    console.error("Failed to send parent pickup notification:", error);
+  }
+
+  return result;
 };
 
 /**
@@ -370,9 +402,40 @@ export const recordDrop = async (
     ...dropData,
   };
 
-  return await tripStudentRepository.updateById(tripStudent._id.toString(), {
-    $set: updates,
-  });
+  const result = await tripStudentRepository.updateById(
+    tripStudent._id.toString(),
+    {
+      $set: updates,
+    },
+  );
+
+  // Emit parent-specific notification for drop-off
+  // Get student info for notification
+  try {
+    const db = await getDB();
+    const student = await db
+      .collection(STUDENTS_COLLECTION)
+      .findOne({ student_id: studentId });
+
+    if (student && student.parent_id) {
+      const trip = await db
+        .collection(TRIPS_COLLECTION)
+        .findOne({ trip_id: tripId });
+
+      TrackingSocketService.notifyParentStudentDropped(
+        student.parent_id,
+        tripId,
+        studentId,
+        student.name || student.first_name || "Your child",
+        trip?.driver_id,
+      );
+    }
+  } catch (error) {
+    // Don't fail the drop-off if notification fails
+    console.error("Failed to send parent drop notification:", error);
+  }
+
+  return result;
 };
 
 /**
