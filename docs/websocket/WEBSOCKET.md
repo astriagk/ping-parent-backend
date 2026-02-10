@@ -1,7 +1,7 @@
 # WebSocket Real-Time Tracking Documentation
 
-**Version**: 3.0.0  
-**Last Updated**: February 5, 2026  
+**Version**: 3.3.0  
+**Last Updated**: February 10, 2026  
 **Status**: ✅ Production Ready
 
 ---
@@ -12,15 +12,16 @@
 2. [Security & Authentication](#security--authentication)
 3. [Connection Setup](#connection-setup)
 4. [Event Enums Reference](#event-enums-reference)
-5. [Complete End-to-End Flow](#complete-end-to-end-flow)
-6. [Driver Events](#driver-events)
-7. [Parent Events](#parent-events)
-8. [Admin Events](#admin-events)
-9. [Event Reference](#event-reference)
-10. [Room Architecture](#room-architecture)
-11. [Rate Limiting](#rate-limiting)
-12. [Best Practices](#best-practices)
-13. [Troubleshooting](#troubleshooting)
+5. [Quick Reference: Which Event to Call When](#quick-reference-which-event-to-call-when)
+6. [Complete End-to-End Flow](#complete-end-to-end-flow)
+7. [Driver Events](#driver-events)
+8. [Parent Events](#parent-events)
+9. [Admin Events](#admin-events)
+10. [Event Reference](#event-reference)
+11. [Room Architecture](#room-architecture)
+12. [Rate Limiting](#rate-limiting)
+13. [Best Practices](#best-practices)
+14. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -166,6 +167,135 @@ enum BroadcastSocketEvent {
   ERROR = "socket:error",
 }
 ```
+
+---
+
+## Quick Reference: Which Event to Call When
+
+This section provides a clear decision matrix for developers implementing the Driver and Parent apps.
+
+### Event Flow Summary
+
+```
+┌─────────────────────────────────────────────────────────────────────────────────────┐
+│                           EVENT FLOW ARCHITECTURE                                   │
+├─────────────────────────────────────────────────────────────────────────────────────┤
+│                                                                                     │
+│   DRIVER APP                   BACKEND                    PARENT APP              │
+│   ══════════                   ═══════                    ══════════              │
+│                                                                                     │
+│   1. Connect with JWT ────────►  Auth Check                                        │
+│                                                                                     │
+│   2. driver:subscribe_trip ───►  Verify ownership ─────►  (none - wait)           │
+│                                  Join driver room                                   │
+│                                                                                     │
+│                                                    ◄─────  parent:subscribe_trip   │
+│                                  Verify student    ◄─────  (needs child on trip)   │
+│                                  Join tracking room                                 │
+│                                  + auto-join parent:id room                        │
+│                                                                                     │
+│   3. driver:trip_started ─────►  Broadcast ────────────►  trip:started (ALL)       │
+│                                                                                     │
+│   4. driver:update_position ──►  Rate limit (5s) ──────►  trip:position_update     │
+│                                  Validate coords           (ALL parents on trip)   │
+│                                                                                     │
+│   5. driver:approaching ──────►  Broadcast ────────────►  trip:approaching (ALL)   │
+│                                                                                     │
+│   6. REST: POST /pickup ──────►  Update DB ────────────►  parent:my_student_picked │
+│      (or driver:student_picked)  + Socket broadcast        (SPECIFIC parent only) │
+│                                                    AND ─►  trip:student_picked     │
+│                                                            (ALL parents on trip)   │
+│                                                                                     │
+│   7. REST: POST /dropoff ─────►  Update DB ────────────►  parent:my_student_dropped│
+│      (or driver:student_dropped) + Socket broadcast        (SPECIFIC parent only) │
+│                                                    AND ─►  trip:student_dropped    │
+│                                                            (ALL parents on trip)   │
+│                                                                                     │
+│   8. driver:trip_completed ───►  Broadcast ────────────►  trip:completed (ALL)     │
+│                                  Cleanup rooms                                      │
+│                                                                                     │
+│   9. driver:unsubscribe_trip ─►  Leave room                                        │
+│                                                    ◄─────  parent:unsubscribe_trip │
+│                                  Leave room        ◄─────                          │
+│                                                                                     │
+└─────────────────────────────────────────────────────────────────────────────────────┘
+```
+
+### Driver App: Events to EMIT (Client → Server)
+
+| Step | Event                         | When to Call                     | Payload                                           | What Happens                         |
+| ---- | ----------------------------- | -------------------------------- | ------------------------------------------------- | ------------------------------------ |
+| 1    | `driver:subscribe_trip`       | After connect, before any action | `tripId: string`                                  | Joins driver to trip room            |
+| 2    | `driver:trip_started`         | When driver starts the trip      | `tripId: string`                                  | Notifies ALL parents                 |
+| 3    | `driver:update_position`      | Every 10-15 seconds during trip  | `{ tripId, latitude, longitude, speed, heading }` | Broadcasts to ALL parents (rate: 5s) |
+| 4    | `driver:approaching_waypoint` | When ETA < 5 mins to a student   | `{ tripId, studentId, eta }`                      | Notifies ALL parents                 |
+| 5    | `driver:student_picked`       | When student boards vehicle      | `{ tripId, studentId }`                           | Notifies ALL parents                 |
+| 6    | `driver:student_dropped`      | When student exits vehicle       | `{ tripId, studentId }`                           | Notifies ALL parents                 |
+| 7    | `driver:trip_completed`       | When all students delivered      | `tripId: string`                                  | Notifies ALL parents, cleanup        |
+| 8    | `driver:unsubscribe_trip`     | After trip ends or on disconnect | `tripId: string`                                  | Leaves room, cleans rate limit       |
+
+### Driver App: Events to LISTEN (Server → Client)
+
+| Event           | When Received            | Payload               | Action                       |
+| --------------- | ------------------------ | --------------------- | ---------------------------- |
+| `socket:error`  | On authorization failure | `{ message: string }` | Show error, retry or re-auth |
+| `connect`       | On successful connection | -                     | Proceed to subscribe         |
+| `connect_error` | On connection failure    | `Error` object        | Retry connection             |
+
+### Parent App: Events to EMIT (Client → Server)
+
+| Event                     | When to Call                     | Payload          | What Happens                  |
+| ------------------------- | -------------------------------- | ---------------- | ----------------------------- |
+| `parent:subscribe_trip`   | After connect, to start tracking | `tripId: string` | Joins parent to tracking room |
+| `parent:unsubscribe_trip` | When done tracking or trip ends  | `tripId: string` | Leaves tracking room          |
+
+### Parent App: Events to LISTEN (Server → Client)
+
+| Event                           | Type         | When Received                 | Payload                                            | Action                           |
+| ------------------------------- | ------------ | ----------------------------- | -------------------------------------------------- | -------------------------------- |
+| `trip:position_update`          | Broadcast    | Every 5-15 seconds            | `{ tripId, latitude, longitude, speed, ... }`      | Update map marker                |
+| `trip:started`                  | Broadcast    | When driver starts trip       | `{ tripId, driverId, timestamp }`                  | Show "Trip started" notification |
+| `trip:completed`                | Broadcast    | When driver completes trip    | `{ tripId, driverId, timestamp }`                  | Show "Trip ended", unsubscribe   |
+| `trip:route_calculated`         | Broadcast    | After route calculation       | `{ tripId, routeData }`                            | Draw route on map                |
+| `trip:approaching`              | Broadcast    | When driver near ANY student  | `{ tripId, studentId, eta, ... }`                  | Show "Driver approaching"        |
+| `trip:student_picked`           | Broadcast    | When ANY student picked up    | `{ tripId, studentId, ... }`                       | Update student status            |
+| `trip:student_dropped`          | Broadcast    | When ANY student dropped off  | `{ tripId, studentId, ... }`                       | Update student status            |
+| `parent:my_student_picked`      | **Targeted** | When YOUR student picked up   | `{ tripId, studentId, studentName, message }`      | High-priority notification       |
+| `parent:my_student_dropped`     | **Targeted** | When YOUR student dropped off | `{ tripId, studentId, studentName, message }`      | High-priority notification       |
+| `parent:my_student_approaching` | **Targeted** | When driver near YOUR student | `{ tripId, studentId, studentName, eta, message }` | Show alert notification          |
+| `socket:error`                  | Error        | On authorization failure      | `{ message: string }`                              | Show error, handle gracefully    |
+
+### Broadcast vs Targeted Events Explained
+
+**Broadcast Events (`trip:*`)** - Sent to ALL parents subscribed to the trip:
+
+- Used for general trip status (started, completed, position)
+- Every parent sees every student's pickup/dropoff status
+- Useful for showing overall trip progress on map
+
+**Targeted Events (`parent:my_student_*`)** - Sent ONLY to the specific parent:
+
+- Triggered from REST API when driver records pickup/dropoff via OTP verification
+- Only the parent of that specific student receives this event
+- Used for high-priority notifications ("Your child has been picked up")
+- Auto-delivered - parents are auto-joined to `parent:{parentId}` room on connect
+
+### When to Use REST API + Socket vs Socket Only
+
+| Action                   | Method         | Reason                                                |
+| ------------------------ | -------------- | ----------------------------------------------------- |
+| Start position streaming | Socket only    | Real-time, no database needed                         |
+| Record student pickup    | REST API       | Requires OTP/QR verification, creates database record |
+| Record student dropoff   | REST API       | Requires OTP/QR verification, creates database record |
+| Trip start               | Socket OR REST | Socket for real-time; REST to update DB status        |
+| Trip complete            | Socket + REST  | Socket for real-time; REST to finalize records        |
+| Calculate route          | REST API       | Heavy computation, auto-broadcasts via socket         |
+
+**REST Endpoints that trigger Socket broadcasts:**
+
+- `POST /api/tracking/calculate` → broadcasts `trip:route_calculated`
+- `POST /api/trip-students/:tripId/:studentId/pickup` → sends `parent:my_student_picked` to specific parent
+- `POST /api/trip-students/:tripId/:studentId/drop` → sends `parent:my_student_dropped` to specific parent
 
 ---
 
@@ -751,7 +881,7 @@ This section shows the complete flow from driver starting a trip to parents trac
    ↓
 3. Driver WebSocket: Subscribes to Trip Room
    - socket.emit('driver:subscribe_trip', { tripId })
-   - Joins: trip:tripId:driver
+   - Joins: trip:{tripId}
 ```
 
 #### Phase 2: Route Calculation (Choose One Method)
@@ -903,7 +1033,7 @@ DRIVER                                    BACKEND                            PAR
   │                                          │                                │
   ├─ Subscribe to Trip                       │                                │
   │  └─ emit('driver:subscribe_trip')        │                                │
-  │     └─ Joins: trip:id:driver ✓           │                                │
+  │     └─ Joins: trip:{tripId} ✓            │                                │
   │                                          │                                │
   ├─ Calculate Route                         │                                │
   │  └─ REST: POST /tracking/calculate       │                                │
@@ -976,7 +1106,7 @@ socket.emit("driver:subscribe_trip", "trip_123", (success) => {
 **What it does**:
 
 1. Verifies driver owns the trip (checks `trips.driver_id`)
-2. Joins driver to `trip:tripId:driver` room
+2. Joins driver to `trip:{tripId}` room (shared with parents)
 3. Returns `true` via callback if authorized
 
 **Error Cases**:
@@ -1135,7 +1265,7 @@ socket.emit(
 socket.emit("driver:unsubscribe_trip", "trip_123");
 ```
 
-**What it does**: Leaves the `trip:tripId:driver` room and cleans up rate limiting
+**What it does**: Leaves the `trip:{tripId}` room and cleans up rate limiting
 
 ---
 
@@ -1162,7 +1292,7 @@ socket.emit("parent:subscribe_trip", "trip_123", (success) => {
 1. Finds parent record by `user_id`
 2. Gets all students belonging to this parent
 3. Checks if any student is in `trip_students` for this trip
-4. If authorized, joins `trip:tripId:tracking` room
+4. If authorized, joins `trip:{tripId}` room (shared with driver)
 
 **Error Cases**:
 
@@ -1401,13 +1531,11 @@ They are automatically triggered when pickup/drop is recorded via REST API.
 │                    SOCKET.IO ROOMS                          │
 ├─────────────────────────────────────────────────────────────┤
 │                                                              │
-│  trip:TRP-123456:driver      ← Driver room (1 driver)       │
-│     └── driver_socket_abc                                    │
-│                                                              │
-│  trip:TRP-123456:tracking    ← Parents room (many parents)  │
-│     ├── parent_socket_def                                    │
-│     ├── parent_socket_ghi                                    │
-│     └── parent_socket_jkl                                    │
+│  trip:TRP-123456             ← Shared trip room              │
+│     ├── driver_socket_abc    (driver of this trip)          │
+│     ├── parent_socket_def    (parent with child on trip)    │
+│     ├── parent_socket_ghi    (parent with child on trip)    │
+│     └── parent_socket_jkl    (parent with child on trip)    │
 │                                                              │
 │  parent:PAR-111111           ← Parent's personal room       │
 │     └── parent_socket_def    (for direct notifications)     │
@@ -1415,10 +1543,8 @@ They are automatically triggered when pickup/drop is recorded via REST API.
 │  parent:PAR-222222           ← Another parent's room        │
 │     └── parent_socket_ghi                                    │
 │                                                              │
-│  trip:TRP-789012:driver                                      │
-│     └── driver_socket_xyz                                    │
-│                                                              │
-│  trip:TRP-789012:tracking                                    │
+│  trip:TRP-789012             ← Another trip room             │
+│     ├── driver_socket_xyz                                    │
 │     └── parent_socket_mno                                    │
 │                                                              │
 └─────────────────────────────────────────────────────────────┘
@@ -1426,11 +1552,10 @@ They are automatically triggered when pickup/drop is recorded via REST API.
 
 **Room Types**:
 
-| Room Pattern             | Purpose                                       | Who Joins                  |
-| ------------------------ | --------------------------------------------- | -------------------------- |
-| `trip:{tripId}:driver`   | Driver control room                           | Driver of the trip         |
-| `trip:{tripId}:tracking` | Trip tracking (broadcasts to all parents)     | Parents with child on trip |
-| `parent:{parentId}`      | Parent's personal room (direct notifications) | Auto-joined on connect     |
+| Room Pattern        | Purpose                                       | Who Joins                    |
+| ------------------- | --------------------------------------------- | ---------------------------- |
+| `trip:{tripId}`     | Shared trip room for all events               | Driver + all parents on trip |
+| `parent:{parentId}` | Parent's personal room (direct notifications) | Auto-joined on connect       |
 
 **Benefits**:
 
@@ -1646,8 +1771,22 @@ socket.on("socket:error", (data) => {
 ---
 
 **Status**: ✅ Production Ready  
-**Last Updated**: February 9, 2026  
-**Version**: 3.1.0
+**Last Updated**: February 10, 2026  
+**Version**: 3.3.0
+
+**Changes in v3.3.0**:
+
+- Simplified room architecture: single `trip:{tripId}` room for both driver and parents
+- Removed separate `:driver` and `:tracking` suffixes
+- Driver and parents now share the same trip room
+- Updated `SocketRoom` enum to reflect simplified architecture
+- Improved broadcast efficiency with unified room
+
+**Changes in v3.2.0**:
+
+- Added Quick Reference section for event decision matrix
+- Added Driver/Parent event tables with clear guidance
+- Documented REST API + Socket event flow
 
 **Changes in v3.1.0**:
 

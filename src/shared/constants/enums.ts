@@ -208,7 +208,7 @@ export enum BroadcastSocketEvent {
 
 // Room types for socket.io
 export enum SocketRoom {
-  TRIP_TRACKING = "trip", // trip:{tripId}:tracking - for parents watching a trip
-  TRIP_DRIVER = "driver", // trip:{tripId}:driver - for driver of a trip
+  TRIP = "trip", // trip:{tripId} - shared room for driver and parents on a trip
+  TRIP_DRIVER = "driver", // trip:{tripId} - for driver of a trip
   PARENT = "parent", // parent:{parentId} - for sending to specific parent
 }
