@@ -166,4 +166,102 @@ export class TrackingSocketService {
       },
     );
   }
+
+  // ============================================
+  // Bulk Parent Notifications
+  // Send one notification per parent with all their students
+  // ============================================
+
+  /**
+   * Notify parent that multiple students were picked up
+   * Sends a single notification with all student names
+   */
+  static notifyParentStudentsPicked(
+    parentId: string,
+    tripId: string,
+    students: { studentId: string; studentName: string }[],
+    driverId?: string,
+  ) {
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    const studentIds = students.map((s) => s.studentId);
+    const message =
+      students.length === 1
+        ? `Your child ${studentNames} has been picked up`
+        : `Your children ${studentNames} have been picked up`;
+
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_PICKED,
+      {
+        tripId,
+        studentIds,
+        students,
+        driverId,
+        message,
+        timestamp: new Date(),
+      },
+    );
+  }
+
+  /**
+   * Notify parent that multiple students were dropped off
+   * Sends a single notification with all student names
+   */
+  static notifyParentStudentsDropped(
+    parentId: string,
+    tripId: string,
+    students: { studentId: string; studentName: string }[],
+    driverId?: string,
+  ) {
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    const studentIds = students.map((s) => s.studentId);
+    const message =
+      students.length === 1
+        ? `Your child ${studentNames} has been dropped off`
+        : `Your children ${studentNames} have been dropped off`;
+
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_DROPPED,
+      {
+        tripId,
+        studentIds,
+        students,
+        driverId,
+        message,
+        timestamp: new Date(),
+      },
+    );
+  }
+
+  /**
+   * Notify parent that their students were marked absent
+   * Sends a single notification with all absent student names
+   */
+  static notifyParentStudentsAbsent(
+    parentId: string,
+    tripId: string,
+    students: { studentId: string; studentName: string }[],
+    driverId?: string,
+  ) {
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    const studentIds = students.map((s) => s.studentId);
+    const message =
+      students.length === 1
+        ? `Your child ${studentNames} was marked absent`
+        : `Your children ${studentNames} were marked absent`;
+
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_ABSENT,
+      {
+        tripId,
+        studentIds,
+        students,
+        driverId,
+        message,
+        timestamp: new Date(),
+      },
+    );
+  }
 }
