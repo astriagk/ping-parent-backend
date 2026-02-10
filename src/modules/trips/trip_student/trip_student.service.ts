@@ -527,7 +527,7 @@ export const bulkStopAction = async (
     failed_students: [],
   };
 
-  // Get parent_id from first available student (all should share same parent)
+  // Get all student IDs and fetch all student details upfront
   const allStudentIds = [...data.student_ids, ...data.absent_student_ids];
   if (allStudentIds.length === 0) {
     throw new ApiError(
@@ -536,15 +536,26 @@ export const bulkStopAction = async (
     );
   }
 
-  const firstStudent = await db
+  // Fetch all students in one query
+  const allStudents = await db
     .collection(STUDENTS_COLLECTION)
-    .findOne({ student_id: allStudentIds[0] });
+    .find({ student_id: { $in: allStudentIds } })
+    .toArray();
 
-  if (!firstStudent) {
+  if (allStudents.length === 0) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.STUDENT.NOT_FOUND);
   }
 
-  const parentId = firstStudent.parent_id;
+  // Build a map for quick lookup
+  const studentMap = new Map(
+    allStudents.map((s) => [
+      s.student_id,
+      { parent_id: s.parent_id, student_name: s.student_name || "Your child" },
+    ]),
+  );
+
+  // All students at one stop share the same parent
+  const parentId = allStudents[0].parent_id;
 
   // If we have students to process (pickup/drop), verify OTP first
   if (data.student_ids.length > 0) {
@@ -773,6 +784,59 @@ export const bulkStopAction = async (
     }
   }
 
+  // Send consolidated notifications using already-fetched student data
+  try {
+    // Build notifications for picked/dropped students
+    if (result.processed_students.length > 0) {
+      const processedStudentDetails = result.processed_students
+        .filter((id) => studentMap.has(id))
+        .map((id) => ({
+          studentId: id,
+          studentName: studentMap.get(id)!.student_name,
+        }));
+
+      if (processedStudentDetails.length > 0) {
+        if (tripType === TripType.PICKUP) {
+          TrackingSocketService.notifyParentStudentsPicked(
+            parentId,
+            tripId,
+            processedStudentDetails,
+            trip?.driver_id,
+          );
+        } else {
+          TrackingSocketService.notifyParentStudentsDropped(
+            parentId,
+            tripId,
+            processedStudentDetails,
+            trip?.driver_id,
+          );
+        }
+      }
+    }
+
+    // Build notifications for absent students
+    if (result.absent_students.length > 0) {
+      const absentStudentDetails = result.absent_students
+        .filter((id) => studentMap.has(id))
+        .map((id) => ({
+          studentId: id,
+          studentName: studentMap.get(id)!.student_name,
+        }));
+
+      if (absentStudentDetails.length > 0) {
+        TrackingSocketService.notifyParentStudentsAbsent(
+          parentId,
+          tripId,
+          absentStudentDetails,
+          trip?.driver_id,
+        );
+      }
+    }
+  } catch (notifyError) {
+    // Don't fail the action if notification fails
+    console.error("Failed to send parent notifications:", notifyError);
+  }
+
   return result;
 };
 
@@ -828,6 +892,20 @@ export const bulkSchoolAction = async (
       ERROR_MESSAGES.TRIP_STUDENT.NO_STUDENTS_PROVIDED,
     );
   }
+
+  // Fetch all student details upfront
+  const allStudents = await db
+    .collection(STUDENTS_COLLECTION)
+    .find({ student_id: { $in: data.student_ids } })
+    .toArray();
+
+  // Build a map for quick lookup
+  const studentMap = new Map(
+    allStudents.map((s) => [
+      s.student_id,
+      { parent_id: s.parent_id, student_name: s.student_name || "Your child" },
+    ]),
+  );
 
   for (const studentId of data.student_ids) {
     try {
@@ -911,6 +989,53 @@ export const bulkSchoolAction = async (
         student_id: studentId,
         reason: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  }
+
+  // Send consolidated notifications - one per parent using already-fetched data
+  if (result.processed_students.length > 0) {
+    try {
+      // Group students by parent_id using the studentMap
+      const studentsByParent = new Map<
+        string,
+        { studentId: string; studentName: string }[]
+      >();
+
+      for (const studentId of result.processed_students) {
+        const studentInfo = studentMap.get(studentId);
+        if (studentInfo && studentInfo.parent_id) {
+          const existing = studentsByParent.get(studentInfo.parent_id) || [];
+          existing.push({
+            studentId,
+            studentName: studentInfo.student_name,
+          });
+          studentsByParent.set(studentInfo.parent_id, existing);
+        }
+      }
+
+      // Send one notification per parent
+      for (const [pId, pStudents] of studentsByParent) {
+        if (tripType === TripType.PICKUP) {
+          // PICKUP trip at school = dropped at school
+          TrackingSocketService.notifyParentStudentsDropped(
+            pId,
+            tripId,
+            pStudents,
+            trip?.driver_id,
+          );
+        } else {
+          // DROP trip at school = picked from school
+          TrackingSocketService.notifyParentStudentsPicked(
+            pId,
+            tripId,
+            pStudents,
+            trip?.driver_id,
+          );
+        }
+      }
+    } catch (notifyError) {
+      // Don't fail the action if notification fails
+      console.error("Failed to send parent notifications:", notifyError);
     }
   }
 

@@ -252,7 +252,14 @@ export class SocketService {
           },
           callback?: (success: boolean) => void,
         ) => {
+          logger.info(
+            `[Socket] 📍 Position update received from ${userId} for trip ${data.tripId}`,
+          );
+
           if (socket.data.role !== UserRole.DRIVER) {
+            logger.warn(
+              `[Socket] ⚠️ Position update rejected - not a driver role: ${socket.data.role}`,
+            );
             if (callback) callback(false);
             return;
           }
@@ -261,6 +268,9 @@ export class SocketService {
             data;
 
           if (!this.checkPositionRateLimit(tripId)) {
+            logger.info(
+              `[Socket] ⏱️ Position update rate-limited for trip: ${tripId}`,
+            );
             if (callback) callback(false);
             return;
           }
@@ -271,6 +281,9 @@ export class SocketService {
             longitude < -180 ||
             longitude > 180
           ) {
+            logger.warn(
+              `[Socket] ⚠️ Invalid coordinates: lat=${latitude}, lng=${longitude}`,
+            );
             socket.emit(BroadcastSocketEvent.ERROR, {
               message: ERROR_MESSAGES.SOCKET.INVALID_COORDINATES,
             });
@@ -278,22 +291,24 @@ export class SocketService {
             return;
           }
 
+          const roomName = `trip:${tripId}`;
+          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+
           logger.info(
-            `[Socket] Sending position update - Trip: ${tripId}, Driver: ${userId}, Lat: ${latitude}, Lng: ${longitude}`,
+            `[Socket] 📡 Broadcasting position - Trip: ${tripId}, Room: ${roomName}, Clients: ${roomSize}, Lat: ${latitude}, Lng: ${longitude}`,
           );
 
-          this.io
-            .to(`trip:${tripId}`)
-            .emit(BroadcastSocketEvent.POSITION_UPDATE, {
-              tripId,
-              driverId: userId,
-              latitude,
-              longitude,
-              speed: speed || 0,
-              heading: heading || 0,
-              accuracy: accuracy || 0,
-              timestamp: new Date(),
-            });
+          this.io.to(roomName).emit(BroadcastSocketEvent.POSITION_UPDATE, {
+            tripId,
+            driverId: userId,
+            latitude,
+            longitude,
+            speed: speed || 0,
+            heading: heading || 0,
+            accuracy: accuracy || 0,
+            timestamp: new Date(),
+          });
 
           if (callback) callback(true);
         },
@@ -396,12 +411,20 @@ export class SocketService {
             `[Socket] 📡 Broadcasting to room: ${roomName} | Clients in room: ${roomSize}`,
           );
 
-          this.io.to(roomName).emit(BroadcastSocketEvent.STUDENT_PICKED, {
+          // Log the exact event name being broadcast
+          const eventName = BroadcastSocketEvent.STUDENT_PICKED;
+          logger.info(
+            `[Socket] 📤 Emitting event: "${eventName}" to room: ${roomName}`,
+          );
+
+          this.io.to(roomName).emit(eventName, {
             tripId,
             studentId,
             driverId: userId,
             timestamp: new Date(),
           });
+
+          logger.info(`[Socket] ✅ Event emitted successfully`);
 
           if (callback) callback(true);
         },
