@@ -1,4 +1,7 @@
-import { BroadcastSocketEvent } from "@shared/constants";
+import {
+  BroadcastSocketEvent,
+  ParentNotificationEvent,
+} from "@shared/constants";
 import { socketService } from "@shared/services/socket.service";
 
 export class TrackingSocketService {
@@ -79,5 +82,88 @@ export class TrackingSocketService {
       ...data,
       timestamp: new Date(),
     });
+  }
+
+  // ============================================
+  // Parent-Specific Notifications
+  // These send events only to the specific parent of a student
+  // Used for home pickup/drop events where only that parent should be notified
+  // ============================================
+
+  /**
+   * Notify specific parent that their student was picked up
+   * Use this for pickup from home (morning trip) - only parent of this student gets notified
+   */
+  static notifyParentStudentPicked(
+    parentId: string,
+    tripId: string,
+    studentId: string,
+    studentName: string,
+    driverId?: string,
+  ) {
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_PICKED,
+      {
+        tripId,
+        studentId,
+        studentName,
+        driverId,
+        message: `Your child ${studentName} has been picked up`,
+        timestamp: new Date(),
+      },
+    );
+  }
+
+  /**
+   * Notify specific parent that their student was dropped off
+   * Use this for drop at home (afternoon trip) - only parent of this student gets notified
+   */
+  static notifyParentStudentDropped(
+    parentId: string,
+    tripId: string,
+    studentId: string,
+    studentName: string,
+    driverId?: string,
+  ) {
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_DROPPED,
+      {
+        tripId,
+        studentId,
+        studentName,
+        driverId,
+        message: `Your child ${studentName} has been dropped off`,
+        timestamp: new Date(),
+      },
+    );
+  }
+
+  /**
+   * Notify specific parent that driver is approaching their student's location
+   * Use this for approach to home - only parent of this student gets notified
+   */
+  static notifyParentApproaching(
+    parentId: string,
+    tripId: string,
+    studentId: string,
+    studentName: string,
+    eta: number,
+    driverId?: string,
+  ) {
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_APPROACHING,
+      {
+        tripId,
+        studentId,
+        studentName,
+        eta,
+        driverId,
+        message: `Driver is approaching - ETA ${Math.ceil(eta / 60)} minutes`,
+        timestamp: new Date(),
+      },
+    );
   }
 }

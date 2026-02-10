@@ -10,6 +10,8 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
+  bulkSchoolAction,
+  bulkStopAction,
   getTripStudentById,
   getTripStudentByTripAndStudent,
   getTripStudentsByAttendanceStatus,
@@ -250,6 +252,64 @@ export const getTripStudentsByPickup = asyncHandler(
       success: true,
       data: tripStudents,
       message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Bulk stop action - handles multiple students at one stop
+ * Works for both PICKUP and DROP trips based on trip_type
+ * Driver can pickup/drop and/or mark absent multiple siblings in a single call
+ */
+export const handleBulkStopAction = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { tripId } = req.params as Record<string, string>;
+    const {
+      student_ids,
+      absent_student_ids,
+      otp_code,
+      qr_code,
+      latitude,
+      longitude,
+    } = req.body;
+
+    const result = await bulkStopAction(tripId, {
+      student_ids: student_ids || [],
+      absent_student_ids: absent_student_ids || [],
+      otp_code,
+      qr_code,
+      latitude,
+      longitude,
+    });
+
+    return res.json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES.TRIP_STUDENT.BULK_STOP_ACTION_SUCCESSFUL,
+    });
+  },
+);
+
+/**
+ * Bulk school action - handles students at school without OTP
+ * - PICKUP trip: marks PICKED students as DROPPED at school
+ * - DROP trip: marks students as PICKED (collecting from school)
+ */
+export const handleBulkSchoolAction = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { tripId } = req.params as Record<string, string>;
+    const { student_ids, latitude, longitude } = req.body;
+
+    const result = await bulkSchoolAction(tripId, {
+      student_ids: student_ids || [],
+      latitude,
+      longitude,
+    });
+
+    return res.json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES.TRIP_STUDENT.BULK_SCHOOL_ACTION_SUCCESSFUL,
     });
   },
 );
