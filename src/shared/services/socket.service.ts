@@ -162,14 +162,21 @@ export class SocketService {
       if (role === UserRole.PARENT) {
         const parentId = await this.getParentIdFromUserId(userId);
         if (parentId) {
-          socket.join(`parent:${parentId}`);
+          const parentRoom = `parent:${parentId}`;
+          socket.join(parentRoom);
           socket.data.parentId = parentId;
-          logger.info(`Parent ${userId} joined room parent:${parentId}`);
+          logger.info(
+            `[Socket] 👤 Parent ${userId} auto-joined personal room: ${parentRoom}`,
+          );
         }
       }
       socket.on(
         DriverSocketEvent.SUBSCRIBE_TRIP,
         async (tripId: string, callback?: (success: boolean) => void) => {
+          logger.info(
+            `Driver ${userId} attempting to subscribe to trip ${tripId}`,
+          );
+          logger.info(socket.data.role);
           if (socket.data.role !== UserRole.DRIVER) {
             socket.emit(BroadcastSocketEvent.ERROR, {
               message: ERROR_MESSAGES.SOCKET.ONLY_DRIVERS_CAN_SUBSCRIBE,
@@ -187,7 +194,13 @@ export class SocketService {
             return;
           }
 
-          socket.join(`trip:${tripId}:driver`);
+          const roomName = `trip:${tripId}`;
+          socket.join(roomName);
+          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+          logger.info(
+            `[Socket] 🚗 Driver ${userId} joined room: ${roomName} | Total clients in room: ${roomSize}`,
+          );
           if (callback) callback(true);
         },
       );
@@ -215,7 +228,13 @@ export class SocketService {
             return;
           }
 
-          socket.join(`trip:${tripId}:tracking`);
+          const roomName = `trip:${tripId}`;
+          socket.join(roomName);
+          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+          logger.info(
+            `[Socket] 👨‍👩‍👧 Parent ${userId} joined room: ${roomName} | Total clients in room: ${roomSize}`,
+          );
           if (callback) callback(true);
         },
       );
@@ -264,7 +283,7 @@ export class SocketService {
           );
 
           this.io
-            .to(`trip:${tripId}:tracking`)
+            .to(`trip:${tripId}`)
             .emit(BroadcastSocketEvent.POSITION_UPDATE, {
               tripId,
               driverId: userId,
@@ -288,13 +307,15 @@ export class SocketService {
             return;
           }
 
-          this.io
-            .to(`trip:${tripId}:tracking`)
-            .emit(BroadcastSocketEvent.TRIP_STARTED, {
-              tripId,
-              driverId: userId,
-              timestamp: new Date(),
-            });
+          logger.info(
+            `[Socket] 🚗 TRIP STARTED - Trip: ${tripId}, Driver: ${userId}`,
+          );
+
+          this.io.to(`trip:${tripId}`).emit(BroadcastSocketEvent.TRIP_STARTED, {
+            tripId,
+            driverId: userId,
+            timestamp: new Date(),
+          });
 
           if (callback) callback(true);
         },
@@ -308,8 +329,12 @@ export class SocketService {
             return;
           }
 
+          logger.info(
+            `[Socket] 🏁 TRIP COMPLETED - Trip: ${tripId}, Driver: ${userId}`,
+          );
+
           this.io
-            .to(`trip:${tripId}:tracking`)
+            .to(`trip:${tripId}`)
             .emit(BroadcastSocketEvent.TRIP_COMPLETED, {
               tripId,
               driverId: userId,
@@ -317,7 +342,7 @@ export class SocketService {
             });
 
           positionUpdateTimestamps.delete(tripId);
-          socket.leave(`trip:${tripId}:driver`);
+          socket.leave(`trip:${tripId}`);
           if (callback) callback(true);
         },
       );
@@ -335,15 +360,13 @@ export class SocketService {
 
           const { tripId, studentId, eta } = data;
 
-          this.io
-            .to(`trip:${tripId}:tracking`)
-            .emit(BroadcastSocketEvent.APPROACHING, {
-              tripId,
-              studentId,
-              eta,
-              driverId: userId,
-              timestamp: new Date(),
-            });
+          this.io.to(`trip:${tripId}`).emit(BroadcastSocketEvent.APPROACHING, {
+            tripId,
+            studentId,
+            eta,
+            driverId: userId,
+            timestamp: new Date(),
+          });
 
           if (callback) callback(true);
         },
@@ -362,14 +385,23 @@ export class SocketService {
 
           const { tripId, studentId } = data;
 
-          this.io
-            .to(`trip:${tripId}:tracking`)
-            .emit(BroadcastSocketEvent.STUDENT_PICKED, {
-              tripId,
-              studentId,
-              driverId: userId,
-              timestamp: new Date(),
-            });
+          const roomName = `trip:${tripId}`;
+          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+
+          logger.info(
+            `[Socket] ✅ STUDENT PICKED - Trip: ${tripId}, Student: ${studentId}, Driver: ${userId}`,
+          );
+          logger.info(
+            `[Socket] 📡 Broadcasting to room: ${roomName} | Clients in room: ${roomSize}`,
+          );
+
+          this.io.to(roomName).emit(BroadcastSocketEvent.STUDENT_PICKED, {
+            tripId,
+            studentId,
+            driverId: userId,
+            timestamp: new Date(),
+          });
 
           if (callback) callback(true);
         },
@@ -388,30 +420,54 @@ export class SocketService {
 
           const { tripId, studentId } = data;
 
-          this.io
-            .to(`trip:${tripId}:tracking`)
-            .emit(BroadcastSocketEvent.STUDENT_DROPPED, {
-              tripId,
-              studentId,
-              driverId: userId,
-              timestamp: new Date(),
-            });
+          const roomName = `trip:${tripId}`;
+          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+
+          logger.info(
+            `[Socket] 📦 STUDENT DROPPED - Trip: ${tripId}, Student: ${studentId}, Driver: ${userId}`,
+          );
+          logger.info(
+            `[Socket] 📡 Broadcasting to room: ${roomName} | Clients in room: ${roomSize}`,
+          );
+
+          this.io.to(roomName).emit(BroadcastSocketEvent.STUDENT_DROPPED, {
+            tripId,
+            studentId,
+            driverId: userId,
+            timestamp: new Date(),
+          });
 
           if (callback) callback(true);
         },
       );
 
       socket.on(ParentSocketEvent.UNSUBSCRIBE_TRIP, (tripId: string) => {
-        socket.leave(`trip:${tripId}:tracking`);
+        const roomName = `trip:${tripId}`;
+        socket.leave(roomName);
+        const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+        const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+        logger.info(
+          `[Socket] 👨‍👩‍👧 Parent ${userId} left room: ${roomName} | Remaining clients: ${roomSize}`,
+        );
       });
 
       socket.on(DriverSocketEvent.UNSUBSCRIBE_TRIP, (tripId: string) => {
-        socket.leave(`trip:${tripId}:driver`);
+        const roomName = `trip:${tripId}`;
+        socket.leave(roomName);
         positionUpdateTimestamps.delete(tripId);
+        const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
+        const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+        logger.info(
+          `[Socket] 🚗 Driver ${userId} left room: ${roomName} | Remaining clients: ${roomSize}`,
+        );
       });
 
       socket.on("disconnect", () => {
-        logger.info(`Socket disconnected: ${userId}`);
+        const rooms = Array.from(socket.rooms).filter((r) => r !== socket.id);
+        logger.info(
+          `[Socket] ❌ Disconnected: ${userId} (${role}) | Was in rooms: ${rooms.length > 0 ? rooms.join(", ") : "none"}`,
+        );
       });
 
       socket.on("error", (error) => {
@@ -426,7 +482,7 @@ export class SocketService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Record<string, any>,
   ) {
-    this.io.to(`trip:${tripId}:tracking`).emit(event, data);
+    this.io.to(`trip:${tripId}`).emit(event, data);
   }
 
   public notifyDriver(
@@ -435,7 +491,7 @@ export class SocketService {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: Record<string, any>,
   ) {
-    this.io.to(`trip:${tripId}:driver`).emit(event, data);
+    this.io.to(`trip:${tripId}`).emit(event, data);
   }
 
   /**
