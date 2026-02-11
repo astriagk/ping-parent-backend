@@ -9,6 +9,8 @@ import {
   getTripStudentsByPickup,
   getTripStudentsByStudent,
   getTripStudentsByTrip,
+  getTripStudentsGroupedByParentHandler,
+  getTripStudentsWithDetailsHandler,
   handleBulkSchoolAction,
   handleBulkStopAction,
   markStudentAttendance,
@@ -67,6 +69,15 @@ router.post(
 
 // 06. Get Trip Students
 router.get("/trip/:tripId", getTripStudentsByTrip);
+
+// 07. Get Trip Students with Details (for driver selection screen)
+router.get("/trip/:tripId/with-details", getTripStudentsWithDetailsHandler);
+
+// 08. Get Trip Students Grouped by Parent (siblings grouped together)
+router.get(
+  "/trip/:tripId/grouped-by-parent",
+  getTripStudentsGroupedByParentHandler,
+);
 
 // Additional Routes
 // Get trip student by ID

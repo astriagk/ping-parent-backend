@@ -23,3 +23,57 @@ export interface TripStudent {
   created_at: Date;
   updated_at?: Date;
 }
+
+/**
+ * Trip student with student details for driver selection screen
+ * Used before school-point to show driver which students to select
+ */
+export interface TripStudentWithDetails {
+  trip_student_id: string;
+  trip_id: string;
+  student_id: string;
+  sequence_order?: number;
+  attendance_status: AttendanceStatus;
+  pickup_status: PickupStatus;
+  // Student details
+  student_name: string;
+  student_photo_url?: string;
+  student_class?: string;
+  student_section?: string;
+  student_roll_number?: string;
+  student_gender?: string;
+  // Parent details
+  parent_id?: string;
+  parent_name?: string;
+  parent_phone_number?: string;
+  parent_photo_url?: string;
+}
+
+/**
+ * Student info within a parent group
+ */
+export interface StudentInGroup {
+  trip_student_id: string;
+  student_id: string;
+  student_name: string;
+  student_photo_url?: string;
+  student_class?: string;
+  student_section?: string;
+  student_roll_number?: string;
+  student_gender?: string;
+  sequence_order?: number;
+  attendance_status: AttendanceStatus;
+  pickup_status: PickupStatus;
+}
+
+/**
+ * Trip students grouped by parent for driver selection screen
+ * One parent can have multiple children (siblings) in the same trip
+ */
+export interface TripStudentsGroupedByParent {
+  parent_id: string;
+  parent_name?: string;
+  parent_phone_number?: string;
+  parent_photo_url?: string;
+  students: StudentInGroup[];
+}

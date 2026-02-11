@@ -7,16 +7,23 @@ import {
   DAILY_QR_OTP_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PARENTS_COLLECTION,
   PickupStatus,
   STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
+  TRIP_STUDENTS_COLLECTION,
   TripType,
+  USERS_COLLECTION,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { logger } from "@shared/utils";
 
 import { tripStudentRepository } from "./trip_student.repository";
-import { TripStudent } from "./trip_student.type";
+import {
+  TripStudent,
+  TripStudentWithDetails,
+  TripStudentsGroupedByParent,
+} from "./trip_student.type";
 
 /**
  * Get trip student record by ID
@@ -74,8 +81,6 @@ const verifyOtpBeforeRecording = async (
     .collection(DAILY_QR_OTP_COLLECTION)
     .findOne(query);
 
-  console.log(validQrOtp);
-
   if (!validQrOtp) {
     return false;
   }
@@ -123,6 +128,233 @@ export const getTripStudentsByTripIdOrdered = async (
   tripId: string,
 ): Promise<WithId<TripStudent>[]> => {
   return await tripStudentRepository.findByTripIdOrderedBySequence(tripId);
+};
+
+/**
+ * Get trip students with student details for driver selection screen
+ * Returns student name, photo, class, section for driver to select present/absent students
+ * Used before school-point and pickup-point endpoints
+ */
+export const getTripStudentsWithDetails = async (
+  tripId: string,
+): Promise<TripStudentWithDetails[]> => {
+  const db = await getDB();
+
+  const result = await db
+    .collection(TRIP_STUDENTS_COLLECTION)
+    .aggregate<TripStudentWithDetails>([
+      // Stage 1: Match students for this trip
+      {
+        $match: { trip_id: tripId },
+      },
+      // Stage 2: Lookup student details
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          localField: "student_id",
+          foreignField: "student_id",
+          as: "studentDetails",
+        },
+      },
+      // Stage 3: Unwind student details
+      {
+        $unwind: {
+          path: "$studentDetails",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      // Stage 4: Lookup parent details
+      {
+        $lookup: {
+          from: PARENTS_COLLECTION,
+          let: { parentId: { $toObjectId: "$studentDetails.parent_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$parentId"] } } }],
+          as: "parentDetails",
+        },
+      },
+      // Stage 5: Unwind parent details (preserve if no match found)
+      {
+        $unwind: {
+          path: "$parentDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 6: Lookup user details for phone number
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          let: { userId: { $toObjectId: "$parentDetails.user_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
+          as: "userDetails",
+        },
+      },
+      // Stage 7: Unwind user details (preserve if no match found)
+      {
+        $unwind: {
+          path: "$userDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 8: Sort by sequence order
+      {
+        $sort: { sequence_order: 1 },
+      },
+      // Stage 9: Project to TripStudentWithDetails format
+      {
+        $project: {
+          _id: 0,
+          trip_student_id: "$trip_student_id",
+          trip_id: "$trip_id",
+          student_id: "$student_id",
+          sequence_order: "$sequence_order",
+          attendance_status: "$attendance_status",
+          pickup_status: "$pickup_status",
+          // Student details
+          student_name: "$studentDetails.student_name",
+          student_photo_url: "$studentDetails.photo_url",
+          student_class: "$studentDetails.class",
+          student_section: "$studentDetails.section",
+          student_roll_number: "$studentDetails.roll_number",
+          student_gender: "$studentDetails.gender",
+          // Parent details
+          parent_id: "$studentDetails.parent_id",
+          parent_name: "$parentDetails.name",
+          parent_phone_number: "$userDetails.phone_number",
+          parent_photo_url: "$parentDetails.photo_url",
+        },
+      },
+    ])
+    .toArray();
+
+  return result;
+};
+
+/**
+ * Get trip students grouped by parent for driver selection screen
+ * One parent can have multiple children (siblings) in the same trip
+ * Returns parent info with array of their students
+ */
+export const getTripStudentsGroupedByParent = async (
+  tripId: string,
+): Promise<TripStudentsGroupedByParent[]> => {
+  const db = await getDB();
+
+  const result = await db
+    .collection(TRIP_STUDENTS_COLLECTION)
+    .aggregate<TripStudentsGroupedByParent>([
+      // Stage 1: Match students for this trip
+      {
+        $match: { trip_id: tripId },
+      },
+      // Stage 2: Lookup student details
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          localField: "student_id",
+          foreignField: "student_id",
+          as: "studentDetails",
+        },
+      },
+      // Stage 3: Unwind student details
+      {
+        $unwind: {
+          path: "$studentDetails",
+          preserveNullAndEmptyArrays: false,
+        },
+      },
+      // Stage 4: Lookup parent details
+      {
+        $lookup: {
+          from: PARENTS_COLLECTION,
+          let: { parentId: { $toObjectId: "$studentDetails.parent_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$parentId"] } } }],
+          as: "parentDetails",
+        },
+      },
+      // Stage 5: Unwind parent details
+      {
+        $unwind: {
+          path: "$parentDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 6: Lookup user details for phone number
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          let: { userId: { $toObjectId: "$parentDetails.user_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
+          as: "userDetails",
+        },
+      },
+      // Stage 7: Unwind user details
+      {
+        $unwind: {
+          path: "$userDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 8: Sort by sequence order before grouping
+      {
+        $sort: { sequence_order: 1 },
+      },
+      // Stage 9: Group by parent_id
+      {
+        $group: {
+          _id: "$studentDetails.parent_id",
+          parent_name: { $first: "$parentDetails.name" },
+          parent_phone_number: { $first: "$userDetails.phone_number" },
+          parent_photo_url: { $first: "$parentDetails.photo_url" },
+          students: {
+            $push: {
+              trip_student_id: "$trip_student_id",
+              student_id: "$student_id",
+              student_name: "$studentDetails.student_name",
+              student_photo_url: "$studentDetails.photo_url",
+              student_class: "$studentDetails.class",
+              student_section: "$studentDetails.section",
+              student_roll_number: "$studentDetails.roll_number",
+              student_gender: "$studentDetails.gender",
+              sequence_order: "$sequence_order",
+              attendance_status: "$attendance_status",
+              pickup_status: "$pickup_status",
+            },
+          },
+        },
+      },
+      // Stage 10: Project final format
+      {
+        $project: {
+          _id: 0,
+          parent_id: "$_id",
+          parent_name: 1,
+          parent_phone_number: 1,
+          parent_photo_url: 1,
+          students: 1,
+        },
+      },
+      // Stage 11: Sort by first student's sequence order
+      {
+        $addFields: {
+          first_sequence: { $arrayElemAt: ["$students.sequence_order", 0] },
+        },
+      },
+      {
+        $sort: { first_sequence: 1 },
+      },
+      {
+        $project: {
+          parent_id: 1,
+          parent_name: 1,
+          parent_phone_number: 1,
+          parent_photo_url: 1,
+          students: 1,
+        },
+      },
+    ])
+    .toArray();
+
+  return result;
 };
 
 /**
@@ -280,8 +512,6 @@ export const recordPickup = async (
     pickupData.pickup_otp,
     pickupData.pickup_qr_code,
   );
-
-  console.log("OTP verification result for pickup:", { otpVerified });
 
   if (!otpVerified) {
     throw new ApiError(

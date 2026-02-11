@@ -320,6 +320,8 @@ export const ERROR_MESSAGES = {
     PERMISSION_DENIED:
       "You do not have permission to calculate route for this trip",
     NO_STUDENTS_ASSIGNED: "No students assigned to this trip",
+    NO_STUDENTS_PICKED_FOR_DROP:
+      "No students have been picked from school yet. Use school-point endpoint to mark students as picked first.",
     NO_VALID_ADDRESSES: "Could not find valid addresses for students",
     DRIVER_POSITION_OUTSIDE_CORRIDOR:
       "Driver position is outside optimized route corridor",
