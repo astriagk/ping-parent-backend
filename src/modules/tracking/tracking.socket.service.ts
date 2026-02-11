@@ -3,6 +3,7 @@ import {
   ParentNotificationEvent,
 } from "@shared/constants";
 import { socketService } from "@shared/services/socket.service";
+import { logger } from "@shared/utils";
 
 export class TrackingSocketService {
   static broadcastPositionUpdate(tripId: string, positionData: any) {
@@ -101,6 +102,9 @@ export class TrackingSocketService {
     studentName: string,
     driverId?: string,
   ) {
+    logger.info(
+      `[Notify Parent] Student Picked | Parent: ${parentId} | Trip: ${tripId} | Student: ${studentId} | Driver: ${driverId}`,
+    );
     socketService.emitToParent(
       parentId,
       ParentNotificationEvent.MY_STUDENT_PICKED,
@@ -126,6 +130,9 @@ export class TrackingSocketService {
     studentName: string,
     driverId?: string,
   ) {
+    logger.info(
+      `[Notify Parent] Student Dropped | Parent: ${parentId} | Trip: ${tripId} | Student: ${studentId} | Driver: ${driverId}`,
+    );
     socketService.emitToParent(
       parentId,
       ParentNotificationEvent.MY_STUDENT_DROPPED,
@@ -152,6 +159,9 @@ export class TrackingSocketService {
     eta: number,
     driverId?: string,
   ) {
+    logger.info(
+      `[Notify Parent] Student Approaching | Parent: ${parentId} | Trip: ${tripId} | Student: ${studentId} | Driver: ${driverId} | ETA: ${eta}`,
+    );
     socketService.emitToParent(
       parentId,
       ParentNotificationEvent.MY_STUDENT_APPROACHING,
@@ -189,6 +199,10 @@ export class TrackingSocketService {
         ? `Your child ${studentNames} has been picked up`
         : `Your children ${studentNames} have been picked up`;
 
+    logger.info(
+      `[Notify Parent] Students Picked | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
+    );
+
     socketService.emitToParent(
       parentId,
       ParentNotificationEvent.MY_STUDENT_PICKED,
@@ -220,6 +234,9 @@ export class TrackingSocketService {
         ? `Your child ${studentNames} has been dropped off`
         : `Your children ${studentNames} have been dropped off`;
 
+    logger.info(
+      `[Notify Parent] Students Dropped | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
+    );
     socketService.emitToParent(
       parentId,
       ParentNotificationEvent.MY_STUDENT_DROPPED,
@@ -251,6 +268,9 @@ export class TrackingSocketService {
         ? `Your child ${studentNames} was marked absent`
         : `Your children ${studentNames} were marked absent`;
 
+    logger.info(
+      `[Notify Parent] Students Absent | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
+    );
     socketService.emitToParent(
       parentId,
       ParentNotificationEvent.MY_STUDENT_ABSENT,

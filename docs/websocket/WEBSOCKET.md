@@ -1,7 +1,7 @@
 # WebSocket Real-Time Tracking Documentation
 
-**Version**: 3.3.0  
-**Last Updated**: February 10, 2026  
+**Version**: 3.4.0  
+**Last Updated**: February 11, 2026  
 **Status**: ✅ Production Ready
 
 ---
@@ -9,19 +9,20 @@
 ## Table of Contents
 
 1. [Overview](#overview)
-2. [Security & Authentication](#security--authentication)
-3. [Connection Setup](#connection-setup)
-4. [Event Enums Reference](#event-enums-reference)
-5. [Quick Reference: Which Event to Call When](#quick-reference-which-event-to-call-when)
-6. [Complete End-to-End Flow](#complete-end-to-end-flow)
-7. [Driver Events](#driver-events)
-8. [Parent Events](#parent-events)
-9. [Admin Events](#admin-events)
-10. [Event Reference](#event-reference)
-11. [Room Architecture](#room-architecture)
-12. [Rate Limiting](#rate-limiting)
-13. [Best Practices](#best-practices)
-14. [Troubleshooting](#troubleshooting)
+2. [Design Philosophy](#design-philosophy)
+3. [Security & Authentication](#security--authentication)
+4. [Connection Setup](#connection-setup)
+5. [Event Enums Reference](#event-enums-reference)
+6. [Quick Reference: Which Event to Call When](#quick-reference-which-event-to-call-when)
+7. [Complete End-to-End Flow](#complete-end-to-end-flow)
+8. [Driver Events](#driver-events)
+9. [Parent Events](#parent-events)
+10. [Admin Events](#admin-events)
+11. [Event Reference](#event-reference)
+12. [Room Architecture](#room-architecture)
+13. [Rate Limiting](#rate-limiting)
+14. [Best Practices](#best-practices)
+15. [Troubleshooting](#troubleshooting)
 
 ---
 
@@ -38,6 +39,43 @@ WebSocket (Socket.IO) enables **real-time position streaming** without polling.
 | **Server Load**      | High         | Low                     |
 | **Battery (Mobile)** | Poor         | Better                  |
 | **Bandwidth**        | ~50 KB/trip  | ~3 KB/trip              |
+
+---
+
+## Design Philosophy
+
+### Lightweight Driver App Architecture
+
+The driver app maintains **minimal socket complexity** by separating concerns:
+
+**🔴 Socket Events Only** (Real-time, no DB impact):
+
+- `driver:subscribe_trip` - Register with trip room
+- `driver:trip_started` - Announce trip beginning
+- `driver:update_position` - Stream live GPS coordinates (every 10-15s)
+- `driver:unsubscribe_trip` - Leave room on disconnect
+
+**🟢 REST API Only** (Requires verification + DB update):
+
+- `PATCH /api/trip-students/:tripId/:studentId/pickup` - Record pickup with OTP
+- `PATCH /api/trip-students/:tripId/:studentId/drop` - Record dropoff with OTP
+- `POST /api/trips/:tripId/complete` - Finalize trip
+
+**⚙️ Backend Auto-Calculated**:
+
+- `trip:approaching` - Auto-detected when ETA < 5 minutes
+- Parent notifications - Automatically sent when actions are verified
+
+### Benefits of This Approach
+
+| Aspect           | Benefit                                                            |
+| ---------------- | ------------------------------------------------------------------ |
+| **Simplicity**   | Driver app only handles 3-4 socket events, not 8                   |
+| **Security**     | REST API enforces OTP/QR verification before broadcast             |
+| **Reliability**  | Backend controls parent notifications, not dependent on driver app |
+| **Scalability**  | Server-side approaching detection scales better                    |
+| **Atomicity**    | DB update + socket notification happens together via REST          |
+| **Offline-Safe** | Driver actions verified before broadcasting to parents             |
 
 ---
 
@@ -223,16 +261,25 @@ This section provides a clear decision matrix for developers implementing the Dr
 
 ### Driver App: Events to EMIT (Client → Server)
 
-| Step | Event                         | When to Call                     | Payload                                           | What Happens                         |
-| ---- | ----------------------------- | -------------------------------- | ------------------------------------------------- | ------------------------------------ |
-| 1    | `driver:subscribe_trip`       | After connect, before any action | `tripId: string`                                  | Joins driver to trip room            |
-| 2    | `driver:trip_started`         | When driver starts the trip      | `tripId: string`                                  | Notifies ALL parents                 |
-| 3    | `driver:update_position`      | Every 10-15 seconds during trip  | `{ tripId, latitude, longitude, speed, heading }` | Broadcasts to ALL parents (rate: 5s) |
-| 4    | `driver:approaching_waypoint` | When ETA < 5 mins to a student   | `{ tripId, studentId, eta }`                      | Notifies ALL parents                 |
-| 5    | `driver:student_picked`       | When student boards vehicle      | `{ tripId, studentId }`                           | Notifies ALL parents                 |
-| 6    | `driver:student_dropped`      | When student exits vehicle       | `{ tripId, studentId }`                           | Notifies ALL parents                 |
-| 7    | `driver:trip_completed`       | When all students delivered      | `tripId: string`                                  | Notifies ALL parents, cleanup        |
-| 8    | `driver:unsubscribe_trip`     | After trip ends or on disconnect | `tripId: string`                                  | Leaves room, cleans rate limit       |
+**⭐ REQUIRED SOCKET EVENTS** (Driver must send these)
+
+| Step | Event                     | When to Call                     | Payload                                           | What Happens                         |
+| ---- | ------------------------- | -------------------------------- | ------------------------------------------------- | ------------------------------------ |
+| 1    | `driver:subscribe_trip`   | After connect, before any action | `tripId: string`                                  | Joins driver to trip room            |
+| 2    | `driver:trip_started`     | When driver starts the trip      | `tripId: string`                                  | Notifies ALL parents                 |
+| 3    | `driver:update_position`  | Every 10-15 seconds during trip  | `{ tripId, latitude, longitude, speed, heading }` | Broadcasts to ALL parents (rate: 5s) |
+| 4    | `driver:unsubscribe_trip` | After trip ends or on disconnect | `tripId: string`                                  | Leaves room, cleans rate limit       |
+
+**✅ OPTIONAL - USE REST API INSTEAD** (Backend handles notifications automatically)
+
+| Event                         | Use REST API Instead                                 | Reason                                                                   |
+| ----------------------------- | ---------------------------------------------------- | ------------------------------------------------------------------------ |
+| `driver:student_picked`       | `PATCH /api/trip-students/:tripId/:studentId/pickup` | Requires OTP verification, creates DB record, auto-broadcasts to parents |
+| `driver:student_dropped`      | `PATCH /api/trip-students/:tripId/:studentId/drop`   | Requires OTP verification, creates DB record, auto-broadcasts to parents |
+| `driver:trip_completed`       | `POST /api/trips/:tripId/complete`                   | Updates trip status in DB, auto-broadcasts completion                    |
+| `driver:approaching_waypoint` | Auto-calculated by backend from position updates     | Server auto-detects when ETA < 5 mins and broadcasts                     |
+
+**Blueprint**: Minimal driver implementation - Only 3-4 socket events needed
 
 ### Driver App: Events to LISTEN (Server → Client)
 
@@ -282,14 +329,15 @@ This section provides a clear decision matrix for developers implementing the Dr
 
 ### When to Use REST API + Socket vs Socket Only
 
-| Action                   | Method         | Reason                                                |
-| ------------------------ | -------------- | ----------------------------------------------------- |
-| Start position streaming | Socket only    | Real-time, no database needed                         |
-| Record student pickup    | REST API       | Requires OTP/QR verification, creates database record |
-| Record student dropoff   | REST API       | Requires OTP/QR verification, creates database record |
-| Trip start               | Socket OR REST | Socket for real-time; REST to update DB status        |
-| Trip complete            | Socket + REST  | Socket for real-time; REST to finalize records        |
-| Calculate route          | REST API       | Heavy computation, auto-broadcasts via socket         |
+| Action                  | Method        | Reason                                          |
+| ----------------------- | ------------- | ----------------------------------------------- |
+| Position streaming      | Socket only   | Real-time, no database update needed            |
+| Trip start              | Socket only   | Real-time notification to parents               |
+| Record student pickup   | REST API only | OTP/QR verification required, creates DB record |
+| Record student dropoff  | REST API only | OTP/QR verification required, creates DB record |
+| Mark trip completed     | REST API only | Updates DB status, finalizes records            |
+| Auto-detect approaching | Backend auto  | Server calculates from position updates         |
+| Calculate route         | REST API only | Heavy computation, auto-broadcasts via socket   |
 
 **REST Endpoints that trigger Socket broadcasts:**
 
@@ -450,20 +498,21 @@ Follow these steps in **exact order**:
 │  5    │ STREAM POSITION: Emit "driver:update_position" every 10-15 seconds  │
 │       │ └── Include: tripId, latitude, longitude, speed, heading, accuracy  │
 │       │ └── Rate limit: Wait 5+ seconds between updates                     │
+│       │ └── Approaching detection: Backend auto-broadcasts when ETA < 5min  │
 ├───────┼─────────────────────────────────────────────────────────────────────┤
-│  6    │ APPROACHING: Emit "driver:approaching_waypoint" when near student   │
-│       │ └── Include: tripId, studentId, eta (seconds)                       │
+│  6    │ PICKUP: Call REST API PATCH /api/trip-students/:tripId/:studentId/pickup │
+│       │ └── Requires OTP/QR verification code                               │
+│       │ └── Backend auto-broadcasts parent:my_student_picked                │
 ├───────┼─────────────────────────────────────────────────────────────────────┤
-│  7    │ PICKUP: Emit "driver:student_picked" when student boards            │
-│       │ └── Include: tripId, studentId                                      │
+│  7    │ DROPOFF: Call REST API PATCH /api/trip-students/:tripId/:studentId/drop  │
+│       │ └── Requires OTP/QR verification code                               │
+│       │ └── Backend auto-broadcasts parent:my_student_dropped               │
 ├───────┼─────────────────────────────────────────────────────────────────────┤
-│  8    │ DROPOFF: Emit "driver:student_dropped" when student exits           │
-│       │ └── Include: tripId, studentId                                      │
+│  8    │ COMPLETE: Call REST API POST /api/trips/:tripId/complete            │
+│       │ └── Updates trip status and finalizes records                       │
+│       │ └── Backend auto-broadcasts trip:completed                          │
 ├───────┼─────────────────────────────────────────────────────────────────────┤
-│  9    │ COMPLETE: Emit "driver:trip_completed" when trip ends               │
-│       │ └── Parents receive "trip:completed" event                          │
-├───────┼─────────────────────────────────────────────────────────────────────┤
-│ 10    │ CLEANUP: Emit "driver:unsubscribe_trip" and optionally disconnect   │
+│  9    │ CLEANUP: Emit "driver:unsubscribe_trip" and optionally disconnect   │
 │       │ └── Rate limit tracking is automatically cleaned up                 │
 └───────┴─────────────────────────────────────────────────────────────────────┘
 ```
@@ -487,18 +536,18 @@ socket.on("connect", () => {
     // STEP 3: Calculate route via REST API
     await fetch(`/api/tracking/calculate`, {
       method: "POST",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
-        trip_id: tripId,
-        latitude: startLat,
-        longitude: startLng,
+        tripId,
+        students: studentsList, // with pickup locations
       }),
     });
+    // Route automatically broadcasts to parents
 
     // STEP 4: Start trip
     socket.emit("driver:trip_started", tripId);
 
-    // STEP 5: Begin position streaming
+    // STEP 5: Begin streaming position
     startPositionStreaming();
   });
 });
@@ -510,36 +559,88 @@ function startPositionStreaming() {
         tripId,
         latitude: pos.coords.latitude,
         longitude: pos.coords.longitude,
-        speed: pos.coords.speed || 0,
-        heading: pos.coords.heading || 0,
-        accuracy: pos.coords.accuracy || 0,
+        speed: pos.coords.speed,
+        heading: pos.coords.heading,
+        accuracy: pos.coords.accuracy,
       });
     });
   }, 10000); // Every 10 seconds (must be >= 5 seconds)
 }
 
-// STEP 6, 7, 8: Call these when appropriate
-function approachingStudent(studentId, etaSeconds) {
-  socket.emit("driver:approaching_waypoint", {
-    tripId,
-    studentId,
-    eta: etaSeconds,
-  });
+// NOTE: Approaching is automatically detected by backend from position updates
+// When ETA < 5 minutes, backend auto-broadcasts trip:approaching to all parents
+
+// STEP 6: PICKUP - Use REST API with OTP verification (NOT socket emit)
+async function pickupStudent(studentId, otpCode) {
+  try {
+    const response = await fetch(
+      `/api/trip-students/${tripId}/${studentId}/pickup`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otpCode }),
+      }
+    );
+    // Backend auto-broadcasts:
+    // - parent:my_student_picked (to specific parent)
+    // - trip:student_picked (to all parents)
+  } catch (error) {
+    console.error("Pickup failed:", error);
+  }
 }
 
-function pickupStudent(studentId) {
-  socket.emit("driver:student_picked", { tripId, studentId });
+// STEP 7: DROPOFF - Use REST API with OTP verification (NOT socket emit)
+async function dropoffStudent(studentId, otpCode) {
+  try {\n    const response = await fetch(
+      `/api/trip-students/${tripId}/${studentId}/drop`,
+      {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ otpCode }),
+      }
+    );
+    // Backend auto-broadcasts:
+    // - parent:my_student_dropped (to specific parent)
+    // - trip:student_dropped (to all parents)
+  } catch (error) {
+    console.error("Dropoff failed:", error);
+  }
 }
 
-function dropoffStudent(studentId) {
-  socket.emit("driver:student_dropped", { tripId, studentId });
+// STEP 8: COMPLETE - Use REST API (NOT socket emit)
+async function completeTrip() {
+  try {
+    const response = await fetch(`/api/trips/${tripId}/complete`, {
+      method: "POST",
+    });
+    // Backend auto-broadcasts trip:completed to all parents
+
+    // STEP 9: Cleanup
+    socket.emit("driver:unsubscribe_trip", tripId);
+  } catch (error) {
+    console.error("Trip completion failed:", error);
+  }
 }
 
-// STEP 9, 10: End trip
-function completeTrip() {
-  socket.emit("driver:trip_completed", tripId);
-  socket.emit("driver:unsubscribe_trip", tripId);
-}
+socket.on("socket:error", (data) => {
+  console.error("Authorization error:", data.message);
+});
+```
+
+**Summary - Minimal Driver Socket Events**:
+
+```javascript
+// Only these 4 socket events are needed:
+socket.emit("driver:subscribe_trip", tripId);    // Once at start
+socket.emit("driver:trip_started", tripId);       // Once when trip starts
+socket.emit("driver:update_position", {...});     // Every 10-15 seconds
+socket.emit("driver:unsubscribe_trip", tripId);   // Once at end
+
+// Everything else goes through REST API for verification:
+// - Pickup: PATCH /api/trip-students/:tripId/:studentId/pickup
+// - Dropoff: PATCH /api/trip-students/:tripId/:studentId/drop
+// - Complete: POST /api/trips/:tripId/complete
+// - Approaching: Auto-calculated by backend
 ```
 
 ---
@@ -1480,16 +1581,16 @@ TrackingSocketService.notifyParentApproaching(
 
 ### Driver Events (Client → Server)
 
-| Event                         | Payload                                                      | Authorization     | Broadcast              |
-| ----------------------------- | ------------------------------------------------------------ | ----------------- | ---------------------- |
-| `driver:subscribe_trip`       | `tripId: string`                                             | ✅ Must own trip  | Joins room             |
-| `driver:unsubscribe_trip`     | `tripId: string`                                             | —                 | Leaves room            |
-| `driver:update_position`      | `{tripId, latitude, longitude, speed?, heading?, accuracy?}` | Rate limited (5s) | `trip:position_update` |
-| `driver:trip_started`         | `tripId: string`                                             | Driver role       | `trip:started`         |
-| `driver:trip_completed`       | `tripId: string`                                             | Driver role       | `trip:completed`       |
-| `driver:student_picked`       | `{tripId, studentId}`                                        | Driver role       | `trip:student_picked`  |
-| `driver:student_dropped`      | `{tripId, studentId}`                                        | Driver role       | `trip:student_dropped` |
-| `driver:approaching_waypoint` | `{tripId, studentId, eta}`                                   | Driver role       | `trip:approaching`     |
+| Event                         | Payload                                                      | Authorization     | Broadcast              | Status                  |
+| ----------------------------- | ------------------------------------------------------------ | ----------------- | ---------------------- | ----------------------- |
+| `driver:subscribe_trip`       | `tripId: string`                                             | ✅ Must own trip  | Joins room             | ⭐ REQUIRED             |
+| `driver:unsubscribe_trip`     | `tripId: string`                                             | —                 | Leaves room            | ⭐ REQUIRED             |
+| `driver:update_position`      | `{tripId, latitude, longitude, speed?, heading?, accuracy?}` | Rate limited (5s) | `trip:position_update` | ⭐ REQUIRED             |
+| `driver:trip_started`         | `tripId: string`                                             | Driver role       | `trip:started`         | ⭐ REQUIRED             |
+| `driver:trip_completed`       | `tripId: string`                                             | Driver role       | `trip:completed`       | ❌ Use REST API instead |
+| `driver:student_picked`       | `{tripId, studentId}`                                        | Driver role       | `trip:student_picked`  | ❌ Use REST API instead |
+| `driver:student_dropped`      | `{tripId, studentId}`                                        | Driver role       | `trip:student_dropped` | ❌ Use REST API instead |
+| `driver:approaching_waypoint` | `{tripId, studentId, eta}`                                   | Driver role       | `trip:approaching`     | ❌ Auto-calculated      |
 
 ### Parent Events (Client → Server)
 
@@ -1771,8 +1872,17 @@ socket.on("socket:error", (data) => {
 ---
 
 **Status**: ✅ Production Ready  
-**Last Updated**: February 10, 2026  
-**Version**: 3.3.0
+**Last Updated**: February 11, 2026  
+**Version**: 3.4.0
+
+**Changes in v3.4.0**:
+
+- Added clear distinction between **REQUIRED** and **OPTIONAL** socket events for driver
+- Documented REST API routes for pickup, dropoff, and trip completion
+- Emphasized auto-calculation of approaching waypoint detection by backend
+- Reduced minimum required driver socket events to 4 (subscribe, update_position, trip_started, unsubscribe)
+- All pickup/dropoff events now route through REST API for OTP verification
+- Backend auto-broadcasts all parent notifications - driver app lightweight implementation
 
 **Changes in v3.3.0**:
 
