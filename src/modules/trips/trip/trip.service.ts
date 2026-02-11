@@ -2,6 +2,7 @@ import { WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
+  BroadcastSocketEvent,
   DRIVERS_COLLECTION,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
@@ -12,6 +13,7 @@ import {
   UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
+import { socketService } from "@shared/services/socket.service";
 import { generateUniqueCode } from "@shared/utils";
 
 import { generateBulkQrOtp } from "../daily_qr_otp/daily_qr_otp.service";
@@ -304,9 +306,25 @@ export const updateTripStatus = async (
     updateData.end_time = new Date();
   }
 
-  return await tripRepository.updateById(id, {
+  const updatedTrip = await tripRepository.updateById(id, {
     $set: updateData,
   });
+
+  // Emit socket event to notify parents of trip status change
+  if (updatedTrip) {
+    socketService.broadcastToTrip(
+      currentTrip.trip_id,
+      BroadcastSocketEvent.TRIP_STATUS_UPDATE,
+      {
+        tripId: currentTrip.trip_id,
+        previousStatus: currentTrip.trip_status,
+        newStatus,
+        timestamp: new Date(),
+      },
+    );
+  }
+
+  return updatedTrip;
 };
 
 export const deleteTrip = async (id: string): Promise<boolean> => {

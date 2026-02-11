@@ -13,6 +13,7 @@ import {
   TripType,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
+import { logger } from "@shared/utils";
 
 import { tripStudentRepository } from "./trip_student.repository";
 import { TripStudent } from "./trip_student.type";
@@ -795,6 +796,10 @@ export const bulkStopAction = async (
           studentName: studentMap.get(id)!.student_name,
         }));
 
+      logger.info(
+        `[Bulk Stop Action] Processed Students | Trip: ${tripId} | Students: ${result.processed_students.join(", ")} | Driver: ${trip?.driver_id}`,
+      );
+
       if (processedStudentDetails.length > 0) {
         if (tripType === TripType.PICKUP) {
           TrackingSocketService.notifyParentStudentsPicked(
@@ -816,6 +821,10 @@ export const bulkStopAction = async (
 
     // Build notifications for absent students
     if (result.absent_students.length > 0) {
+      logger.info(
+        `[Bulk Stop Action] Absent Students | Trip: ${tripId} | Students: ${result.absent_students.join(", ")} | Driver: ${trip?.driver_id}`,
+      );
+
       const absentStudentDetails = result.absent_students
         .filter((id) => studentMap.has(id))
         .map((id) => ({
