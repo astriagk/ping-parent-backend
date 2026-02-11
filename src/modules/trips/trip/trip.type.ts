@@ -15,3 +15,21 @@ export interface Trip {
   created_at: Date;
   updated_at?: Date;
 }
+
+/**
+ * Trip progress response for resume functionality
+ * Calculated from trip_students statuses and optimized_route_data
+ */
+export interface TripProgress {
+  tripId: string;
+  tripType: TripType;
+  tripStatus: TripStatus;
+  currentWaypointIndex: number;
+  totalWaypoints: number;
+  processedStudentIds: string[]; // PICKUP: picked/dropped, DROP: dropped at home
+  inTransitStudentIds: string[]; // DROP trips only: picked from school, not yet dropped
+  absentStudentIds: string[];
+  optimizedRouteId: string | null;
+  startedAt: Date | null;
+  lastPositionUpdate: Date | null;
+}

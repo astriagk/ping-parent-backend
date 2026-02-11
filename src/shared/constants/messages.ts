@@ -141,6 +141,7 @@ export const ERROR_MESSAGES = {
   },
   TRIP: {
     NOT_FOUND: "Trip not found",
+    NOT_ACTIVE: "Trip is not active",
     FAILED_TO_CREATE: "Failed to create trip",
     FAILED_TO_UPDATE: "Failed to update trip",
     FAILED_TO_DELETE: "Failed to delete trip",
@@ -454,6 +455,7 @@ export const SUCCESS_MESSAGES = {
     COMPLETED_SUCCESSFULLY: "Trip completed successfully",
     CANCELLED_SUCCESSFULLY: "Trip cancelled successfully",
     STATUS_UPDATED_SUCCESSFULLY: "Trip status updated successfully",
+    PROGRESS_FETCHED_SUCCESSFULLY: "Trip progress retrieved successfully",
   },
   TRIP_STUDENT: {
     CREATED_SUCCESSFULLY: "Trip student record created successfully",

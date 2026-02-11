@@ -162,6 +162,15 @@ export const VALIDATION_MESSAGES = {
     OTP_LENGTH: "OTP must be 4 digits",
     OTP_PATTERN: "OTP must contain only numbers",
     NOTES_MAX: "Notes cannot exceed 500 characters",
+    STUDENT_IDS_ARRAY: "student_ids must be an array",
+    STUDENT_IDS_REQUIRED: "student_ids is required",
+    ABSENT_STUDENT_IDS_ARRAY: "absent_student_ids must be an array",
+    SKIPPED_STUDENT_IDS_ARRAY: "skipped_student_ids must be an array",
+    NO_STUDENTS_ERROR:
+      "At least one student must be in student_ids or absent_student_ids",
+    NO_STUDENTS_SCHOOL_ERROR:
+      "At least one student must be in student_ids or skipped_student_ids",
+    OTP_OR_QR_REQUIRED: "OTP or QR code is required when processing students",
   },
   DAILY_QR_OTP: {
     STUDENT_ID_REQUIRED: "Student ID is required",

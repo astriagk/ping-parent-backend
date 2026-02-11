@@ -1086,6 +1086,7 @@ export interface BulkSchoolActionResult {
   trip_type: TripType;
   action: "picked_from_school" | "dropped_at_school";
   processed_students: string[];
+  skipped_students: string[];
   failed_students: { student_id: string; reason: string }[];
 }
 
@@ -1093,12 +1094,14 @@ export interface BulkSchoolActionResult {
  * Bulk school action - handles all students at school without OTP
  * - PICKUP trip: marks PICKED students as DROPPED at school
  * - DROP trip: marks PENDING students as PICKED from school
+ *   - skipped_student_ids: students not boarding (marked as NO_SHOW)
  * No OTP required since this is at school location
  */
 export const bulkSchoolAction = async (
   tripId: string,
   data: {
     student_ids: string[];
+    skipped_student_ids?: string[];
     latitude?: number;
     longitude?: number;
   },
@@ -1122,20 +1125,27 @@ export const bulkSchoolAction = async (
     action:
       tripType === TripType.PICKUP ? "dropped_at_school" : "picked_from_school",
     processed_students: [],
+    skipped_students: [],
     failed_students: [],
   };
 
-  if (data.student_ids.length === 0) {
+  const skippedStudentIds = data.skipped_student_ids || [];
+
+  // For school-point, allow empty student_ids if skipped_student_ids has values (DROP trip)
+  if (data.student_ids.length === 0 && skippedStudentIds.length === 0) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
       ERROR_MESSAGES.TRIP_STUDENT.NO_STUDENTS_PROVIDED,
     );
   }
 
+  // Combine all student IDs for fetching details
+  const allStudentIds = [...data.student_ids, ...skippedStudentIds];
+
   // Fetch all student details upfront
   const allStudents = await db
     .collection(STUDENTS_COLLECTION)
-    .find({ student_id: { $in: data.student_ids } })
+    .find({ student_id: { $in: allStudentIds } })
     .toArray();
 
   // Build a map for quick lookup
@@ -1228,6 +1238,51 @@ export const bulkSchoolAction = async (
         student_id: studentId,
         reason: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  }
+
+  // Process skipped students (only for DROP trips - students not boarding from school)
+  if (tripType === TripType.DROP && skippedStudentIds.length > 0) {
+    for (const studentId of skippedStudentIds) {
+      try {
+        const tripStudent = await tripStudentRepository.findByTripAndStudent(
+          tripId,
+          studentId,
+        );
+
+        if (!tripStudent) {
+          result.failed_students.push({
+            student_id: studentId,
+            reason: ERROR_MESSAGES.TRIP_STUDENT.NOT_FOUND,
+          });
+          continue;
+        }
+
+        // Mark as NO_SHOW (student not boarding for drop trip)
+        if (
+          tripStudent.pickup_status === PickupStatus.NO_SHOW ||
+          tripStudent.attendance_status === AttendanceStatus.ABSENT
+        ) {
+          // Already marked as skipped/absent, skip
+          result.skipped_students.push(studentId);
+          continue;
+        }
+
+        await tripStudentRepository.updateById(tripStudent._id.toString(), {
+          $set: {
+            pickup_status: PickupStatus.NO_SHOW,
+            attendance_status: AttendanceStatus.ABSENT,
+            updated_at: now,
+          },
+        });
+
+        result.skipped_students.push(studentId);
+      } catch (error) {
+        result.failed_students.push({
+          student_id: studentId,
+          reason: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     }
   }
 

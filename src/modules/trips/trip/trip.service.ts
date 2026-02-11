@@ -2,11 +2,14 @@ import { WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
+  AttendanceStatus,
   BroadcastSocketEvent,
   DRIVERS_COLLECTION,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PickupStatus,
+  TRIPS_COLLECTION,
   TRIP_STUDENTS_COLLECTION,
   TripStatus,
   TripType,
@@ -18,7 +21,7 @@ import { generateUniqueCode } from "@shared/utils";
 
 import { generateBulkQrOtp } from "../daily_qr_otp/daily_qr_otp.service";
 import { tripRepository } from "./trip.repository";
-import { Trip } from "./trip.type";
+import { Trip, TripProgress } from "./trip.type";
 
 /**
  * Helper function to convert userId to driver_id
@@ -326,4 +329,183 @@ export const updateTripStatus = async (
 export const deleteTrip = async (id: string): Promise<boolean> => {
   const result = await tripRepository.deleteById(id);
   return result !== null;
+};
+
+/**
+ * Get trip progress for resume functionality
+ * Calculates currentWaypointIndex based on processed students and route waypoints
+ * Only works for active trips (started or in_progress)
+ */
+export const getTripProgress = async (
+  tripId: string,
+): Promise<TripProgress> => {
+  const db = await getDB();
+
+  // Fetch trip by trip_id
+  const trip = await db
+    .collection(TRIPS_COLLECTION)
+    .findOne({ trip_id: tripId });
+
+  if (!trip) {
+    throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TRIP.NOT_FOUND);
+  }
+
+  // Validate trip is active (started or in_progress)
+  const activeStatuses = [TripStatus.STARTED, TripStatus.IN_PROGRESS];
+  if (!activeStatuses.includes(trip.trip_status)) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      `${ERROR_MESSAGES.TRIP.NOT_ACTIVE}. Status: ${trip.trip_status}`,
+    );
+  }
+
+  // Get all trip students for this trip
+  const tripStudents = await db
+    .collection(TRIP_STUDENTS_COLLECTION)
+    .find({ trip_id: tripId })
+    .sort({ sequence_order: 1 })
+    .toArray();
+
+  const tripType = trip.trip_type as TripType;
+
+  // Calculate processed, in-transit, and absent student IDs based on trip type
+  // PICKUP: student is processed when PICKED (at parent home) or DROPPED (at school)
+  // DROP: student is processed at waypoint when DROPPED (at parent home)
+  const processedStudentIds: string[] = [];
+  const inTransitStudentIds: string[] = []; // DROP trips: picked from school, not yet dropped
+  const absentStudentIds: string[] = [];
+
+  for (const ts of tripStudents) {
+    // For waypoint progress calculation:
+    // - PICKUP trip: PICKED means waypoint (parent home) is done
+    // - DROP trip: DROPPED means waypoint (parent home) is done
+    if (tripType === TripType.PICKUP) {
+      // For PICKUP: student processed at parent home when PICKED or DROPPED
+      if (
+        ts.pickup_status === PickupStatus.PICKED ||
+        ts.pickup_status === PickupStatus.DROPPED
+      ) {
+        processedStudentIds.push(ts.student_id);
+      }
+    } else {
+      // For DROP: student processed at parent home waypoint only when DROPPED
+      if (ts.pickup_status === PickupStatus.DROPPED) {
+        processedStudentIds.push(ts.student_id);
+      }
+      // Track students currently in transit (picked from school but not dropped yet)
+      if (ts.pickup_status === PickupStatus.PICKED) {
+        inTransitStudentIds.push(ts.student_id);
+      }
+    }
+
+    if (
+      ts.pickup_status === PickupStatus.NO_SHOW ||
+      ts.attendance_status === AttendanceStatus.ABSENT
+    ) {
+      absentStudentIds.push(ts.student_id);
+    }
+  }
+
+  // Get waypoints from optimized_route_data
+  const waypoints = trip.optimized_route_data?.waypoints || [];
+  const totalWaypoints = waypoints.length;
+
+  // Calculate currentWaypointIndex
+  // Find the first waypoint that has unprocessed students
+  let currentWaypointIndex = 0;
+
+  // For waypoint calculation: check if students are processed (DROPPED for DROP, PICKED for PICKUP)
+  const processedSet = new Set([...processedStudentIds, ...absentStudentIds]);
+
+  // For DROP trips: check if school waypoint is done based on trip_students status
+  // School is done when all students are either PICKED (in transit), DROPPED, or NO_SHOW
+  const allStudentsLeftSchool =
+    tripType === TripType.DROP &&
+    tripStudents.every(
+      (ts) =>
+        ts.pickup_status === PickupStatus.PICKED ||
+        ts.pickup_status === PickupStatus.DROPPED ||
+        ts.pickup_status === PickupStatus.NO_SHOW ||
+        ts.attendance_status === AttendanceStatus.ABSENT,
+    );
+
+  for (let i = 0; i < waypoints.length; i++) {
+    const waypoint = waypoints[i];
+
+    // Check if this is a school waypoint
+    // student_parent_id can be "SCHOOL_LOCATION" for school waypoints
+
+    const isSchoolWaypoint = waypoint.student_parent_id === "SCHOOL_LOCATION";
+
+    // For PICKUP trips, skip school waypoint (it's the final destination)
+    if (isSchoolWaypoint && tripType === TripType.PICKUP) {
+      continue;
+    }
+
+    // For DROP trips at school waypoint: check if all students have left school
+    if (isSchoolWaypoint && tripType === TripType.DROP) {
+      if (!allStudentsLeftSchool) {
+        currentWaypointIndex = i;
+        break;
+      }
+      // School is done, move currentWaypointIndex past school
+      currentWaypointIndex = i + 1;
+      continue;
+    }
+
+    // Get student IDs at this waypoint (can be array or single)
+    let studentIds: string[] = [];
+    if (Array.isArray(waypoint.student_id)) {
+      studentIds = waypoint.student_id;
+    } else if (waypoint.student_id) {
+      studentIds = [waypoint.student_id];
+    }
+
+    // For parent home waypoints, check if all students at this stop are dropped
+    const allProcessed =
+      studentIds.length === 0 ||
+      studentIds.every((sid: string) => processedSet.has(sid));
+
+    if (!allProcessed) {
+      currentWaypointIndex = i;
+      break;
+    }
+
+    // This waypoint is done, update index to next waypoint
+    currentWaypointIndex = i + 1;
+  }
+
+  // If no waypoints or all processed, calculate based on progress
+  if (waypoints.length === 0 && tripStudents.length > 0) {
+    // No optimized route, estimate based on processed count
+    currentWaypointIndex = processedStudentIds.length + absentStudentIds.length;
+  }
+
+  // Get last position update timestamp from trip_students
+  let lastPositionUpdate: Date | null = null;
+  const lastUpdated = tripStudents
+    .filter((ts) => ts.pickup_time || ts.drop_time)
+    .sort((a, b) => {
+      const aTime = a.drop_time || a.pickup_time;
+      const bTime = b.drop_time || b.pickup_time;
+      return new Date(bTime).getTime() - new Date(aTime).getTime();
+    })[0];
+
+  if (lastUpdated) {
+    lastPositionUpdate = lastUpdated.drop_time || lastUpdated.pickup_time;
+  }
+
+  return {
+    tripId: trip.trip_id,
+    tripType: trip.trip_type,
+    tripStatus: trip.trip_status,
+    currentWaypointIndex,
+    totalWaypoints,
+    processedStudentIds,
+    inTransitStudentIds, // DROP trips: picked from school, not yet dropped
+    absentStudentIds,
+    optimizedRouteId: trip._id?.toString() || null,
+    startedAt: trip.start_time || null,
+    lastPositionUpdate,
+  };
 };

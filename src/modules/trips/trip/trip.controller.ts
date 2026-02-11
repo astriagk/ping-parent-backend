@@ -14,6 +14,7 @@ import {
   getActiveTrips,
   getAllTrips,
   getTripById,
+  getTripProgress as getTripProgressService,
   getTripsByDriverIdAndDate,
   getTripsByUserId,
   updateTrip,
@@ -204,6 +205,25 @@ export const deleteTripProfile = asyncHandler(
     return res.json({
       success: true,
       message: SUCCESS_MESSAGES.TRIP.DELETED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get trip progress for resume functionality
+ * Returns current waypoint index, processed students, and absent students
+ * Only works for active trips (started or in_progress)
+ */
+export const getTripProgress = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+
+    const progress = await getTripProgressService(id);
+
+    return res.json({
+      success: true,
+      data: progress,
+      message: SUCCESS_MESSAGES.TRIP.PROGRESS_FETCHED_SUCCESSFULLY,
     });
   },
 );
