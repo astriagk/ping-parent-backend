@@ -1,3 +1,5 @@
+import { PickupStatus } from "@shared/constants";
+
 export interface RouteWaypoint {
   latitude: number;
   longitude: number;
@@ -6,6 +8,7 @@ export interface RouteWaypoint {
   student_parent_id?: string; // parent id to group students from same parent
   student_name?: string; // single student name from repository (before grouping)
   student_names?: string[]; // array of student names (after grouping)
+  pickup_status?: PickupStatus; // PickupStatus enum: pending, picked, dropped, no_show
   student_roll_number?: string;
   student_grade?: string;
   student_section?: string;

@@ -115,8 +115,6 @@ export const getMyTripsByDate = asyncHandler(
 
     const tripDate = new Date(date as string);
 
-    logger.info("tripDate", tripDate);
-
     if (isNaN(tripDate.getTime())) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,

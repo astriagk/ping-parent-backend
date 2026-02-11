@@ -165,14 +165,29 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     return updatedCount;
   }
 
-  async getTripStudentsWithDetails(tripId: string): Promise<RouteWaypoint[]> {
+  /**
+   * Get trip students with details for route calculation
+   * @param tripId - Trip ID
+   * @param pickupStatusFilter - Optional filter for pickup_status (used for DROP trips to get only picked students)
+   */
+  async getTripStudentsWithDetails(
+    tripId: string,
+    pickupStatusFilter?: string,
+  ): Promise<RouteWaypoint[]> {
     const db = await getDB();
+
+    // Build match condition - always filter by trip_id, optionally by pickup_status
+    const matchCondition: Record<string, any> = { trip_id: tripId };
+    if (pickupStatusFilter) {
+      matchCondition.pickup_status = pickupStatusFilter;
+    }
+
     return db
       .collection(TRIP_STUDENTS_COLLECTION)
       .aggregate<RouteWaypoint>([
-        // Stage 1: Match students for this trip
+        // Stage 1: Match students for this trip (with optional pickup_status filter)
         {
-          $match: { trip_id: tripId },
+          $match: matchCondition,
         },
         // Stage 2: Lookup student details
         {
