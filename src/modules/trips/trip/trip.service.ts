@@ -118,8 +118,6 @@ export const createTrip = async (
     data.trip_date,
   );
 
-  console.log(duplicate);
-
   if (duplicate) {
     throw new ApiError(
       HTTP_STATUS.CONFLICT,
@@ -135,8 +133,6 @@ export const createTrip = async (
     created_at: new Date(),
     updated_at: new Date(),
   };
-
-  console.log(tripData);
 
   const createdTrip = await tripRepository.create(tripData);
 

@@ -19,6 +19,8 @@ import {
   getTripStudentsByStudentId,
   getTripStudentsByTripId,
   getTripStudentsByTripIdOrdered,
+  getTripStudentsGroupedByParent,
+  getTripStudentsWithDetails,
   markAttendance,
   recordDrop,
   recordPickup,
@@ -67,6 +69,44 @@ export const getTripStudentsByTrip = asyncHandler(
     return res.json({
       success: true,
       data: tripStudents,
+      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get trip students with student details for driver selection
+ * Returns student name, photo, class, section along with trip student status
+ * Used before school-point to show driver which students to select
+ */
+export const getTripStudentsWithDetailsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { tripId } = req.params as Record<string, string>;
+
+    const tripStudents = await getTripStudentsWithDetails(tripId);
+
+    return res.json({
+      success: true,
+      data: tripStudents,
+      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get trip students grouped by parent for driver selection
+ * Returns parent info with array of their students (siblings grouped together)
+ * Includes parent phone number and photo for easy identification/contact
+ */
+export const getTripStudentsGroupedByParentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { tripId } = req.params as Record<string, string>;
+
+    const groupedStudents = await getTripStudentsGroupedByParent(tripId);
+
+    return res.json({
+      success: true,
+      data: groupedStudents,
       message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
     });
   },

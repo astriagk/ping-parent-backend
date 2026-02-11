@@ -3,6 +3,7 @@ import {
   DRIVERS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PickupStatus,
   TripType,
   UniqueCodeTypes,
 } from "@shared/constants";
@@ -52,7 +53,6 @@ const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
   const uniqueWaypoints: RouteWaypoint[] = [];
   for (const [parentId, studentList] of grouped.entries()) {
     const firstStudent = studentList[0];
-    console.log(firstStudent);
 
     const studentIds = studentList.flatMap((s) => {
       if (Array.isArray(s.student_id)) {
@@ -139,14 +139,23 @@ const validateAndPrepareRoute = async (
     );
   }
 
+  // For DROP trips: only include students who have been picked from school
+  // For PICKUP trips: include all assigned students
+  const pickupStatusFilter =
+    trip.trip_type === TripType.DROP ? PickupStatus.PICKED : undefined;
+
   const waypointsToOptimize =
-    await trackingRepository.getTripStudentsWithDetails(tripId);
+    await trackingRepository.getTripStudentsWithDetails(
+      tripId,
+      pickupStatusFilter,
+    );
 
   if (waypointsToOptimize.length === 0) {
-    throw new ApiError(
-      HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.TRACKING.NO_STUDENTS_ASSIGNED,
-    );
+    const errorMessage =
+      trip.trip_type === TripType.DROP
+        ? ERROR_MESSAGES.TRACKING.NO_STUDENTS_PICKED_FOR_DROP
+        : ERROR_MESSAGES.TRACKING.NO_STUDENTS_ASSIGNED;
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, errorMessage);
   }
 
   const uniqueWaypoints = groupStudentsByParent(waypointsToOptimize);
@@ -297,25 +306,32 @@ export const calculateRoute = async (
     longitude: data.current_longitude,
   };
 
-  const waypointsForOptimization =
-    trip.trip_type === TripType.PICKUP && schoolLocation
-      ? [...uniqueWaypoints, schoolLocation]
-      : uniqueWaypoints;
+  // For PICKUP: optimize homes, add school at end
+  // For DROP: optimize homes from current location (at/near school)
+  const waypointsToOptimize = uniqueWaypoints;
 
   const sequence = calculateOptimalSequence(
     startPoint,
-    waypointsForOptimization.map((wp) => ({
+    waypointsToOptimize.map((wp) => ({
       latitude: wp.latitude,
       longitude: wp.longitude,
     })),
   );
 
-  const optimizedWaypoints = sequence.map(
-    (idx) => waypointsForOptimization[idx],
-  );
+  const optimizedWaypoints = sequence.map((idx) => waypointsToOptimize[idx]);
+
+  // Build final waypoints:
+  // PICKUP: optimized homes → school (last)
+  // DROP: school (first) → optimized homes
+  const finalWaypoints =
+    trip.trip_type === TripType.PICKUP && schoolLocation
+      ? [...optimizedWaypoints, schoolLocation]
+      : trip.trip_type === TripType.DROP && schoolLocation
+        ? [schoolLocation, ...optimizedWaypoints]
+        : optimizedWaypoints;
 
   const { waypointsWithMetrics, routeData } =
-    await calculateGeometryAndETasHaversine(startPoint, optimizedWaypoints);
+    await calculateGeometryAndETasHaversine(startPoint, finalWaypoints);
 
   const updatedCount = await updateAndBroadcastRoute(
     data.trip_id,
@@ -342,30 +358,36 @@ export const calculateOptimalRouteWithTomTom = async (
   const { uniqueWaypoints, trip, schoolLocation } =
     await validateAndPrepareRoute(userId, data.trip_id);
 
-  const waypointsForOptimization =
-    trip.trip_type === TripType.PICKUP && schoolLocation
-      ? [...uniqueWaypoints, schoolLocation]
-      : uniqueWaypoints;
-
   const startPoint = {
     latitude: data.current_latitude,
     longitude: data.current_longitude,
   };
 
+  // For both PICKUP and DROP: optimize student homes from current location
+  const waypointsToOptimize = uniqueWaypoints;
+
   const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
     startPoint,
-    waypointsForOptimization.map((wp) => ({
+    waypointsToOptimize.map((wp) => ({
       latitude: wp.latitude,
       longitude: wp.longitude,
     })),
   );
 
-  const optimizedWaypoints = sequence.map(
-    (idx) => waypointsForOptimization[idx],
-  );
+  const optimizedWaypoints = sequence.map((idx) => waypointsToOptimize[idx]);
+
+  // Build final waypoints:
+  // PICKUP: optimized homes → school (last)
+  // DROP: school (first) → optimized homes
+  const finalWaypoints =
+    trip.trip_type === TripType.PICKUP && schoolLocation
+      ? [...optimizedWaypoints, schoolLocation]
+      : trip.trip_type === TripType.DROP && schoolLocation
+        ? [schoolLocation, ...optimizedWaypoints]
+        : optimizedWaypoints;
 
   const { waypointsWithMetrics, routeData } =
-    await calculateGeometryAndETasTomTom(startPoint, optimizedWaypoints);
+    await calculateGeometryAndETasTomTom(startPoint, finalWaypoints);
 
   const updatedCount = await updateAndBroadcastRoute(
     data.trip_id,
@@ -553,35 +575,38 @@ export const recalculateRoute = async (
   const { uniqueWaypoints, trip, schoolLocation } =
     await validateAndPrepareRoute(userId, data.trip_id);
 
-  // Build waypoints based on trip type
-  // PICKUP trips: home → school (add school as final waypoint)
-  // DROP trips: school → home (don't add school, it's the starting point)
-  const waypointsForOptimization =
-    trip.trip_type === TripType.PICKUP && schoolLocation
-      ? [...uniqueWaypoints, schoolLocation]
-      : uniqueWaypoints;
-
   const startPoint = {
     latitude: data.current_latitude,
     longitude: data.current_longitude,
   };
 
+  // Optimize only student homes from current location
+  const waypointsToOptimize = uniqueWaypoints;
+
   // Recalculate optimal sequence with new start point using grouped waypoints
   const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
     startPoint,
-    waypointsForOptimization.map((wp) => ({
+    waypointsToOptimize.map((wp) => ({
       latitude: wp.latitude,
       longitude: wp.longitude,
     })),
   );
 
-  const optimizedWaypoints = sequence.map(
-    (idx) => waypointsForOptimization[idx],
-  );
+  const optimizedWaypoints = sequence.map((idx) => waypointsToOptimize[idx]);
+
+  // Build final waypoints:
+  // PICKUP: optimized homes → school (last)
+  // DROP: school (first) → optimized homes
+  const finalWaypoints =
+    trip.trip_type === TripType.PICKUP && schoolLocation
+      ? [...optimizedWaypoints, schoolLocation]
+      : trip.trip_type === TripType.DROP && schoolLocation
+        ? [schoolLocation, ...optimizedWaypoints]
+        : optimizedWaypoints;
 
   // Calculate geometry and ETAs using TomTom version (accurate API-based)
   const { waypointsWithMetrics, routeData } =
-    await calculateGeometryAndETasTomTom(startPoint, optimizedWaypoints);
+    await calculateGeometryAndETasTomTom(startPoint, finalWaypoints);
 
   await trackingRepository.updateTripRouteData(
     data.trip_id,
