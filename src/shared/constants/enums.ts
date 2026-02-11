@@ -200,6 +200,7 @@ export enum BroadcastSocketEvent {
   POSITION_UPDATE = "trip:position_update",
   TRIP_STARTED = "trip:started",
   TRIP_COMPLETED = "trip:completed",
+  TRIP_STATUS_UPDATE = "trip:status_update",
   ROUTE_CALCULATED = "trip:route_calculated",
   APPROACHING = "trip:approaching",
   STUDENT_PICKED = "trip:student_picked",

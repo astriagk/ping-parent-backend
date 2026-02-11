@@ -156,27 +156,19 @@ export class SocketService {
   private setupConnectionHandlers() {
     this.io.on("connection", async (socket: Socket) => {
       const { userId, role } = socket.data;
-      logger.info(`Socket connected: ${userId} (${role})`);
+      logger.info(`[Socket] Connected: ${userId} (${role})`);
 
       // Auto-join parents to their personal room for direct notifications
       if (role === UserRole.PARENT) {
         const parentId = await this.getParentIdFromUserId(userId);
         if (parentId) {
-          const parentRoom = `parent:${parentId}`;
-          socket.join(parentRoom);
+          socket.join(`parent:${parentId}`);
           socket.data.parentId = parentId;
-          logger.info(
-            `[Socket] 👤 Parent ${userId} auto-joined personal room: ${parentRoom}`,
-          );
         }
       }
       socket.on(
         DriverSocketEvent.SUBSCRIBE_TRIP,
         async (tripId: string, callback?: (success: boolean) => void) => {
-          logger.info(
-            `Driver ${userId} attempting to subscribe to trip ${tripId}`,
-          );
-          logger.info(socket.data.role);
           if (socket.data.role !== UserRole.DRIVER) {
             socket.emit(BroadcastSocketEvent.ERROR, {
               message: ERROR_MESSAGES.SOCKET.ONLY_DRIVERS_CAN_SUBSCRIBE,
@@ -198,8 +190,9 @@ export class SocketService {
           socket.join(roomName);
           const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
           const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+
           logger.info(
-            `[Socket] 🚗 Driver ${userId} joined room: ${roomName} | Total clients in room: ${roomSize}`,
+            `[Socket] Driver ${userId} joined trip:${tripId} | Clients: ${roomSize}`,
           );
           if (callback) callback(true);
         },
@@ -232,8 +225,9 @@ export class SocketService {
           socket.join(roomName);
           const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
           const roomSize = socketsInRoom ? socketsInRoom.size : 0;
+
           logger.info(
-            `[Socket] 👨‍👩‍👧 Parent ${userId} joined room: ${roomName} | Total clients in room: ${roomSize}`,
+            `[Socket] Parent ${userId} joined trip:${tripId} | Clients: ${roomSize}`,
           );
           if (callback) callback(true);
         },
@@ -252,14 +246,7 @@ export class SocketService {
           },
           callback?: (success: boolean) => void,
         ) => {
-          logger.info(
-            `[Socket] 📍 Position update received from ${userId} for trip ${data.tripId}`,
-          );
-
           if (socket.data.role !== UserRole.DRIVER) {
-            logger.warn(
-              `[Socket] ⚠️ Position update rejected - not a driver role: ${socket.data.role}`,
-            );
             if (callback) callback(false);
             return;
           }
@@ -268,9 +255,6 @@ export class SocketService {
             data;
 
           if (!this.checkPositionRateLimit(tripId)) {
-            logger.info(
-              `[Socket] ⏱️ Position update rate-limited for trip: ${tripId}`,
-            );
             if (callback) callback(false);
             return;
           }
@@ -281,9 +265,6 @@ export class SocketService {
             longitude < -180 ||
             longitude > 180
           ) {
-            logger.warn(
-              `[Socket] ⚠️ Invalid coordinates: lat=${latitude}, lng=${longitude}`,
-            );
             socket.emit(BroadcastSocketEvent.ERROR, {
               message: ERROR_MESSAGES.SOCKET.INVALID_COORDINATES,
             });
@@ -295,8 +276,9 @@ export class SocketService {
           const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
           const roomSize = socketsInRoom ? socketsInRoom.size : 0;
 
+          // Single log for position broadcast
           logger.info(
-            `[Socket] 📡 Broadcasting position - Trip: ${tripId}, Room: ${roomName}, Clients: ${roomSize}, Lat: ${latitude}, Lng: ${longitude}`,
+            `[Socket] 📍 Position | Trip: ${tripId} | Driver: ${userId} | (${latitude}, ${longitude}) | Clients: ${roomSize}`,
           );
 
           this.io.to(roomName).emit(BroadcastSocketEvent.POSITION_UPDATE, {
@@ -322,10 +304,6 @@ export class SocketService {
             return;
           }
 
-          logger.info(
-            `[Socket] 🚗 TRIP STARTED - Trip: ${tripId}, Driver: ${userId}`,
-          );
-
           this.io.to(`trip:${tripId}`).emit(BroadcastSocketEvent.TRIP_STARTED, {
             tripId,
             driverId: userId,
@@ -343,10 +321,6 @@ export class SocketService {
             if (callback) callback(false);
             return;
           }
-
-          logger.info(
-            `[Socket] 🏁 TRIP COMPLETED - Trip: ${tripId}, Driver: ${userId}`,
-          );
 
           this.io
             .to(`trip:${tripId}`)
@@ -400,31 +374,18 @@ export class SocketService {
 
           const { tripId, studentId } = data;
 
-          const roomName = `trip:${tripId}`;
-          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
-          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
-
           logger.info(
-            `[Socket] ✅ STUDENT PICKED - Trip: ${tripId}, Student: ${studentId}, Driver: ${userId}`,
-          );
-          logger.info(
-            `[Socket] 📡 Broadcasting to room: ${roomName} | Clients in room: ${roomSize}`,
+            `[Socket] Student Picked | Trip: ${tripId} | Student: ${studentId} | Driver: ${userId}`,
           );
 
-          // Log the exact event name being broadcast
-          const eventName = BroadcastSocketEvent.STUDENT_PICKED;
-          logger.info(
-            `[Socket] 📤 Emitting event: "${eventName}" to room: ${roomName}`,
-          );
-
-          this.io.to(roomName).emit(eventName, {
-            tripId,
-            studentId,
-            driverId: userId,
-            timestamp: new Date(),
-          });
-
-          logger.info(`[Socket] ✅ Event emitted successfully`);
+          this.io
+            .to(`trip:${tripId}`)
+            .emit(BroadcastSocketEvent.STUDENT_PICKED, {
+              tripId,
+              studentId,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
           if (callback) callback(true);
         },
@@ -443,58 +404,48 @@ export class SocketService {
 
           const { tripId, studentId } = data;
 
-          const roomName = `trip:${tripId}`;
-          const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
-          const roomSize = socketsInRoom ? socketsInRoom.size : 0;
-
           logger.info(
-            `[Socket] 📦 STUDENT DROPPED - Trip: ${tripId}, Student: ${studentId}, Driver: ${userId}`,
-          );
-          logger.info(
-            `[Socket] 📡 Broadcasting to room: ${roomName} | Clients in room: ${roomSize}`,
+            `[Socket] Student Dropped | Trip: ${tripId} | Student: ${studentId} | Driver: ${userId}`,
           );
 
-          this.io.to(roomName).emit(BroadcastSocketEvent.STUDENT_DROPPED, {
-            tripId,
-            studentId,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          this.io
+            .to(`trip:${tripId}`)
+            .emit(BroadcastSocketEvent.STUDENT_DROPPED, {
+              tripId,
+              studentId,
+              driverId: userId,
+              timestamp: new Date(),
+            });
 
           if (callback) callback(true);
         },
       );
 
-      socket.on(ParentSocketEvent.UNSUBSCRIBE_TRIP, (tripId: string) => {
-        const roomName = `trip:${tripId}`;
-        socket.leave(roomName);
-        const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
-        const roomSize = socketsInRoom ? socketsInRoom.size : 0;
-        logger.info(
-          `[Socket] 👨‍👩‍👧 Parent ${userId} left room: ${roomName} | Remaining clients: ${roomSize}`,
-        );
-      });
+      socket.on(
+        ParentSocketEvent.UNSUBSCRIBE_TRIP,
+        (tripId: string, callback?: (success: boolean) => void) => {
+          socket.leave(`trip:${tripId}`);
+          logger.info(`[Socket] Parent ${userId} left trip:${tripId}`);
+          if (callback) callback(true);
+        },
+      );
 
-      socket.on(DriverSocketEvent.UNSUBSCRIBE_TRIP, (tripId: string) => {
-        const roomName = `trip:${tripId}`;
-        socket.leave(roomName);
-        positionUpdateTimestamps.delete(tripId);
-        const socketsInRoom = this.io.sockets.adapter.rooms.get(roomName);
-        const roomSize = socketsInRoom ? socketsInRoom.size : 0;
-        logger.info(
-          `[Socket] 🚗 Driver ${userId} left room: ${roomName} | Remaining clients: ${roomSize}`,
-        );
-      });
+      socket.on(
+        DriverSocketEvent.UNSUBSCRIBE_TRIP,
+        (tripId: string, callback?: (success: boolean) => void) => {
+          socket.leave(`trip:${tripId}`);
+          positionUpdateTimestamps.delete(tripId);
+          logger.info(`[Socket] Driver ${userId} left trip:${tripId}`);
+          if (callback) callback(true);
+        },
+      );
 
       socket.on("disconnect", () => {
-        const rooms = Array.from(socket.rooms).filter((r) => r !== socket.id);
-        logger.info(
-          `[Socket] ❌ Disconnected: ${userId} (${role}) | Was in rooms: ${rooms.length > 0 ? rooms.join(", ") : "none"}`,
-        );
+        logger.info(`[Socket] Disconnected: ${userId} (${role})`);
       });
 
       socket.on("error", (error) => {
-        logger.error(`Socket error: ${userId}`, error);
+        logger.error(`[Socket] Error: ${userId}`, error);
       });
     });
   }
