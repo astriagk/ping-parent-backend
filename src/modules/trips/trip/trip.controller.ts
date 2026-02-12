@@ -6,13 +6,13 @@ import {
   SUCCESS_MESSAGES,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { logger } from "@shared/utils";
 
 import {
   createTrip as createTripService,
   deleteTrip,
   getActiveTrips,
   getAllTrips,
+  getCompletedTripDetails as getCompletedTripDetailsService,
   getTripById,
   getTripProgress as getTripProgressService,
   getTripsByDriverIdAndDate,
@@ -224,6 +224,28 @@ export const getTripProgress = asyncHandler(
       success: true,
       data: progress,
       message: SUCCESS_MESSAGES.TRIP.PROGRESS_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get completed trip details with students and parent data
+ * Returns trip info along with all students and their parent details
+ */
+export const getCompletedTripDetails = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+
+    const tripDetails = await getCompletedTripDetailsService(id);
+
+    if (!tripDetails) {
+      throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TRIP.NOT_FOUND);
+    }
+
+    return res.json({
+      success: true,
+      data: tripDetails,
+      message: SUCCESS_MESSAGES.TRIP.FETCHED_SUCCESSFULLY,
     });
   },
 );

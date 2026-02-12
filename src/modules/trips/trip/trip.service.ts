@@ -8,11 +8,14 @@ import {
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PARENTS_COLLECTION,
   PickupStatus,
+  STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
   TRIP_STUDENTS_COLLECTION,
   TripStatus,
   TripType,
+  USERS_COLLECTION,
   UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
@@ -21,7 +24,7 @@ import { generateUniqueCode } from "@shared/utils";
 
 import { generateBulkQrOtp } from "../daily_qr_otp/daily_qr_otp.service";
 import { tripRepository } from "./trip.repository";
-import { Trip, TripProgress } from "./trip.type";
+import { CompletedTripDetails, Trip, TripProgress } from "./trip.type";
 
 /**
  * Helper function to convert userId to driver_id
@@ -508,4 +511,156 @@ export const getTripProgress = async (
     startedAt: trip.start_time || null,
     lastPositionUpdate,
   };
+};
+
+/**
+ * Get completed trip details with students and parent data
+ * Uses MongoDB aggregation to join trips -> trip_students -> students -> parents
+ */
+export const getCompletedTripDetails = async (
+  tripId: string,
+): Promise<CompletedTripDetails | null> => {
+  const db = await getDB();
+
+  const result = await db
+    .collection(TRIPS_COLLECTION)
+    .aggregate<CompletedTripDetails>([
+      // Stage 1: Match the trip by trip_id
+      {
+        $match: { trip_id: tripId },
+      },
+      // Stage 2: Lookup trip_students for this trip
+      {
+        $lookup: {
+          from: TRIP_STUDENTS_COLLECTION,
+          localField: "trip_id",
+          foreignField: "trip_id",
+          as: "tripStudents",
+        },
+      },
+      // Stage 3: Unwind trip_students to join with students
+      {
+        $unwind: {
+          path: "$tripStudents",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 4: Lookup student details from students collection
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          localField: "tripStudents.student_id",
+          foreignField: "student_id",
+          as: "studentDetails",
+        },
+      },
+      // Stage 5: Unwind student details
+      {
+        $unwind: {
+          path: "$studentDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 6: Lookup parent details using parent_id from students
+      {
+        $lookup: {
+          from: PARENTS_COLLECTION,
+          let: { parentId: { $toObjectId: "$studentDetails.parent_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$parentId"] } } }],
+          as: "parentDetails",
+        },
+      },
+      // Stage 7: Unwind parent details
+      {
+        $unwind: {
+          path: "$parentDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 8: Lookup user details for parent phone number
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          let: { userId: { $toObjectId: "$parentDetails.user_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
+          as: "userDetails",
+        },
+      },
+      // Stage 9: Unwind user details
+      {
+        $unwind: {
+          path: "$userDetails",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      // Stage 10: Group back to trip level with students array
+      {
+        $group: {
+          _id: "$_id",
+          trip_id: { $first: "$trip_id" },
+          driver_id: { $first: "$driver_id" },
+          school_id: { $first: "$school_id" },
+          trip_type: { $first: "$trip_type" },
+          trip_date: { $first: "$trip_date" },
+          trip_status: { $first: "$trip_status" },
+          start_time: { $first: "$start_time" },
+          end_time: { $first: "$end_time" },
+          total_distance: { $first: "$total_distance" },
+          created_at: { $first: "$created_at" },
+          students: {
+            $push: {
+              $cond: {
+                if: { $ne: ["$tripStudents", null] },
+                then: {
+                  trip_student_id: "$tripStudents.trip_student_id",
+                  student_id: "$tripStudents.student_id",
+                  student_name: "$studentDetails.student_name",
+                  student_class: "$studentDetails.class",
+                  student_section: "$studentDetails.section",
+                  student_roll_number: "$studentDetails.roll_number",
+                  student_photo_url: "$studentDetails.photo_url",
+                  student_gender: "$studentDetails.gender",
+                  attendance_status: "$tripStudents.attendance_status",
+                  pickup_status: "$tripStudents.pickup_status",
+                  pickup_time: "$tripStudents.pickup_time",
+                  drop_time: "$tripStudents.drop_time",
+                  parent: {
+                    parent_id: { $toString: "$parentDetails._id" },
+                    name: "$parentDetails.name",
+                    email: "$parentDetails.email",
+                    photo_url: "$parentDetails.photo_url",
+                    phone_number: "$userDetails.phone_number",
+                  },
+                },
+                else: "$$REMOVE",
+              },
+            },
+          },
+        },
+      },
+      // Stage 11: Project final output
+      {
+        $project: {
+          _id: 0,
+          trip_id: 1,
+          driver_id: 1,
+          school_id: 1,
+          trip_type: 1,
+          trip_date: 1,
+          trip_status: 1,
+          start_time: 1,
+          end_time: 1,
+          total_distance: 1,
+          created_at: 1,
+          students: 1,
+        },
+      },
+    ])
+    .toArray();
+
+  if (result.length === 0) {
+    return null;
+  }
+
+  return result[0];
 };

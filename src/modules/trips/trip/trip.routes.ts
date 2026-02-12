@@ -10,6 +10,7 @@ import {
   createTrip,
   deleteTripProfile,
   getAllTripsController,
+  getCompletedTripDetails,
   getMyActiveTrips,
   getMyTrips,
   getMyTripsByDate,
@@ -53,6 +54,9 @@ router.get("/my-trips/active", getMyActiveTrips);
 
 // 06. Get Trip Progress (for resume functionality)
 router.get("/:id/progress", getTripProgress);
+
+// 07. Get Completed Trip Details (trip with students and parent data)
+router.get("/:id/completed", getCompletedTripDetails);
 
 // Get Trip Details
 router.get("/:id", getTripProfile);

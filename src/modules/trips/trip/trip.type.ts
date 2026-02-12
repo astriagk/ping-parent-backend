@@ -33,3 +33,50 @@ export interface TripProgress {
   startedAt: Date | null;
   lastPositionUpdate: Date | null;
 }
+
+/**
+ * Parent info within a completed trip student response
+ */
+export interface CompletedTripParent {
+  parent_id: string;
+  name?: string;
+  email?: string;
+  photo_url?: string;
+  phone_number?: string;
+}
+
+/**
+ * Student info within a completed trip response
+ */
+export interface CompletedTripStudent {
+  trip_student_id: string;
+  student_id: string;
+  student_name: string;
+  student_class?: string;
+  student_section?: string;
+  student_roll_number?: string;
+  student_photo_url?: string;
+  student_gender?: string;
+  attendance_status: string;
+  pickup_status: string;
+  pickup_time?: Date;
+  drop_time?: Date;
+  parent: CompletedTripParent;
+}
+
+/**
+ * Completed trip details response
+ */
+export interface CompletedTripDetails {
+  trip_id: string;
+  driver_id: string;
+  school_id: string;
+  trip_type: TripType;
+  trip_date: Date;
+  trip_status: TripStatus;
+  start_time?: Date;
+  end_time?: Date;
+  total_distance?: number;
+  created_at: Date;
+  students: CompletedTripStudent[];
+}

@@ -37,6 +37,7 @@ export const getTripStudentById = async (
 /**
  * Helper function to verify OTP/QR code before recording pickup/drop
  * Now uses parent-grouped OTP - checks if student is in the OTP's student_ids array
+ * In dev environment, OTP "1111" will bypass verification
  */
 const verifyOtpBeforeRecording = async (
   studentId: string,
@@ -44,6 +45,11 @@ const verifyOtpBeforeRecording = async (
   otpCode?: string,
   qrCode?: string,
 ): Promise<boolean> => {
+  // DEV BYPASS: Accept "1111" as valid OTP in development environment
+  if (process.env.NODE_ENV === "dev" && otpCode === "1111") {
+    return true;
+  }
+
   // If neither OTP nor QR code provided, not required
   if (!otpCode && !qrCode) {
     return true;
@@ -790,7 +796,11 @@ export const bulkStopAction = async (
 
   // If we have students to process (pickup/drop), verify OTP first
   if (data.student_ids.length > 0) {
-    if (!data.otp_code && !data.qr_code) {
+    // DEV BYPASS: Accept "1111" as valid OTP in development environment
+    const isDevBypass =
+      process.env.NODE_ENV === "dev" && data.otp_code === "1111";
+
+    if (!isDevBypass && !data.otp_code && !data.qr_code) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.TRIP_STUDENT.QR_CODE_OR_OTP_REQUIRED,
@@ -801,15 +811,19 @@ export const bulkStopAction = async (
     const query: any = {
       parent_id: parentId,
       trip_id: tripId,
-      is_used: false,
-      valid_from: { $lte: now },
-      valid_until: { $gte: now },
     };
 
-    if (data.otp_code) {
-      query.otp_code = data.otp_code;
-    } else if (data.qr_code) {
-      query.qr_code = data.qr_code;
+    // Only add validity checks if not dev bypass
+    if (!isDevBypass) {
+      query.is_used = false;
+      query.valid_from = { $lte: now };
+      query.valid_until = { $gte: now };
+
+      if (data.otp_code) {
+        query.otp_code = data.otp_code;
+      } else if (data.qr_code) {
+        query.qr_code = data.qr_code;
+      }
     }
 
     const qrOtpRecord = await db
@@ -826,8 +840,11 @@ export const bulkStopAction = async (
     // Process students based on trip type
     for (const studentId of data.student_ids) {
       try {
-        // Check student is in OTP's student_ids
-        if (!(qrOtpRecord.student_ids as string[]).includes(studentId)) {
+        // Check student is in OTP's student_ids (skip in dev bypass)
+        if (
+          !isDevBypass &&
+          !(qrOtpRecord.student_ids as string[]).includes(studentId)
+        ) {
           result.failed_students.push({
             student_id: studentId,
             reason: "Student not covered by this OTP",
