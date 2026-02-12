@@ -166,14 +166,9 @@ export const bulkStopActionSchema = Joi.object({
  * No OTP required since this is at school location
  */
 export const bulkSchoolActionSchema = Joi.object({
-  student_ids: Joi.array()
-    .items(Joi.string().required())
-    .min(0)
-    .required()
-    .messages({
-      "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.STUDENT_IDS_ARRAY,
-      "any.required": VALIDATION_MESSAGES.TRIP_STUDENT.STUDENT_IDS_REQUIRED,
-    }),
+  student_ids: Joi.array().items(Joi.string().required()).default([]).messages({
+    "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.STUDENT_IDS_ARRAY,
+  }),
   skipped_student_ids: Joi.array()
     .items(Joi.string().required())
     .optional()
@@ -193,7 +188,7 @@ export const bulkSchoolActionSchema = Joi.object({
   }),
 })
   .custom((value, helpers) => {
-    // For school-point, at least one student must be in student_ids or skipped_student_ids
+    // At least one student must be in student_ids or skipped_student_ids
     const totalStudents =
       (value.student_ids?.length || 0) +
       (value.skipped_student_ids?.length || 0);
