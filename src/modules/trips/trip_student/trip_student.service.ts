@@ -37,6 +37,7 @@ export const getTripStudentById = async (
 /**
  * Helper function to verify OTP/QR code before recording pickup/drop
  * Now uses parent-grouped OTP - checks if student is in the OTP's student_ids array
+ * In dev environment, OTP "1111" will bypass verification
  */
 const verifyOtpBeforeRecording = async (
   studentId: string,
@@ -44,6 +45,11 @@ const verifyOtpBeforeRecording = async (
   otpCode?: string,
   qrCode?: string,
 ): Promise<boolean> => {
+  // DEV BYPASS: Accept "1111" as valid OTP in development environment
+  if (process.env.NODE_ENV === "dev" && otpCode === "1111") {
+    return true;
+  }
+
   // If neither OTP nor QR code provided, not required
   if (!otpCode && !qrCode) {
     return true;
@@ -790,7 +796,11 @@ export const bulkStopAction = async (
 
   // If we have students to process (pickup/drop), verify OTP first
   if (data.student_ids.length > 0) {
-    if (!data.otp_code && !data.qr_code) {
+    // DEV BYPASS: Accept "1111" as valid OTP in development environment
+    const isDevBypass =
+      process.env.NODE_ENV === "dev" && data.otp_code === "1111";
+
+    if (!isDevBypass && !data.otp_code && !data.qr_code) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.TRIP_STUDENT.QR_CODE_OR_OTP_REQUIRED,
@@ -801,15 +811,19 @@ export const bulkStopAction = async (
     const query: any = {
       parent_id: parentId,
       trip_id: tripId,
-      is_used: false,
-      valid_from: { $lte: now },
-      valid_until: { $gte: now },
     };
 
-    if (data.otp_code) {
-      query.otp_code = data.otp_code;
-    } else if (data.qr_code) {
-      query.qr_code = data.qr_code;
+    // Only add validity checks if not dev bypass
+    if (!isDevBypass) {
+      query.is_used = false;
+      query.valid_from = { $lte: now };
+      query.valid_until = { $gte: now };
+
+      if (data.otp_code) {
+        query.otp_code = data.otp_code;
+      } else if (data.qr_code) {
+        query.qr_code = data.qr_code;
+      }
     }
 
     const qrOtpRecord = await db
@@ -826,8 +840,11 @@ export const bulkStopAction = async (
     // Process students based on trip type
     for (const studentId of data.student_ids) {
       try {
-        // Check student is in OTP's student_ids
-        if (!(qrOtpRecord.student_ids as string[]).includes(studentId)) {
+        // Check student is in OTP's student_ids (skip in dev bypass)
+        if (
+          !isDevBypass &&
+          !(qrOtpRecord.student_ids as string[]).includes(studentId)
+        ) {
           result.failed_students.push({
             student_id: studentId,
             reason: "Student not covered by this OTP",
@@ -1086,6 +1103,7 @@ export interface BulkSchoolActionResult {
   trip_type: TripType;
   action: "picked_from_school" | "dropped_at_school";
   processed_students: string[];
+  skipped_students: string[];
   failed_students: { student_id: string; reason: string }[];
 }
 
@@ -1093,12 +1111,14 @@ export interface BulkSchoolActionResult {
  * Bulk school action - handles all students at school without OTP
  * - PICKUP trip: marks PICKED students as DROPPED at school
  * - DROP trip: marks PENDING students as PICKED from school
+ *   - skipped_student_ids: students not boarding (marked as NO_SHOW)
  * No OTP required since this is at school location
  */
 export const bulkSchoolAction = async (
   tripId: string,
   data: {
     student_ids: string[];
+    skipped_student_ids?: string[];
     latitude?: number;
     longitude?: number;
   },
@@ -1122,20 +1142,27 @@ export const bulkSchoolAction = async (
     action:
       tripType === TripType.PICKUP ? "dropped_at_school" : "picked_from_school",
     processed_students: [],
+    skipped_students: [],
     failed_students: [],
   };
 
-  if (data.student_ids.length === 0) {
+  const skippedStudentIds = data.skipped_student_ids || [];
+
+  // For school-point, allow empty student_ids if skipped_student_ids has values (DROP trip)
+  if (data.student_ids.length === 0 && skippedStudentIds.length === 0) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
       ERROR_MESSAGES.TRIP_STUDENT.NO_STUDENTS_PROVIDED,
     );
   }
 
+  // Combine all student IDs for fetching details
+  const allStudentIds = [...data.student_ids, ...skippedStudentIds];
+
   // Fetch all student details upfront
   const allStudents = await db
     .collection(STUDENTS_COLLECTION)
-    .find({ student_id: { $in: data.student_ids } })
+    .find({ student_id: { $in: allStudentIds } })
     .toArray();
 
   // Build a map for quick lookup
@@ -1228,6 +1255,51 @@ export const bulkSchoolAction = async (
         student_id: studentId,
         reason: error instanceof Error ? error.message : "Unknown error",
       });
+    }
+  }
+
+  // Process skipped students (only for DROP trips - students not boarding from school)
+  if (tripType === TripType.DROP && skippedStudentIds.length > 0) {
+    for (const studentId of skippedStudentIds) {
+      try {
+        const tripStudent = await tripStudentRepository.findByTripAndStudent(
+          tripId,
+          studentId,
+        );
+
+        if (!tripStudent) {
+          result.failed_students.push({
+            student_id: studentId,
+            reason: ERROR_MESSAGES.TRIP_STUDENT.NOT_FOUND,
+          });
+          continue;
+        }
+
+        // Mark as NO_SHOW (student not boarding for drop trip)
+        if (
+          tripStudent.pickup_status === PickupStatus.NO_SHOW ||
+          tripStudent.attendance_status === AttendanceStatus.ABSENT
+        ) {
+          // Already marked as skipped/absent, skip
+          result.skipped_students.push(studentId);
+          continue;
+        }
+
+        await tripStudentRepository.updateById(tripStudent._id.toString(), {
+          $set: {
+            pickup_status: PickupStatus.NO_SHOW,
+            attendance_status: AttendanceStatus.ABSENT,
+            updated_at: now,
+          },
+        });
+
+        result.skipped_students.push(studentId);
+      } catch (error) {
+        result.failed_students.push({
+          student_id: studentId,
+          reason: error instanceof Error ? error.message : "Unknown error",
+        });
+      }
     }
   }
 

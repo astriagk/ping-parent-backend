@@ -109,13 +109,13 @@ export const updateTripStudentSchema = Joi.object({
  */
 export const bulkStopActionSchema = Joi.object({
   student_ids: Joi.array().items(Joi.string().required()).default([]).messages({
-    "array.base": "student_ids must be an array",
+    "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.STUDENT_IDS_ARRAY,
   }),
   absent_student_ids: Joi.array()
     .items(Joi.string().required())
     .default([])
     .messages({
-      "array.base": "absent_student_ids must be an array",
+      "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.ABSENT_STUDENT_IDS_ARRAY,
     }),
   otp_code: Joi.string()
     .length(4)
@@ -154,35 +154,50 @@ export const bulkStopActionSchema = Joi.object({
     return value;
   })
   .messages({
-    "custom.noStudents":
-      "At least one student must be in student_ids or absent_student_ids",
-    "custom.otpRequired": "OTP or QR code is required when processing students",
+    "custom.noStudents": VALIDATION_MESSAGES.TRIP_STUDENT.NO_STUDENTS_ERROR,
+    "custom.otpRequired": VALIDATION_MESSAGES.TRIP_STUDENT.OTP_OR_QR_REQUIRED,
   });
 
 /**
  * Schema for bulk school action - handles school pickup/drop without OTP
  * - PICKUP trip at school: marks PICKED students as DROPPED (completing trip)
  * - DROP trip at school: marks students as PICKED (collecting from school)
+ *   - skipped_student_ids: students not boarding (marked as NO_SHOW)
  * No OTP required since this is at school location
  */
 export const bulkSchoolActionSchema = Joi.object({
-  student_ids: Joi.array()
+  student_ids: Joi.array().items(Joi.string().required()).default([]).messages({
+    "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.STUDENT_IDS_ARRAY,
+  }),
+  skipped_student_ids: Joi.array()
     .items(Joi.string().required())
-    .min(1)
-    .required()
+    .optional()
+    .default([])
     .messages({
-      "array.base": "student_ids must be an array",
-      "array.min": "At least one student must be specified",
-      "any.required": "student_ids is required",
+      "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.SKIPPED_STUDENT_IDS_ARRAY,
     }),
   latitude: Joi.number().min(-90).max(90).optional().messages({
-    "number.base": "Invalid latitude",
-    "number.min": "Latitude must be between -90 and 90",
-    "number.max": "Latitude must be between -90 and 90",
+    "number.base": VALIDATION_MESSAGES.TRACKING.LATITUDE_NUMBER,
+    "number.min": VALIDATION_MESSAGES.TRACKING.LATITUDE_RANGE,
+    "number.max": VALIDATION_MESSAGES.TRACKING.LATITUDE_RANGE,
   }),
   longitude: Joi.number().min(-180).max(180).optional().messages({
-    "number.base": "Invalid longitude",
-    "number.min": "Longitude must be between -180 and 180",
-    "number.max": "Longitude must be between -180 and 180",
+    "number.base": VALIDATION_MESSAGES.TRACKING.LONGITUDE_NUMBER,
+    "number.min": VALIDATION_MESSAGES.TRACKING.LONGITUDE_RANGE,
+    "number.max": VALIDATION_MESSAGES.TRACKING.LONGITUDE_RANGE,
   }),
-});
+})
+  .custom((value, helpers) => {
+    // At least one student must be in student_ids or skipped_student_ids
+    const totalStudents =
+      (value.student_ids?.length || 0) +
+      (value.skipped_student_ids?.length || 0);
+    if (totalStudents === 0) {
+      return helpers.error("custom.noStudents");
+    }
+    return value;
+  })
+  .messages({
+    "custom.noStudents":
+      VALIDATION_MESSAGES.TRIP_STUDENT.NO_STUDENTS_SCHOOL_ERROR,
+  });

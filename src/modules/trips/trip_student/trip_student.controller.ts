@@ -334,14 +334,16 @@ export const handleBulkStopAction = asyncHandler(
  * Bulk school action - handles students at school without OTP
  * - PICKUP trip: marks PICKED students as DROPPED at school
  * - DROP trip: marks students as PICKED (collecting from school)
+ *   - skipped_student_ids: students not boarding (marked as NO_SHOW)
  */
 export const handleBulkSchoolAction = asyncHandler(
   async (req: Request, res: Response) => {
     const { tripId } = req.params as Record<string, string>;
-    const { student_ids, latitude, longitude } = req.body;
+    const { student_ids, skipped_student_ids, latitude, longitude } = req.body;
 
     const result = await bulkSchoolAction(tripId, {
       student_ids: student_ids || [],
+      skipped_student_ids: skipped_student_ids || [],
       latitude,
       longitude,
     });

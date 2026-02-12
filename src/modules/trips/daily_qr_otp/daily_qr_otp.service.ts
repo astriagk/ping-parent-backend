@@ -324,6 +324,7 @@ export const getQrOtpByParentAndTrip = async (
  * Verify QR code or OTP - returns the OTP record with all students covered
  * Does NOT mark as used - use verifyAndRecordAttendance for that
  * Uses parent_id + trip_id for optimized indexed lookup
+ * In dev environment, OTP "1111" will bypass verification
  */
 export const verifyQrOtp = async (
   parentId: string,
@@ -331,7 +332,20 @@ export const verifyQrOtp = async (
   qrCode?: string,
   otpCode?: string,
 ): Promise<WithId<DailyQrOtp>> => {
+  const db = await getDB();
   const now = new Date();
+
+  // DEV BYPASS: Accept "1111" as valid OTP in development environment
+  if (process.env.NODE_ENV === "dev" && otpCode === "1111") {
+    const devRecord = await db.collection(DAILY_QR_OTP_COLLECTION).findOne({
+      parent_id: parentId,
+      trip_id: tripId,
+    });
+
+    if (devRecord) {
+      return devRecord as unknown as WithId<DailyQrOtp>;
+    }
+  }
 
   // Build optimized query using parent_id + trip_id (indexed)
   const query: any = {
@@ -353,7 +367,6 @@ export const verifyQrOtp = async (
     );
   }
 
-  const db = await getDB();
   const qrOtpRecord = await db
     .collection(DAILY_QR_OTP_COLLECTION)
     .findOne(query);
@@ -373,6 +386,7 @@ export const verifyQrOtp = async (
  * Verify OTP and record which students are present/absent
  * This is the main verification endpoint for pickup/drop
  * Uses parent_id + trip_id for optimized indexed lookup
+ * In dev environment, OTP "1111" will bypass verification
  */
 export const verifyAndRecordAttendance = async (
   parentId: string,
@@ -385,24 +399,31 @@ export const verifyAndRecordAttendance = async (
   const db = await getDB();
   const now = new Date();
 
+  // DEV BYPASS: Accept "1111" as valid OTP in development environment
+  const isDevBypass = process.env.NODE_ENV === "dev" && otpCode === "1111";
+
   // Find valid OTP using parent_id + trip_id (indexed)
   const query: any = {
     parent_id: parentId,
     trip_id: tripId,
-    is_used: false,
-    valid_from: { $lte: now },
-    valid_until: { $gte: now },
   };
 
-  if (otpCode) {
-    query.otp_code = otpCode;
-  } else if (qrCode) {
-    query.qr_code = qrCode;
-  } else {
-    throw new ApiError(
-      HTTP_STATUS.BAD_REQUEST,
-      ERROR_MESSAGES.DAILY_QR_OTP.INVALID,
-    );
+  // Only add validity checks if not dev bypass
+  if (!isDevBypass) {
+    query.is_used = false;
+    query.valid_from = { $lte: now };
+    query.valid_until = { $gte: now };
+
+    if (otpCode) {
+      query.otp_code = otpCode;
+    } else if (qrCode) {
+      query.qr_code = qrCode;
+    } else {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.DAILY_QR_OTP.INVALID,
+      );
+    }
   }
 
   const qrOtpRecord = await db
