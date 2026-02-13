@@ -98,7 +98,6 @@ export const getMyTrips = asyncHandler(async (req: Request, res: Response) => {
 export const getMyTripsByDate = asyncHandler(
   async (req: Request, res: Response) => {
     const userId = req.user?.userId;
-    const { date } = req.query;
 
     if (!userId) {
       throw new ApiError(
@@ -107,21 +106,7 @@ export const getMyTripsByDate = asyncHandler(
       );
     }
 
-    if (!date) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.TRIP.TRIP_DATE_REQUIRED,
-      );
-    }
-
-    const tripDate = new Date(date as string);
-
-    if (isNaN(tripDate.getTime())) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.TRIP.TRIP_DATE_REQUIRED,
-      );
-    }
+    const tripDate = new Date();
 
     const trips = await getTripsByDriverIdAndDate(userId, tripDate);
 

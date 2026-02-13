@@ -23,10 +23,10 @@ export class TripRepository extends BaseRepository<Trip> {
     tripDate: Date,
   ): Promise<WithId<Trip>[]> {
     const startOfDay = new Date(tripDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(tripDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     return await this.findMany({
       driver_id: driverId,
@@ -47,10 +47,10 @@ export class TripRepository extends BaseRepository<Trip> {
     tripDate: Date,
   ): Promise<WithId<Trip> | null> {
     const startOfDay = new Date(tripDate);
-    startOfDay.setHours(0, 0, 0, 0);
+    startOfDay.setUTCHours(0, 0, 0, 0);
 
     const endOfDay = new Date(tripDate);
-    endOfDay.setHours(23, 59, 59, 999);
+    endOfDay.setUTCHours(23, 59, 59, 999);
 
     return await this.findOne({
       driver_id: driverId,
