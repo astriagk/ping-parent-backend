@@ -21,6 +21,6 @@ export const validateRazorpayConfig = () => {
 
   return {
     isConfigured: true,
-    keyId: keyId.substring(0, 10) + "...", // Log masked key for security
+    keyId: keyId, // Log masked key for security
   };
 };
