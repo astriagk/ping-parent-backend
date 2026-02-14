@@ -106,24 +106,24 @@ export const verifyAndCompletePayment = asyncHandler(
       );
     }
 
-    // Update our payment record
-    const updatedPayment = await completePayment(
-      payment_id,
-      razorpay_payment_id,
-      {
-        razorpay_order_id,
-        razorpay_payment_id,
-        method: razorpayPayment.method,
-        amount: razorpayPayment.amount,
-        currency: razorpayPayment.currency,
-        status: razorpayPayment.status,
-        created_at: razorpayPayment.created_at,
-      },
-    );
+    // // Update our payment record
+    // const updatedPayment = await completePayment(
+    //   payment_id,
+    //   razorpay_payment_id,
+    //   {
+    //     razorpay_order_id,
+    //     razorpay_payment_id,
+    //     method: razorpayPayment.method,
+    //     amount: razorpayPayment.amount,
+    //     currency: razorpayPayment.currency,
+    //     status: razorpayPayment.status,
+    //     created_at: razorpayPayment.created_at,
+    //   },
+    // );
 
     return res.json({
       success: true,
-      data: updatedPayment,
+      data: razorpayPayment,
       message: SUCCESS_MESSAGES.PAYMENT.COMPLETED_SUCCESSFULLY,
     });
   },
