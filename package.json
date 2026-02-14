@@ -15,7 +15,8 @@
     "format:check": "prettier --check 'src/**/*.ts'",
     "prepare": "husky",
     "docs:generate": "node scripts/generate-api-docs.js",
-    "docs:generate:v2": "node scripts/generate-api-docs-v2.js"
+    "docs:generate:v2": "node scripts/generate-api-docs-v2.js",
+    "docs:generate:all": "node scripts/generate-api-docs.js && node scripts/generate-api-docs-v2.js"
   },
   "keywords": [],
   "author": "",

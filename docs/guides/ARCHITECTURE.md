@@ -57,6 +57,7 @@ Problem: To work on "parent" feature → navigate through 6 different folders
 ```
 
 **Characteristics:**
+
 - ❌ High cognitive load (remember where each layer is)
 - ❌ Scattered feature code across multiple folders
 - ❌ Thin controller-service split (often just pass-through)
@@ -90,6 +91,7 @@ Solution: To work on "parent" feature → go to modules/users/parent/
 ```
 
 **Characteristics:**
+
 - ✅ Low cognitive load (think in domains, not layers)
 - ✅ Cohesive feature code in one location
 - ✅ Simplified 2-layer architecture (handler + repository)
@@ -278,12 +280,18 @@ Handlers combine HTTP handling and business logic in a single cohesive unit.
 
 ```typescript
 // modules/users/parent/parent.handler.ts
-import { Request, Response } from 'express';
-import { asyncHandler } from '@shared/middlewares';
-import { HTTP_STATUS, ERROR_MESSAGES, SUCCESS_MESSAGES } from '@shared/constants';
-import { ApiError } from '@shared/utils';
-import { parentRepository } from './parent.repository';
-import type { Parent } from './parent.types';
+import { Request, Response } from "express";
+
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SUCCESS_MESSAGES,
+} from "@shared/constants";
+import { asyncHandler } from "@shared/middlewares";
+import { ApiError } from "@shared/utils";
+
+import { parentRepository } from "./parent.repository";
+import type { Parent } from "./parent.types";
 
 /**
  * ParentHandler class
@@ -300,7 +308,7 @@ class ParentHandler {
     if (!userId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       );
     }
 
@@ -310,7 +318,7 @@ class ParentHandler {
     if (!profile) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND
+        ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
       );
     }
 
@@ -325,8 +333,8 @@ class ParentHandler {
         photo_url: profile.photo_url,
         user: profile.user,
         created_at: profile.created_at,
-        updated_at: profile.updated_at
-      }
+        updated_at: profile.updated_at,
+      },
     });
   }
 
@@ -339,7 +347,7 @@ class ParentHandler {
     if (!userId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED
+        ERROR_MESSAGES.PARENT.USER_NOT_AUTHENTICATED,
       );
     }
 
@@ -354,7 +362,7 @@ class ParentHandler {
     if (Object.keys(updates).length === 0) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.PARENT.NO_UPDATES_PROVIDED
+        ERROR_MESSAGES.PARENT.NO_UPDATES_PROVIDED,
       );
     }
 
@@ -364,13 +372,13 @@ class ParentHandler {
     if (!updated) {
       const created = await parentRepository.create({
         user_id: userId,
-        ...updates
+        ...updates,
       });
 
       if (!created) {
         throw new ApiError(
           HTTP_STATUS.INTERNAL_SERVER_ERROR,
-          ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE
+          ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
         );
       }
     }
@@ -381,7 +389,7 @@ class ParentHandler {
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedProfile,
-      message: SUCCESS_MESSAGES.PARENT.PROFILE_UPDATED_SUCCESSFULLY
+      message: SUCCESS_MESSAGES.PARENT.PROFILE_UPDATED_SUCCESSFULLY,
     });
   }
 
@@ -411,9 +419,10 @@ Repositories encapsulate all data access logic and MongoDB operations.
 
 ```typescript
 // modules/users/parent/parent.repository.ts
-import { BaseRepository } from '@shared/database';
-import { PARENTS_COLLECTION, USERS_COLLECTION } from '@shared/constants';
-import type { Parent } from './parent.types';
+import { PARENTS_COLLECTION, USERS_COLLECTION } from "@shared/constants";
+import { BaseRepository } from "@shared/database";
+
+import type { Parent } from "./parent.types";
 
 /**
  * ParentRepository
@@ -430,18 +439,19 @@ export class ParentRepository extends BaseRepository<Parent> {
   async findByUserId(userId: string): Promise<Parent | null> {
     const db = this.getDB();
 
-    const result = await db.collection(PARENTS_COLLECTION)
+    const result = await db
+      .collection(PARENTS_COLLECTION)
       .aggregate([
         { $match: { user_id: userId } },
         {
           $lookup: {
             from: USERS_COLLECTION,
-            localField: 'user_id',
-            foreignField: 'user_id',
-            as: 'user'
-          }
+            localField: "user_id",
+            foreignField: "user_id",
+            as: "user",
+          },
         },
-        { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } }
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
       ])
       .toArray();
 
@@ -453,11 +463,11 @@ export class ParentRepository extends BaseRepository<Parent> {
    */
   async updateByUserId(
     userId: string,
-    updates: Partial<Parent>
+    updates: Partial<Parent>,
   ): Promise<boolean> {
     const result = await this.updateOne(
       { user_id: userId },
-      { $set: { ...updates, updated_at: new Date() } }
+      { $set: { ...updates, updated_at: new Date() } },
     );
 
     return !!result;
@@ -469,7 +479,8 @@ export class ParentRepository extends BaseRepository<Parent> {
   async getParentWithSubscriptionStatus(parentId: string) {
     const db = this.getDB();
 
-    return db.collection(PARENTS_COLLECTION)
+    return db
+      .collection(PARENTS_COLLECTION)
       .aggregate([
         { $match: { _id: this.toObjectId(parentId) } },
         // Complex aggregation pipeline...
@@ -517,17 +528,20 @@ export class ParentBusinessLogic {
 Modules are organized by business domain, not technical concern.
 
 #### 1. **auth/** - Authentication Domain
+
 - **Purpose**: User authentication and authorization
 - **Entities**: Login, OTP, token management
 - **Key Operations**: Send OTP, verify OTP, refresh tokens
 
 #### 2. **users/** - User Management Domain
+
 - **Purpose**: Manage different user types
 - **Entities**: parent, driver, student
 - **Rationale**: All user types share similar CRUD patterns and relationships
 - **Key Operations**: Profile management, user lookup, user-specific data
 
 #### 3. **trips/** - Trip & Transportation Domain
+
 - **Purpose**: Core transportation workflow
 - **Entities**:
   - `trip/` - Trip scheduling and tracking
@@ -538,6 +552,7 @@ Modules are organized by business domain, not technical concern.
 - **Key Operations**: Trip creation, attendance marking, assignment management
 
 #### 4. **billing/** - Billing & Subscription Domain
+
 - **Purpose**: Financial transactions and subscriptions
 - **Entities**:
   - `subscription-plan/` - Available subscription plans
@@ -547,21 +562,25 @@ Modules are organized by business domain, not technical concern.
 - **Key Operations**: Plan management, subscription enrollment, payment processing
 
 #### 5. **school/** - School Management Domain
+
 - **Purpose**: School entity management
 - **Entities**: school
 - **Key Operations**: School CRUD, school lookup
 
 #### 6. **notifications/** - Notification Domain
+
 - **Purpose**: Cross-cutting notification system
 - **Entities**: notification
 - **Key Operations**: Send notifications, notification history
 
 #### 7. **reviews/** - Rating & Review Domain
+
 - **Purpose**: Feedback and rating system
 - **Entities**: rating_review
 - **Key Operations**: Submit reviews, view ratings
 
 #### 8. **admin/** - Admin Portal Domain
+
 - **Purpose**: Platform administration
 - **Entities**:
   - `admin` - Admin user management
@@ -764,9 +783,9 @@ export const moduleRepository = new ModuleRepository();
 
 const router = Router();
 
-router.get('/', authenticate, handler.list);
-router.post('/', authenticate, validate(schema), handler.create);
-router.put('/:id', authenticate, validate(schema), handler.update);
+router.get("/", authenticate, handler.list);
+router.post("/", authenticate, validate(schema), handler.create);
+router.put("/:id", authenticate, validate(schema), handler.update);
 
 export default router;
 ```
@@ -787,7 +806,7 @@ export interface Module {
   updated_at: Date;
 }
 
-export type ModuleInput = Omit<Module, '_id' | 'created_at' | 'updated_at'>;
+export type ModuleInput = Omit<Module, "_id" | "created_at" | "updated_at">;
 ```
 
 #### 5. **validation.ts** - Joi Validation Schemas
@@ -800,14 +819,14 @@ export type ModuleInput = Omit<Module, '_id' | 'created_at' | 'updated_at'>;
 
 export const createModuleSchema = Joi.object({
   field1: Joi.string().required().messages({
-    'string.empty': VALIDATION_MESSAGES.FIELD1_REQUIRED
+    "string.empty": VALIDATION_MESSAGES.FIELD1_REQUIRED,
   }),
-  field2: Joi.number().min(0).required()
+  field2: Joi.number().min(0).required(),
 });
 
 export const updateModuleSchema = createModuleSchema.fork(
-  ['field1', 'field2'],
-  (schema) => schema.optional()
+  ["field1", "field2"],
+  (schema) => schema.optional(),
 );
 ```
 
@@ -819,9 +838,9 @@ export const updateModuleSchema = createModuleSchema.fork(
 // Imports: Routes, types, handlers (optional)
 // Exports: Default routes + named exports
 
-export { default as moduleRoutes } from './module.routes';
-export * from './module.types';
-export * from './module.handler'; // Optional, for cross-module usage
+export { default as moduleRoutes } from "./module.routes";
+export * from "./module.types";
+export * from "./module.handler"; // Optional, for cross-module usage
 ```
 
 ---
@@ -846,12 +865,14 @@ shared/
 ### When to Use Shared vs Module-Specific
 
 **Use `shared/` when:**
+
 - ✅ Code is used by 3+ modules
 - ✅ Infrastructure concerns (database, config, auth)
 - ✅ Framework-level utilities (error handling, logging)
 - ✅ Global constants and types
 
 **Keep in module when:**
+
 - ✅ Code is specific to one domain
 - ✅ Business logic for that feature
 - ✅ Domain-specific types and validations
@@ -882,11 +903,14 @@ Question: Where should parent-specific error messages go?
 export class BaseRepository<T extends Document> {
   protected collectionName: string;
 
-  async findOne(filter: Filter<T>): Promise<T | null> { }
-  async findMany(filter: Filter<T>): Promise<T[]> { }
-  async create(data: T): Promise<T> { }
-  async updateOne(filter: Filter<T>, update: UpdateFilter<T>): Promise<T | null> { }
-  async deleteOne(filter: Filter<T>): Promise<boolean> { }
+  async findOne(filter: Filter<T>): Promise<T | null> {}
+  async findMany(filter: Filter<T>): Promise<T[]> {}
+  async create(data: T): Promise<T> {}
+  async updateOne(
+    filter: Filter<T>,
+    update: UpdateFilter<T>,
+  ): Promise<T | null> {}
+  async deleteOne(filter: Filter<T>): Promise<boolean> {}
 }
 
 // Usage in module
@@ -944,11 +968,11 @@ const testHandler = new ParentHandler(mockRepo);
 
 ```typescript
 router.post(
-  '/profile',
-  verifyParentToken,           // Auth check
-  validate(updateSchema),      // Input validation
-  rateLimit({ max: 10 }),      // Rate limiting
-  updateProfile                // Handler
+  "/profile",
+  verifyParentToken, // Auth check
+  validate(updateSchema), // Input validation
+  rateLimit({ max: 10 }), // Rate limiting
+  updateProfile, // Handler
 );
 ```
 
