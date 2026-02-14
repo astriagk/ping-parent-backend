@@ -25,11 +25,11 @@ const path = require("path");
 const CONFIG = {
   MODULES_DIR: path.join(__dirname, "../src/modules"),
   ROUTES_FILE: path.join(__dirname, "../src/routes/index.ts"),
-  OUTPUT_DIR: path.join(__dirname, "../docs/api"),
-  POSTMAN_DIR: path.join(__dirname, "../docs/api/postman/collections"),
-  ENV_DIR: path.join(__dirname, "../docs/api/postman/environments"),
-  OPENAPI_DIR: path.join(__dirname, "../docs/api/openapi"),
-  VERSION_FILE: path.join(__dirname, "../docs/api/.version-v2.json"),
+  OUTPUT_DIR: path.join(__dirname, "../docs"),
+  POSTMAN_DIR: path.join(__dirname, "../docs/postman/collections"),
+  ENV_DIR: path.join(__dirname, "../docs/postman/environments"),
+  OPENAPI_DIR: path.join(__dirname, "../docs/openapi"),
+  VERSION_FILE: path.join(__dirname, "../docs/openapi/.version-v2.json"),
   BASE_NAME: "PP_API_V2",
 };
 
