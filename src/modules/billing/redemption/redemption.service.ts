@@ -2,6 +2,7 @@ import { WithId } from "mongodb";
 
 import { schoolSubscriptionRepository } from "@modules/billing/school_subscription/school_subscription.repository";
 import { parentRepository } from "@modules/users/parent/parent.repository";
+import { studentRepository } from "@modules/users/student/student.repository";
 import {
   HTTP_STATUS,
   SchoolSubscriptionStatus,
@@ -82,12 +83,22 @@ export const redeemSchoolSubscriptionCode = async (
     );
   }
 
+  // Fetch parent's active students for the subscription
+  const students = await studentRepository.findByParentId(parentId);
+  const activeStudents = students.filter((s: any) => s.is_active);
+  const studentIds = activeStudents.map((s: any) => s.student_id);
+
   // Create subscription record for parent
   const subscription_id = generateUniqueCode("PSUB");
   const newSubscription: ParentSubscription = {
     subscription_id,
     parent_id: parentId,
     plan_id: schoolSubscription.plan_id,
+    student_ids: studentIds,
+    number_of_kids: studentIds.length,
+    original_price: 0, // School-redeemed subscriptions are pre-paid
+    calculated_price: 0,
+    currency: "INR",
     start_date: new Date(),
     end_date: schoolSubscription.end_date,
     subscription_status: SubscriptionStatus.ACTIVE,
