@@ -16,6 +16,16 @@ export interface PlanBadge {
   type: PlanBadgeType;
 }
 
+export interface SameTripDiscount {
+  percentage: number;
+  min_kids: number;
+  label: string;
+}
+
+export interface PlanDiscounts {
+  same_trip?: SameTripDiscount;
+}
+
 export interface SubscriptionPlan {
   _id?: any;
   plan_id: string;
@@ -28,6 +38,7 @@ export interface SubscriptionPlan {
   per_kid_price: number | null;
   features: FeatureItem[];
   badge: PlanBadge | null;
+  discounts?: PlanDiscounts;
   priority: number;
   is_active: boolean;
   created_at: Date;
