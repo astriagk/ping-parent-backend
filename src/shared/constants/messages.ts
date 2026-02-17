@@ -232,9 +232,26 @@ export const ERROR_MESSAGES = {
     ALREADY_EXISTS: "An active subscription already exists for this parent",
     INVALID_DATE_RANGE: "End date must be after start date",
     PLAN_NOT_FOUND: "Subscription plan not found",
+    PLAN_NOT_ACTIVE: "The selected subscription plan is not active",
     CANNOT_UPDATE_EXPIRED: "Cannot update an expired subscription",
     CANNOT_CANCEL_EXPIRED: "Cannot cancel an expired subscription",
     ALREADY_CANCELLED: "Subscription is already cancelled",
+    NO_ACTIVE_STUDENTS: "No active students found for this parent",
+    STUDENT_NOT_FOUND: "One or more students were not found",
+    STUDENT_NOT_OWNED: "One or more students do not belong to this parent",
+    STUDENT_NOT_ACTIVE: "One or more students are not active",
+    STUDENT_ALREADY_SUBSCRIBED:
+      "One or more students are already covered by an active subscription",
+    STUDENT_COUNT_BELOW_MIN:
+      "Number of students is below the plan's minimum requirement",
+    STUDENT_COUNT_ABOVE_MAX:
+      "Number of students exceeds the plan's maximum limit",
+    NO_ACTIVE_SUBSCRIPTION_TO_UPGRADE:
+      "No active subscription found to upgrade",
+    CANNOT_UPGRADE_TO_SAME_PLAN:
+      "Cannot upgrade to the same plan you already have",
+    UPGRADE_NOT_ALLOWED_DOWNGRADE:
+      "The selected plan is not an upgrade. The new plan price must be higher than your current plan",
   },
   PAYMENT: {
     NOT_FOUND: "Payment not found",
@@ -521,6 +538,10 @@ export const SUCCESS_MESSAGES = {
     FETCHED_SUCCESSFULLY: "Subscription fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Subscriptions list fetched successfully",
     RENEWED_SUCCESSFULLY: "Subscription renewed successfully",
+    RECOMMENDATIONS_FETCHED:
+      "Subscription recommendations fetched successfully",
+    DETAILS_FETCHED: "Subscription details fetched successfully",
+    UPGRADED_SUCCESSFULLY: "Subscription upgraded successfully",
   },
   PAYMENT: {
     CREATED_SUCCESSFULLY: "Payment created successfully",
