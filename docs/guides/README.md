@@ -11,6 +11,13 @@ This folder consolidates all implementation guides, architecture docs, and testi
 - [CHANGELOG.md](CHANGELOG.md): API change history
 - [VERSIONING.md](VERSIONING.md): Versioning strategy
 
+### Portal & App Development Guides
+
+- [ADMIN_PORTAL_BLUEPRINT.md](ADMIN_PORTAL_BLUEPRINT.md): Feature & menu mapping for the admin portal, organized by role
+- [ADMIN_PORTAL_SCREENS.md](ADMIN_PORTAL_SCREENS.md): Admin portal — screen-by-screen development guide with scenarios and APIs
+- [PARENT_APP_SCREENS.md](PARENT_APP_SCREENS.md): Parent app — screen-by-screen development guide with scenarios and APIs
+- [DRIVER_APP_SCREENS.md](DRIVER_APP_SCREENS.md): Driver app — screen-by-screen development guide with scenarios and APIs
+
 ### Testing
 
 - [testing/E2E_TESTING_GUIDE.md](testing/E2E_TESTING_GUIDE.md)

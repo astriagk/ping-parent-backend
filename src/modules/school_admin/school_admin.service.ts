@@ -1,6 +1,7 @@
 import { WithId } from "mongodb";
 
-import { ERROR_MESSAGES, HTTP_STATUS } from "@shared/constants";
+import { ERROR_MESSAGES, HTTP_STATUS, UserRole } from "@shared/constants";
+import { generateAdminTokenPair } from "@shared/services/token.service";
 import {
   ApiError,
   comparePassword,
@@ -97,15 +98,16 @@ export const loginSchoolAdmin = async (
     $set: { last_login: new Date() },
   });
 
-  // Generate tokens (implementation depends on your auth service)
-  const access_token = ""; // TODO: Generate access token
-  const refresh_token = ""; // TODO: Generate refresh token
+  const tokens = generateAdminTokenPair({
+    adminId: admin.admin_id,
+    role: UserRole.SCHOOL_ADMIN,
+  });
 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { password_hash: _loginHash, ...adminWithoutPassword } = admin;
   return {
     admin: adminWithoutPassword as Omit<WithId<SchoolAdmin>, "password_hash">,
-    tokens: { access_token, refresh_token },
+    tokens,
   };
 };
 
