@@ -1,12 +1,12 @@
 # School Transport System - Testing Guide
 
-This guide provides step-by-step instructions to test all new school transport endpoints with dummy data.
+This guide provides step-by-step instructions to test all school transport endpoints with dummy data.
 
 ---
 
 ## Prerequisites
 
-1. **API Base URL**: `http://localhost:3000`
+1. **API Base URL**: `http://localhost:3000/api`
 2. **Postman Collection**: Import `School_Transport_System.postman_collection.json`
 3. **Database**: Ensure test data exists (see Dummy Data section)
 4. **Authentication Tokens**: Save tokens in Postman variables after login
@@ -127,7 +127,7 @@ This guide provides step-by-step instructions to test all new school transport e
 
 #### 1.1 Register School Admin
 
-**Endpoint**: `POST /api/v1/school/auth/register`
+**Endpoint**: `POST /api/school-admin/register`
 
 **Request Body**:
 
@@ -156,13 +156,13 @@ This guide provides step-by-step instructions to test all new school transport e
 }
 ```
 
-**✅ Test Result**: Record the `admin_id` for later tests
+**Test Result**: Record the `admin_id` for later tests
 
 ---
 
 #### 1.2 Login School Admin
 
-**Endpoint**: `POST /api/v1/school/auth/login`
+**Endpoint**: `POST /api/school-admin/login`
 
 **Request Body**:
 
@@ -186,21 +186,18 @@ This guide provides step-by-step instructions to test all new school transport e
       "email": "admin@springfield.school",
       "name": "John Manager"
     },
-    "tokens": {
-      "access_token": "eyJhbGciOiJIUzI1NiIs...",
-      "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
-    }
+    "token": "eyJhbGciOiJIUzI1NiIs..."
   }
 }
 ```
 
-**✅ Test Result**: Save `access_token` to `SCHOOL_ADMIN_TOKEN` variable in Postman
+**Test Result**: Save `token` to `SCHOOL_ADMIN_TOKEN` variable in Postman
 
 ---
 
-#### 1.3 Logout School Admin
+#### 1.3 Get Current School Admin Profile
 
-**Endpoint**: `POST /api/v1/school/auth/logout`
+**Endpoint**: `GET /api/school-admin/me`
 
 **Headers**:
 
@@ -213,7 +210,45 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```json
 {
   "success": true,
-  "message": "Logged out successfully"
+  "data": {
+    "admin_id": "SCHADM-001",
+    "school_id": "SCHOOL-001",
+    "name": "John Manager",
+    "email": "admin@springfield.school",
+    "phone_number": "+919876543210",
+    "is_active": true
+  }
+}
+```
+
+---
+
+#### 1.4 Change School Admin Password
+
+**Endpoint**: `POST /api/school-admin/change-password`
+
+**Headers**:
+
+```
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+Content-Type: application/json
+```
+
+**Request Body**:
+
+```json
+{
+  "current_password": "SecurePass123",
+  "new_password": "NewSecurePass456"
+}
+```
+
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Password changed successfully"
 }
 ```
 
@@ -223,7 +258,7 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 
 #### 2.1 Assign Driver to School
 
-**Endpoint**: `POST /api/v1/school/drivers/:driverId/assign`
+**Endpoint**: `POST /api/school-driver/assign`
 
 **Headers**:
 
@@ -232,17 +267,12 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 Content-Type: application/json
 ```
 
-**URL Parameters**:
-
-```
-driverId = DRIVER-001
-```
-
 **Request Body**:
 
 ```json
 {
-  "driver_id": "DRIVER-001"
+  "driver_id": "DRIVER-001",
+  "school_id": "SCHOOL-001"
 }
 ```
 
@@ -265,7 +295,7 @@ driverId = DRIVER-001
 
 #### 2.2 List School Drivers
 
-**Endpoint**: `GET /api/v1/school/drivers`
+**Endpoint**: `GET /api/school-driver/SCHOOL-001`
 
 **Headers**:
 
@@ -278,7 +308,6 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```json
 {
   "success": true,
-  "message": "Drivers retrieved successfully",
   "data": [
     {
       "driver_id": "DRIVER-001",
@@ -288,20 +317,15 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
       "vehicle_capacity": 10,
       "is_available": true
     }
-  ],
-  "pagination": {
-    "total": 1,
-    "limit": 20,
-    "offset": 0
-  }
+  ]
 }
 ```
 
 ---
 
-#### 2.3 Remove Driver from School
+#### 2.3 Get Driver Details
 
-**Endpoint**: `POST /api/v1/school/drivers/:driverId/remove`
+**Endpoint**: `GET /api/school-driver/DRIVER-001/details`
 
 **Headers**:
 
@@ -309,10 +333,33 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```
 
-**URL Parameters**:
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "driver_id": "DRIVER-001",
+    "name": "Barney Gumble",
+    "vehicle_type": "van",
+    "vehicle_number": "MH-01-AA-1234",
+    "vehicle_capacity": 10,
+    "school_id": "SCHOOL-001",
+    "is_available": true
+  }
+}
+```
+
+---
+
+#### 2.4 Remove Driver from School
+
+**Endpoint**: `POST /api/school-driver/DRIVER-001/remove`
+
+**Headers**:
 
 ```
-driverId = DRIVER-001
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```
 
 **Expected Response** (200):
@@ -326,99 +373,14 @@ driverId = DRIVER-001
 
 ---
 
-### Test 3: School Student Management
-
-#### 3.1 List School Students
-
-**Endpoint**: `GET /api/v1/school/students?subscription_status=active&limit=20&offset=0`
-
-**Headers**:
-
-```
-Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
-```
-
-**Query Parameters**:
-
-```
-subscription_status = active
-limit = 20
-offset = 0
-```
-
-**Expected Response** (200):
-
-```json
-{
-  "success": true,
-  "message": "Students retrieved successfully",
-  "data": [
-    {
-      "student_id": "STUDENT-001",
-      "student_name": "Bart Simpson",
-      "class": "4th",
-      "section": "A",
-      "parent_id": "PARENT-001",
-      "parent_name": "Homer Simpson",
-      "is_active": true
-    }
-  ],
-  "pagination": {
-    "total": 1,
-    "limit": 20,
-    "offset": 0
-  }
-}
-```
-
----
-
-#### 3.2 Get Student Details
-
-**Endpoint**: `GET /api/v1/school/students/:studentId`
-
-**Headers**:
-
-```
-Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
-```
-
-**URL Parameters**:
-
-```
-studentId = STUDENT-001
-```
-
-**Expected Response** (200):
-
-```json
-{
-  "success": true,
-  "message": "Student retrieved successfully",
-  "data": {
-    "student_id": "STUDENT-001",
-    "student_name": "Bart Simpson",
-    "class": "4th",
-    "section": "A",
-    "parent_id": "PARENT-001",
-    "parent_name": "Homer Simpson",
-    "school_id": "SCHOOL-001",
-    "is_active": true,
-    "created_at": "2026-01-01T00:00:00Z"
-  }
-}
-```
-
----
-
-### Test 4: School Assignment Management
+### Test 3: School Assignment Management
 
 **Important**: School assignments are **immediately active** upon creation. No approval/rejection needed.
 School admin assigns drivers directly since they are employed by the school.
 
-#### 4.1 Assign Driver to Student (School Assignment - Immediate Activation)
+#### 3.1 Create School Assignment (Immediate Activation)
 
-**Endpoint**: `POST /api/v1/school/students/:studentId/assign-driver`
+**Endpoint**: `POST /api/school-assignments/SCHOOL-001/create`
 
 **Headers**:
 
@@ -427,48 +389,43 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 Content-Type: application/json
 ```
 
-**URL Parameters**:
-
-```
-studentId = STUDENT-001
-```
-
 **Request Body**:
 
 ```json
 {
   "driver_id": "DRIVER-001",
-  "monthly_fee": 5000
+  "student_id": "STUDENT-001",
+  "monthly_fee": 5000,
+  "start_date": "2026-02-01"
 }
 ```
-
-**Note**: `monthly_fee` is **optional** - use for tracking only (school handles actual payments outside system)
 
 **Expected Response** (201):
 
 ```json
 {
   "success": true,
-  "message": "Driver assigned to student successfully",
+  "message": "Assignment created successfully",
   "data": {
-    "assignment_id": "ASSIGN-001",
+    "assignment_id": "DSA-XXXXXX",
     "driver_id": "DRIVER-001",
     "student_id": "STUDENT-001",
+    "school_id": "SCHOOL-001",
     "monthly_fee": 5000,
-    "assignment_source": "school",
+    "assignment_source": "school_admin",
     "assignment_status": "active",
     "assigned_date": "2026-02-01"
   }
 }
 ```
 
-**✅ Test Result**: Assignment is **active immediately** (no approval needed)
+**Test Result**: Assignment is **active immediately** (no approval needed). Record `assignment_id`.
 
 ---
 
-#### 4.2 Get School Assignments
+#### 3.2 Get School Assignments
 
-**Endpoint**: `GET /api/v1/school/assignments?assignment_status=active&limit=20&offset=0`
+**Endpoint**: `GET /api/school-assignments/SCHOOL-001`
 
 **Headers**:
 
@@ -476,12 +433,35 @@ studentId = STUDENT-001
 Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```
 
-**Query Parameters**:
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "assignment_id": "DSA-XXXXXX",
+      "driver_id": "DRIVER-001",
+      "student_id": "STUDENT-001",
+      "school_id": "SCHOOL-001",
+      "assignment_source": "school_admin",
+      "assignment_status": "active",
+      "monthly_fee": 5000
+    }
+  ]
+}
+```
+
+---
+
+#### 3.3 Get Pending Assignments
+
+**Endpoint**: `GET /api/school-assignments/SCHOOL-001/pending`
+
+**Headers**:
 
 ```
-assignment_status = active
-limit = 20
-offset = 0
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```
 
 **Expected Response** (200):
@@ -489,38 +469,83 @@ offset = 0
 ```json
 {
   "success": true,
-  "message": "Assignments retrieved successfully",
+  "data": []
+}
+```
+
+**Note**: School-created assignments are immediately active, so this returns parent-requested assignments awaiting school approval.
+
+---
+
+#### 3.4 Get Assignments by Driver
+
+**Endpoint**: `GET /api/school-assignments/SCHOOL-001/driver/DRIVER-001`
+
+**Headers**:
+
+```
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+```
+
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
   "data": [
     {
-      "assignment_id": "ASSIGN-001",
+      "assignment_id": "DSA-XXXXXX",
       "driver_id": "DRIVER-001",
-      "driver_name": "Barney Gumble",
       "student_id": "STUDENT-001",
-      "student_name": "Bart Simpson",
-      "assignment_source": "school",
-      "assignment_status": "active",
-      "monthly_fee": 5000
+      "assignment_status": "active"
     }
-  ],
-  "pagination": {
-    "total": 1,
-    "limit": 20,
-    "offset": 0
+  ]
+}
+```
+
+---
+
+#### 3.5 Approve Assignment (For Parent-Requested Assignments)
+
+**Endpoint**: `POST /api/school-assignments/DSA-XXXXXX/approve`
+
+**Headers**:
+
+```
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+```
+
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "Assignment approved successfully",
+  "data": {
+    "assignment_id": "DSA-XXXXXX",
+    "assignment_status": "active"
   }
 }
 ```
 
-**URL Parameters**:
+---
+
+#### 3.6 Reject Assignment
+
+**Endpoint**: `POST /api/school-assignments/DSA-XXXXXX/reject`
+
+**Headers**:
 
 ```
-assignmentId = ASSIGN-001
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+Content-Type: application/json
 ```
 
 **Request Body**:
 
 ```json
 {
-  "reason": "Driver not available for this route"
+  "rejection_reason": "Driver not available for this route"
 }
 ```
 
@@ -531,25 +556,24 @@ assignmentId = ASSIGN-001
   "success": true,
   "message": "Assignment rejected successfully",
   "data": {
-    "assignment_id": "ASSIGN-001",
-    "assignment_status": "rejected",
-    "rejection_reason": "Driver not available for this route"
+    "assignment_id": "DSA-XXXXXX",
+    "assignment_status": "rejected"
   }
 }
 ```
 
 ---
 
-### Test 5: School Subscription Code Management
+### Test 4: School Subscription Management
 
-#### 5.1 Generate Subscription Codes
+#### 4.1 Create School Subscription
 
-**Endpoint**: `POST /api/v1/school/subscriptions/generate-code`
+**Endpoint**: `POST /api/school-subscriptions`
 
 **Headers**:
 
 ```
-Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+Authorization: Bearer {{ADMIN_TOKEN}}
 Content-Type: application/json
 ```
 
@@ -557,10 +581,14 @@ Content-Type: application/json
 
 ```json
 {
+  "school_id": "SCHOOL-001",
   "plan_id": "PLAN-001",
-  "parent_list": ["PARENT-001", "PARENT-002"],
   "start_date": "2026-02-01",
-  "end_date": "2026-03-01"
+  "end_date": "2026-03-01",
+  "auto_renew": false,
+  "max_drivers": 10,
+  "max_students": 50,
+  "billing_contact": "billing@springfield.school"
 }
 ```
 
@@ -569,35 +597,58 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "Subscription codes generated successfully",
+  "message": "School subscription created successfully",
+  "data": {
+    "subscription_id": "SCHSUB-XXXXXX",
+    "school_id": "SCHOOL-001",
+    "plan_id": "PLAN-001",
+    "start_date": "2026-02-01",
+    "end_date": "2026-03-01",
+    "subscription_status": "active",
+    "auto_renew": false,
+    "max_drivers": 10,
+    "max_students": 50
+  }
+}
+```
+
+**Test Result**: Record `subscription_id` for code generation test
+
+---
+
+#### 4.2 Get Subscriptions for School
+
+**Endpoint**: `GET /api/school-subscriptions/school/SCHOOL-001`
+
+**Headers**:
+
+```
+Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+```
+
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
   "data": [
     {
-      "subscription_id": "SUB-001",
-      "subscription_code": "SCH-ABC123XYZ",
+      "subscription_id": "SCHSUB-XXXXXX",
+      "school_id": "SCHOOL-001",
       "plan_id": "PLAN-001",
-      "validity_period": "2026-02-01 to 2026-03-01",
-      "is_redeemed": false,
-      "parent_id": "PARENT-001"
-    },
-    {
-      "subscription_id": "SUB-002",
-      "subscription_code": "SCH-DEF456UVW",
-      "plan_id": "PLAN-001",
-      "validity_period": "2026-02-01 to 2026-03-01",
-      "is_redeemed": false,
-      "parent_id": "PARENT-002"
+      "subscription_status": "active",
+      "start_date": "2026-02-01",
+      "end_date": "2026-03-01"
     }
   ]
 }
 ```
 
-**✅ Test Result**: Record `subscription_code` for parent redemption test
-
 ---
 
-#### 5.2 List Subscription Codes
+#### 4.3 Get Active Subscription for School
 
-**Endpoint**: `GET /api/v1/school/subscriptions?limit=20&offset=0`
+**Endpoint**: `GET /api/school-subscriptions/school/SCHOOL-001/active`
 
 **Headers**:
 
@@ -605,11 +656,39 @@ Content-Type: application/json
 Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```
 
-**Query Parameters**:
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "subscription_id": "SCHSUB-XXXXXX",
+    "subscription_status": "active",
+    "start_date": "2026-02-01",
+    "end_date": "2026-03-01"
+  }
+}
+```
+
+---
+
+#### 4.4 Renew Subscription
+
+**Endpoint**: `POST /api/school-subscriptions/SCHSUB-XXXXXX/renew`
+
+**Headers**:
 
 ```
-limit = 20
-offset = 0
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+```
+
+**Request Body**:
+
+```json
+{
+  "newEndDate": "2026-04-01"
+}
 ```
 
 **Expected Response** (200):
@@ -617,39 +696,104 @@ offset = 0
 ```json
 {
   "success": true,
-  "message": "Subscription codes retrieved successfully",
+  "message": "School subscription renewed successfully",
+  "data": {
+    "subscription_id": "SCHSUB-XXXXXX",
+    "end_date": "2026-04-01",
+    "subscription_status": "active"
+  }
+}
+```
+
+---
+
+#### 4.5 Cancel Subscription
+
+**Endpoint**: `POST /api/school-subscriptions/SCHSUB-XXXXXX/cancel`
+
+**Headers**:
+
+```
+Authorization: Bearer {{ADMIN_TOKEN}}
+```
+
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "message": "School subscription cancelled successfully",
+  "data": {
+    "subscription_id": "SCHSUB-XXXXXX",
+    "subscription_status": "cancelled"
+  }
+}
+```
+
+---
+
+### Test 5: Student Code Generation & Redemption
+
+#### 5.1 Generate Per-Student Codes
+
+**Endpoint**: `POST /api/school-subscriptions/SCHSUB-XXXXXX/generate-codes`
+
+**Headers**:
+
+```
+Authorization: Bearer {{ADMIN_TOKEN}}
+Content-Type: application/json
+```
+
+**Request Body**:
+
+```json
+{
+  "student_ids": ["STUDENT-001", "STUDENT-002"]
+}
+```
+
+**Expected Response** (201):
+
+```json
+{
+  "success": true,
+  "message": "Student codes generated successfully",
   "data": [
     {
-      "subscription_id": "SUB-001",
-      "subscription_code": "SCH-ABC123XYZ",
-      "plan_id": "PLAN-001",
+      "code_id": "SSC-XXXXXX",
+      "code": "SCHSTDCD-ABC123",
+      "school_subscription_id": "SCHSUB-XXXXXX",
       "school_id": "SCHOOL-001",
-      "parent_id": "PARENT-001",
-      "status": "active",
-      "is_redeemed": false,
-      "start_date": "2026-02-01",
-      "end_date": "2026-03-01",
-      "created_at": "2026-02-01T10:00:00Z"
+      "student_id": "STUDENT-001",
+      "plan_id": "PLAN-001",
+      "is_redeemed": false
+    },
+    {
+      "code_id": "SSC-YYYYYY",
+      "code": "SCHSTDCD-DEF456",
+      "school_subscription_id": "SCHSUB-XXXXXX",
+      "school_id": "SCHOOL-001",
+      "student_id": "STUDENT-002",
+      "plan_id": "PLAN-001",
+      "is_redeemed": false
     }
-  ],
-  "pagination": {
-    "total": 2,
-    "limit": 20,
-    "offset": 0
-  }
+  ]
 }
 ```
 
+**Test Result**: Record `code` values for parent redemption test
+
 ---
 
-#### 5.3 Get Subscription Analytics
+#### 5.2 List Codes for Subscription
 
-**Endpoint**: `GET /api/v1/school/subscriptions/analytics`
+**Endpoint**: `GET /api/school-subscriptions/SCHSUB-XXXXXX/codes`
 
 **Headers**:
 
 ```
-Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
+Authorization: Bearer {{ADMIN_TOKEN}}
 ```
 
 **Expected Response** (200):
@@ -657,26 +801,32 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 ```json
 {
   "success": true,
-  "message": "Analytics retrieved successfully",
-  "data": {
-    "total_codes_generated": 2,
-    "total_codes_redeemed": 0,
-    "active_subscriptions": 2,
-    "expired_subscriptions": 0,
-    "cancelled_subscriptions": 0,
-    "redemption_rate": 0,
-    "pending_redemptions": 2
-  }
+  "data": [
+    {
+      "code_id": "SSC-XXXXXX",
+      "code": "SCHSTDCD-ABC123",
+      "student_id": "STUDENT-001",
+      "is_redeemed": false,
+      "created_at": "2026-02-01T10:00:00Z"
+    },
+    {
+      "code_id": "SSC-YYYYYY",
+      "code": "SCHSTDCD-DEF456",
+      "student_id": "STUDENT-002",
+      "is_redeemed": false,
+      "created_at": "2026-02-01T10:00:00Z"
+    }
+  ]
 }
 ```
 
 ---
 
-### Test 6: Parent School Subscription Redemption
+### Test 6: Parent Redemption
 
 #### 6.1 Parent Login (Create Parent Account First)
 
-**Endpoint**: `POST /api/v1/auth/parent/login` (Use existing parent auth)
+**Endpoint**: `POST /api/auth/login/verify-otp` (Use existing parent auth)
 
 **Request Body**:
 
@@ -693,19 +843,18 @@ Authorization: Bearer {{SCHOOL_ADMIN_TOKEN}}
 {
   "success": true,
   "data": {
-    "access_token": "eyJhbGciOiJIUzI1NiIs...",
-    "refresh_token": "eyJhbGciOiJIUzI1NiIs..."
+    "token": "eyJhbGciOiJIUzI1NiIs..."
   }
 }
 ```
 
-**✅ Test Result**: Save `access_token` to `PARENT_TOKEN` variable
+**Test Result**: Save `token` to `PARENT_TOKEN` variable
 
 ---
 
 #### 6.2 Redeem Subscription Code
 
-**Endpoint**: `POST /api/v1/parent/school-subscriptions/redeem`
+**Endpoint**: `POST /api/redemptions/redeem`
 
 **Headers**:
 
@@ -718,24 +867,21 @@ Content-Type: application/json
 
 ```json
 {
-  "subscription_code": "SCH-ABC123XYZ"
+  "subscription_code": "SCHSTDCD-ABC123"
 }
 ```
 
-**Expected Response** (200):
+**Expected Response** (201):
 
 ```json
 {
   "success": true,
   "message": "Subscription code redeemed successfully",
   "data": {
-    "subscription_id": "SUB-001",
+    "subscription_id": "SUB-XXXXXX",
     "school_id": "SCHOOL-001",
-    "school_name": "Springfield Elementary School",
     "plan_id": "PLAN-001",
     "subscription_status": "active",
-    "is_redeemed": true,
-    "redeemed_at": "2026-02-01T12:00:00Z",
     "start_date": "2026-02-01",
     "end_date": "2026-03-01"
   }
@@ -744,9 +890,9 @@ Content-Type: application/json
 
 ---
 
-#### 6.3 Get Parent School Subscriptions
+#### 6.3 Get Active Subscription
 
-**Endpoint**: `GET /api/v1/parent/school-subscriptions`
+**Endpoint**: `GET /api/redemptions/active`
 
 **Headers**:
 
@@ -759,26 +905,20 @@ Authorization: Bearer {{PARENT_TOKEN}}
 ```json
 {
   "success": true,
-  "message": "School subscriptions retrieved successfully",
-  "data": [
-    {
-      "subscription_id": "SUB-001",
-      "school_id": "SCHOOL-001",
-      "school_name": "Springfield Elementary School",
-      "subscription_status": "active",
-      "start_date": "2026-02-01",
-      "end_date": "2026-03-01",
-      "redeemed_at": "2026-02-01T12:00:00Z"
-    }
-  ]
+  "data": {
+    "subscription_id": "SUB-XXXXXX",
+    "subscription_status": "active",
+    "start_date": "2026-02-01",
+    "end_date": "2026-03-01"
+  }
 }
 ```
 
 ---
 
-#### 6.4 Cancel School Subscription
+#### 6.4 Get All Parent Subscriptions
 
-**Endpoint**: `POST /api/v1/parent/school-subscriptions/:subscriptionId/cancel`
+**Endpoint**: `GET /api/redemptions/`
 
 **Headers**:
 
@@ -786,10 +926,64 @@ Authorization: Bearer {{PARENT_TOKEN}}
 Authorization: Bearer {{PARENT_TOKEN}}
 ```
 
-**URL Parameters**:
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "data": [
+    {
+      "subscription_id": "SUB-XXXXXX",
+      "subscription_status": "active",
+      "start_date": "2026-02-01",
+      "end_date": "2026-03-01"
+    }
+  ]
+}
+```
+
+---
+
+#### 6.5 Check Subscription Status
+
+**Endpoint**: `GET /api/redemptions/status/check`
+
+**Headers**:
 
 ```
-subscriptionId = SUB-001
+Authorization: Bearer {{PARENT_TOKEN}}
+```
+
+**Expected Response** (200):
+
+```json
+{
+  "success": true,
+  "data": {
+    "has_active_subscription": true
+  }
+}
+```
+
+---
+
+#### 6.6 Cancel Subscription
+
+**Endpoint**: `POST /api/redemptions/cancel`
+
+**Headers**:
+
+```
+Authorization: Bearer {{PARENT_TOKEN}}
+Content-Type: application/json
+```
+
+**Request Body**:
+
+```json
+{
+  "subscription_id": "SUB-XXXXXX"
+}
 ```
 
 **Expected Response** (200):
@@ -799,20 +993,19 @@ subscriptionId = SUB-001
   "success": true,
   "message": "Subscription cancelled successfully",
   "data": {
-    "subscription_id": "SUB-001",
-    "subscription_status": "cancelled",
-    "cancelled_at": "2026-02-01T14:00:00Z"
+    "subscription_id": "SUB-XXXXXX",
+    "subscription_status": "cancelled"
   }
 }
 ```
 
 ---
 
-### Test 7: Modified Assignment Endpoints (Parent Assignment)
+### Test 7: Parent Assignment Endpoints
 
 #### 7.1 Parent Assign Driver to Student
 
-**Endpoint**: `POST /api/v1/students/:studentId/assign-driver`
+**Endpoint**: `POST /api/driver-student-assignments`
 
 **Headers**:
 
@@ -821,18 +1014,15 @@ Authorization: Bearer {{PARENT_TOKEN}}
 Content-Type: application/json
 ```
 
-**URL Parameters**:
-
-```
-studentId = STUDENT-002
-```
-
 **Request Body**:
 
 ```json
 {
-  "driver_unique_id": "DRV-ABC123",
-  "monthly_fee": 5500
+  "driver_id": "DRIVER-002",
+  "student_id": "STUDENT-002",
+  "driver_unique_id": "DRV-XYZ789",
+  "monthly_fee": 5500,
+  "assignment_source": "parent"
 }
 ```
 
@@ -841,9 +1031,9 @@ studentId = STUDENT-002
 ```json
 {
   "success": true,
-  "message": "Driver assigned to student successfully",
+  "message": "Assignment created successfully",
   "data": {
-    "assignment_id": "ASSIGN-002",
+    "assignment_id": "DSA-YYYYYY",
     "driver_id": "DRIVER-002",
     "student_id": "STUDENT-002",
     "monthly_fee": 5500,
@@ -858,7 +1048,7 @@ studentId = STUDENT-002
 
 #### 7.2 Get Student Assignments
 
-**Endpoint**: `GET /api/v1/students/:studentId/assignments`
+**Endpoint**: `GET /api/driver-student-assignments/student/STUDENT-002`
 
 **Headers**:
 
@@ -866,25 +1056,17 @@ studentId = STUDENT-002
 Authorization: Bearer {{PARENT_TOKEN}}
 ```
 
-**URL Parameters**:
-
-```
-studentId = STUDENT-002
-```
-
 **Expected Response** (200):
 
 ```json
 {
   "success": true,
-  "message": "Student assignments retrieved successfully",
   "data": [
     {
-      "assignment_id": "ASSIGN-002",
+      "assignment_id": "DSA-YYYYYY",
       "driver_id": "DRIVER-002",
-      "driver_name": "Barney Gumble",
       "assignment_source": "parent",
-      "assignment_status": "active",
+      "assignment_status": "pending",
       "monthly_fee": 5500,
       "assigned_date": "2026-02-01"
     }
@@ -896,14 +1078,14 @@ studentId = STUDENT-002
 
 ### Test 8: Trip Generation
 
-#### 8.1 Generate Daily Trips
+#### 8.1 Create Trip
 
-**Endpoint**: `POST /api/v1/trips/generate-daily`
+**Endpoint**: `POST /api/trips`
 
 **Headers**:
 
 ```
-Authorization: Bearer {{ADMIN_TOKEN}}
+Authorization: Bearer {{DRIVER_TOKEN}}
 Content-Type: application/json
 ```
 
@@ -911,8 +1093,9 @@ Content-Type: application/json
 
 ```json
 {
-  "trip_date": "2026-02-02",
-  "assignment_source": "both"
+  "school_id": "SCHOOL-001",
+  "trip_type": "pickup",
+  "trip_date": "2026-02-02"
 }
 ```
 
@@ -921,33 +1104,14 @@ Content-Type: application/json
 ```json
 {
   "success": true,
-  "message": "Daily trips generated successfully",
+  "message": "Trip created successfully",
   "data": {
-    "trips_generated": 2,
-    "trips": [
-      {
-        "trip_id": "TRIP-001",
-        "driver_id": "DRIVER-001",
-        "driver_name": "Barney Gumble",
-        "school_id": "SCHOOL-001",
-        "trip_type": "pickup",
-        "trip_date": "2026-02-02",
-        "trip_status": "scheduled",
-        "students_count": 2,
-        "assignment_source": "school"
-      },
-      {
-        "trip_id": "TRIP-002",
-        "driver_id": "DRIVER-002",
-        "driver_name": "Homer Simpson",
-        "school_id": "SCHOOL-001",
-        "trip_type": "drop",
-        "trip_date": "2026-02-02",
-        "trip_status": "scheduled",
-        "students_count": 1,
-        "assignment_source": "parent"
-      }
-    ]
+    "trip_id": "TRP-XXXXXX",
+    "driver_id": "DRIVER-001",
+    "school_id": "SCHOOL-001",
+    "trip_type": "pickup",
+    "trip_date": "2026-02-02",
+    "trip_status": "scheduled"
   }
 }
 ```
@@ -958,7 +1122,7 @@ Content-Type: application/json
 
 ### Error 1: Unauthorized Access
 
-**Endpoint**: `GET /api/v1/school/drivers`
+**Endpoint**: `GET /api/school-driver/SCHOOL-001`
 
 **Headers** (No Authorization):
 
@@ -979,7 +1143,7 @@ Content-Type: application/json
 
 ### Error 2: Invalid Subscription Code
 
-**Endpoint**: `POST /api/v1/parent/school-subscriptions/redeem`
+**Endpoint**: `POST /api/redemptions/redeem`
 
 **Headers**:
 
@@ -1008,7 +1172,7 @@ Authorization: Bearer {{PARENT_TOKEN}}
 
 ### Error 3: Assignment Already Active
 
-**Endpoint**: `POST /api/v1/school/assignments/:assignmentId/approve`
+**Endpoint**: `POST /api/school-assignments/DSA-XXXXXX/approve`
 
 **Request**: Try to approve an already approved assignment
 
@@ -1025,7 +1189,7 @@ Authorization: Bearer {{PARENT_TOKEN}}
 
 ### Error 4: Code Already Redeemed
 
-**Endpoint**: `POST /api/v1/parent/school-subscriptions/redeem`
+**Endpoint**: `POST /api/redemptions/redeem`
 
 **Request**: Try to redeem same code twice
 
@@ -1044,26 +1208,34 @@ Authorization: Bearer {{PARENT_TOKEN}}
 
 - [ ] **Test 1.1**: Register School Admin
 - [ ] **Test 1.2**: Login School Admin (Save Token)
-- [ ] **Test 1.3**: Logout School Admin
+- [ ] **Test 1.3**: Get Current Admin Profile
+- [ ] **Test 1.4**: Change Password
 - [ ] **Test 2.1**: Assign Driver to School
 - [ ] **Test 2.2**: List School Drivers
-- [ ] **Test 2.3**: Remove Driver from School
-- [ ] **Test 3.1**: List School Students
-- [ ] **Test 3.2**: Get Student Details
-- [ ] **Test 4.1**: Assign Driver to Student (School - Immediate Activation)
-- [ ] **Test 4.2**: Get School Assignments
-- [ ] **Test 5.1**: Generate Subscription Codes
-- [ ] **Test 5.2**: List Subscription Codes
-- [ ] **Test 5.3**: Get Subscription Analytics
+- [ ] **Test 2.3**: Get Driver Details
+- [ ] **Test 2.4**: Remove Driver from School
+- [ ] **Test 3.1**: Create School Assignment (Immediate Activation)
+- [ ] **Test 3.2**: Get School Assignments
+- [ ] **Test 3.3**: Get Pending Assignments
+- [ ] **Test 3.4**: Get Assignments by Driver
+- [ ] **Test 3.5**: Approve Assignment
+- [ ] **Test 3.6**: Reject Assignment
+- [ ] **Test 4.1**: Create School Subscription
+- [ ] **Test 4.2**: Get Subscriptions for School
+- [ ] **Test 4.3**: Get Active Subscription
+- [ ] **Test 4.4**: Renew Subscription
+- [ ] **Test 4.5**: Cancel Subscription
+- [ ] **Test 5.1**: Generate Per-Student Codes
+- [ ] **Test 5.2**: List Codes for Subscription
 - [ ] **Test 6.1**: Parent Login (Save Token)
 - [ ] **Test 6.2**: Redeem Subscription Code
-- [ ] **Test 6.3**: Get Parent School Subscriptions
-- [ ] **Test 6.4**: Cancel School Subscription
+- [ ] **Test 6.3**: Get Active Subscription
+- [ ] **Test 6.4**: Get All Parent Subscriptions
+- [ ] **Test 6.5**: Check Subscription Status
+- [ ] **Test 6.6**: Cancel Subscription
 - [ ] **Test 7.1**: Parent Assign Driver to Student (Requires Approval)
 - [ ] **Test 7.2**: Get Student Assignments
-- [ ] **Test 7.3**: Approve Parent Assignment
-- [ ] **Test 7.4**: Reject Parent Assignment
-- [ ] **Test 8.1**: Generate Daily Trips
+- [ ] **Test 8.1**: Create Trip
 - [ ] **Error Test 1**: Unauthorized Access
 - [ ] **Error Test 2**: Invalid Subscription Code
 - [ ] **Error Test 3**: Assignment Already Active
@@ -1075,10 +1247,11 @@ Authorization: Bearer {{PARENT_TOKEN}}
 
 1. **Import Collection**: `School_Transport_System.postman_collection.json`
 2. **Set Environment Variables**:
-   - `BASE_URL` = `http://localhost:3000`
+   - `BASE_URL` = `http://localhost:3000/api`
    - `SCHOOL_ADMIN_TOKEN` = (Fill after login test)
    - `PARENT_TOKEN` = (Fill after parent login)
    - `ADMIN_TOKEN` = (Fill after admin login)
+   - `DRIVER_TOKEN` = (Fill after driver login)
 3. **Run Tests**: Execute in order from Test 1 to Test 8
 
 ---
@@ -1100,16 +1273,16 @@ Authorization: Bearer {{PARENT_TOKEN}}
 - **Cause**: Missing required fields
 - **Solution**: Check request body against examples provided
 
-### Issue: "Assignment Source Must Be 'parent' or 'school'"
+### Issue: "Assignment Source Must Be 'parent' or 'school_admin'"
 
-- **Cause**: Database schema issue
-- **Solution**: Ensure `assignment_source` enum is created in migrations
+- **Cause**: Invalid enum value for `assignment_source`
+- **Solution**: Use `parent`, `school_admin`, or `system` as values
 
 ---
 
 ## Performance Notes
 
-- **Bulk Operations**: Test with 50+ students for trip generation performance
+- **Bulk Operations**: Test with 50+ students for code generation performance
 - **Concurrent Requests**: Test multiple school admins accessing same endpoints
 - **Code Expiry**: Test code redemption after expiry date (should fail)
 - **Rate Limiting**: Test login attempts (should be rate-limited after 5 attempts)
