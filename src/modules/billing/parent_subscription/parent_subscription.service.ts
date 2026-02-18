@@ -1,5 +1,4 @@
 import { WithId } from "mongodb";
-import { nanoid } from "nanoid";
 
 import { getDB } from "@shared/config";
 import {
@@ -8,9 +7,12 @@ import {
   PARENTS_COLLECTION,
   PlanType,
   PricingModel,
+  SubscriptionSource,
   SubscriptionStatus,
+  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
+import { generateUniqueCode } from "@shared/utils";
 
 import { driverStudentAssignmentRepository } from "../../trips/driver_student_assignment/driver_student_assignment.repository";
 import { parentRepository } from "../../users/parent/parent.repository";
@@ -508,7 +510,7 @@ export const createParentSubscription = async (
 
   // 10. Create subscription
   const subscriptionData: ParentSubscription = {
-    subscription_id: nanoid(),
+    subscription_id: generateUniqueCode(UniqueCodeTypes.SUBSCRIPTION),
     parent_id: parentId,
     plan_id: data.plan_id,
     student_ids: studentIds,
@@ -521,6 +523,7 @@ export const createParentSubscription = async (
     end_date: endDate,
     subscription_status: SubscriptionStatus.ACTIVE,
     auto_renew: data.auto_renew ?? false,
+    subscription_source: SubscriptionSource.SELF_PAY,
     created_at: new Date(),
     updated_at: new Date(),
   };
@@ -649,7 +652,7 @@ export const upgradeParentSubscription = async (
   const endDate = calculateEndDate(startDate, newPlan.plan_type);
 
   const subscriptionData: ParentSubscription = {
-    subscription_id: nanoid(),
+    subscription_id: generateUniqueCode(UniqueCodeTypes.SUBSCRIPTION),
     parent_id: parentId,
     plan_id: data.plan_id,
     student_ids: studentIds,
@@ -662,6 +665,7 @@ export const upgradeParentSubscription = async (
     end_date: endDate,
     subscription_status: SubscriptionStatus.ACTIVE,
     auto_renew: activeSubscription.auto_renew,
+    subscription_source: SubscriptionSource.SELF_PAY,
     created_at: new Date(),
     updated_at: new Date(),
     upgraded_from_subscription_id: activeSubscription.subscription_id,

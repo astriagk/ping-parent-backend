@@ -1,5 +1,4 @@
 import { ObjectId, WithId } from "mongodb";
-import { nanoid } from "nanoid";
 
 import { getDB } from "@shared/config";
 import {
@@ -8,8 +7,10 @@ import {
   HTTP_STATUS,
   PARENTS_COLLECTION,
   TRIPS_COLLECTION,
+  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
+import { generateUniqueCode } from "@shared/utils";
 
 import { ratingReviewRepository } from "./rating_review.repository";
 import { RatingReview } from "./rating_review.type";
@@ -105,7 +106,7 @@ export const createRatingReview = async (
   }
 
   const ratingReviewData: RatingReview = {
-    review_id: nanoid(),
+    review_id: generateUniqueCode(UniqueCodeTypes.REVIEW),
     parent_id: parentId,
     ...data,
     created_at: new Date(),

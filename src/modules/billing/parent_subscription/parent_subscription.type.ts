@@ -1,4 +1,4 @@
-import { SubscriptionStatus } from "@shared/constants";
+import { SubscriptionSource, SubscriptionStatus } from "@shared/constants";
 
 export interface DiscountApplied {
   type: string;
@@ -26,6 +26,8 @@ export interface ParentSubscription {
   updated_at?: Date;
   upgraded_from_subscription_id?: string;
   prorated_amount?: number;
+  subscription_source?: SubscriptionSource;
+  school_subscription_id?: string;
 }
 
 export interface ProrationDetails {

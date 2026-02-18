@@ -8,6 +8,7 @@ import {
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
   SUBSCRIPTION_PLANS_COLLECTION,
+  SubscriptionSource,
   SubscriptionStatus,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
@@ -55,10 +56,24 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
   async findDuplicateActiveSubscription(
     parentId: string,
   ): Promise<WithId<ParentSubscription> | null> {
+    // Only block duplicate SELF_PAY subscriptions — school redemptions can coexist
     return await this.findOne({
       parent_id: parentId,
       subscription_status: SubscriptionStatus.ACTIVE,
-    });
+      subscription_source: { $ne: SubscriptionSource.SCHOOL_REDEMPTION },
+    } as any);
+  }
+
+  async findActiveRedemptionBySchoolSub(
+    parentId: string,
+    schoolSubscriptionId: string,
+  ): Promise<WithId<ParentSubscription> | null> {
+    return await this.findOne({
+      parent_id: parentId,
+      subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
+      school_subscription_id: schoolSubscriptionId,
+      subscription_status: SubscriptionStatus.ACTIVE,
+    } as any);
   }
 
   /**

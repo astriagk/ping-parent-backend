@@ -57,6 +57,9 @@ export enum UniqueCodeTypes {
   ROLE = "ROL",
   AUDIT_LOG = "AUL",
   LOCATION = "LOC",
+  SUBSCRIPTION = "SUB",
+  REVIEW = "REV",
+  SCHOOL_STUDENT_CODE = "SSC",
 }
 
 export enum AssignmentStatus {
@@ -171,6 +174,11 @@ export enum SchoolSubscriptionStatus {
   EXPIRED = "expired",
   CANCELLED = "cancelled",
   PENDING = "pending",
+}
+
+export enum SubscriptionSource {
+  SELF_PAY = "self_pay",
+  SCHOOL_REDEMPTION = "school_redemption",
 }
 
 export enum DriverSocketEvent {

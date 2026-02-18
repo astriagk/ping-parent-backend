@@ -1,228 +1,235 @@
 import { WithId } from "mongodb";
 
-import { schoolSubscriptionRepository } from "@modules/billing/school_subscription/school_subscription.repository";
 import { parentRepository } from "@modules/users/parent/parent.repository";
 import { studentRepository } from "@modules/users/student/student.repository";
 import {
+  ERROR_MESSAGES,
   HTTP_STATUS,
-  SchoolSubscriptionStatus,
+  SubscriptionSource,
   SubscriptionStatus,
+  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
 
 import { parentSubscriptionRepository } from "../parent_subscription/parent_subscription.repository";
+import {
+  cancelParentSubscription as cancelParentSubscriptionService,
+  getActiveParentSubscriptionByUserId,
+  getParentSubscriptionById,
+  getParentSubscriptionsByUserId,
+} from "../parent_subscription/parent_subscription.service";
 import { ParentSubscription } from "../parent_subscription/parent_subscription.type";
+import { schoolStudentCodeRepository } from "../school_subscription/school_student_code.repository";
+import { subscriptionPlanRepository } from "../subscription_plan/subscription_plan.repository";
 
 /**
- * Get active subscription for parent
+ * Helper: convert userId (JWT) to parent MongoDB _id string
  */
-export const getParentActiveSubscription = async (
-  parentId: string,
-): Promise<WithId<ParentSubscription> | null> => {
-  return await parentSubscriptionRepository.findOne({
-    parent_id: parentId,
-    subscription_status: SubscriptionStatus.ACTIVE,
-    end_date: { $gte: new Date() },
-  });
+const getParentByUserId = async (userId: string) => {
+  const parent = await parentRepository.findByUserId(userId);
+  if (!parent) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.SUBSCRIPTION.PARENT_NOT_FOUND,
+    );
+  }
+  return parent;
 };
 
 /**
- * Get all subscriptions for parent
- */
-export const getParentSubscriptions = async (
-  parentId: string,
-): Promise<WithId<ParentSubscription>[]> => {
-  return await parentSubscriptionRepository.findByParentId(parentId);
-};
-
-/**
- * Redeem school subscription code (parent)
- * Parent uses a subscription code provided by school to activate school-based transport
+ * Redeem a school student code (parent)
+ * - Finds the per-student code issued by school admin
+ * - Validates ownership (student must belong to this parent)
+ * - If parent already has an active redemption from the same school subscription, adds the student to it
+ * - Otherwise creates a new ParentSubscription (price = 0)
  */
 export const redeemSchoolSubscriptionCode = async (
-  parentId: string,
+  userId: string,
   subscriptionCode: string,
 ): Promise<{
-  subscription_id: string;
-  plan_id: string;
-  start_date: Date;
-  end_date: Date;
-  subscription_status: SubscriptionStatus;
+  subscription: WithId<ParentSubscription>;
+  added_student_id: string;
 }> => {
-  // Validate parent exists
-  const parent = await parentRepository.findById(parentId);
+  // 1. Resolve parent
+  const parent = await getParentByUserId(userId);
+  const parentId = String(parent._id);
 
-  if (!parent) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Parent not found");
-  }
+  // 2. Look up the student code
+  const code = await schoolStudentCodeRepository.findByCode(subscriptionCode);
 
-  // Find subscription by code (custom field that would be generated for schools)
-  // This assumes school subscriptions have a redeemable code
-  const schoolSubscription = await schoolSubscriptionRepository.findOne({
-    code: subscriptionCode,
-    subscription_status: SchoolSubscriptionStatus.ACTIVE,
-    is_redeemable: true,
-  });
-
-  if (!schoolSubscription) {
+  if (!code) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
-      "Invalid or expired subscription code",
+      ERROR_MESSAGES.SUBSCRIPTION.INVALID_OR_EXPIRED_CODE,
     );
   }
 
-  // Check if code was already redeemed
-  const isRedeemed =
-    ((schoolSubscription as Record<string, unknown>)?.is_redeemed as boolean) ??
-    false;
-  if (isRedeemed) {
+  if (code.is_redeemed) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
-      "Subscription code already redeemed",
+      ERROR_MESSAGES.SUBSCRIPTION.CODE_ALREADY_REDEEMED,
     );
   }
 
-  // Fetch parent's active students for the subscription
+  if (code.end_date < new Date()) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.SUBSCRIPTION.INVALID_OR_EXPIRED_CODE,
+    );
+  }
+
+  // 3. Fetch plan
+  const plan = await subscriptionPlanRepository.findByPlanId(code.plan_id);
+  if (!plan) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.SUBSCRIPTION_PLAN.NOT_FOUND,
+    );
+  }
+
+  // 4. Validate the student belongs to this parent
   const students = await studentRepository.findByParentId(parentId);
-  const activeStudents = students.filter((s: any) => s.is_active);
-  const studentIds = activeStudents.map((s: any) => s.student_id);
+  const studentBelongsToParent = students.some(
+    (s) => s.student_id === code.student_id,
+  );
 
-  // Create subscription record for parent
-  const subscription_id = generateUniqueCode("PSUB");
-  const newSubscription: ParentSubscription = {
-    subscription_id,
-    parent_id: parentId,
-    plan_id: schoolSubscription.plan_id,
-    student_ids: studentIds,
-    number_of_kids: studentIds.length,
-    original_price: 0, // School-redeemed subscriptions are pre-paid
-    calculated_price: 0,
-    currency: "INR",
-    start_date: new Date(),
-    end_date: schoolSubscription.end_date,
-    subscription_status: SubscriptionStatus.ACTIVE,
-    auto_renew: false, // School subscriptions don't auto-renew per-parent
-    created_at: new Date(),
-    updated_at: new Date(),
-  };
+  if (!studentBelongsToParent) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.SUBSCRIPTION.INVALID_OR_EXPIRED_CODE,
+    );
+  }
 
-  await parentSubscriptionRepository.create(newSubscription);
+  // 5. Check student is not already in an active subscription
+  const conflicting =
+    await parentSubscriptionRepository.findActiveSubscriptionsByStudentIds([
+      code.student_id,
+    ]);
 
-  // Update parent record to mark active subscription
-  await parentRepository.updateById(parent._id.toString(), {
-    $set: {
-      has_active_subscription: true,
-      subscription_id,
+  if (conflicting.length > 0) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.PARENT_SUBSCRIPTION.STUDENT_ALREADY_SUBSCRIBED,
+    );
+  }
+
+  // 6. Check if parent already has an active redemption from the same school subscription
+  const existing =
+    await parentSubscriptionRepository.findActiveRedemptionBySchoolSub(
+      parentId,
+      code.school_subscription_id,
+    );
+
+  let subscription: WithId<ParentSubscription>;
+
+  if (existing) {
+    // Add student to the existing subscription
+    const updated = await parentSubscriptionRepository.updateById(
+      existing._id.toString(),
+      {
+        $addToSet: { student_ids: code.student_id } as any,
+        $inc: { number_of_kids: 1 } as any,
+        $set: { updated_at: new Date() },
+      },
+    );
+
+    subscription = updated!;
+  } else {
+    // Create new subscription — same pattern as createParentSubscription
+    const newSubData: ParentSubscription = {
+      subscription_id: generateUniqueCode(UniqueCodeTypes.SUBSCRIPTION),
+      parent_id: parentId,
+      plan_id: code.plan_id,
+      student_ids: [code.student_id],
+      number_of_kids: 1,
+      original_price: 0,
+      calculated_price: 0,
+      currency: plan.currency,
+      start_date: new Date(),
+      end_date: code.end_date,
+      subscription_status: SubscriptionStatus.ACTIVE,
+      auto_renew: false,
+      subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
+      school_subscription_id: code.school_subscription_id,
+      created_at: new Date(),
       updated_at: new Date(),
-    },
-  });
+    };
 
-  // Mark school subscription as redeemed
-  await schoolSubscriptionRepository.updateById(
-    schoolSubscription._id.toString(),
-    {
-      $set: {
-        is_redeemed: true,
-        redeemed_by_parent_id: parentId,
-        redeemed_at: new Date(),
-      },
-    },
-  );
+    subscription = await parentSubscriptionRepository.create(newSubData);
 
-  return {
-    subscription_id,
-    plan_id: schoolSubscription.plan_id,
-    start_date: newSubscription.start_date,
-    end_date: newSubscription.end_date,
-    subscription_status: newSubscription.subscription_status,
-  };
+    // Update parent document
+    await parentRepository.updateByUserId(userId, {
+      has_active_subscription: true,
+      subscription_id: newSubData.subscription_id,
+      updated_at: new Date(),
+    } as any);
+  }
+
+  // Mark code as redeemed
+  await schoolStudentCodeRepository.markRedeemed(code._id.toString(), parentId);
+
+  return { subscription, added_student_id: code.student_id };
 };
 
 /**
- * Cancel parent subscription
+ * Get all subscriptions for a parent (delegates to parent_subscription service)
  */
-export const cancelParentSubscription = async (
-  parentId: string,
-  subscriptionId: string,
-): Promise<WithId<ParentSubscription> | null> => {
-  const subscription = await parentSubscriptionRepository.findOne({
-    subscription_id: subscriptionId,
-    parent_id: parentId,
-  });
-
-  if (!subscription) {
-    throw new ApiError(HTTP_STATUS.NOT_FOUND, "Subscription not found");
-  }
-
-  const updated = await parentSubscriptionRepository.updateById(
-    subscription._id.toString(),
-    {
-      $set: {
-        subscription_status: SubscriptionStatus.CANCELLED,
-        updated_at: new Date(),
-      },
-    },
-  );
-
-  // Update parent subscription status
-  if (updated?.subscription_status === SubscriptionStatus.CANCELLED) {
-    await parentRepository.updateById(parentId, {
-      $set: {
-        has_active_subscription: false,
-        updated_at: new Date(),
-      },
-    });
-  }
-
-  return updated;
+export const getParentSubscriptions = async (userId: string) => {
+  return await getParentSubscriptionsByUserId(userId);
 };
 
 /**
- * Get subscription details
+ * Get active subscription for parent (delegates to parent_subscription service)
+ */
+export const getParentActiveSubscription = async (userId: string) => {
+  return await getActiveParentSubscriptionByUserId(userId);
+};
+
+/**
+ * Get subscription details by subscription_id (delegates to parent_subscription service)
  */
 export const getSubscriptionDetails = async (
   subscriptionId: string,
 ): Promise<WithId<ParentSubscription> | null> => {
-  return await parentSubscriptionRepository.findOne({
+  return await getParentSubscriptionById(subscriptionId);
+};
+
+/**
+ * Cancel a parent subscription (delegates to parent_subscription service — includes status validation)
+ */
+export const cancelParentSubscription = async (
+  userId: string,
+  subscriptionId: string,
+): Promise<WithId<ParentSubscription> | null> => {
+  // Find the subscription by subscription_id to get its _id
+  const sub = await parentSubscriptionRepository.findOne({
     subscription_id: subscriptionId,
   });
+
+  if (!sub) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.SUBSCRIPTION.NOT_FOUND,
+    );
+  }
+
+  return await cancelParentSubscriptionService(sub._id.toString(), userId);
 };
 
 /**
- * Check if parent has active subscription
+ * Check if parent has any active subscription
  */
 export const checkParentSubscriptionActive = async (
-  parentId: string,
+  userId: string,
 ): Promise<boolean> => {
-  const subscription = await getParentActiveSubscription(parentId);
-  return !!subscription;
+  const active = await getActiveParentSubscriptionByUserId(userId);
+  return active !== null;
 };
 
 /**
- * List available redemption codes (for parent to see available schools)
+ * Get available (unredeemed) school student codes — for parents to see what schools offer
  */
-export const getAvailableRedemptionCodes = async (): Promise<
-  Array<{
-    code?: string;
-    school_id: string;
-    plan_id: string;
-    end_date: Date;
-    max_students?: number;
-  }>
-> => {
-  type RedemptionCode = {
-    code?: string;
-    school_id: string;
-    plan_id: string;
-    end_date: Date;
-    max_students?: number;
-  };
-
-  return (await schoolSubscriptionRepository.findMany({
-    is_redeemable: true,
-    is_redeemed: false,
-    subscription_status: SchoolSubscriptionStatus.ACTIVE,
-    end_date: { $gte: new Date() },
-  } as Record<string, unknown>)) as unknown as RedemptionCode[];
+export const getAvailableRedemptionCodes = async () => {
+  return await schoolStudentCodeRepository.findAvailableCodes();
 };
