@@ -10,7 +10,9 @@ import { ApiError, asyncHandler } from "@shared/middlewares";
 import {
   cancelSchoolSubscription as cancelSchoolSubscriptionService,
   createSchoolSubscription as createSchoolSubscriptionService,
+  generateStudentCodes as generateStudentCodesService,
   getActiveSchoolSubscription as getActiveSchoolSubscriptionService,
+  getCodesBySchoolSubscription as getCodesBySchoolSubscriptionService,
   getExpiredSchoolSubscriptions as getExpiredSchoolSubscriptionsService,
   getSchoolSubscriptionById as getSchoolSubscriptionByIdService,
   getSchoolSubscriptions as getSchoolSubscriptionsService,
@@ -243,6 +245,61 @@ export const getExpiredSubscriptions = asyncHandler(
       data: subscriptions,
       message:
         SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.EXPIRED_RETRIEVED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Generate per-student redemption codes (admin only)
+ * @route POST /api/v1/billing/school-subscriptions/:subscriptionId/generate-codes
+ */
+export const generateStudentCodes = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { subscriptionId } = req.params as Record<string, string>;
+    const { student_ids } = req.body;
+
+    if (!subscriptionId) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.SCHOOL_SUBSCRIPTION.SUBSCRIPTION_ID_REQUIRED,
+      );
+    }
+
+    const codes = await generateStudentCodesService(
+      subscriptionId,
+      student_ids,
+    );
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: codes,
+      message:
+        SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.CODES_GENERATED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Get all student codes for a school subscription (admin only)
+ * @route GET /api/v1/billing/school-subscriptions/:subscriptionId/codes
+ */
+export const getCodesBySchoolSubscription = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { subscriptionId } = req.params as Record<string, string>;
+
+    if (!subscriptionId) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.SCHOOL_SUBSCRIPTION.SUBSCRIPTION_ID_REQUIRED,
+      );
+    }
+
+    const codes = await getCodesBySchoolSubscriptionService(subscriptionId);
+
+    return res.json({
+      success: true,
+      data: codes,
+      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.CODES_FETCHED_SUCCESSFULLY,
     });
   },
 );

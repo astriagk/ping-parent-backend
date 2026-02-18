@@ -14,5 +14,8 @@ export {
   getSubscriptionsByPlan,
   canAddDriver,
   canAddStudent,
+  generateStudentCodes,
+  getCodesBySchoolSubscription,
 } from "./school_subscription.service";
 export * from "./school_subscription.type";
+export * from "./school_student_code.type";

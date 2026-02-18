@@ -44,3 +44,10 @@ export const cancelSchoolSubscriptionValidation = Joi.object({
     "string.empty": "subscription_id is required",
   }),
 });
+
+export const generateStudentCodesSchema = Joi.object({
+  student_ids: Joi.array().items(Joi.string()).min(1).required().messages({
+    "array.min": "At least one student_id is required",
+    "any.required": "student_ids is required",
+  }),
+});
