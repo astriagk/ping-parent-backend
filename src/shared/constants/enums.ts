@@ -60,6 +60,7 @@ export enum UniqueCodeTypes {
   SUBSCRIPTION = "SUB",
   REVIEW = "REV",
   SCHOOL_STUDENT_CODE = "SSC",
+  SCHOOL_SUBSCRIPTION = "SCHSUB",
 }
 
 export enum AssignmentStatus {

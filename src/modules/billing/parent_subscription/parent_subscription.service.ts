@@ -311,7 +311,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
       calculated_price: pricing.calculated_price,
       discount: pricing.discount_applied ?? null,
       covers_all_kids: true,
-      kids_covered: totalKids,
+      kids_covered: plan.kids.max,
       features: plan.features,
       badge: plan.badge,
       is_recommended: false,
