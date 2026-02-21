@@ -12,6 +12,12 @@ export interface User {
   fcm_token?: string;
 }
 
+export interface UserWithProfile extends User {
+  name?: string;
+  email?: string;
+  photo_url?: string;
+}
+
 export interface OtpVerification {
   _id?: any; // MongoDB internal ID
   otp_id: number;

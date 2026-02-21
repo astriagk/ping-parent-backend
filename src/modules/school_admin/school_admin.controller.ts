@@ -58,7 +58,7 @@ export const loginSchoolAdmin = asyncHandler(
  */
 export const getCurrentSchoolAdmin = asyncHandler(
   async (req: Request, res: Response) => {
-    const adminId = req.user?.userId;
+    const adminId = req.admin?.adminId;
 
     if (!adminId) {
       throw new ApiError(
@@ -115,7 +115,7 @@ export const getSchoolAdmins = asyncHandler(
  */
 export const updateSchoolAdmin = asyncHandler(
   async (req: Request, res: Response) => {
-    const adminId = req.user?.userId;
+    const adminId = req.admin?.adminId;
 
     if (!adminId) {
       throw new ApiError(
@@ -147,7 +147,7 @@ export const updateSchoolAdmin = asyncHandler(
  */
 export const changeSchoolAdminPassword = asyncHandler(
   async (req: Request, res: Response) => {
-    const adminId = req.user?.userId;
+    const adminId = req.admin?.adminId;
 
     if (!adminId) {
       throw new ApiError(

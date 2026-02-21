@@ -1,6 +1,7 @@
 import { WithId } from "mongodb";
 
 import {
+  AlphabetType,
   ERROR_MESSAGES,
   HTTP_STATUS,
   SchoolSubscriptionStatus,
@@ -35,7 +36,9 @@ export const createSchoolSubscription = async (
     );
   }
 
-  const subscription_id = generateUniqueCode("SCHSUB");
+  const subscription_id = generateUniqueCode(
+    UniqueCodeTypes.SCHOOL_SUBSCRIPTION,
+  );
   const newSubscription: SchoolSubscription = {
     ...input,
     subscription_id,
@@ -235,9 +238,12 @@ export const generateStudentCodes = async (
     }
 
     const codeValue = generateUniqueCode(UniqueCodeTypes.SCHOOL_STUDENT_CODE);
+    const redemCode = generateUniqueCode(UniqueCodeTypes.SCHOOL_STUDENT_CODE, {
+      alphabetType: AlphabetType.Numbers,
+    });
     const newCode: SchoolStudentCode = {
       code_id: codeValue,
-      code: codeValue,
+      code: redemCode,
       school_subscription_id: schoolSub.subscription_id,
       school_id: schoolSub.school_id,
       student_id: studentId,

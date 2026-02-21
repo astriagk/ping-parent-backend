@@ -3,7 +3,7 @@ import { ObjectId, WithId } from "mongodb";
 import { UserRole } from "@shared/constants";
 
 import { userRepository } from "./auth.repository";
-import { User } from "./auth.type";
+import { User, UserWithProfile } from "./auth.type";
 
 // User management
 
@@ -43,12 +43,12 @@ export const phoneExists = async (phoneNumber: string): Promise<boolean> => {
  */
 export const getAllUsers = async (
   userType?: UserRole,
-): Promise<WithId<User>[]> => {
+): Promise<UserWithProfile[]> => {
   const filter: Partial<User> = {};
   if (userType) {
     filter.user_type = userType;
   }
-  return await userRepository.findMany(filter);
+  return await userRepository.findAllWithProfile(filter);
 };
 
 /**
