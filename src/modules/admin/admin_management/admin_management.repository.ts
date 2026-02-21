@@ -1,4 +1,4 @@
-import { UpdateFilter, WithId } from "mongodb";
+import { WithId } from "mongodb";
 
 import { ADMIN_PORTAL_COLLECTION } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
@@ -18,10 +18,6 @@ export class AdminRepository extends BaseRepository<Admin> {
     return await this.findOne({ username });
   }
 
-  async findByAdminId(adminId: string): Promise<WithId<Admin> | null> {
-    return await this.findOne({ admin_id: adminId });
-  }
-
   async emailExists(email: string): Promise<boolean> {
     return await this.exists({ email });
   }
@@ -32,17 +28,6 @@ export class AdminRepository extends BaseRepository<Admin> {
 
   async findActiveAdmins(): Promise<WithId<Admin>[]> {
     return await this.findMany({ is_active: true });
-  }
-
-  async adminIdExists(adminId: string): Promise<boolean> {
-    return await this.exists({ admin_id: adminId });
-  }
-
-  async updateByAdminId(
-    adminId: string,
-    update: UpdateFilter<Admin>,
-  ): Promise<WithId<Admin> | null> {
-    return await this.updateOne({ admin_id: adminId }, update);
   }
 }
 

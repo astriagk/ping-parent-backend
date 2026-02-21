@@ -10,11 +10,9 @@ import {
   PARENT_ADDRESSES_COLLECTION,
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
-  UniqueCodeTypes,
   UserRole,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { driverStudentAssignmentRepository } from "./driver_student_assignment.repository";
 import { DriverStudentAssignment } from "./driver_student_assignment.type";
@@ -53,7 +51,7 @@ const getDriverByUniqueId = async (
 
 type CreateAssignmentData = Omit<
   DriverStudentAssignment,
-  "assignment_id" | "driver_id" | "created_at" | "assignment_status"
+  "driver_id" | "created_at" | "assignment_status"
 >;
 
 /**
@@ -119,9 +117,6 @@ export const createDriverStudentAssignment = async (
   }
 
   const assignmentData: DriverStudentAssignment = {
-    assignment_id: generateUniqueCode(
-      UniqueCodeTypes.DRIVER_STUDENT_ASSIGNMENT,
-    ),
     driver_id: driverId,
     ...data,
     assignment_status: assignmentStatus,
@@ -392,8 +387,8 @@ export const getParentRequestedAssignments = async (
       {
         $lookup: {
           from: STUDENTS_COLLECTION,
-          localField: "student_id",
-          foreignField: "student_id",
+          let: { studentId: { $toObjectId: "$student_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
           as: "student",
         },
       },
@@ -404,10 +399,21 @@ export const getParentRequestedAssignments = async (
         },
       },
       {
+        $addFields: {
+          school_object_id: {
+            $cond: [
+              { $ne: ["$student.school_id", null] },
+              { $toObjectId: "$student.school_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
         $lookup: {
           from: SCHOOLS_COLLECTION,
-          localField: "student.school_id",
-          foreignField: "school_id",
+          localField: "school_object_id",
+          foreignField: "_id",
           as: "school",
         },
       },
@@ -444,6 +450,7 @@ export const getParentRequestedAssignments = async (
       },
       {
         $project: {
+          school_object_id: 0,
           pickup_address_object_id: 0,
         },
       },
@@ -499,8 +506,8 @@ export const getParentRequestedAssignmentsByDriver = async (
       {
         $lookup: {
           from: STUDENTS_COLLECTION,
-          localField: "student_id",
-          foreignField: "student_id",
+          let: { studentId: { $toObjectId: "$student_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
           as: "student",
         },
       },
@@ -511,10 +518,21 @@ export const getParentRequestedAssignmentsByDriver = async (
         },
       },
       {
+        $addFields: {
+          school_object_id: {
+            $cond: [
+              { $ne: ["$student.school_id", null] },
+              { $toObjectId: "$student.school_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
         $lookup: {
           from: SCHOOLS_COLLECTION,
-          localField: "student.school_id",
-          foreignField: "school_id",
+          localField: "school_object_id",
+          foreignField: "_id",
           as: "school",
         },
       },
@@ -551,6 +569,7 @@ export const getParentRequestedAssignmentsByDriver = async (
       },
       {
         $project: {
+          school_object_id: 0,
           pickup_address_object_id: 0,
         },
       },

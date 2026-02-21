@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 import QRCode from "qrcode";
 
 import { getDB } from "@shared/config";
@@ -40,14 +40,15 @@ const getStudentsWithParents = async (
   studentIds: string[],
 ): Promise<StudentWithParent[]> => {
   const db = await getDB();
+  const objectIds = studentIds.map((id) => new ObjectId(id));
   const students = await db
     .collection(STUDENTS_COLLECTION)
-    .find({ student_id: { $in: studentIds } })
-    .project({ student_id: 1, parent_id: 1 })
+    .find({ _id: { $in: objectIds } })
+    .project({ parent_id: 1 })
     .toArray();
 
   return students.map((s) => ({
-    student_id: s.student_id,
+    student_id: String(s._id),
     parent_id: s.parent_id,
   }));
 };
@@ -108,7 +109,6 @@ const generateParentGroupQrOtpData = async (
   validUntil.setHours(validUntil.getHours() + 24);
 
   return {
-    qr_otp_id: generateUniqueCode(UniqueCodeTypes.DAILY_QR_OTP),
     parent_id: parentId,
     student_ids: studentIds,
     trip_id: tripId,

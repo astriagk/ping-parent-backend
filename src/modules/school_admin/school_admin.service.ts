@@ -2,12 +2,7 @@ import { WithId } from "mongodb";
 
 import { ERROR_MESSAGES, HTTP_STATUS, UserRole } from "@shared/constants";
 import { generateAdminTokenPair } from "@shared/services/token.service";
-import {
-  ApiError,
-  comparePassword,
-  generateUniqueCode,
-  hashPassword,
-} from "@shared/utils";
+import { ApiError, comparePassword, hashPassword } from "@shared/utils";
 
 import { schoolAdminRepository } from "./school_admin.repository";
 import {
@@ -33,11 +28,9 @@ export const registerSchoolAdmin = async (
     );
   }
 
-  const admin_id = generateUniqueCode("SCHADM");
   const password_hash = await hashPassword(input.password);
 
   const newAdmin: SchoolAdmin = {
-    admin_id,
     school_id: input.school_id,
     email: input.email,
     password_hash,
@@ -99,7 +92,7 @@ export const loginSchoolAdmin = async (
   });
 
   const tokens = generateAdminTokenPair({
-    adminId: admin.admin_id,
+    adminId: String(admin._id),
     role: UserRole.SCHOOL_ADMIN,
   });
 
@@ -117,7 +110,7 @@ export const loginSchoolAdmin = async (
 export const getSchoolAdminById = async (
   adminId: string,
 ): Promise<Omit<WithId<SchoolAdmin>, "password_hash"> | null> => {
-  const admin = await schoolAdminRepository.findByAdminId(adminId);
+  const admin = await schoolAdminRepository.findById(adminId);
 
   if (!admin) {
     return null;
@@ -150,7 +143,7 @@ export const updateSchoolAdmin = async (
   adminId: string,
   updates: SchoolAdminUpdateInput,
 ): Promise<Omit<WithId<SchoolAdmin>, "password_hash"> | null> => {
-  const admin = await schoolAdminRepository.findByAdminId(adminId);
+  const admin = await schoolAdminRepository.findById(adminId);
 
   if (!admin) {
     throw new ApiError(
@@ -180,7 +173,7 @@ export const changeSchoolAdminPassword = async (
   currentPassword: string,
   newPassword: string,
 ): Promise<boolean> => {
-  const admin = await schoolAdminRepository.findByAdminId(adminId);
+  const admin = await schoolAdminRepository.findById(adminId);
 
   if (!admin) {
     throw new ApiError(
@@ -216,7 +209,7 @@ export const changeSchoolAdminPassword = async (
 export const deactivateSchoolAdmin = async (
   adminId: string,
 ): Promise<boolean> => {
-  const admin = await schoolAdminRepository.findByAdminId(adminId);
+  const admin = await schoolAdminRepository.findById(adminId);
 
   if (!admin) {
     throw new ApiError(

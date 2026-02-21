@@ -1,0 +1,557 @@
+Table users {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  phone_number varchar(20) [unique, not null]
+  user_type enum [not null, note: 'parent or driver']
+  is_active boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+  last_login timestamp
+  fcm_token varchar(255) [note: 'Firebase Cloud Messaging token']
+
+  indexes {
+    phone_number
+    user_type
+  }
+}
+
+Table parents {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [unique, not null, ref: - users._id]
+  name varchar(100) [not null]
+  email varchar(100)
+  photo_url varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    email
+  }
+}
+
+Table parent_addresses {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  parent_id ObjectId [not null, ref: > parents._id]
+  address_line1 varchar(255) [not null]
+  address_line2 varchar(255)
+  city varchar(100) [not null]
+  state varchar(100) [not null]
+  pincode varchar(10)
+  latitude decimal(10,8) [not null]
+  longitude decimal(11,8) [not null]
+  is_primary boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    parent_id
+    (latitude, longitude)
+  }
+}
+
+Table drivers {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [unique, not null, ref: - users._id]
+  driver_unique_id varchar(20) [unique, not null, note: 'Unique ID for parents to search/add driver']
+  name varchar(100) [not null]
+  email varchar(100)
+  photo_url varchar(255)
+  vehicle_type enum [not null, note: 'van, auto, bus']
+  vehicle_number varchar(20) [not null]
+  vehicle_capacity int [not null]
+  current_student_count int [default: 0, note: 'Current number of active students']
+  approval_status enum [default: 'pending', note: 'pending, approved, rejected']
+  approved_by ObjectId [note: 'References admin_portal._id']
+  approved_at timestamp
+  rejection_reason text
+  is_available boolean [default: true]
+  rating decimal(3,2) [default: 0.00]
+  total_trips int [default: 0]
+  school_id ObjectId [ref: > schools._id, note: 'School employment - if employed by a school']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    approval_status
+    vehicle_type
+    is_available
+    driver_unique_id
+  }
+
+  Note: 'Driver profile. Documents and addresses are in separate tables.'
+}
+
+Table driver_addresses {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  driver_id ObjectId [not null, ref: > drivers._id]
+  address_line1 varchar(255) [not null]
+  address_line2 varchar(255)
+  city varchar(100) [not null]
+  state varchar(100) [not null]
+  pincode varchar(10)
+  latitude decimal(10,8) [not null]
+  longitude decimal(11,8) [not null]
+  is_primary boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    driver_id
+    (latitude, longitude)
+  }
+
+  Note: 'Driver can have multiple addresses, but usually one primary (home).'
+}
+
+Table driver_documents {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  driver_id ObjectId [not null, ref: > drivers._id]
+  driving_license_number varchar(50) [not null]
+  driving_license_photo_url varchar(255)
+  vehicle_license_number varchar(50) [not null]
+  vehicle_license_photo_url varchar(255)
+  insurance_number varchar(50)
+  insurance_photo_url varchar(255)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    driver_id
+  }
+
+  Note: 'Stores driver document details. Can be extended for document history.'
+}
+
+Table schools {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  school_name varchar(200) [not null]
+  address varchar(255) [not null]
+  city varchar(100) [not null]
+  state varchar(100) [not null]
+  latitude decimal(10,8) [not null]
+  longitude decimal(11,8) [not null]
+  contact_number varchar(20)
+  email varchar(100)
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    city
+    (latitude, longitude)
+  }
+}
+
+Table students {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  parent_id ObjectId [not null, ref: > parents._id]
+  school_id ObjectId [not null, ref: > schools._id]
+  student_name varchar(100) [not null]
+  class varchar(20) [not null]
+  section varchar(10)
+  roll_number varchar(20)
+  photo_url varchar(255)
+  date_of_birth date
+  gender enum [note: 'male, female, other']
+  pickup_address_id ObjectId [not null, ref: > parent_addresses._id]
+  emergency_contact varchar(20)
+  medical_info text
+  is_active boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    parent_id
+    school_id
+    is_active
+  }
+}
+
+Table driver_student_assignments {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  driver_id ObjectId [not null, ref: > drivers._id]
+  student_id ObjectId [not null, ref: > students._id]
+  driver_unique_id varchar(20) [not null, note: 'Unique ID parents use to find driver']
+  monthly_fee decimal(10,2)
+  assignment_status enum [default: 'pending', note: 'active, inactive, pending, parent_requested']
+  assignment_source enum [default: 'parent', note: 'parent or school - indicates assignment source']
+  assigned_by ObjectId [note: 'References parents._id or school_admin._id depending on assignment_source']
+  assigned_date date [not null]
+  start_date date
+  end_date date
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    driver_id
+    student_id
+    assignment_status
+    (driver_id, assignment_status)
+    driver_unique_id
+  }
+
+  Note: 'Parents or schools assign drivers to students. assignment_source tracks who assigned (parent or school).'
+}
+
+Table trips {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  driver_id ObjectId [not null, ref: > drivers._id]
+  school_id ObjectId [not null, ref: > schools._id, note: 'Destination school for pickup, start point for drop']
+  trip_type enum [not null, note: 'pickup, drop']
+  trip_date date [not null]
+  trip_status enum [default: 'scheduled', note: 'scheduled, started, in_progress, completed, cancelled']
+  start_time timestamp
+  end_time timestamp
+  total_distance decimal(10,2) [note: 'in kilometers']
+  optimized_route_data json [note: 'Calculated optimal sequence of student pickups/drops based on lat/long']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    (driver_id, trip_date)
+    trip_status
+    trip_date
+    school_id
+  }
+
+  Note: 'Route is dynamically calculated: Driver home → Students (optimized order) → School (pickup) OR School → Students (optimized order) → Driver home (drop)'
+}
+
+Table trip_students {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  trip_id ObjectId [not null, ref: > trips._id]
+  student_id ObjectId [not null, ref: > students._id]
+  sequence_order int [note: 'Optimized pickup/drop order calculated by system based on lat/long']
+  estimated_arrival_time time [note: 'Calculated ETA based on route optimization']
+  attendance_status enum [default: 'pending', note: 'present, absent, pending']
+  pickup_status enum [default: 'pending', note: 'pending, picked, dropped, no_show']
+  pickup_time timestamp
+  pickup_latitude decimal(10,8)
+  pickup_longitude decimal(11,8)
+  pickup_qr_code varchar(100)
+  pickup_otp varchar(6)
+  drop_time timestamp
+  drop_latitude decimal(10,8)
+  drop_longitude decimal(11,8)
+  drop_qr_code varchar(100)
+  drop_otp varchar(6)
+  notes text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    trip_id
+    student_id
+    (attendance_status, pickup_status)
+    (trip_id, sequence_order)
+  }
+
+  Note: '''sequence_order is auto-calculated using routing algorithm based on student home addresses and school location.
+
+  Bulk Stop Action (POST /trip-students/trip/:tripId/bulk-stop-action):
+  - Works for both PICKUP (morning) and DROP (evening) trips based on trip.trip_type
+  - Request body: student_ids[], absent_student_ids[], otp_code/qr_code, latitude, longitude
+  - PICKUP trip: sets pickup_status=PICKED, pickup_time, pickup_lat/long
+  - DROP trip: validates PICKED status, sets pickup_status=DROPPED, drop_time, drop_lat/long
+  - Updates daily_qr_otp verified_student_ids/absent_student_ids
+  - OTP required only for pickup/drop, not for marking absent
+
+  Bulk School Action (POST /trip-students/trip/:tripId/bulk-school-action):
+  - Used at school location - NO OTP required
+  - Request body: student_ids[], latitude, longitude
+  - PICKUP trip: marks PICKED students as DROPPED at school (drop_time, drop_lat/long)
+  - DROP trip: marks PENDING students as PICKED from school (pickup_time, pickup_lat/long)
+
+  Complete Flow:
+  PICKUP (morning): bulk-stop-action at home (OTP) → bulk-school-action at school (no OTP)
+  DROP (evening): bulk-school-action at school (no OTP) → bulk-stop-action at home (OTP)'''
+}
+
+Table location_tracking {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  trip_id ObjectId [not null, ref: > trips._id]
+  driver_id ObjectId [not null, ref: > drivers._id]
+  latitude decimal(10,8) [not null]
+  longitude decimal(11,8) [not null]
+  speed decimal(5,2) [note: 'in km/h']
+  heading decimal(5,2) [note: 'direction in degrees']
+  accuracy decimal(6,2) [note: 'in meters']
+  timestamp timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    trip_id
+    driver_id
+    timestamp
+  }
+}
+
+Table daily_qr_otp {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  parent_id ObjectId [not null, ref: > parents._id, note: 'One OTP per parent per trip']
+  student_ids json [not null, note: 'Array of student ObjectIds covered by this OTP']
+  trip_id ObjectId [not null, ref: > trips._id]
+  qr_code varchar(255) [unique, not null]
+  otp_code varchar(6) [not null]
+  trip_type enum [not null, note: 'pickup, drop']
+  valid_from timestamp [not null]
+  valid_until timestamp [not null]
+  is_used boolean [default: false]
+  used_at timestamp
+  verified_student_ids json [note: 'Students who were picked up/dropped via bulk-stop-action or individual pickup']
+  absent_student_ids json [note: 'Students marked absent via bulk-stop-action or markAttendance']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (parent_id, trip_id)
+    qr_code
+    otp_code
+    valid_until
+  }
+
+  Note: '''Parent-grouped OTP: One OTP covers all children of same parent in a trip.
+  Updated by:
+  - bulk-stop-action: student_ids → verified_student_ids, absent_student_ids → absent_student_ids
+  - Individual pickup/drop: adds to verified_student_ids
+  - markAttendance(absent): adds to absent_student_ids
+  is_used becomes true when all student_ids are in verified_student_ids OR absent_student_ids'''
+}
+
+Table notifications {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [not null, ref: > users._id]
+  notification_type enum [not null, note: 'pickup_started, approaching, picked_up, dropped, payment_due, general']
+  title varchar(200) [not null]
+  message text [not null]
+  data json [note: 'Additional data']
+  is_read boolean [default: false]
+  read_at timestamp
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    (user_id, is_read)
+    created_at
+  }
+}
+
+Table subscription_plans {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  plan_name varchar(100) [not null]
+  plan_type enum [not null, note: 'monthly, quarterly, yearly']
+  price decimal(10,2) [not null]
+  features json
+  is_active boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    is_active
+  }
+}
+
+Table parent_subscriptions {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  parent_id ObjectId [not null, ref: > parents._id]
+  plan_id ObjectId [not null, ref: > subscription_plans._id]
+  start_date date [not null]
+  end_date date [not null]
+  subscription_status enum [not null, note: 'active, expired, cancelled']
+  auto_renew boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    parent_id
+    subscription_status
+    end_date
+  }
+}
+
+Table school_subscriptions {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  school_id ObjectId [not null, ref: > schools._id]
+  plan_id ObjectId [not null, ref: > subscription_plans._id]
+  start_date date [not null]
+  end_date date [not null]
+  subscription_status enum [not null, note: 'active, expired, cancelled, pending']
+  auto_renew boolean [default: false]
+  max_drivers int [note: 'Maximum drivers allowed under this subscription']
+  max_students int [note: 'Maximum students allowed under this subscription']
+  billing_contact varchar(100) [note: 'Contact person for billing']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    school_id
+    subscription_status
+    end_date
+  }
+
+  Note: 'School-level subscription. Per-student redemption codes are in school_student_codes table.'
+}
+
+Table school_student_codes {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  code varchar(50) [unique, not null, note: 'Redemption code prefixed with SCHSTDCD']
+  school_subscription_id ObjectId [not null, ref: > school_subscriptions._id]
+  school_id ObjectId [not null, ref: > schools._id]
+  student_id ObjectId [not null, ref: > students._id]
+  plan_id ObjectId [not null, ref: > subscription_plans._id]
+  end_date date [not null]
+  is_redeemed boolean [default: false]
+  redeemed_by_parent_id ObjectId [ref: > parents._id, note: 'Parent who redeemed this code']
+  redeemed_at timestamp
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    school_subscription_id
+    school_id
+    student_id
+    code
+    is_redeemed
+    (school_subscription_id, student_id)
+  }
+
+  Note: 'Per-student redemption codes generated by school admin. Parent redeems code in app to activate subscription.'
+}
+
+Table payments {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  parent_id ObjectId [not null, ref: > parents._id]
+  payment_type enum [not null, note: 'subscription, penalty']
+  amount decimal(10,2) [not null]
+  currency varchar(3) [default: 'INR']
+  payment_method enum [not null, note: 'card, upi, netbanking, wallet, cash']
+  payment_status enum [not null, note: 'pending, completed, failed, refunded']
+  transaction_id varchar(100)
+  gateway_response json
+  subscription_id ObjectId [ref: > parent_subscriptions._id]
+  payment_date timestamp [default: `CURRENT_TIMESTAMP`]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    parent_id
+    payment_status
+    payment_date
+  }
+
+  Note: 'Only parents make payments for subscriptions and penalties. No driver payments.'
+}
+
+Table ratings_reviews {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  parent_id ObjectId [not null, ref: > parents._id]
+  driver_id ObjectId [not null, ref: > drivers._id]
+  trip_id ObjectId [ref: > trips._id]
+  rating int [not null, note: '1-5 stars']
+  review_text text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    driver_id
+    rating
+  }
+}
+
+Table support_tickets {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [not null, ref: > users._id]
+  subject varchar(200) [not null]
+  description text [not null]
+  ticket_status enum [default: 'open', note: 'open, in_progress, resolved, closed']
+  priority enum [default: 'medium', note: 'low, medium, high, urgent']
+  assigned_to ObjectId [note: 'References admin_portal._id']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+  resolved_at timestamp
+
+  indexes {
+    user_id
+    ticket_status
+    created_at
+  }
+}
+
+Table audit_logs {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [ref: > users._id]
+  action_type varchar(50) [not null]
+  entity_type varchar(50) [not null]
+  entity_id ObjectId
+  old_values json
+  new_values json
+  ip_address varchar(45)
+  user_agent text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    user_id
+    (entity_type, entity_id)
+    created_at
+  }
+}
+
+Table admin_portal {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  username varchar(100) [unique, not null]
+  password_hash varchar(255) [not null]
+  email varchar(100) [unique, not null]
+  phone_number varchar(20)
+  is_active boolean [default: true]
+  last_login timestamp
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    username
+    email
+    is_active
+  }
+
+  Note: 'Admin portal users for managing the system, roles for access control.'
+}
+
+Table school_admin {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  school_id ObjectId [not null, ref: > schools._id]
+  name varchar(100) [not null]
+  email varchar(100) [unique, not null]
+  phone_number varchar(20)
+  password_hash varchar(255) [not null]
+  is_active boolean [default: true]
+  last_login timestamp
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    school_id
+    email
+    is_active
+  }
+
+  Note: 'School-level administrators for managing their respective school. Separate from system admins.'
+}
+
+Table roles {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  role_name varchar(50) [unique, not null, note: 'parent, driver, superadmin, admin, support']
+  description text
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+}
+
+Table user_roles {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [not null, ref: > users._id]
+  role_id ObjectId [not null, ref: > roles._id]
+  assigned_by ObjectId [ref: > admin_portal._id]
+  assigned_at timestamp [default: `CURRENT_TIMESTAMP`]
+  is_active boolean [default: true]
+
+  indexes {
+    user_id
+    role_id
+    is_active
+  }
+
+  Note: 'Maps users to roles (parent, driver, admin, etc). Admins can assign roles.'
+}

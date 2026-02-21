@@ -1,6 +1,5 @@
 export interface SchoolStudentCode {
   _id?: any;
-  code_id: string;
   code: string;
   school_subscription_id: string;
   school_id: string;

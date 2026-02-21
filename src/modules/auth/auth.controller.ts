@@ -7,7 +7,6 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
-  UniqueCodeTypes,
   UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -16,7 +15,7 @@ import {
   verifyAccessToken,
 } from "@shared/services/token.service";
 import { sendOtp, verifyOtp } from "@shared/services/twilio-otp.service";
-import { generateUniqueCode, normalizePhone } from "@shared/utils";
+import { normalizePhone } from "@shared/utils";
 
 import {
   activateUser,
@@ -339,7 +338,6 @@ export const verifyPhoneOtp = asyncHandler(
       // Create new user with phone number
       isNewUser = true;
       const newUserData = {
-        user_id: generateUniqueCode(UniqueCodeTypes.USER),
         phone_number: normalizedPhone,
         user_type: role === UserRole.DRIVER ? UserRole.DRIVER : UserRole.PARENT,
         is_active: true,

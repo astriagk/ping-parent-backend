@@ -1,18 +1,9 @@
 import { WithId } from "mongodb";
 
-import {
-  ERROR_MESSAGES,
-  HTTP_STATUS,
-  UniqueCodeTypes,
-  UserRole,
-} from "@shared/constants";
+import { ERROR_MESSAGES, HTTP_STATUS, UserRole } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { generateAdminTokenPair } from "@shared/services/token.service";
-import {
-  comparePassword,
-  generateUniqueCode,
-  hashPassword,
-} from "@shared/utils";
+import { comparePassword, hashPassword } from "@shared/utils";
 
 import { adminRepository } from "./admin_management.repository";
 import {
@@ -79,7 +70,7 @@ export const loginAdmin = async (
 
   // Generate tokens
   const tokens = generateAdminTokenPair({
-    adminId: admin.admin_id,
+    adminId: String(admin._id),
     role: admin.admin_role,
   });
 
@@ -92,12 +83,10 @@ export const loginAdmin = async (
 
 /**
  * Create super admin (no authentication required - for initial setup)
- * Allows creating multiple super admins without existing authentication
  */
 export const createInitialSuperAdmin = async (
   createData: AdminCreateInput,
 ): Promise<AdminResponse> => {
-  // Check if email already exists
   const emailExists = await adminRepository.emailExists(createData.email);
   if (emailExists) {
     throw new ApiError(
@@ -106,7 +95,6 @@ export const createInitialSuperAdmin = async (
     );
   }
 
-  // Check if username already exists
   const usernameExists = await adminRepository.usernameExists(
     createData.username,
   );
@@ -117,24 +105,20 @@ export const createInitialSuperAdmin = async (
     );
   }
 
-  // Hash password
   const password_hash = await hashPassword(createData.password);
 
-  // Create super admin (force role to superadmin)
   const adminData: Admin = {
-    admin_id: generateUniqueCode(UniqueCodeTypes.ADMIN),
     username: createData.username,
     email: createData.email,
     password_hash,
     phone_number: createData.phone_number,
-    admin_role: UserRole.SUPERADMIN, // Always create as superadmin
+    admin_role: UserRole.SUPERADMIN,
     is_active: true,
     created_at: new Date(),
     updated_at: new Date(),
   };
 
   const newAdmin = await adminRepository.create(adminData);
-
   return formatAdminResponse(newAdmin);
 };
 
@@ -145,8 +129,7 @@ export const createAdmin = async (
   createData: AdminCreateInput,
   creatorAdminId: string,
 ): Promise<AdminResponse> => {
-  // Verify creator is superadmin
-  const creator = await adminRepository.findByAdminId(creatorAdminId);
+  const creator = await adminRepository.findById(creatorAdminId);
 
   if (!creator || creator.admin_role !== UserRole.SUPERADMIN) {
     throw new ApiError(
@@ -155,7 +138,6 @@ export const createAdmin = async (
     );
   }
 
-  // Check if email already exists
   const emailExists = await adminRepository.emailExists(createData.email);
   if (emailExists) {
     throw new ApiError(
@@ -164,7 +146,6 @@ export const createAdmin = async (
     );
   }
 
-  // Check if username already exists
   const usernameExists = await adminRepository.usernameExists(
     createData.username,
   );
@@ -175,12 +156,9 @@ export const createAdmin = async (
     );
   }
 
-  // Hash password
   const password_hash = await hashPassword(createData.password);
 
-  // Create admin
   const adminData: Admin = {
-    admin_id: generateUniqueCode(UniqueCodeTypes.ADMIN),
     username: createData.username,
     email: createData.email,
     password_hash,
@@ -192,7 +170,6 @@ export const createAdmin = async (
   };
 
   const newAdmin = await adminRepository.create(adminData);
-
   return formatAdminResponse(newAdmin);
 };
 
@@ -218,12 +195,12 @@ export const getAdminById = async (
 };
 
 /**
- * Get admin by admin_id
+ * Get admin by _id (raw, for internal use)
  */
 export const getAdminByAdminId = async (
   adminId: string,
 ): Promise<WithId<Admin> | null> => {
-  return await adminRepository.findByAdminId(adminId);
+  return await adminRepository.findById(adminId);
 };
 
 /**
@@ -234,15 +211,13 @@ export const updateAdmin = async (
   updates: AdminUpdateInput,
   updaterAdminId: string,
 ): Promise<AdminResponse | null> => {
-  // Get admin to update
   const adminToUpdate = await adminRepository.findById(id);
 
   if (!adminToUpdate) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
   }
 
-  // Prevent modification of superadmin by non-superadmin
-  const updater = await adminRepository.findByAdminId(updaterAdminId);
+  const updater = await adminRepository.findById(updaterAdminId);
   if (
     adminToUpdate.admin_role === UserRole.SUPERADMIN &&
     updater?.admin_role !== UserRole.SUPERADMIN
@@ -253,7 +228,6 @@ export const updateAdmin = async (
     );
   }
 
-  // Check email uniqueness if updating email
   if (updates.email && updates.email !== adminToUpdate.email) {
     const emailExists = await adminRepository.emailExists(updates.email);
     if (emailExists) {
@@ -264,7 +238,6 @@ export const updateAdmin = async (
     }
   }
 
-  // Check username uniqueness if updating username
   if (updates.username && updates.username !== adminToUpdate.username) {
     const usernameExists = await adminRepository.usernameExists(
       updates.username,
@@ -295,15 +268,13 @@ export const activateAdmin = async (
   id: string,
   activatorAdminId: string,
 ): Promise<AdminResponse | null> => {
-  // Get admin to activate
   const adminToActivate = await adminRepository.findById(id);
 
   if (!adminToActivate) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
   }
 
-  // Verify activator is superadmin for superadmin accounts
-  const activator = await adminRepository.findByAdminId(activatorAdminId);
+  const activator = await adminRepository.findById(activatorAdminId);
   if (
     adminToActivate.admin_role === UserRole.SUPERADMIN &&
     activator?.admin_role !== UserRole.SUPERADMIN
@@ -332,14 +303,12 @@ export const deactivateAdmin = async (
   id: string,
   deactivatorAdminId: string,
 ): Promise<AdminResponse | null> => {
-  // Get admin to deactivate
   const adminToDeactivate = await adminRepository.findById(id);
 
   if (!adminToDeactivate) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
   }
 
-  // Prevent deactivation of superadmin
   if (adminToDeactivate.admin_role === UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -347,8 +316,7 @@ export const deactivateAdmin = async (
     );
   }
 
-  // Verify deactivator is superadmin
-  const deactivator = await adminRepository.findByAdminId(deactivatorAdminId);
+  const deactivator = await adminRepository.findById(deactivatorAdminId);
   if (deactivator?.admin_role !== UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -368,12 +336,12 @@ export const deactivateAdmin = async (
 };
 
 /**
- * Get admin by admin_id (for frontend use)
+ * Get admin by ID (formatted for frontend)
  */
 export const getAdminByAdminIdFormatted = async (
   adminId: string,
 ): Promise<AdminResponse | null> => {
-  const admin = await adminRepository.findByAdminId(adminId);
+  const admin = await adminRepository.findById(adminId);
   if (!admin) {
     return null;
   }
@@ -381,22 +349,20 @@ export const getAdminByAdminIdFormatted = async (
 };
 
 /**
- * Update admin by admin_id
+ * Update admin by ID
  */
 export const updateAdminByAdminId = async (
   adminId: string,
   updates: AdminUpdateInput,
   updaterAdminId: string,
 ): Promise<AdminResponse | null> => {
-  // Get admin to update
-  const adminToUpdate = await adminRepository.findByAdminId(adminId);
+  const adminToUpdate = await adminRepository.findById(adminId);
 
   if (!adminToUpdate) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
   }
 
-  // Prevent modification of superadmin by non-superadmin
-  const updater = await adminRepository.findByAdminId(updaterAdminId);
+  const updater = await adminRepository.findById(updaterAdminId);
   if (
     adminToUpdate.admin_role === UserRole.SUPERADMIN &&
     updater?.admin_role !== UserRole.SUPERADMIN
@@ -407,7 +373,6 @@ export const updateAdminByAdminId = async (
     );
   }
 
-  // Check email uniqueness if updating email
   if (updates.email && updates.email !== adminToUpdate.email) {
     const emailExists = await adminRepository.emailExists(updates.email);
     if (emailExists) {
@@ -418,7 +383,6 @@ export const updateAdminByAdminId = async (
     }
   }
 
-  // Check username uniqueness if updating username
   if (updates.username && updates.username !== adminToUpdate.username) {
     const usernameExists = await adminRepository.usernameExists(
       updates.username,
@@ -431,7 +395,7 @@ export const updateAdminByAdminId = async (
     }
   }
 
-  const updatedAdmin = await adminRepository.updateByAdminId(adminId, {
+  const updatedAdmin = await adminRepository.updateById(adminId, {
     $set: { ...updates, updated_at: new Date() },
   });
 
@@ -443,21 +407,19 @@ export const updateAdminByAdminId = async (
 };
 
 /**
- * Activate admin by admin_id
+ * Activate admin by ID
  */
 export const activateAdminByAdminId = async (
   adminId: string,
   activatorAdminId: string,
 ): Promise<AdminResponse | null> => {
-  // Get admin to activate
-  const adminToActivate = await adminRepository.findByAdminId(adminId);
+  const adminToActivate = await adminRepository.findById(adminId);
 
   if (!adminToActivate) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
   }
 
-  // Verify activator is superadmin for superadmin accounts
-  const activator = await adminRepository.findByAdminId(activatorAdminId);
+  const activator = await adminRepository.findById(activatorAdminId);
   if (
     adminToActivate.admin_role === UserRole.SUPERADMIN &&
     activator?.admin_role !== UserRole.SUPERADMIN
@@ -468,7 +430,7 @@ export const activateAdminByAdminId = async (
     );
   }
 
-  const updatedAdmin = await adminRepository.updateByAdminId(adminId, {
+  const updatedAdmin = await adminRepository.updateById(adminId, {
     $set: { is_active: true, updated_at: new Date() },
   });
 
@@ -480,20 +442,18 @@ export const activateAdminByAdminId = async (
 };
 
 /**
- * Deactivate admin by admin_id
+ * Deactivate admin by ID
  */
 export const deactivateAdminByAdminId = async (
   adminId: string,
   deactivatorAdminId: string,
 ): Promise<AdminResponse | null> => {
-  // Get admin to deactivate
-  const adminToDeactivate = await adminRepository.findByAdminId(adminId);
+  const adminToDeactivate = await adminRepository.findById(adminId);
 
   if (!adminToDeactivate) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ADMIN.NOT_FOUND);
   }
 
-  // Prevent deactivation of superadmin
   if (adminToDeactivate.admin_role === UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -501,8 +461,7 @@ export const deactivateAdminByAdminId = async (
     );
   }
 
-  // Verify deactivator is superadmin
-  const deactivator = await adminRepository.findByAdminId(deactivatorAdminId);
+  const deactivator = await adminRepository.findById(deactivatorAdminId);
   if (deactivator?.admin_role !== UserRole.SUPERADMIN) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
@@ -510,7 +469,7 @@ export const deactivateAdminByAdminId = async (
     );
   }
 
-  const updatedAdmin = await adminRepository.updateByAdminId(adminId, {
+  const updatedAdmin = await adminRepository.updateById(adminId, {
     $set: { is_active: false, updated_at: new Date() },
   });
 

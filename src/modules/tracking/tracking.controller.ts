@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 
+import { tripRepository } from "@modules/trips/trip/trip.repository";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
@@ -7,7 +8,6 @@ import {
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
-import { trackingRepository } from "./tracking.repository";
 import {
   calculateOptimalRouteWithTomTom,
   calculateRoute,
@@ -197,7 +197,9 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
     }
 
     // Check if trip exists
-    const existingTrip = await trackingRepository.getTripById(trip_id);
+    const existingTrip = await tripRepository.findById(trip_id);
+
+    console.log(existingTrip);
 
     if (existingTrip && existingTrip.optimized_route_data) {
       // Trip exists and has optimized route data, return it
@@ -205,7 +207,7 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
         success: true,
         data: {
           _id: existingTrip._id?.toString(),
-          trip_id: existingTrip.trip_id,
+          trip_id: existingTrip._id?.toString(),
           route_geometry: existingTrip.optimized_route_data,
           total_distance: existingTrip.optimized_route_data.total_distance,
           total_duration: existingTrip.optimized_route_data.total_duration,

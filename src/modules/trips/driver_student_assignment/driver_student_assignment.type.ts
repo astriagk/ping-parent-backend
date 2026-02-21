@@ -2,7 +2,6 @@ import { AssignmentSource, AssignmentStatus } from "@shared/constants";
 
 export interface DriverStudentAssignment {
   _id?: any;
-  assignment_id: string;
   driver_id: string;
   student_id: string;
   driver_unique_id: string;

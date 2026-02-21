@@ -1,8 +1,7 @@
 import { UserRole } from "@shared/constants/enums";
 
 export interface Admin {
-  _id?: any; // MongoDB internal ID
-  admin_id: string;
+  _id?: any;
   username: string;
   password_hash: string;
   email: string;
@@ -40,7 +39,7 @@ export interface AdminPasswordChangeInput {
 }
 
 export interface AdminResponse {
-  admin_id: string;
+  _id: string;
   username: string;
   email: string;
   phone_number?: string;

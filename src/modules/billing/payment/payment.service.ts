@@ -6,10 +6,8 @@ import {
   HTTP_STATUS,
   PARENTS_COLLECTION,
   PaymentStatus,
-  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { paymentRepository } from "./payment.repository";
 import { Payment } from "./payment.type";
@@ -34,10 +32,7 @@ const getParentIdByUserId = async (userId: string): Promise<string | null> => {
 
 export const createPayment = async (
   userId: string,
-  data: Omit<
-    Payment,
-    "payment_id" | "parent_id" | "created_at" | "payment_date"
-  >,
+  data: Omit<Payment, "parent_id" | "created_at" | "payment_date">,
 ): Promise<WithId<Payment>> => {
   // Convert user_id to parent_id
   const parentId = await getParentIdByUserId(userId);
@@ -58,7 +53,6 @@ export const createPayment = async (
   }
 
   const paymentData: Payment = {
-    payment_id: generateUniqueCode(UniqueCodeTypes.PAYMENT),
     parent_id: parentId,
     ...data,
     currency: data.currency || "INR",

@@ -1,6 +1,5 @@
 export interface SchoolAdmin {
-  _id?: any; // MongoDB internal ID
-  admin_id: string;
+  _id?: any;
   school_id: string; // FK to schools
   user_id?: string; // Optional: reference to users table if unified auth
   email: string;
@@ -27,7 +26,7 @@ export interface SchoolAdminRegisterInput {
 }
 
 export interface SchoolAdminResponse {
-  admin_id: string;
+  _id: string;
   school_id: string;
   email: string;
   phone_number?: string;

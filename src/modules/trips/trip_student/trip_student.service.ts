@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
 import { TrackingSocketService } from "@modules/tracking/tracking.socket.service";
 import { getDB } from "@shared/config";
@@ -61,7 +61,7 @@ const verifyOtpBeforeRecording = async (
   // First, get the student's parent_id
   const student = await db
     .collection(STUDENTS_COLLECTION)
-    .findOne({ student_id: studentId });
+    .findOne({ _id: new ObjectId(studentId) });
 
   if (!student) {
     return false;
@@ -153,12 +153,12 @@ export const getTripStudentsWithDetails = async (
       {
         $match: { trip_id: tripId },
       },
-      // Stage 2: Lookup student details
+      // Stage 2: Lookup student details (student_id stored as string, students._id is ObjectId)
       {
         $lookup: {
           from: STUDENTS_COLLECTION,
-          localField: "student_id",
-          foreignField: "student_id",
+          let: { studentId: { $toObjectId: "$student_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
           as: "studentDetails",
         },
       },
@@ -209,7 +209,7 @@ export const getTripStudentsWithDetails = async (
       {
         $project: {
           _id: 0,
-          trip_student_id: "$trip_student_id",
+          trip_student_id: { $toString: "$_id" },
           trip_id: "$trip_id",
           student_id: "$student_id",
           sequence_order: "$sequence_order",
@@ -252,12 +252,12 @@ export const getTripStudentsGroupedByParent = async (
       {
         $match: { trip_id: tripId },
       },
-      // Stage 2: Lookup student details
+      // Stage 2: Lookup student details (student_id stored as string, students._id is ObjectId)
       {
         $lookup: {
           from: STUDENTS_COLLECTION,
-          localField: "student_id",
-          foreignField: "student_id",
+          let: { studentId: { $toObjectId: "$student_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
           as: "studentDetails",
         },
       },
@@ -313,7 +313,7 @@ export const getTripStudentsGroupedByParent = async (
           parent_photo_url: { $first: "$parentDetails.photo_url" },
           students: {
             $push: {
-              trip_student_id: "$trip_student_id",
+              trip_student_id: "$_id",
               student_id: "$student_id",
               student_name: "$studentDetails.student_name",
               student_photo_url: "$studentDetails.photo_url",
@@ -414,7 +414,7 @@ export const markAttendance = async (
     // Get student's parent_id
     const student = await db
       .collection(STUDENTS_COLLECTION)
-      .findOne({ student_id: studentId });
+      .findOne({ _id: new ObjectId(studentId) });
 
     if (student) {
       // Find the OTP for this parent and trip
@@ -548,12 +548,12 @@ export const recordPickup = async (
     const db = await getDB();
     const student = await db
       .collection(STUDENTS_COLLECTION)
-      .findOne({ student_id: studentId });
+      .findOne({ _id: new ObjectId(studentId) });
 
     if (student && student.parent_id) {
       const trip = await db
         .collection(TRIPS_COLLECTION)
-        .findOne({ trip_id: tripId });
+        .findOne({ _id: new ObjectId(tripId) });
 
       TrackingSocketService.notifyParentStudentPicked(
         student.parent_id,
@@ -652,12 +652,12 @@ export const recordDrop = async (
     const db = await getDB();
     const student = await db
       .collection(STUDENTS_COLLECTION)
-      .findOne({ student_id: studentId });
+      .findOne({ _id: new ObjectId(studentId) });
 
     if (student && student.parent_id) {
       const trip = await db
         .collection(TRIPS_COLLECTION)
-        .findOne({ trip_id: tripId });
+        .findOne({ _id: new ObjectId(tripId) });
 
       TrackingSocketService.notifyParentStudentDropped(
         student.parent_id,
@@ -749,7 +749,7 @@ export const bulkStopAction = async (
   // Fetch trip to get trip_type
   const trip = await db
     .collection(TRIPS_COLLECTION)
-    .findOne({ trip_id: tripId });
+    .findOne({ _id: new ObjectId(tripId) });
 
   if (!trip) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TRIP.NOT_FOUND);
@@ -776,17 +776,17 @@ export const bulkStopAction = async (
   // Fetch all students in one query
   const allStudents = await db
     .collection(STUDENTS_COLLECTION)
-    .find({ student_id: { $in: allStudentIds } })
+    .find({ _id: { $in: allStudentIds.map((id) => new ObjectId(id)) } })
     .toArray();
 
   if (allStudents.length === 0) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.STUDENT.NOT_FOUND);
   }
 
-  // Build a map for quick lookup
+  // Build a map for quick lookup (keyed by string _id)
   const studentMap = new Map(
     allStudents.map((s) => [
-      s.student_id,
+      String(s._id),
       { parent_id: s.parent_id, student_name: s.student_name || "Your child" },
     ]),
   );
@@ -1129,7 +1129,7 @@ export const bulkSchoolAction = async (
   // Fetch trip to get trip_type
   const trip = await db
     .collection(TRIPS_COLLECTION)
-    .findOne({ trip_id: tripId });
+    .findOne({ _id: new ObjectId(tripId) });
 
   if (!trip) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TRIP.NOT_FOUND);
@@ -1162,13 +1162,13 @@ export const bulkSchoolAction = async (
   // Fetch all student details upfront
   const allStudents = await db
     .collection(STUDENTS_COLLECTION)
-    .find({ student_id: { $in: allStudentIds } })
+    .find({ _id: { $in: allStudentIds.map((id) => new ObjectId(id)) } })
     .toArray();
 
-  // Build a map for quick lookup
+  // Build a map for quick lookup (keyed by string _id)
   const studentMap = new Map(
     allStudents.map((s) => [
-      s.student_id,
+      String(s._id),
       { parent_id: s.parent_id, student_name: s.student_name || "Your child" },
     ]),
   );

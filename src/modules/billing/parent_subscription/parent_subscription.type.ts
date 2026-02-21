@@ -9,7 +9,6 @@ export interface DiscountApplied {
 
 export interface ParentSubscription {
   _id?: any;
-  subscription_id: string;
   parent_id: string;
   plan_id: string;
   student_ids: string[];

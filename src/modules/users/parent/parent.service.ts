@@ -71,7 +71,8 @@ export const updateParentProfile = async (
     const db = await getDB();
 
     // Remove fields that shouldn't be updated
-    const { _id, parent_id, user_id, ...sanitizedUpdates } = updates;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _id, user_id, ...sanitizedUpdates } = updates;
 
     // Find parent by user_id
     const result = await db.collection(PARENTS_COLLECTION).updateOne(
@@ -246,8 +247,8 @@ export const getCompleteParentDetailsById = async (
         {
           $lookup: {
             from: USERS_COLLECTION,
-            localField: "user_id",
-            foreignField: "user_id",
+            let: { userId: { $toObjectId: "$user_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
             as: "user",
           },
         },
@@ -361,7 +362,7 @@ export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
             {
               $lookup: {
                 from: TRIP_STUDENTS_COLLECTION,
-                let: { studentId: "$students.student_id" },
+                let: { studentId: { $toString: "$students._id" } },
                 pipeline: [
                   {
                     $match: {
@@ -386,7 +387,9 @@ export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
                 pipeline: [
                   {
                     $match: {
-                      $expr: { $eq: ["$trip_id", "$$tripId"] },
+                      $expr: {
+                        $eq: [{ $toString: "$_id" }, "$$tripId"],
+                      },
                       trip_status: {
                         $in: [TripStatus.STARTED, TripStatus.IN_PROGRESS],
                       },
@@ -405,11 +408,11 @@ export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
             // Group by trip to consolidate students
             {
               $group: {
-                _id: "$trip.trip_id",
+                _id: "$trip._id",
                 trip: { $first: "$trip" },
                 students: {
                   $addToSet: {
-                    student_id: "$students.student_id",
+                    _id: { $toString: "$students._id" },
                     student_name: "$students.student_name",
                     class: "$students.class",
                     section: "$students.section",
@@ -474,7 +477,6 @@ export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
             {
               $project: {
                 _id: "$trip._id",
-                trip_id: "$trip.trip_id",
                 trip_type: "$trip.trip_type",
                 trip_status: "$trip.trip_status",
                 trip_date: "$trip.trip_date",
@@ -487,7 +489,6 @@ export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
                 students: 1,
                 driver: {
                   _id: "$driver._id",
-                  driver_id: "$driver.driver_id",
                   driver_unique_id: "$driver.driver_unique_id",
                   name: "$driver.name",
                   email: "$driver.email",
@@ -502,7 +503,6 @@ export const getParentActiveTrips = async (userId: string): Promise<any[]> => {
                   total_trips: "$driver.total_trips",
                   user: {
                     _id: "$driverUser._id",
-                    user_id: "$driverUser.user_id",
                     phone_number: "$driverUser.phone_number",
                     user_type: "$driverUser.user_type",
                     is_active: "$driverUser.is_active",
@@ -587,7 +587,7 @@ export const getParentAllTrips = async (userId: string): Promise<any[]> => {
             {
               $lookup: {
                 from: TRIP_STUDENTS_COLLECTION,
-                let: { studentId: "$students.student_id" },
+                let: { studentId: { $toString: "$students._id" } },
                 pipeline: [
                   {
                     $match: {
@@ -612,7 +612,9 @@ export const getParentAllTrips = async (userId: string): Promise<any[]> => {
                 pipeline: [
                   {
                     $match: {
-                      $expr: { $eq: ["$trip_id", "$$tripId"] },
+                      $expr: {
+                        $eq: [{ $toString: "$_id" }, "$$tripId"],
+                      },
                     },
                   },
                 ],
@@ -628,11 +630,11 @@ export const getParentAllTrips = async (userId: string): Promise<any[]> => {
             // Group by trip to consolidate students
             {
               $group: {
-                _id: "$trip.trip_id",
+                _id: "$trip._id",
                 trip: { $first: "$trip" },
                 students: {
                   $addToSet: {
-                    student_id: "$students.student_id",
+                    _id: { $toString: "$students._id" },
                     student_name: "$students.student_name",
                     class: "$students.class",
                     section: "$students.section",
@@ -701,7 +703,6 @@ export const getParentAllTrips = async (userId: string): Promise<any[]> => {
             {
               $project: {
                 _id: "$trip._id",
-                trip_id: "$trip.trip_id",
                 trip_type: "$trip.trip_type",
                 trip_status: "$trip.trip_status",
                 trip_date: "$trip.trip_date",
@@ -714,7 +715,6 @@ export const getParentAllTrips = async (userId: string): Promise<any[]> => {
                 students: 1,
                 driver: {
                   _id: "$driver._id",
-                  driver_id: "$driver.driver_id",
                   driver_unique_id: "$driver.driver_unique_id",
                   name: "$driver.name",
                   email: "$driver.email",
@@ -729,7 +729,6 @@ export const getParentAllTrips = async (userId: string): Promise<any[]> => {
                   total_trips: "$driver.total_trips",
                   user: {
                     _id: "$driverUser._id",
-                    user_id: "$driverUser.user_id",
                     phone_number: "$driverUser.phone_number",
                     user_type: "$driverUser.user_type",
                     is_active: "$driverUser.is_active",

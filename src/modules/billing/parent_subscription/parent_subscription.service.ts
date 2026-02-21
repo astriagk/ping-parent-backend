@@ -9,10 +9,8 @@ import {
   PricingModel,
   SubscriptionSource,
   SubscriptionStatus,
-  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { driverStudentAssignmentRepository } from "../../trips/driver_student_assignment/driver_student_assignment.repository";
 import { parentRepository } from "../../users/parent/parent.repository";
@@ -231,19 +229,19 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     };
   }
 
-  const studentIds = activeStudents.map((s) => s.student_id);
+  const studentIds = activeStudents.map((s) => String(s._id));
 
   // Get driver assignments for each student
   const kidsWithDetails = await Promise.all(
     activeStudents.map(async (student) => {
       const assignments =
         await driverStudentAssignmentRepository.findActiveAssignmentsByStudentId(
-          student.student_id,
+          String(student._id),
         );
       const assignment = assignments.length > 0 ? assignments[0] : null;
 
       return {
-        student_id: student.student_id,
+        student_id: String(student._id),
         student_name: student.student_name,
         class: student.class,
         section: student.section,
@@ -268,7 +266,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     // Check if plan can cover all kids
     if (totalKids > plan.kids.max) {
       excludedPlans.push({
-        plan_id: plan.plan_id,
+        plan_id: String(plan._id),
         plan_name: plan.plan_name,
         reason: `Supports max ${plan.kids.max} kid${plan.kids.max > 1 ? "s" : ""} (you have ${totalKids})`,
       });
@@ -277,7 +275,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
 
     if (totalKids < plan.kids.min) {
       excludedPlans.push({
-        plan_id: plan.plan_id,
+        plan_id: String(plan._id),
         plan_name: plan.plan_name,
         reason: `Requires at least ${plan.kids.min} kid${plan.kids.min > 1 ? "s" : ""}`,
       });
@@ -301,7 +299,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     }
 
     recommendedPlans.push({
-      plan_id: plan.plan_id,
+      plan_id: String(plan._id),
       plan_name: plan.plan_name,
       plan_type: plan.plan_type,
       pricing_model: plan.pricing_model,
@@ -327,7 +325,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     const proration = calculateProration(activeSubscription);
 
     for (const plan of recommendedPlans) {
-      const isSamePlan = activeSubscription.plan_id === plan.plan_id;
+      const isSamePlan = activeSubscription.plan_id === String(plan._id);
       plan.is_current_plan = isSamePlan;
 
       if (isSamePlan) {
@@ -382,7 +380,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     },
     current_subscription: activeSubscription
       ? {
-          subscription_id: activeSubscription.subscription_id,
+          subscription_id: String(activeSubscription._id),
           plan_id: activeSubscription.plan_id,
           calculated_price: activeSubscription.calculated_price,
           start_date: activeSubscription.start_date,
@@ -439,7 +437,7 @@ export const createParentSubscription = async (
   }
 
   // 3. Fetch and validate the plan
-  const plan = await subscriptionPlanRepository.findByPlanId(data.plan_id);
+  const plan = await subscriptionPlanRepository.findById(data.plan_id);
   if (!plan) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
@@ -458,7 +456,7 @@ export const createParentSubscription = async (
     );
   }
 
-  const studentIds = activeStudents.map((s) => s.student_id);
+  const studentIds = activeStudents.map((s) => String(s._id));
   const studentCount = studentIds.length;
 
   // 5. Validate student count against plan limits
@@ -491,11 +489,11 @@ export const createParentSubscription = async (
   for (const student of activeStudents) {
     const assignments =
       await driverStudentAssignmentRepository.findActiveAssignmentsByStudentId(
-        student.student_id,
+        String(student._id),
       );
     if (assignments.length === 0) {
       warnings.push(
-        `Student "${student.student_name}" (${student.student_id}) does not have an active driver assignment`,
+        `Student "${student.student_name}" (${String(student._id)}) does not have an active driver assignment`,
       );
     }
   }
@@ -510,7 +508,6 @@ export const createParentSubscription = async (
 
   // 10. Create subscription
   const subscriptionData: ParentSubscription = {
-    subscription_id: generateUniqueCode(UniqueCodeTypes.SUBSCRIPTION),
     parent_id: parentId,
     plan_id: data.plan_id,
     student_ids: studentIds,
@@ -534,7 +531,7 @@ export const createParentSubscription = async (
   // 11. Update parent document
   await parentRepository.updateByUserId(userId, {
     has_active_subscription: true,
-    subscription_id: subscriptionData.subscription_id,
+    subscription_id: String(subscription._id),
     updated_at: new Date(),
   } as any);
 
@@ -586,7 +583,7 @@ export const upgradeParentSubscription = async (
   }
 
   // 4. Fetch and validate new plan
-  const newPlan = await subscriptionPlanRepository.findByPlanId(data.plan_id);
+  const newPlan = await subscriptionPlanRepository.findById(data.plan_id);
   if (!newPlan) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
@@ -605,7 +602,7 @@ export const upgradeParentSubscription = async (
     );
   }
 
-  const studentIds = activeStudents.map((s) => s.student_id);
+  const studentIds = activeStudents.map((s) => String(s._id));
   const studentCount = studentIds.length;
 
   // 6. Validate student count against new plan limits
@@ -642,9 +639,14 @@ export const upgradeParentSubscription = async (
   );
 
   // 10. Mark old subscription as upgraded
-  await parentSubscriptionRepository.updateStatusBySubscriptionId(
-    activeSubscription.subscription_id,
-    SubscriptionStatus.UPGRADED,
+  await parentSubscriptionRepository.updateById(
+    String(activeSubscription._id),
+    {
+      $set: {
+        subscription_status: SubscriptionStatus.UPGRADED,
+        updated_at: new Date(),
+      },
+    },
   );
 
   // 11. Create new subscription
@@ -652,7 +654,6 @@ export const upgradeParentSubscription = async (
   const endDate = calculateEndDate(startDate, newPlan.plan_type);
 
   const subscriptionData: ParentSubscription = {
-    subscription_id: generateUniqueCode(UniqueCodeTypes.SUBSCRIPTION),
     parent_id: parentId,
     plan_id: data.plan_id,
     student_ids: studentIds,
@@ -668,7 +669,7 @@ export const upgradeParentSubscription = async (
     subscription_source: SubscriptionSource.SELF_PAY,
     created_at: new Date(),
     updated_at: new Date(),
-    upgraded_from_subscription_id: activeSubscription.subscription_id,
+    upgraded_from_subscription_id: String(activeSubscription._id),
     prorated_amount: proratedUpgradePrice,
   };
 
@@ -678,7 +679,7 @@ export const upgradeParentSubscription = async (
   // 12. Update parent document to point to new subscription
   await parentRepository.updateByUserId(userId, {
     has_active_subscription: true,
-    subscription_id: subscriptionData.subscription_id,
+    subscription_id: String(newSubscription._id),
     updated_at: new Date(),
   } as any);
 
@@ -686,11 +687,11 @@ export const upgradeParentSubscription = async (
   for (const student of activeStudents) {
     const assignments =
       await driverStudentAssignmentRepository.findActiveAssignmentsByStudentId(
-        student.student_id,
+        String(student._id),
       );
     if (assignments.length === 0) {
       warnings.push(
-        `Student "${student.student_name}" (${student.student_id}) does not have an active driver assignment`,
+        `Student "${student.student_name}" (${String(student._id)}) does not have an active driver assignment`,
       );
     }
   }
@@ -705,7 +706,7 @@ export const upgradeParentSubscription = async (
   };
 
   return {
-    old_subscription_id: activeSubscription.subscription_id,
+    old_subscription_id: String(activeSubscription._id),
     new_subscription: newSubscription,
     proration: prorationDetails,
     warnings,

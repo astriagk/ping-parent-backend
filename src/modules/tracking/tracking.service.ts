@@ -1,3 +1,4 @@
+import { tripRepository } from "@modules/trips/trip/trip.repository";
 import { getDB } from "@shared/config";
 import {
   DRIVERS_COLLECTION,
@@ -5,7 +6,6 @@ import {
   HTTP_STATUS,
   PickupStatus,
   TripType,
-  UniqueCodeTypes,
 } from "@shared/constants";
 import { SUCCESS_MESSAGES } from "@shared/constants/messages";
 import { ApiError } from "@shared/middlewares";
@@ -16,7 +16,7 @@ import {
   isPointWithinRouteCorridor,
 } from "@shared/services/geo-util.service";
 import { tomTomService } from "@shared/services/tomtom.service";
-import { generateUniqueCode, logger } from "@shared/utils";
+import { logger } from "@shared/utils";
 
 import { trackingRepository } from "./tracking.repository";
 import { TrackingSocketService } from "./tracking.socket.service";
@@ -124,7 +124,7 @@ const validateAndPrepareRoute = async (
     );
   }
 
-  const trip = await trackingRepository.getTripById(tripId);
+  const trip = await tripRepository.findById(tripId);
   if (!trip) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
@@ -355,6 +355,7 @@ export const calculateOptimalRouteWithTomTom = async (
   userId: string,
   data: RouteCalculationRequest,
 ): Promise<RouteCalculationResponse> => {
+  console.log(data.trip_id);
   const { uniqueWaypoints, trip, schoolLocation } =
     await validateAndPrepareRoute(userId, data.trip_id);
 
@@ -424,7 +425,7 @@ export const updateDriverPosition = async (
     );
   }
 
-  const trip = await trackingRepository.getTripById(tripId);
+  const trip = await tripRepository.findById(tripId);
   if (!trip) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
@@ -452,7 +453,6 @@ export const updateDriverPosition = async (
   }
 
   const trackingData: Omit<LocationTracking, "_id"> = {
-    tracking_id: generateUniqueCode(UniqueCodeTypes.LOCATION),
     trip_id: tripId,
     driver_id: driverId,
     latitude,
@@ -482,7 +482,6 @@ export const updateDriverPosition = async (
   });
 
   return {
-    tracking_id: result.tracking_id,
     trip_id: result.trip_id,
     driver_id: result.driver_id,
     latitude: result.latitude,
@@ -500,7 +499,6 @@ export const getRouteTracking = async (
 ): Promise<LocationTracking[]> => {
   const tracking = await trackingRepository.getTrackingByTripId(tripId);
   return tracking.slice(0, limit).map((t) => ({
-    tracking_id: t.tracking_id,
     trip_id: t.trip_id,
     driver_id: t.driver_id,
     latitude: t.latitude,
@@ -518,7 +516,6 @@ export const getLatestDriverPosition = async (
   const latest = await trackingRepository.getLatestTrackingByTripId(tripId);
   return latest
     ? {
-        tracking_id: latest.tracking_id,
         trip_id: latest.trip_id,
         driver_id: latest.driver_id,
         latitude: latest.latitude,
@@ -532,7 +529,7 @@ export const getLatestDriverPosition = async (
 };
 
 export const getRouteDetails = async (tripId: string): Promise<any> => {
-  const trip = await trackingRepository.getTripById(tripId);
+  const trip = await tripRepository.findById(tripId);
 
   if (!trip) {
     throw new ApiError(
@@ -545,7 +542,7 @@ export const getRouteDetails = async (tripId: string): Promise<any> => {
   const tripStudents = await trackingRepository.getTripStudents(tripId);
 
   return {
-    trip_id: trip.trip_id,
+    trip_id: String(trip._id),
     trip_type: trip.trip_type,
     trip_status: trip.trip_status,
     trip_date: trip.trip_date,
