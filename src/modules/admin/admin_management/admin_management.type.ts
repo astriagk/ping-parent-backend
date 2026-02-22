@@ -7,6 +7,7 @@ export interface Admin {
   email: string;
   phone_number?: string;
   admin_role: UserRole;
+  school_id?: string;
   is_active: boolean;
   last_login?: Date;
   created_at: Date;
@@ -24,6 +25,7 @@ export interface AdminCreateInput {
   password: string;
   phone_number?: string;
   admin_role: UserRole;
+  school_id?: string;
 }
 
 export interface AdminUpdateInput {
@@ -44,6 +46,7 @@ export interface AdminResponse {
   email: string;
   phone_number?: string;
   admin_role: UserRole;
+  school_id?: string;
   is_active: boolean;
   last_login?: Date;
   created_at: Date;

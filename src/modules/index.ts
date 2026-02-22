@@ -3,7 +3,6 @@ export * from "./auth";
 export * from "./billing";
 export * from "./notification";
 export * from "./school";
-export * from "./school_admin";
 export * from "./tracking";
 export * from "./trips";
 export * from "./users";

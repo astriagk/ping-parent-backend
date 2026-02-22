@@ -68,10 +68,11 @@ export const loginAdmin = async (
     { $set: { last_login: new Date() } },
   );
 
-  // Generate tokens
+  // Generate tokens (include school_id for school admins)
   const tokens = generateAdminTokenPair({
     adminId: String(admin._id),
     role: admin.admin_role,
+    ...(admin.school_id && { school_id: admin.school_id }),
   });
 
   return {
@@ -123,7 +124,10 @@ export const createInitialSuperAdmin = async (
 };
 
 /**
- * Create new admin (superadmin only)
+ * Create new admin
+ * - superadmin can create: admin, school_admin
+ * - admin can create: school_admin only
+ * - school_admin cannot create anyone
  */
 export const createAdmin = async (
   createData: AdminCreateInput,
@@ -131,7 +135,26 @@ export const createAdmin = async (
 ): Promise<AdminResponse> => {
   const creator = await adminRepository.findById(creatorAdminId);
 
-  if (!creator || creator.admin_role !== UserRole.SUPERADMIN) {
+  if (!creator) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,
+    );
+  }
+
+  // school_admin cannot create anyone
+  if (creator.admin_role === UserRole.SCHOOL_ADMIN) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,
+    );
+  }
+
+  // admin can only create school_admin
+  if (
+    creator.admin_role === UserRole.ADMIN &&
+    createData.admin_role !== UserRole.SCHOOL_ADMIN
+  ) {
     throw new ApiError(
       HTTP_STATUS.FORBIDDEN,
       ERROR_MESSAGES.ADMIN.ONLY_SUPERADMIN_CAN_CREATE,
@@ -164,6 +187,7 @@ export const createAdmin = async (
     password_hash,
     phone_number: createData.phone_number,
     admin_role: createData.admin_role,
+    ...(createData.school_id && { school_id: createData.school_id }),
     is_active: true,
     created_at: new Date(),
     updated_at: new Date(),
@@ -178,6 +202,16 @@ export const createAdmin = async (
  */
 export const getAllAdmins = async (): Promise<AdminResponse[]> => {
   const admins = await adminRepository.findMany();
+  return admins.map(formatAdminResponse);
+};
+
+/**
+ * Get all school admins for a specific school
+ */
+export const getAdminsBySchool = async (
+  schoolId: string,
+): Promise<AdminResponse[]> => {
+  const admins = await adminRepository.findBySchoolId(schoolId);
   return admins.map(formatAdminResponse);
 };
 

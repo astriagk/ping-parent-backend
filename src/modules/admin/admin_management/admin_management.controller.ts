@@ -37,6 +37,7 @@ import {
   getAdminByAdminId,
   getAdminByAdminIdFormatted,
   getAdminById,
+  getAdminsBySchool as getAdminsBySchoolService,
   getAllAdmins,
   loginAdmin as loginAdminService,
   updateAdminByAdminId as updateAdminByAdminIdService,
@@ -582,6 +583,21 @@ export const getParentCompleteDetails = asyncHandler(
       success: true,
       data: parentDetails,
       message: SUCCESS_MESSAGES.PARENT.DETAILS_FETCHED_SUCCESSFULLY,
+    });
+  },
+);
+
+// Get all admins for a specific school
+export const getAdminsBySchool = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { school_id } = req.params as Record<string, string>;
+
+    const admins = await getAdminsBySchoolService(school_id);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: admins,
+      message: SUCCESS_MESSAGES.ADMIN.LIST_FETCHED_SUCCESSFULLY,
     });
   },
 );

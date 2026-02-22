@@ -29,6 +29,10 @@ export class AdminRepository extends BaseRepository<Admin> {
   async findActiveAdmins(): Promise<WithId<Admin>[]> {
     return await this.findMany({ is_active: true });
   }
+
+  async findBySchoolId(schoolId: string): Promise<WithId<Admin>[]> {
+    return await this.findMany({ school_id: schoolId });
+  }
 }
 
 export const adminRepository = new AdminRepository();

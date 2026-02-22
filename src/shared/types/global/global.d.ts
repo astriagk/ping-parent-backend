@@ -5,6 +5,7 @@ import type { TokenPayload } from "../../services/token.service";
 export interface AdminTokenPayload {
   adminId: string;
   role: UserRole;
+  school_id?: string;
 }
 
 declare global {
