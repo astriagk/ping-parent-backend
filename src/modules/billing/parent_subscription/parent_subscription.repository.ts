@@ -32,6 +32,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     return await this.findOne({
       parent_id: parentId,
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     });
   }
 
@@ -50,6 +51,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
   async findActiveSubscriptions(): Promise<WithId<ParentSubscription>[]> {
     return await this.findMany({
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     });
   }
 
@@ -60,6 +62,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     return await this.findOne({
       parent_id: parentId,
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
       subscription_source: { $ne: SubscriptionSource.SCHOOL_REDEMPTION },
     } as any);
   }
@@ -73,6 +76,18 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
       subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
       school_subscription_id: schoolSubscriptionId,
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
+    } as any);
+  }
+
+  async findActiveSchoolRedemptionByParentId(
+    parentId: string,
+  ): Promise<WithId<ParentSubscription> | null> {
+    return await this.findOne({
+      parent_id: parentId,
+      subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
+      subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     } as any);
   }
 
@@ -85,6 +100,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     return await this.findMany({
       student_ids: { $in: studentIds },
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     });
   }
 
@@ -196,6 +212,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
           $match: {
             parent_id: parentId,
             subscription_status: SubscriptionStatus.ACTIVE,
+            end_date: { $gt: new Date() },
           },
         },
         {
@@ -281,6 +298,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
           $match: {
             parent_id: parentId,
             subscription_status: SubscriptionStatus.ACTIVE,
+            end_date: { $gt: new Date() },
           },
         },
         // Join plan

@@ -317,6 +317,40 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     });
   }
 
+  // If covered by school redemption, no paid recommendations apply
+  const schoolRedemption =
+    await parentSubscriptionRepository.findActiveSchoolRedemptionByParentId(
+      parentId,
+    );
+
+  if (schoolRedemption) {
+    return {
+      parent_summary: {
+        total_kids: totalKids,
+        kids: kidsWithDetails,
+        same_trip_groups: sameTripGroups.map((g) => ({
+          driver_unique_id: g.driver_unique_id,
+          school_id: g.school_id,
+          kids: g.student_ids,
+          count: g.count,
+        })),
+      },
+      covered_by_school: true,
+      current_subscription: {
+        subscription_id: String(schoolRedemption._id),
+        plan_id: schoolRedemption.plan_id,
+        subscription_source: schoolRedemption.subscription_source,
+        calculated_price: schoolRedemption.calculated_price,
+        start_date: schoolRedemption.start_date,
+        end_date: schoolRedemption.end_date,
+        remaining_days: calculateProration(schoolRedemption).remaining_days,
+        remaining_value: calculateProration(schoolRedemption).remaining_value,
+      },
+      recommended_plans: [],
+      excluded_plans: [],
+    };
+  }
+
   // Check for active subscription to enrich with upgrade info
   const activeSubscription =
     await parentSubscriptionRepository.findActiveByParentId(parentId);
