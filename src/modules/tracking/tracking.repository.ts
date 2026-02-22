@@ -170,7 +170,6 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     pickupStatusFilter?: string,
   ): Promise<RouteWaypoint[]> {
     const db = await getDB();
-    console.log(tripId);
     // Build match condition - always filter by trip_id, optionally by pickup_status
     const matchCondition: Record<string, any> = { trip_id: tripId };
     if (pickupStatusFilter) {

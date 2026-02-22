@@ -28,11 +28,26 @@ API responses return it as **`_id`** (string).
 |---|---|
 | `parent_id` | `_id` |
 
+### Parent Addresses
+| Old key | New key |
+|---|---|
+| `address_id` | `_id` |
+
 ### Drivers (`/api/drivers/*`)
 | Old key | New key |
 |---|---|
 | `driver_id` | `_id` |
 | `driver_unique_id` | **unchanged** (still generated, human-readable) |
+
+### Driver Addresses
+| Old key | New key |
+|---|---|
+| `address_id` | `_id` |
+
+### Driver Documents
+| Old key | New key |
+|---|---|
+| `document_id` | `_id` |
 
 ### Students (`/api/students/*`)
 | Old key | New key |
@@ -58,6 +73,11 @@ API responses return it as **`_id`** (string).
 | Old key | New key |
 |---|---|
 | `role_id` | `_id` |
+
+### User Roles
+| Old key | New key |
+|---|---|
+| `user_role_id` | `_id` |
 
 ### Audit Logs (`/api/admin/audit-logs/*`)
 | Old key | New key |
@@ -124,6 +144,11 @@ API responses return it as **`_id`** (string).
 | Old key | New key |
 |---|---|
 | `tracking_id` | `_id` |
+
+### Support Tickets (`/api/support-tickets/*`)
+| Old key | New key |
+|---|---|
+| `ticket_id` | `_id` |
 
 ### Tracking Subscriptions
 | Old key | New key |

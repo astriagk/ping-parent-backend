@@ -355,7 +355,6 @@ export const calculateOptimalRouteWithTomTom = async (
   userId: string,
   data: RouteCalculationRequest,
 ): Promise<RouteCalculationResponse> => {
-  console.log(data.trip_id);
   const { uniqueWaypoints, trip, schoolLocation } =
     await validateAndPrepareRoute(userId, data.trip_id);
 

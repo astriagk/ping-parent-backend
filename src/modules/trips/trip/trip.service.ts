@@ -88,15 +88,12 @@ const createTripStudentsForTrip = async (
     updated_at: new Date(),
   }));
 
-  console.log(tripStudents);
-
   if (tripStudents.length > 0) {
     // Insert all trip students
     await db.collection(TRIP_STUDENTS_COLLECTION).insertMany(tripStudents);
 
     // Generate QR/OTP for all students in bulk
     const studentIds = tripStudents.map((ts) => ts.student_id);
-    console.log(studentIds, tripId, tripType);
     await generateBulkQrOtp(studentIds, tripId, tripType);
   }
 };

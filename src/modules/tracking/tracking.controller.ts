@@ -199,8 +199,6 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
     // Check if trip exists
     const existingTrip = await tripRepository.findById(trip_id);
 
-    console.log(existingTrip);
-
     if (existingTrip && existingTrip.optimized_route_data) {
       // Trip exists and has optimized route data, return it
       return res.status(HTTP_STATUS.OK).json({

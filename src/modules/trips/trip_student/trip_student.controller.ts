@@ -84,7 +84,6 @@ export const getTripStudentsWithDetailsHandler = asyncHandler(
     const { tripId } = req.params as Record<string, string>;
 
     const tripStudents = await getTripStudentsWithDetails(tripId);
-    console.log(tripStudents);
     return res.json({
       success: true,
       data: tripStudents,
