@@ -13,6 +13,7 @@ import {
   deactivateAdminByAdminId,
   deactivateUser,
   deleteUser,
+  getAdminsBySchool,
   getAll,
   getAllUsers,
   getByAdminId,
@@ -105,6 +106,9 @@ router.patch("/users/:id/deactivate", verifyAdminToken, deactivateUser);
 
 // Delete User
 router.delete("/users/:id", verifyAdminToken, deleteUser);
+
+// Get all admins for a school
+router.get("/by-school/:school_id", verifyAdminToken, getAdminsBySchool);
 
 // Admin Management Routes by admin_id (for frontend use - no _id exposure)
 // Get Admin by admin_id

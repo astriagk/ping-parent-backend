@@ -21,7 +21,12 @@ import { createPaymentSchema, updatePaymentSchema } from "./payment.validation";
 
 const router = Router();
 
-// All routes require parent authentication
+// Admin routes (no verifyParentToken)
+router.get("/admin/all-payments", verifyAdminToken, getAllPaymentsController);
+
+router.get("/admin/payment/:id", verifyAdminToken, getPaymentByIdController);
+
+// All routes below require parent authentication
 router.use(verifyParentToken);
 
 // 01. Make Payment
@@ -48,8 +53,5 @@ router.put("/:id", validate(updatePaymentSchema), updatePaymentById);
 
 // Refund Payment
 router.post("/:id/refund", refundPaymentById);
-
-// Admin routes
-router.get("/admin/all-payments", verifyAdminToken, getAllPaymentsController);
 
 export default router;

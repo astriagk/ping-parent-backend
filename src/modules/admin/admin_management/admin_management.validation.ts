@@ -47,12 +47,21 @@ export const createAdminSchema = Joi.object({
       "string.pattern.base": VALIDATION_MESSAGES.ADMIN.PHONE_PATTERN,
     }),
   admin_role: Joi.string()
-    .valid(UserRole.ADMIN, UserRole.SUPERADMIN)
+    .valid(UserRole.ADMIN, UserRole.SCHOOL_ADMIN)
     .required()
     .messages({
       "any.only": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_INVALID,
       "any.required": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_REQUIRED,
     }),
+  school_id: Joi.string().when("admin_role", {
+    is: UserRole.SCHOOL_ADMIN,
+    then: Joi.required().messages({
+      "any.required": "school_id is required when creating a school admin",
+    }),
+    otherwise: Joi.forbidden().messages({
+      "any.unknown": "school_id is only applicable for school_admin role",
+    }),
+  }),
 });
 
 export const updateAdminSchema = Joi.object({

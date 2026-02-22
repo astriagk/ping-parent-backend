@@ -2,7 +2,6 @@ import { TripType } from "@shared/constants";
 
 export interface DailyQrOtp {
   _id?: any;
-  qr_otp_id: string;
   /** Parent ID - one OTP per parent covering all their children */
   parent_id: string;
   /** Array of student IDs covered by this OTP */

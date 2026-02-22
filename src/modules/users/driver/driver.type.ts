@@ -21,8 +21,7 @@ export interface DriverOnboarding {
 
 // Table: drivers
 export interface Driver {
-  _id?: any; // MongoDB internal ID
-  driver_id?: string;
+  _id?: any;
   user_id: string;
   driver_unique_id?: string;
   name: string;
@@ -46,8 +45,7 @@ export interface Driver {
 
 // Table: driver_addresses
 export interface DriverAddress {
-  _id?: any; // MongoDB internal ID
-  address_id?: string;
+  _id?: any;
   driver_id: string;
   address_line1: string;
   address_line2?: string;
@@ -63,8 +61,7 @@ export interface DriverAddress {
 
 // Table: driver_documents
 export interface DriverDocument {
-  _id?: any; // MongoDB internal ID
-  document_id?: string;
+  _id?: any;
   driver_id: string;
   driving_license_number: string;
   driving_license_photo_url?: string;
@@ -80,7 +77,6 @@ export interface DriverDocument {
 export type DriverInput = Omit<
   Driver,
   | "_id"
-  | "driver_id"
   | "driver_unique_id"
   | "current_student_count"
   | "approval_status"
@@ -109,27 +105,21 @@ export type DriverProfileUpdate = Partial<
 // Type for driver address input
 export type DriverAddressInput = Omit<
   DriverAddress,
-  "_id" | "address_id" | "created_at" | "updated_at"
+  "_id" | "created_at" | "updated_at"
 >;
 
 // Type for updating driver address
 export type DriverAddressUpdate = Partial<
-  Omit<
-    DriverAddress,
-    "_id" | "address_id" | "driver_id" | "created_at" | "updated_at"
-  >
+  Omit<DriverAddress, "_id" | "driver_id" | "created_at" | "updated_at">
 >;
 
 // Type for driver document input
 export type DriverDocumentInput = Omit<
   DriverDocument,
-  "_id" | "document_id" | "created_at" | "updated_at"
+  "_id" | "created_at" | "updated_at"
 >;
 
 // Type for uploading/updating documents
 export type DriverDocumentUpdate = Partial<
-  Omit<
-    DriverDocument,
-    "_id" | "document_id" | "driver_id" | "created_at" | "updated_at"
-  >
+  Omit<DriverDocument, "_id" | "driver_id" | "created_at" | "updated_at">
 >;

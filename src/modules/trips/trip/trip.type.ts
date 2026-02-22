@@ -2,7 +2,6 @@ import { TripStatus, TripType } from "@shared/constants";
 
 export interface Trip {
   _id?: any;
-  trip_id: string;
   driver_id: string;
   school_id: string;
   trip_type: TripType;

@@ -1,7 +1,6 @@
 // Table: parents
 export interface Parent {
-  _id?: any; // MongoDB internal ID
-  parent_id?: string;
+  _id?: any;
   user_id: string;
   name: string;
   email?: string;
@@ -14,8 +13,7 @@ export interface Parent {
 
 // Table: parent_addresses
 export interface ParentAddress {
-  _id?: any; // MongoDB internal ID
-  address_id?: string;
+  _id?: any;
   parent_id: string;
   address_line1: string;
   address_line2?: string;
@@ -32,5 +30,5 @@ export interface ParentAddress {
 // Reusable type for address input (omits auto-generated/internal fields)
 export type ParentAddressInput = Omit<
   ParentAddress,
-  "_id" | "address_id" | "parent_id" | "created_at" | "updated_at"
+  "_id" | "parent_id" | "created_at" | "updated_at"
 >;

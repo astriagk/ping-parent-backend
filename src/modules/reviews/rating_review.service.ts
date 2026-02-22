@@ -1,5 +1,4 @@
 import { ObjectId, WithId } from "mongodb";
-import { nanoid } from "nanoid";
 
 import { getDB } from "@shared/config";
 import {
@@ -58,7 +57,7 @@ const verifyTripExists = async (tripId: string): Promise<boolean> => {
 
 export const createRatingReview = async (
   userId: string,
-  data: Omit<RatingReview, "review_id" | "parent_id" | "created_at">,
+  data: Omit<RatingReview, "parent_id" | "created_at">,
 ): Promise<WithId<RatingReview>> => {
   // Convert user_id to parent_id
   const parentId = await getParentIdByUserId(userId);
@@ -105,7 +104,6 @@ export const createRatingReview = async (
   }
 
   const ratingReviewData: RatingReview = {
-    review_id: nanoid(),
     parent_id: parentId,
     ...data,
     created_at: new Date(),

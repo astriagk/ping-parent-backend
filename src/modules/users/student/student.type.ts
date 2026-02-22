@@ -1,8 +1,7 @@
 import { Gender } from "@shared/constants";
 
 export interface Student {
-  _id?: any; // MongoDB internal ID
-  student_id: string;
+  _id?: any;
   parent_id: string;
   school_id: string;
   student_name: string;

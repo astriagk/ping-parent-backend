@@ -514,6 +514,8 @@ export const SUCCESS_MESSAGES = {
     CANCELLED_SUCCESSFULLY: "School subscription cancelled successfully",
     EXPIRED_RETRIEVED_SUCCESSFULLY:
       "Expired subscriptions retrieved successfully",
+    CODES_GENERATED_SUCCESSFULLY: "Student codes generated successfully",
+    CODES_FETCHED_SUCCESSFULLY: "Student codes retrieved successfully",
   },
   SCHOOL_DRIVER: {
     RETRIEVED_SUCCESSFULLY: "School drivers retrieved successfully",

@@ -5,7 +5,9 @@ import { validate, verifyAdminToken } from "@shared/middlewares";
 import {
   cancelSchoolSubscription,
   createSchoolSubscription,
+  generateStudentCodes,
   getActiveSchoolSubscription,
+  getCodesBySchoolSubscription,
   getExpiredSubscriptions,
   getSchoolSubscriptionById,
   getSchoolSubscriptions,
@@ -15,6 +17,7 @@ import {
 import {
   cancelSchoolSubscriptionValidation,
   createSchoolSubscriptionValidation,
+  generateStudentCodesSchema,
   renewSchoolSubscriptionValidation,
   updateSchoolSubscriptionValidation,
 } from "./school_subscription.validation";
@@ -68,5 +71,20 @@ router.post(
 
 // 08: Get expired subscriptions
 router.get("/expired/list", verifyAdminToken, getExpiredSubscriptions);
+
+// 09: Generate per-student redemption codes (admin only)
+router.post(
+  "/:subscriptionId/generate-codes",
+  validate(generateStudentCodesSchema),
+  verifyAdminToken,
+  generateStudentCodes,
+);
+
+// 10: Get all student codes for a school subscription (admin only)
+router.get(
+  "/:subscriptionId/codes",
+  verifyAdminToken,
+  getCodesBySchoolSubscription,
+);
 
 export default router;

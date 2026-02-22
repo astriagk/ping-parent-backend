@@ -8,7 +8,6 @@ import {
   SUCCESS_MESSAGES,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { driverStudentAssignmentRepository } from "../driver_student_assignment/driver_student_assignment.repository";
 import {
@@ -202,10 +201,7 @@ export const createSchoolAssignment = asyncHandler(
       );
     }
 
-    const assignment_id = generateUniqueCode("DSA");
-
     const assignment = await driverStudentAssignmentRepository.create({
-      assignment_id,
       driver_id,
       student_id,
       school_id: schoolId,

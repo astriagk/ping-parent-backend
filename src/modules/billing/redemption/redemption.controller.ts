@@ -22,9 +22,9 @@ import {
  * @route POST /api/v1/parent/subscriptions/redemption/redeem
  */
 export const redeemCode = asyncHandler(async (req: Request, res: Response) => {
-  const parentId = req.user?.userId;
+  const userId = req.user?.userId;
 
-  if (!parentId) {
+  if (!userId) {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
       ERROR_MESSAGES.COMMON.UNAUTHORIZED,
@@ -33,14 +33,14 @@ export const redeemCode = asyncHandler(async (req: Request, res: Response) => {
 
   const { subscription_code } = req.body;
 
-  const subscription = await redeemSchoolSubscriptionCodeService(
-    parentId,
+  const result = await redeemSchoolSubscriptionCodeService(
+    userId,
     subscription_code,
   );
 
   return res.status(HTTP_STATUS.CREATED).json({
     success: true,
-    data: subscription,
+    data: result.subscription,
     message:
       SUCCESS_MESSAGES.SUBSCRIPTION_REDEMPTION.CODE_REDEEMED_SUCCESSFULLY,
   });
@@ -48,20 +48,23 @@ export const redeemCode = asyncHandler(async (req: Request, res: Response) => {
 
 /**
  * Get active subscription (parent)
+ * Returns the active subscription with plan + student details.
+ * A parent may have multiple active subscriptions (one paid + one or more redeemed).
+ * This returns the most recent active subscription with full details.
  * @route GET /api/v1/parent/subscriptions/redemption/active
  */
 export const getActiveSubscription = asyncHandler(
   async (req: Request, res: Response) => {
-    const parentId = req.user?.userId;
+    const userId = req.user?.userId;
 
-    if (!parentId) {
+    if (!userId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
         ERROR_MESSAGES.COMMON.UNAUTHORIZED,
       );
     }
 
-    const subscription = await getParentActiveSubscriptionService(parentId);
+    const subscription = await getParentActiveSubscriptionService(userId);
 
     return res.json({
       success: true,
@@ -74,20 +77,21 @@ export const getActiveSubscription = asyncHandler(
 
 /**
  * Get all subscriptions (parent)
+ * Returns all subscriptions with plan + student details (aggregated).
  * @route GET /api/v1/parent/subscriptions/redemption
  */
 export const getParentSubscriptions = asyncHandler(
   async (req: Request, res: Response) => {
-    const parentId = req.user?.userId;
+    const userId = req.user?.userId;
 
-    if (!parentId) {
+    if (!userId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
         ERROR_MESSAGES.COMMON.UNAUTHORIZED,
       );
     }
 
-    const subscriptions = await getParentSubscriptionsService(parentId);
+    const subscriptions = await getParentSubscriptionsService(userId);
 
     return res.json({
       success: true,
@@ -103,10 +107,10 @@ export const getParentSubscriptions = asyncHandler(
  */
 export const cancelSubscription = asyncHandler(
   async (req: Request, res: Response) => {
-    const parentId = req.user?.userId;
+    const userId = req.user?.userId;
     const { subscription_id } = req.body;
 
-    if (!parentId) {
+    if (!userId) {
       throw new ApiError(
         HTTP_STATUS.UNAUTHORIZED,
         ERROR_MESSAGES.COMMON.UNAUTHORIZED,
@@ -114,7 +118,7 @@ export const cancelSubscription = asyncHandler(
     }
 
     const subscription = await cancelParentSubscriptionService(
-      parentId,
+      userId,
       subscription_id,
     );
 
@@ -135,19 +139,19 @@ export const cancelSubscription = asyncHandler(
 
 /**
  * Check subscription status (parent)
- * @route GET /api/v1/parent/subscriptions/redemption/status
+ * @route GET /api/v1/parent/subscriptions/redemption/status/check
  */
 export const checkStatus = asyncHandler(async (req: Request, res: Response) => {
-  const parentId = req.user?.userId;
+  const userId = req.user?.userId;
 
-  if (!parentId) {
+  if (!userId) {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
       ERROR_MESSAGES.COMMON.UNAUTHORIZED,
     );
   }
 
-  const isActive = await checkParentSubscriptionActiveService(parentId);
+  const isActive = await checkParentSubscriptionActiveService(userId);
 
   return res.json({
     success: true,
@@ -166,7 +170,10 @@ export const getDetails = asyncHandler(async (req: Request, res: Response) => {
   const { subscriptionId } = req.params as Record<string, string>;
 
   if (!subscriptionId) {
-    throw new ApiError(HTTP_STATUS.BAD_REQUEST, "Subscription ID is required");
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.SCHOOL_SUBSCRIPTION.SUBSCRIPTION_ID_REQUIRED,
+    );
   }
 
   const subscription = await getSubscriptionDetailsService(subscriptionId);
@@ -186,8 +193,8 @@ export const getDetails = asyncHandler(async (req: Request, res: Response) => {
 });
 
 /**
- * Get available redemption codes (parent can see which schools/plans are available)
- * @route GET /api/v1/parent/subscriptions/redemption/available
+ * Get available redemption codes (public — parents can see which codes are available)
+ * @route GET /api/v1/parent/subscriptions/redemption/available/codes
  */
 export const getAvailableCodes = asyncHandler(
   async (req: Request, res: Response) => {

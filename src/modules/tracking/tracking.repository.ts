@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
@@ -115,7 +115,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
   ): Promise<void> {
     const db = await getDB();
     await db.collection(TRIPS_COLLECTION).updateOne(
-      { trip_id: tripId },
+      { _id: new ObjectId(tripId) },
       {
         $set: {
           optimized_route_data: routeData,
@@ -124,11 +124,6 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         },
       },
     );
-  }
-
-  async getTripById(tripId: string): Promise<any> {
-    const db = await getDB();
-    return db.collection(TRIPS_COLLECTION).findOne({ trip_id: tripId });
   }
 
   async updateTripStudentsSequence(
@@ -175,7 +170,6 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     pickupStatusFilter?: string,
   ): Promise<RouteWaypoint[]> {
     const db = await getDB();
-
     // Build match condition - always filter by trip_id, optionally by pickup_status
     const matchCondition: Record<string, any> = { trip_id: tripId };
     if (pickupStatusFilter) {
@@ -189,12 +183,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         {
           $match: matchCondition,
         },
-        // Stage 2: Lookup student details
+        // Stage 2: Lookup student details (student_id stored as string, students._id is ObjectId)
         {
           $lookup: {
             from: STUDENTS_COLLECTION,
-            localField: "student_id",
-            foreignField: "student_id",
+            let: { studentId: { $toObjectId: "$student_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
             as: "studentDetails",
           },
         },
@@ -205,12 +199,14 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 4: Lookup parent addresses
+        // Stage 4: Lookup parent addresses (pickup_address_id stored as string, parent_addresses._id is ObjectId)
         {
           $lookup: {
             from: PARENT_ADDRESSES_COLLECTION,
-            localField: "studentDetails.parent_id",
-            foreignField: "parent_id",
+            let: {
+              addressId: { $toObjectId: "$studentDetails.pickup_address_id" },
+            },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$addressId"] } } }],
             as: "addressDetails",
           },
         },
@@ -253,12 +249,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 10: Lookup school details
+        // Stage 10: Lookup school details (school_id stored as string, schools._id is ObjectId)
         {
           $lookup: {
             from: SCHOOLS_COLLECTION,
-            localField: "studentDetails.school_id",
-            foreignField: "school_id",
+            let: { schoolId: { $toObjectId: "$studentDetails.school_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$schoolId"] } } }],
             as: "schoolDetails",
           },
         },
@@ -276,7 +272,6 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             student_id: "$student_id",
             student_name: "$studentDetails.student_name",
             student_roll_number: "$studentDetails.roll_number",
-            student_grade: "$studentDetails.grade",
             student_section: "$studentDetails.section",
             student_class: "$studentDetails.class",
             student_photo_url: "$studentDetails.photo_url",
@@ -296,7 +291,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
               ],
             },
             school: {
-              school_id: "$schoolDetails.school_id",
+              school_id: "$schoolDetails._id",
               school_name: "$schoolDetails.school_name",
               school_address: "$schoolDetails.address",
               school_city: "$schoolDetails.city",

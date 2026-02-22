@@ -28,7 +28,6 @@ export interface PlanDiscounts {
 
 export interface SubscriptionPlan {
   _id?: any;
-  plan_id: string;
   plan_name: string;
   plan_type: PlanType;
   price: number;

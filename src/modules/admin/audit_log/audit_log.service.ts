@@ -1,8 +1,5 @@
 import { WithId } from "mongodb";
 
-import { UniqueCodeTypes } from "@shared/constants";
-import { generateUniqueCode } from "@shared/utils";
-
 import { auditLogRepository } from "./audit_log.repository";
 import { AuditLog, AuditLogFilters, AuditLogResponse } from "./audit_log.type";
 
@@ -18,10 +15,9 @@ const formatAuditLogResponse = (log: WithId<AuditLog>): AuditLogResponse => {
  * Create a new audit log entry
  */
 export const createAuditLog = async (
-  logData: Omit<AuditLog, "log_id" | "created_at">,
+  logData: Omit<AuditLog, "created_at">,
 ): Promise<AuditLogResponse> => {
   const auditLog: AuditLog = {
-    log_id: generateUniqueCode(UniqueCodeTypes.AUDIT_LOG),
     ...logData,
     created_at: new Date(),
   };
@@ -51,7 +47,7 @@ export const getAuditLogs = async (
 export const getAuditLogById = async (
   logId: string,
 ): Promise<AuditLogResponse | null> => {
-  const log = await auditLogRepository.findByLogId(logId);
+  const log = await auditLogRepository.findById(logId);
   if (!log) {
     return null;
   }

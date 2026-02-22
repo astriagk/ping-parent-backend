@@ -1,12 +1,7 @@
 import { WithId } from "mongodb";
 
-import {
-  ERROR_MESSAGES,
-  HTTP_STATUS,
-  UniqueCodeTypes,
-} from "@shared/constants";
+import { ERROR_MESSAGES, HTTP_STATUS } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { roleRepository } from "./role.repository";
 import {
@@ -16,9 +11,6 @@ import {
   RoleUpdateInput,
 } from "./role.type";
 
-/**
- * Format role response by removing MongoDB _id
- */
 const formatRoleResponse = (role: WithId<Role>): RoleResponse => {
   const { _id, ...roleData } = role;
   return roleData as RoleResponse;
@@ -43,7 +35,6 @@ export const createRole = async (
 
   // Create role
   const roleData: Role = {
-    role_id: generateUniqueCode(UniqueCodeTypes.ROLE),
     role_name: createData.role_name,
     description: createData.description,
     created_at: new Date(),
@@ -75,12 +66,12 @@ export const getRoleById = async (id: string): Promise<RoleResponse | null> => {
 };
 
 /**
- * Get role by role_id
+ * Get role by ID (raw)
  */
 export const getRoleByRoleId = async (
   roleId: string,
 ): Promise<WithId<Role> | null> => {
-  return await roleRepository.findByRoleId(roleId);
+  return await roleRepository.findById(roleId);
 };
 
 /**
@@ -130,10 +121,6 @@ export const deleteRole = async (id: string): Promise<boolean> => {
   if (!role) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.ROLE.NOT_FOUND);
   }
-
-  // Note: In a production system, you'd want to check if the role is assigned to any users
-  // and prevent deletion if it is. For now, we'll allow deletion.
-  // You can add this check by querying the users collection for user_type matching the role_name
 
   return await roleRepository.deleteById(id);
 };

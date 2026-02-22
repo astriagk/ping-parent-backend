@@ -2,7 +2,6 @@ import { NotificationType } from "@shared/constants";
 
 export interface Notification {
   _id?: any;
-  notification_id: string;
   user_id: string;
   notification_type: NotificationType;
   title: string;

@@ -2,7 +2,6 @@ import { AttendanceStatus, PickupStatus } from "@shared/constants";
 
 export interface TripStudent {
   _id?: any;
-  trip_student_id: string;
   trip_id: string;
   student_id: string;
   sequence_order?: number; // Optimized order - calculated by system

@@ -1,8 +1,7 @@
 import { AuditAction } from "@shared/constants";
 
 export interface AuditLog {
-  _id?: any; // MongoDB internal ID
-  log_id: string;
+  _id?: any;
   user_id?: string;
   admin_id?: string;
   action: string;
@@ -18,7 +17,7 @@ export interface AuditLog {
 
 // Audit log response
 export interface AuditLogResponse {
-  log_id: string;
+  _id: string;
   user_id?: string;
   admin_id?: string;
   action: string;

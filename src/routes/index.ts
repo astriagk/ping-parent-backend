@@ -17,7 +17,6 @@ import {
 import { notificationRoutes } from "@modules/notification";
 import { ratingReviewRoutes } from "@modules/reviews";
 import { schoolRoutes } from "@modules/school";
-import { schoolAdminRoutes } from "@modules/school_admin";
 import trackingRouter from "@modules/tracking";
 import {
   dailyQrOtpRoutes,
@@ -52,9 +51,6 @@ router.use("/students", studentRoutes);
 
 // 05. School APIs
 router.use("/schools", schoolRoutes);
-
-// 05.5 School Admin APIs
-router.use("/school-admin", schoolAdminRoutes);
 
 // 06. Assignment & Trip APIs
 router.use("/driver-student-assignments", driverStudentAssignmentRoutes);

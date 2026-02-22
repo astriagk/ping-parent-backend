@@ -1,7 +1,5 @@
 import { WithId } from "mongodb";
 
-import { generateUniqueCode } from "@shared/utils";
-
 import { subscriptionPlanRepository } from "./subscription_plan.repository";
 import { SubscriptionPlan } from "./subscription_plan.type";
 
@@ -9,12 +7,10 @@ import { SubscriptionPlan } from "./subscription_plan.type";
  * Create new subscription plan (admin only)
  */
 export const createSubscriptionPlan = async (
-  planData: Omit<SubscriptionPlan, "plan_id" | "created_at" | "is_active">,
+  planData: Omit<SubscriptionPlan, "created_at" | "is_active">,
 ): Promise<WithId<SubscriptionPlan>> => {
-  const plan_id = generateUniqueCode("PLAN");
   const newPlan: SubscriptionPlan = {
     ...planData,
-    plan_id,
     is_active: true,
     created_at: new Date(),
     updated_at: new Date(),
@@ -41,12 +37,12 @@ export const getSubscriptionPlanById = async (
 };
 
 /**
- * Get subscription plan by plan_id
+ * Get subscription plan by plan_id (alias for findById)
  */
 export const getSubscriptionPlanByPlanId = async (
   planId: string,
 ): Promise<WithId<SubscriptionPlan> | null> => {
-  return await subscriptionPlanRepository.findByPlanId(planId);
+  return await subscriptionPlanRepository.findById(planId);
 };
 
 /**
