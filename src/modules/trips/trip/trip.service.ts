@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
@@ -16,11 +16,9 @@ import {
   TripStatus,
   TripType,
   USERS_COLLECTION,
-  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { socketService } from "@shared/services/socket.service";
-import { generateUniqueCode } from "@shared/utils";
 
 import { generateBulkQrOtp } from "../daily_qr_otp/daily_qr_otp.service";
 import { tripRepository } from "./trip.repository";
@@ -70,7 +68,6 @@ const createTripStudentsForTrip = async (
 
   // Create trip_students for each assigned student
   const tripStudents = assignments.map((assignment, index) => ({
-    trip_student_id: generateUniqueCode(UniqueCodeTypes.TRIP_STUDENT),
     trip_id: tripId,
     student_id: assignment.student_id,
     sequence_order: index + 1,
@@ -103,7 +100,7 @@ const createTripStudentsForTrip = async (
 
 export const createTrip = async (
   userId: string,
-  data: Omit<Trip, "trip_id" | "driver_id" | "created_at" | "trip_status">,
+  data: Omit<Trip, "driver_id" | "created_at" | "trip_status">,
 ): Promise<WithId<Trip>> => {
   // Convert user_id to driver_id
   const driverId = await getDriverIdByUserId(userId);
@@ -132,7 +129,6 @@ export const createTrip = async (
   }
 
   const tripData: Trip = {
-    trip_id: generateUniqueCode(UniqueCodeTypes.TRIP),
     driver_id: driverId,
     ...data,
     trip_status: TripStatus.SCHEDULED,
@@ -145,7 +141,7 @@ export const createTrip = async (
   // AUTO-CREATE TRIP STUDENTS AND GENERATE QR/OTP
   try {
     await createTripStudentsForTrip(
-      createdTrip.trip_id,
+      String(createdTrip._id),
       driverId,
       tripData.trip_type,
     );
@@ -315,10 +311,10 @@ export const updateTripStatus = async (
   // Emit socket event to notify parents of trip status change
   if (updatedTrip) {
     socketService.broadcastToTrip(
-      currentTrip.trip_id,
+      String(currentTrip._id),
       BroadcastSocketEvent.TRIP_STATUS_UPDATE,
       {
-        tripId: currentTrip.trip_id,
+        tripId: String(currentTrip._id),
         previousStatus: currentTrip.trip_status,
         newStatus,
         timestamp: new Date(),
@@ -344,10 +340,10 @@ export const getTripProgress = async (
 ): Promise<TripProgress> => {
   const db = await getDB();
 
-  // Fetch trip by trip_id
+  // Fetch trip by _id
   const trip = await db
     .collection(TRIPS_COLLECTION)
-    .findOne({ trip_id: tripId });
+    .findOne({ _id: new ObjectId(tripId) });
 
   if (!trip) {
     throw new ApiError(HTTP_STATUS.NOT_FOUND, ERROR_MESSAGES.TRIP.NOT_FOUND);
@@ -499,7 +495,7 @@ export const getTripProgress = async (
   }
 
   return {
-    tripId: trip.trip_id,
+    tripId: String(trip._id),
     tripType: trip.trip_type,
     tripStatus: trip.trip_status,
     currentWaypointIndex,
@@ -525,16 +521,16 @@ export const getCompletedTripDetails = async (
   const result = await db
     .collection(TRIPS_COLLECTION)
     .aggregate<CompletedTripDetails>([
-      // Stage 1: Match the trip by trip_id
+      // Stage 1: Match the trip by _id
       {
-        $match: { trip_id: tripId },
+        $match: { _id: new ObjectId(tripId) },
       },
-      // Stage 2: Lookup trip_students for this trip
+      // Stage 2: Lookup trip_students for this trip (trip_id stored as string in trip_students)
       {
         $lookup: {
           from: TRIP_STUDENTS_COLLECTION,
-          localField: "trip_id",
-          foreignField: "trip_id",
+          let: { tripId: { $toString: "$_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$trip_id", "$$tripId"] } } }],
           as: "tripStudents",
         },
       },
@@ -545,12 +541,12 @@ export const getCompletedTripDetails = async (
           preserveNullAndEmptyArrays: true,
         },
       },
-      // Stage 4: Lookup student details from students collection
+      // Stage 4: Lookup student details (student_id stored as string, students._id is ObjectId)
       {
         $lookup: {
           from: STUDENTS_COLLECTION,
-          localField: "tripStudents.student_id",
-          foreignField: "student_id",
+          let: { studentId: { $toObjectId: "$tripStudents.student_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
           as: "studentDetails",
         },
       },
@@ -597,7 +593,7 @@ export const getCompletedTripDetails = async (
       {
         $group: {
           _id: "$_id",
-          trip_id: { $first: "$trip_id" },
+          trip_id: { $first: { $toString: "$_id" } },
           driver_id: { $first: "$driver_id" },
           school_id: { $first: "$school_id" },
           trip_type: { $first: "$trip_type" },
@@ -612,7 +608,7 @@ export const getCompletedTripDetails = async (
               $cond: {
                 if: { $ne: ["$tripStudents", null] },
                 then: {
-                  trip_student_id: "$tripStudents.trip_student_id",
+                  trip_student_id: { $toString: "$tripStudents._id" },
                   student_id: "$tripStudents.student_id",
                   student_name: "$studentDetails.student_name",
                   student_class: "$studentDetails.class",

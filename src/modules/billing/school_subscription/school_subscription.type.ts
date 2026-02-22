@@ -2,7 +2,6 @@ import { SchoolSubscriptionStatus } from "@shared/constants";
 
 export interface SchoolSubscription {
   _id?: any;
-  subscription_id: string;
   school_id: string; // FK to schools
   plan_id: string; // FK to subscription_plans
   start_date: Date;
@@ -38,7 +37,7 @@ export interface SchoolSubscriptionUpdateInput {
 }
 
 export interface SchoolSubscriptionResponse {
-  subscription_id: string;
+  _id: string;
   school_id: string;
   plan_id: string;
   start_date: Date;

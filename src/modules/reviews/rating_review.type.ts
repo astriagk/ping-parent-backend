@@ -1,6 +1,5 @@
 export interface RatingReview {
   _id?: any;
-  review_id: string;
   parent_id: string;
   driver_id: string;
   trip_id?: string;

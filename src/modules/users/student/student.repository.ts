@@ -28,10 +28,15 @@ export class StudentRepository extends BaseRepository<Student> {
           $match: { parent_id: parentId },
         },
         {
+          $addFields: {
+            school_object_id: { $toObjectId: "$school_id" },
+          },
+        },
+        {
           $lookup: {
             from: SCHOOLS_COLLECTION,
-            localField: "school_id",
-            foreignField: "school_id",
+            localField: "school_object_id",
+            foreignField: "_id",
             as: "school",
           },
         },
@@ -63,8 +68,10 @@ export class StudentRepository extends BaseRepository<Student> {
         {
           $lookup: {
             from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
-            localField: "student_id",
-            foreignField: "student_id",
+            let: { studentId: { $toString: "$_id" } },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$student_id", "$$studentId"] } } },
+            ],
             as: "driver_assignment",
           },
         },
@@ -117,10 +124,15 @@ export class StudentRepository extends BaseRepository<Student> {
           $match: { parent_id: parentId, is_active: true },
         },
         {
+          $addFields: {
+            school_object_id: { $toObjectId: "$school_id" },
+          },
+        },
+        {
           $lookup: {
             from: SCHOOLS_COLLECTION,
-            localField: "school_id",
-            foreignField: "school_id",
+            localField: "school_object_id",
+            foreignField: "_id",
             as: "school",
           },
         },
@@ -152,8 +164,10 @@ export class StudentRepository extends BaseRepository<Student> {
         {
           $lookup: {
             from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
-            localField: "student_id",
-            foreignField: "student_id",
+            let: { studentId: { $toString: "$_id" } },
+            pipeline: [
+              { $match: { $expr: { $eq: ["$student_id", "$$studentId"] } } },
+            ],
             as: "driver_assignment",
           },
         },
@@ -179,6 +193,7 @@ export class StudentRepository extends BaseRepository<Student> {
         },
         {
           $project: {
+            school_object_id: 0,
             pickup_address_object_id: 0,
           },
         },
@@ -187,11 +202,11 @@ export class StudentRepository extends BaseRepository<Student> {
   }
 
   async findByStudentId(studentId: string): Promise<WithId<Student> | null> {
-    return await this.findOne({ student_id: studentId });
+    return await this.findOne({ _id: new ObjectId(studentId) });
   }
 
   async studentIdExists(studentId: string): Promise<boolean> {
-    return await this.exists({ student_id: studentId });
+    return await this.exists({ _id: new ObjectId(studentId) });
   }
 
   async findDuplicateStudent(

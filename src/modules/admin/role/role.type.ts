@@ -1,7 +1,6 @@
 // Table: roles
 export interface Role {
-  _id?: any; // MongoDB internal ID
-  role_id: string;
+  _id?: any;
   role_name: string;
   description?: string;
   created_at: Date;
@@ -20,9 +19,9 @@ export interface RoleUpdateInput {
   description?: string;
 }
 
-// Role response (without MongoDB _id)
+// Role response
 export interface RoleResponse {
-  role_id: string;
+  _id: string;
   role_name: string;
   description?: string;
   created_at: Date;

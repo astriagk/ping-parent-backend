@@ -7,10 +7,8 @@ import {
   HTTP_STATUS,
   SubscriptionSource,
   SubscriptionStatus,
-  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { parentSubscriptionRepository } from "../parent_subscription/parent_subscription.repository";
 import {
@@ -80,7 +78,7 @@ export const redeemSchoolSubscriptionCode = async (
   }
 
   // 3. Fetch plan
-  const plan = await subscriptionPlanRepository.findByPlanId(code.plan_id);
+  const plan = await subscriptionPlanRepository.findById(code.plan_id);
   if (!plan) {
     throw new ApiError(
       HTTP_STATUS.NOT_FOUND,
@@ -91,7 +89,7 @@ export const redeemSchoolSubscriptionCode = async (
   // 4. Validate the student belongs to this parent
   const students = await studentRepository.findByParentId(parentId);
   const studentBelongsToParent = students.some(
-    (s) => s.student_id === code.student_id,
+    (s) => String(s._id) === code.student_id,
   );
 
   if (!studentBelongsToParent) {
@@ -138,7 +136,6 @@ export const redeemSchoolSubscriptionCode = async (
   } else {
     // Create new subscription — same pattern as createParentSubscription
     const newSubData: ParentSubscription = {
-      subscription_id: generateUniqueCode(UniqueCodeTypes.SUBSCRIPTION),
       parent_id: parentId,
       plan_id: code.plan_id,
       student_ids: [code.student_id],
@@ -161,7 +158,7 @@ export const redeemSchoolSubscriptionCode = async (
     // Update parent document
     await parentRepository.updateByUserId(userId, {
       has_active_subscription: true,
-      subscription_id: newSubData.subscription_id,
+      subscription_id: String(subscription._id),
       updated_at: new Date(),
     } as any);
   }
@@ -202,10 +199,7 @@ export const cancelParentSubscription = async (
   userId: string,
   subscriptionId: string,
 ): Promise<WithId<ParentSubscription> | null> => {
-  // Find the subscription by subscription_id to get its _id
-  const sub = await parentSubscriptionRepository.findOne({
-    subscription_id: subscriptionId,
-  });
+  const sub = await parentSubscriptionRepository.findById(subscriptionId);
 
   if (!sub) {
     throw new ApiError(
@@ -214,7 +208,7 @@ export const cancelParentSubscription = async (
     );
   }
 
-  return await cancelParentSubscriptionService(sub._id.toString(), userId);
+  return await cancelParentSubscriptionService(subscriptionId, userId);
 };
 
 /**

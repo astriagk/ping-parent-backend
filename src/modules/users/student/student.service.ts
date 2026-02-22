@@ -5,10 +5,8 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   PARENTS_COLLECTION,
-  UniqueCodeTypes,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
-import { generateUniqueCode } from "@shared/utils";
 
 import { studentRepository } from "./student.repository";
 import { Student } from "./student.type";
@@ -36,7 +34,7 @@ const getParentIdByUserId = async (userId: string): Promise<string | null> => {
  */
 export const createStudent = async (
   userId: string,
-  data: Omit<Student, "student_id" | "parent_id" | "created_at" | "is_active">,
+  data: Omit<Student, "parent_id" | "created_at" | "is_active">,
 ): Promise<WithId<Student>> => {
   // Convert user_id to parent_id
   const parentId = await getParentIdByUserId(userId);
@@ -64,7 +62,6 @@ export const createStudent = async (
   }
 
   const studentData: Student = {
-    student_id: generateUniqueCode(UniqueCodeTypes.STUDENT),
     parent_id: parentId,
     ...data,
     is_active: true,
@@ -84,7 +81,7 @@ export const getStudentById = async (
 export const getStudentByStudentId = async (
   studentId: string,
 ): Promise<WithId<Student> | null> => {
-  return await studentRepository.findByStudentId(studentId);
+  return await studentRepository.findById(studentId);
 };
 
 export const updateStudent = async (
@@ -130,8 +127,8 @@ export const updateStudentByStudentId = async (
   studentId: string,
   updates: Partial<Student>,
 ): Promise<WithId<Student> | null> => {
-  // Get current student
-  const currentStudent = await studentRepository.findByStudentId(studentId);
+  // Get current student (now using _id)
+  const currentStudent = await studentRepository.findById(studentId);
 
   if (!currentStudent) {
     return null;
@@ -152,7 +149,7 @@ export const updateStudentByStudentId = async (
     );
 
     // If duplicate exists and it's not the same student
-    if (duplicate && duplicate.student_id !== studentId) {
+    if (duplicate && String(duplicate._id) !== studentId) {
       throw new ApiError(
         HTTP_STATUS.CONFLICT,
         ERROR_MESSAGES.STUDENT.ALREADY_EXISTS,
@@ -160,12 +157,9 @@ export const updateStudentByStudentId = async (
     }
   }
 
-  return await studentRepository.updateOne(
-    { student_id: studentId },
-    {
-      $set: { ...updates, updated_at: new Date() },
-    },
-  );
+  return await studentRepository.updateById(studentId, {
+    $set: { ...updates, updated_at: new Date() },
+  });
 };
 
 export const deleteStudent = async (id: string): Promise<boolean> => {
@@ -179,13 +173,10 @@ export const deleteStudent = async (id: string): Promise<boolean> => {
 export const deleteStudentByStudentId = async (
   studentId: string,
 ): Promise<boolean> => {
-  // Soft delete - set is_active to false
-  const result = await studentRepository.updateOne(
-    { student_id: studentId },
-    {
-      $set: { is_active: false, updated_at: new Date() },
-    },
-  );
+  // Soft delete - set is_active to false (now using _id)
+  const result = await studentRepository.updateById(studentId, {
+    $set: { is_active: false, updated_at: new Date() },
+  });
   return result !== null;
 };
 

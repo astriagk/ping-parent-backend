@@ -2,7 +2,6 @@ import { PaymentMethod, PaymentStatus, PaymentType } from "@shared/constants";
 
 export interface Payment {
   _id?: any;
-  payment_id: string;
   parent_id: string;
   payment_type: PaymentType;
   amount: number;

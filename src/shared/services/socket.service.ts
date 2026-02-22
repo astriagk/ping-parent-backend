@@ -1,9 +1,11 @@
 import { Server as HTTPServer } from "http";
+import { ObjectId } from "mongodb";
 import { Socket, Server as SocketIOServer } from "socket.io";
 
 import { getDB } from "@shared/config";
 import {
   BroadcastSocketEvent,
+  DRIVERS_COLLECTION,
   DriverSocketEvent,
   ERROR_MESSAGES,
   PARENTS_COLLECTION,
@@ -81,14 +83,14 @@ export class SocketService {
     try {
       const db = await getDB();
       const driver = await db
-        .collection("drivers")
+        .collection(DRIVERS_COLLECTION)
         .findOne({ user_id: userId });
 
       if (!driver) return false;
 
       const trip = await db
         .collection(TRIPS_COLLECTION)
-        .findOne({ trip_id: tripId, driver_id: String(driver._id) });
+        .findOne({ _id: new ObjectId(tripId), driver_id: String(driver._id) });
 
       return !!trip;
     } catch {
@@ -115,7 +117,7 @@ export class SocketService {
 
       if (students.length === 0) return false;
 
-      const studentIds = students.map((s) => s.student_id);
+      const studentIds = students.map((s) => String(s._id));
       const tripStudent = await db
         .collection(TRIP_STUDENTS_COLLECTION)
         .findOne({ trip_id: tripId, student_id: { $in: studentIds } });

@@ -1,4 +1,4 @@
-import { UpdateResult, WithId } from "mongodb";
+import { ObjectId, UpdateResult, WithId } from "mongodb";
 
 import {
   DRIVERS_COLLECTION,
@@ -32,6 +32,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     return await this.findOne({
       parent_id: parentId,
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     });
   }
 
@@ -50,6 +51,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
   async findActiveSubscriptions(): Promise<WithId<ParentSubscription>[]> {
     return await this.findMany({
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     });
   }
 
@@ -60,6 +62,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     return await this.findOne({
       parent_id: parentId,
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
       subscription_source: { $ne: SubscriptionSource.SCHOOL_REDEMPTION },
     } as any);
   }
@@ -73,6 +76,18 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
       subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
       school_subscription_id: schoolSubscriptionId,
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
+    } as any);
+  }
+
+  async findActiveSchoolRedemptionByParentId(
+    parentId: string,
+  ): Promise<WithId<ParentSubscription> | null> {
+    return await this.findOne({
+      parent_id: parentId,
+      subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
+      subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     } as any);
   }
 
@@ -85,6 +100,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     return await this.findMany({
       student_ids: { $in: studentIds },
       subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
     });
   }
 
@@ -97,7 +113,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
   ): Promise<UpdateResult> {
     const collection = this.getCollection();
     return await collection.updateOne(
-      { subscription_id: subscriptionId },
+      { _id: new ObjectId(subscriptionId) },
       {
         $set: {
           subscription_status: status,
@@ -119,25 +135,41 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
         { $match: { parent_id: parentId } },
         { $sort: { created_at: -1 } },
         {
+          $addFields: {
+            plan_object_id: { $toObjectId: "$plan_id" },
+          },
+        },
+        {
           $lookup: {
             from: SUBSCRIPTION_PLANS_COLLECTION,
-            localField: "plan_id",
-            foreignField: "plan_id",
+            localField: "plan_object_id",
+            foreignField: "_id",
             as: "plan",
           },
         },
         { $unwind: { path: "$plan", preserveNullAndEmptyArrays: true } },
         {
+          $addFields: {
+            student_ids: {
+              $map: {
+                input: "$student_ids",
+                as: "id",
+                in: { $toObjectId: "$$id" },
+              },
+            },
+          },
+        },
+        {
           $lookup: {
             from: STUDENTS_COLLECTION,
             localField: "student_ids",
-            foreignField: "student_id",
+            foreignField: "_id",
             as: "students",
           },
         },
         {
           $project: {
-            subscription_id: 1,
+            _id: 1,
             parent_id: 1,
             plan_id: 1,
             student_ids: 1,
@@ -152,14 +184,14 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
             auto_renew: 1,
             created_at: 1,
             updated_at: 1,
-            "plan.plan_id": 1,
+            "plan._id": 1,
             "plan.plan_name": 1,
             "plan.plan_type": 1,
             "plan.pricing_model": 1,
             "plan.price": 1,
             "plan.per_kid_price": 1,
             "plan.features": 1,
-            "students.student_id": 1,
+            "students._id": 1,
             "students.student_name": 1,
             "students.class": 1,
             "students.section": 1,
@@ -180,28 +212,45 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
           $match: {
             parent_id: parentId,
             subscription_status: SubscriptionStatus.ACTIVE,
+            end_date: { $gt: new Date() },
+          },
+        },
+        {
+          $addFields: {
+            plan_object_id: { $toObjectId: "$plan_id" },
           },
         },
         {
           $lookup: {
             from: SUBSCRIPTION_PLANS_COLLECTION,
-            localField: "plan_id",
-            foreignField: "plan_id",
+            localField: "plan_object_id",
+            foreignField: "_id",
             as: "plan",
           },
         },
         { $unwind: { path: "$plan", preserveNullAndEmptyArrays: true } },
         {
+          $addFields: {
+            student_ids: {
+              $map: {
+                input: "$student_ids",
+                as: "id",
+                in: { $toObjectId: "$$id" },
+              },
+            },
+          },
+        },
+        {
           $lookup: {
             from: STUDENTS_COLLECTION,
             localField: "student_ids",
-            foreignField: "student_id",
+            foreignField: "_id",
             as: "students",
           },
         },
         {
           $project: {
-            subscription_id: 1,
+            _id: 1,
             parent_id: 1,
             plan_id: 1,
             student_ids: 1,
@@ -216,14 +265,14 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
             auto_renew: 1,
             created_at: 1,
             updated_at: 1,
-            "plan.plan_id": 1,
+            "plan._id": 1,
             "plan.plan_name": 1,
             "plan.plan_type": 1,
             "plan.pricing_model": 1,
             "plan.price": 1,
             "plan.per_kid_price": 1,
             "plan.features": 1,
-            "students.student_id": 1,
+            "students._id": 1,
             "students.student_name": 1,
             "students.class": 1,
             "students.section": 1,
@@ -249,24 +298,42 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
           $match: {
             parent_id: parentId,
             subscription_status: SubscriptionStatus.ACTIVE,
+            end_date: { $gt: new Date() },
           },
         },
         // Join plan
+
+        {
+          $addFields: {
+            plan_object_id: { $toObjectId: "$plan_id" },
+          },
+        },
         {
           $lookup: {
             from: SUBSCRIPTION_PLANS_COLLECTION,
-            localField: "plan_id",
-            foreignField: "plan_id",
+            localField: "plan_object_id",
+            foreignField: "_id",
             as: "plan",
           },
         },
         { $unwind: { path: "$plan", preserveNullAndEmptyArrays: true } },
+        {
+          $addFields: {
+            student_ids: {
+              $map: {
+                input: "$student_ids",
+                as: "id",
+                in: { $toObjectId: "$$id" },
+              },
+            },
+          },
+        },
         // Join students
         {
           $lookup: {
             from: STUDENTS_COLLECTION,
             localField: "student_ids",
-            foreignField: "student_id",
+            foreignField: "_id",
             as: "students",
           },
         },
@@ -274,10 +341,15 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
         { $unwind: { path: "$students", preserveNullAndEmptyArrays: true } },
         // Join school for each student
         {
+          $addFields: {
+            school_object_id: { $toObjectId: "$students.school_id" },
+          },
+        },
+        {
           $lookup: {
             from: SCHOOLS_COLLECTION,
-            localField: "students.school_id",
-            foreignField: "school_id",
+            localField: "school_object_id",
+            foreignField: "_id",
             as: "students.school",
           },
         },
@@ -291,7 +363,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
         {
           $lookup: {
             from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
-            let: { sid: "$students.student_id" },
+            let: { sid: { $toString: "$students._id" } },
             pipeline: [
               {
                 $match: {
@@ -329,7 +401,6 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
         {
           $group: {
             _id: "$_id",
-            subscription_id: { $first: "$subscription_id" },
             parent_id: { $first: "$parent_id" },
             plan_id: { $first: "$plan_id" },
             student_ids: { $first: "$student_ids" },
@@ -347,13 +418,13 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
             plan: { $first: "$plan" },
             students: {
               $push: {
-                student_id: "$students.student_id",
+                _id: { $toString: "$students._id" },
                 student_name: "$students.student_name",
                 class: "$students.class",
                 section: "$students.section",
                 photo_url: "$students.photo_url",
                 school: {
-                  school_id: "$students.school.school_id",
+                  _id: { $toString: "$students.school._id" },
                   school_name: "$students.school.school_name",
                   address: "$students.school.address",
                   city: "$students.school.city",
@@ -376,10 +447,10 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
                 assignment: {
                   $cond: {
                     if: {
-                      $ifNull: ["$students.assignment.assignment_id", false],
+                      $ifNull: ["$students.assignment._id", false],
                     },
                     then: {
-                      assignment_id: "$students.assignment.assignment_id",
+                      _id: { $toString: "$students.assignment._id" },
                       monthly_fee: "$students.assignment.monthly_fee",
                       assignment_status:
                         "$students.assignment.assignment_status",
@@ -395,7 +466,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
         {
           $lookup: {
             from: PAYMENTS_COLLECTION,
-            localField: "subscription_id",
+            localField: "_id",
             foreignField: "subscription_id",
             as: "payments",
           },

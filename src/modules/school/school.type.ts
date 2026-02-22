@@ -1,6 +1,5 @@
 export interface School {
-  _id?: any; // MongoDB internal ID
-  school_id: string;
+  _id?: any;
   school_name: string;
   address: string;
   city: string;

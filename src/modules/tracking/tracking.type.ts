@@ -67,7 +67,6 @@ export interface RouteGeometry {
 
 export interface LocationTracking {
   _id?: any;
-  tracking_id: string;
   trip_id: string;
   driver_id: string;
   latitude: number;
@@ -99,7 +98,6 @@ export interface RouteCalculationResponse {
 
 export interface TrackingSubscription {
   _id?: any;
-  subscription_id: string;
   parent_id: string;
   trip_id: string;
   driver_id: string;
