@@ -29,7 +29,6 @@ const gatewayCategories = new Set();
 const CONFIG = {
   MODULES_DIR: path.join(__dirname, "../src/modules"),
   ROUTES_LAYER_DIR: path.join(__dirname, "../src/routes"), // role-scoped gateway files
-  ROUTES_FILE: path.join(__dirname, "../src/routes/index.ts"),
   OUTPUT_DIR: path.join(__dirname, "../docs"),
   POSTMAN_DIR: path.join(__dirname, "../docs/postman/collections"),
   ENV_DIR: path.join(__dirname, "../docs/postman/environments"),
@@ -122,17 +121,6 @@ function titleCase(str) {
   return str.replace(/[-_]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-/**
- * Convert camelCase or PascalCase to Title Case
- */
-function camelToTitle(str) {
-  return str
-    .replace(/([A-Z])/g, " $1")
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase())
-    .trim();
-}
-
 // ============================================================================
 // VERSION MANAGEMENT
 // ============================================================================
@@ -163,63 +151,6 @@ function incrementVersion(currentVersion, bumpType = "patch") {
     default:
       return `${major}.${minor}.${patch + 1}`;
   }
-}
-
-// ============================================================================
-// BASE PATH EXTRACTION FROM MAIN ROUTES
-// ============================================================================
-
-/**
- * Parse the main routes file to extract base paths for each module
- */
-function parseMainRoutesFile() {
-  const basePaths = {};
-
-  if (!fs.existsSync(CONFIG.ROUTES_FILE)) {
-    console.warn("⚠️  Main routes file not found");
-    return basePaths;
-  }
-
-  const content = fs.readFileSync(CONFIG.ROUTES_FILE, "utf-8");
-
-  // Match: router.use("/path", routesVariable);
-  const routeUseRegex = /router\.use\(\s*["']([^"']+)["']\s*,\s*(\w+)\s*\)/g;
-  let match;
-
-  while ((match = routeUseRegex.exec(content)) !== null) {
-    const [, basePath, routesVar] = match;
-    // Store the variable name to base path mapping
-    basePaths[routesVar] = basePath;
-  }
-
-  return basePaths;
-}
-
-/**
- * Get the import statement variable name from route file
- */
-function getRouteVariableName(filePath, mainRoutesContent) {
-  const fileName = path.basename(filePath, ".routes.ts");
-
-  // Try different naming conventions
-  const possibleNames = [
-    `${fileName}Routes`,
-    `${fileName.replace(/_/g, "")}Routes`,
-    `${camelCase(fileName)}Routes`,
-    fileName.replace(/_([a-z])/g, (_, l) => l.toUpperCase()) + "Routes",
-  ];
-
-  for (const name of possibleNames) {
-    if (mainRoutesContent.includes(name)) {
-      return name;
-    }
-  }
-
-  return null;
-}
-
-function camelCase(str) {
-  return str.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
 }
 
 // ============================================================================
@@ -712,54 +643,36 @@ function buildHandlerRegistry(moduleRouteFiles) {
 // ============================================================================
 
 /**
- * Find all route files in the modules directory and the role-scoped routes layer.
- *
- * Scans two locations:
- *   1. src/modules/  — legacy module-level route files (Express Router exports)
- *   2. src/routes/   — new role-gateway route files (parent, driver, admin, etc.)
- *
- * Files that have been converted to handler-group exports (no router.get/post calls)
- * are silently skipped by the existing `endpoints.length === 0` guard in main().
+ * Find all role-gateway route files from src/routes/.
+ * These are the only files that contain router.get/post/etc. definitions.
  */
 function findAllRouteFiles() {
-  const routeFiles = [];
+  if (!fs.existsSync(CONFIG.ROUTES_LAYER_DIR)) return [];
+  return fs
+    .readdirSync(CONFIG.ROUTES_LAYER_DIR)
+    .filter((item) => item.endsWith(".routes.ts"))
+    .map((item) => path.join(CONFIG.ROUTES_LAYER_DIR, item));
+}
 
-  // Recursive scan for module-level route files (nested directory structure)
+/**
+ * Recursively find all module-level route files from src/modules/.
+ * These export handler groups (no router calls) and are used only for
+ * building the handler registry (resolving validate() schema references).
+ */
+function findModuleRouteFiles() {
+  const files = [];
   function traverse(dir) {
-    const items = fs.readdirSync(dir);
-    for (const item of items) {
+    for (const item of fs.readdirSync(dir)) {
       const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
-      if (stat.isDirectory()) {
+      if (fs.statSync(fullPath).isDirectory()) {
         traverse(fullPath);
       } else if (item.endsWith(".routes.ts")) {
-        routeFiles.push(fullPath);
+        files.push(fullPath);
       }
     }
   }
-
-  // Flat scan for role-gateway route files (flat directory, no nesting)
-  function traverseFlat(dir) {
-    const items = fs.readdirSync(dir);
-    for (const item of items) {
-      const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
-      // Only pick up top-level *.routes.ts files (parent.routes.ts, driver.routes.ts, etc.)
-      // Avoid re-scanning src/routes/index.ts or any sub-directories if added later
-      if (!stat.isDirectory() && item.endsWith(".routes.ts")) {
-        routeFiles.push(fullPath);
-      }
-    }
-  }
-
   traverse(CONFIG.MODULES_DIR);
-
-  // Also scan the role-scoped routes layer if it exists
-  if (fs.existsSync(CONFIG.ROUTES_LAYER_DIR)) {
-    traverseFlat(CONFIG.ROUTES_LAYER_DIR);
-  }
-
-  return routeFiles;
+  return files;
 }
 
 /**
@@ -1597,31 +1510,16 @@ function main() {
     if (arg.startsWith("--bump=")) bumpType = arg.split("=")[1];
   });
 
-  // Step 1: Parse main routes for base paths
-  console.log("📍 Step 1: Parsing main routes file...");
-  const basePaths = parseMainRoutesFile();
-  console.log(`   Found ${Object.keys(basePaths).length} route mappings\n`);
-
-  // Read main routes content for variable lookup
-  const mainRoutesContent = fs.existsSync(CONFIG.ROUTES_FILE)
-    ? fs.readFileSync(CONFIG.ROUTES_FILE, "utf-8")
-    : "";
-
-  // Step 2: Discover route files
-  console.log("📁 Step 2: Discovering route files...");
+  // Step 1: Discover gateway route files
+  console.log("📁 Step 1: Discovering gateway route files...");
   const routeFiles = findAllRouteFiles();
-  console.log(`   Found ${routeFiles.length} route files\n`);
+  console.log(`   Found ${routeFiles.length} gateway files\n`);
 
-  // Step 2.5: Build handler registry from module-level route files
+  // Step 2: Build handler registry from module-level route files
   // Gateway routes reference handler groups (e.g. parentHandlers.validateUpdate)
   // instead of inline validate() calls — the registry resolves these to schema fields.
-  console.log("🔗 Step 2.5: Building handler registry...");
-  const moduleRouteFiles = routeFiles.filter(
-    (f) =>
-      !f.startsWith(CONFIG.ROUTES_LAYER_DIR + path.sep) &&
-      !f.startsWith(CONFIG.ROUTES_LAYER_DIR + "/"),
-  );
-  const handlerRegistry = buildHandlerRegistry(moduleRouteFiles);
+  console.log("🔗 Step 2: Building handler registry...");
+  const handlerRegistry = buildHandlerRegistry(findModuleRouteFiles());
   console.log(
     `   Registered ${Object.keys(handlerRegistry).length} handler-to-schema mappings\n`,
   );
@@ -1632,31 +1530,15 @@ function main() {
   let totalEndpoints = 0;
 
   for (const file of routeFiles) {
-    // Check if this file is from the role-gateway layer (src/routes/) or the module layer (src/modules/)
-    const isGatewayFile = file.startsWith(CONFIG.ROUTES_LAYER_DIR + path.sep) ||
-      file.startsWith(CONFIG.ROUTES_LAYER_DIR + "/");
+    // Gateway file: derive category and base path from file name
+    // e.g. parent.routes.ts → category "Parent", base path "/parent"
+    const relativePath = path.relative(CONFIG.ROUTES_LAYER_DIR, file);
+    const gatewayName = path.basename(file, ".routes.ts"); // e.g. "parent", "school-admin"
+    const categoryName = titleCase(gatewayName);
+    const basePath = "/" + gatewayName;
+    gatewayCategories.add(categoryName);
 
-    let relativePath;
-    let categoryName;
-
-    if (isGatewayFile) {
-      // Role-gateway file: parent.routes.ts → category "Parent"
-      relativePath = path.relative(CONFIG.ROUTES_LAYER_DIR, file);
-      const gatewayName = path.basename(file, ".routes.ts"); // e.g. "parent", "driver", "school-admin"
-      categoryName = titleCase(gatewayName);
-      gatewayCategories.add(categoryName);
-    } else {
-      // Module-level file: users/parent/parent.routes.ts → "Users - Parent"
-      relativePath = path.relative(CONFIG.MODULES_DIR, file);
-      const parts = relativePath.split(path.sep);
-      if (parts.length > 2) {
-        categoryName = `${titleCase(parts[0])} - ${titleCase(parts[1])}`;
-      } else {
-        categoryName = titleCase(parts[0]);
-      }
-    }
-
-    // Parse endpoints (pass handler registry so gateway routes resolve schema bodies)
+    // Parse endpoints (handler registry resolves validate() schema references)
     const endpoints = parseRouteFile(file, handlerRegistry);
 
     if (endpoints.length === 0) {
@@ -1664,13 +1546,9 @@ function main() {
       continue;
     }
 
-    // Determine base path from main routes
-    const varName = getRouteVariableName(file, mainRoutesContent);
-    const basePath = varName ? basePaths[varName] || "" : "";
-
-    // Apply base path to all endpoints
+    // Prepend the gateway base path (e.g. /parent) to every endpoint route
     endpoints.forEach((ep) => {
-      if (basePath && !ep.route.startsWith(basePath)) {
+      if (!ep.route.startsWith(basePath)) {
         ep.route = basePath + ep.route;
       }
     });

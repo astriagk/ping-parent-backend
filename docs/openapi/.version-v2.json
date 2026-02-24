@@ -1,5 +1,5 @@
 {
-  "current": "2.0.0",
+  "current": "2.0.1",
   "history": [
     {
       "version": "1.0.1",
@@ -10,6 +10,12 @@
     {
       "version": "2.0.0",
       "timestamp": "2026-02-24T13:14:31.096Z",
+      "endpoints": 208,
+      "categories": 8
+    },
+    {
+      "version": "2.0.1",
+      "timestamp": "2026-02-24T13:34:07.050Z",
       "endpoints": 208,
       "categories": 8
     }
