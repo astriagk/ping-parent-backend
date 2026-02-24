@@ -50,3 +50,26 @@ router.get("/status/check", verifyParentToken, checkStatus);
 router.get("/available/codes", getAvailableCodes);
 
 export default router;
+
+/**
+ * Handler group for redemption module.
+ * Import in src/routes/parent.routes.ts, public.routes.ts — NO auth middleware here.
+ */
+export const redemptionHandlers = {
+  // Parent-specific
+  parent: {
+    validateRedeem: validate(redeemSubscriptionCodeValidation),
+    redeem: redeemCode,
+    getActive: getActiveSubscription,
+    getAll: getParentSubscriptions,
+    getById: getDetails,
+    validateCancel: validate(cancelSubscriptionValidation),
+    cancel: cancelSubscription,
+    checkStatus: checkStatus,
+  },
+
+  // Public (no auth)
+  public: {
+    getAvailableCodes: getAvailableCodes,
+  },
+};

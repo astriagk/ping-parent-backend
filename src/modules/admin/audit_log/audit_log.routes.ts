@@ -16,3 +16,12 @@ router.get("/", verifyAdminToken, getAuditLogs);
 router.get("/:id", verifyAdminToken, getAuditLogById);
 
 export default router;
+
+/**
+ * Handler group for audit_log module.
+ * Import in src/routes/admin.routes.ts, superadmin.routes.ts — NO auth middleware here.
+ */
+export const auditLogHandlers = {
+  getAll: getAuditLogs,
+  getById: getAuditLogById,
+};

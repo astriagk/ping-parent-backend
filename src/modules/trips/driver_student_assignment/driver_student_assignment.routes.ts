@@ -116,3 +116,37 @@ router.get(
 );
 
 export default router;
+
+/**
+ * Handler group for driver_student_assignment.
+ * Import in src/routes/parent.routes.ts, driver.routes.ts, admin.routes.ts.
+ * NO auth middleware lives here.
+ */
+export const assignmentHandlers = {
+  // Shared (parent and driver both call these)
+  validateCreate: validate(createDriverStudentAssignmentSchema),
+  create: createDriverStudentAssignment,
+  getById: getAssignment,
+  getByStudent: getAssignmentsByStudent,
+  getAllDrivers: getAllDrivers,
+  validateUpdate: validate(updateDriverStudentAssignmentSchema),
+  update: updateDriverStudentAssignment,
+  delete: deleteDriverStudentAssignment,
+
+  // Driver-specific
+  driver: {
+    getAll: getMyAssignments,
+    getPending: getMyPendingAssignments,
+    getActive: getMyActiveAssignments,
+    getParentRequested: getDriverParentRequestedAssignments,
+    approve: approveDriverStudentAssignment,
+    reject: rejectDriverStudentAssignment,
+    deactivate: deactivateDriverStudentAssignment,
+  },
+
+  // Admin-specific
+  admin: {
+    getAll: getAllDriverStudentAssignments,
+    getParentRequested: getParentRequestedAssignmentsData,
+  },
+};

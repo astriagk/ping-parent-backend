@@ -1,0 +1,205 @@
+<mxfile host="65bd71144e">
+    <diagram name="Parent Workflow" id="0">
+        <mxGraphModel dx="1289" dy="779" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="850" pageHeight="1100" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="start" value="Start" style="ellipse;fillColor=#dae8fc;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="360" y="20" width="100" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_onboard" value="ONBOARDING" style="text;fontStyle=1;fontSize=14;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="20" y="90" width="120" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="login" value="Login via Phone + OTP&#xa;(users table — user_type=parent)" style="rounded=1;fillColor=#fff2cc;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="290" y="100" width="240" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e1" parent="1" source="start" target="login" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="profile" value="Complete Parent Profile&#xa;name, email, photo&#xa;(parents table)" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="290" y="190" width="240" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e2" parent="1" source="login" target="profile" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="address" value="Add Home Address&#xa;address, city, state, lat/long&#xa;(parent_addresses)" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="290" y="280" width="240" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e3" parent="1" source="profile" target="address" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_active" value="ACTIVE PARENT" style="text;fontStyle=1;fontSize=14;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="20" y="370" width="140" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="dashboard" value="Parent Dashboard" style="rounded=1;fillColor=#d5e8d4;fontStyle=1;fontSize=13" parent="1" vertex="1">
+                    <mxGeometry x="310" y="375" width="200" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e4" parent="1" source="address" target="dashboard" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_student" value="STUDENT MGMT" style="text;fontStyle=1;fontSize=12;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="20" y="450" width="130" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="add_student" value="Add Student&#xa;student_name, class, section,&#xa;school, pickup_address&#xa;(students, schools)" style="rounded=1;fillColor=#dae8fc" parent="1" vertex="1">
+                    <mxGeometry x="20" y="480" width="250" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5" parent="1" source="dashboard" target="add_student" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="auto_community" value="Auto-join School Community&#xa;(school_parent_community)" style="rounded=1;fillColor=#e1d5e7;dashed=1;dashPattern=4 4" parent="1" vertex="1">
+                    <mxGeometry x="20" y="575" width="250" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e5b" value="auto" style="dashed=1;strokeColor=#999" parent="1" source="add_student" target="auto_community" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="assign_driver" value="Assign Driver to Student&#xa;(search by driver_unique_id)&#xa;assignment_source = parent&#xa;(driver_student_assignments)" style="rounded=1;fillColor=#f8cecc" parent="1" vertex="1">
+                    <mxGeometry x="20" y="650" width="250" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e6" parent="1" source="add_student" target="assign_driver" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="fee_set" value="Monthly Fee Set&#xa;(monthly_fee on assignment)" style="rounded=1;fillColor=#fff2cc" parent="1" vertex="1">
+                    <mxGeometry x="20" y="745" width="250" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="e6b" parent="1" source="assign_driver" target="fee_set" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_billing" value="SUBSCRIPTION &amp; PAYMENT" style="text;fontStyle=1;fontSize=12;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="310" y="450" width="210" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="sub_choice" value="Subscription?" style="rhombus;fillColor=#fff2cc;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="345" y="490" width="130" height="80" as="geometry"/>
+                </mxCell>
+                <mxCell id="e7" parent="1" source="dashboard" target="sub_choice" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="buy_plan" value="Buy Subscription Plan&#xa;(monthly / quarterly / yearly)&#xa;subscription_plans →&#xa;parent_subscriptions" style="rounded=1;fillColor=#fff2cc" parent="1" vertex="1">
+                    <mxGeometry x="310" y="600" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e8" value="Buy Plan" parent="1" source="sub_choice" target="buy_plan" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="redeem_code" value="Redeem School Code&#xa;(SCHSTDCD prefix)&#xa;school_student_codes&#xa;→ parent_subscriptions" style="rounded=1;fillColor=#fff2cc" parent="1" vertex="1">
+                    <mxGeometry x="600" y="495" width="200" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e8b" value="Redeem Code" parent="1" source="sub_choice" target="redeem_code" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="payment" value="Make Payment&#xa;(card, upi, netbanking, wallet, cash)&#xa;payment_type = subscription&#xa;(payments — Razorpay)" style="rounded=1;fillColor=#fff2cc;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="310" y="700" width="220" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e9" parent="1" source="buy_plan" target="payment" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_trip" value="TRIP TRACKING" style="text;fontStyle=1;fontSize=12;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="620" y="580" width="130" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="track_trip" value="Track Trip Live&#xa;(real-time driver location)&#xa;trips, location_tracking" style="rounded=1;fillColor=#dae8fc" parent="1" vertex="1">
+                    <mxGeometry x="600" y="610" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e10" parent="1" source="dashboard" target="track_trip" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="otp_qr" value="Show OTP / QR Code&#xa;(one OTP per parent per trip)&#xa;daily_qr_otp" style="rounded=1;fillColor=#f8cecc;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="600" y="700" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e11" parent="1" source="track_trip" target="otp_qr" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="attendance" value="Mark Attendance&#xa;(absent → absent_student_ids)&#xa;trip_students" style="rounded=1;fillColor=#f8cecc" parent="1" vertex="1">
+                    <mxGeometry x="600" y="790" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e12" parent="1" source="otp_qr" target="attendance" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="notifications_trip" value="Receive Trip Notifications&#xa;(pickup_started, approaching,&#xa;picked_up, dropped)&#xa;notifications" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="600" y="880" width="260" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e13" parent="1" source="attendance" target="notifications_trip" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_school" value="SCHOOL ENGAGEMENT" style="text;fontStyle=1;fontSize=12;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="20" y="830" width="180" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="view_events" value="View School Events&#xa;(sports, holiday, exam, etc.)&#xa;school_events" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="20" y="860" width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e14" parent="1" source="dashboard" target="view_events" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="rsvp" value="RSVP to Events&#xa;(attending / not_attending / maybe)&#xa;event_rsvp" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="20" y="950" width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e15" parent="1" source="view_events" target="rsvp" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_community" value="PARENT COMMUNITY" style="text;fontStyle=1;fontSize=12;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="310" y="830" width="180" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="community_board" value="Community Board&#xa;(per-school, gated by membership)&#xa;community_posts" style="rounded=1;fillColor=#dae8fc" parent="1" vertex="1">
+                    <mxGeometry x="310" y="860" width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e16" parent="1" source="dashboard" target="community_board" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="create_post" value="Create Post&#xa;(general, question, alert, recommendation)&#xa;(can be anonymous)" style="rounded=1;fillColor=#dae8fc" parent="1" vertex="1">
+                    <mxGeometry x="310" y="950" width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e17" parent="1" source="community_board" target="create_post" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="react_comment" value="React &amp; Comment on Posts&#xa;(like, helpful, heart, support)&#xa;community_post_reactions&#xa;community_post_comments" style="rounded=1;fillColor=#dae8fc" parent="1" vertex="1">
+                    <mxGeometry x="310" y="1040" width="250" height="70" as="geometry"/>
+                </mxCell>
+                <mxCell id="e18" parent="1" source="create_post" target="react_comment" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="connections" value="Connect with Other Parents&#xa;(same school, opt-in)&#xa;parent_connections" style="rounded=1;fillColor=#dae8fc" parent="1" vertex="1">
+                    <mxGeometry x="310" y="1140" width="250" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e19" parent="1" source="react_comment" target="connections" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="phase_feedback" value="FEEDBACK &amp; SUPPORT" style="text;fontStyle=1;fontSize=12;fillColor=none;fontColor=#666666" parent="1" vertex="1">
+                    <mxGeometry x="620" y="980" width="180" height="25" as="geometry"/>
+                </mxCell>
+                <mxCell id="rate_driver" value="Rate &amp; Review Driver&#xa;(1-5 stars + review_text)&#xa;ratings_reviews" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="610" y="1010" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e20" parent="1" source="dashboard" target="rate_driver" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="support" value="Raise Support Ticket&#xa;(subject, description, priority)&#xa;support_tickets" style="rounded=1;fillColor=#e1d5e7" parent="1" vertex="1">
+                    <mxGeometry x="610" y="1100" width="260" height="60" as="geometry"/>
+                </mxCell>
+                <mxCell id="e21" parent="1" source="rate_driver" target="support" edge="1">
+                    <mxGeometry relative="1" as="geometry"/>
+                </mxCell>
+                <mxCell id="end" value="End" style="ellipse;fillColor=#dae8fc;fontStyle=1" parent="1" vertex="1">
+                    <mxGeometry x="360" y="1240" width="100" height="50" as="geometry"/>
+                </mxCell>
+                <mxCell id="legend_title" value="LEGEND" style="text;fontStyle=1;fontSize=14;fillColor=none" parent="1" vertex="1">
+                    <mxGeometry x="920" y="20" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l1" value="Auth / Payment" style="rounded=1;fillColor=#fff2cc;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="920" y="55" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l2" value="Profile / Setup" style="rounded=1;fillColor=#e1d5e7;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="920" y="90" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l3" value="Dashboard" style="rounded=1;fillColor=#d5e8d4;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="920" y="125" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l4" value="Data / Community" style="rounded=1;fillColor=#dae8fc;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="920" y="160" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="l5" value="OTP / Verification" style="rounded=1;fillColor=#f8cecc;fontSize=10" parent="1" vertex="1">
+                    <mxGeometry x="920" y="195" width="150" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="note1" value="Parent pays for subscription only.&#xa;No driver payments.&#xa;&#xa;OTP covers all children of same parent per trip.&#xa;&#xa;School code = school pays, parent redeems.&#xa;Buy plan = parent pays directly via Razorpay." style="shape=note;fillColor=#ffffcc;strokeColor=#999;fontSize=11;whiteSpace=wrap;align=left;spacingLeft=8" parent="1" vertex="1">
+                    <mxGeometry x="920" y="260" width="280" height="120" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>

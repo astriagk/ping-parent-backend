@@ -47,3 +47,24 @@ router.put(
 router.delete("/admin/:school_id", verifyAdminToken, deleteSchool);
 
 export default router;
+
+/**
+ * Handler group for school module.
+ * Import in src/routes/shared.routes.ts, admin.routes.ts — NO auth middleware here.
+ */
+export const schoolHandlers = {
+  // Shared (any authenticated user — read-only)
+  shared: {
+    getAll: getAllSchools,
+    getById: getSchool,
+  },
+
+  // Admin-specific
+  admin: {
+    validateCreate: validate(createSchoolSchema),
+    create: createSchool,
+    validateUpdate: validate(updateSchoolSchema),
+    update: updateSchool,
+    delete: deleteSchool,
+  },
+};

@@ -24,3 +24,20 @@ router.post("/:driverId/remove", verifyAdminToken, removeDriverFromSchool);
 router.get("/:driverId/details", verifyAdminToken, getSchoolDriverDetails);
 
 export default router;
+
+/**
+ * Handler group for school_driver module.
+ * Import in src/routes/admin.routes.ts, school-admin.routes.ts — NO auth middleware here.
+ */
+export const schoolDriverHandlers = {
+  admin: {
+    getBySchool: getSchoolDrivers,
+    assign: assignDriverToSchool,
+    remove: removeDriverFromSchool,
+    getDetails: getSchoolDriverDetails,
+  },
+  schoolAdmin: {
+    getAll: getSchoolDrivers,
+    add: assignDriverToSchool,
+  },
+};

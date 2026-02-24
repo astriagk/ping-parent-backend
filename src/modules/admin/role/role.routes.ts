@@ -32,3 +32,17 @@ router.put("/:id", verifyAdminToken, validate(updateRoleSchema), updateRole);
 router.delete("/:id", verifyAdminToken, deleteRole);
 
 export default router;
+
+/**
+ * Handler group for role module.
+ * Import in src/routes/superadmin.routes.ts — NO auth middleware here.
+ */
+export const roleHandlers = {
+  getAll: getAllRoles,
+  validateCreate: validate(createRoleSchema),
+  create: createRole,
+  getById: getRoleById,
+  validateUpdate: validate(updateRoleSchema),
+  update: updateRole,
+  delete: deleteRole,
+};

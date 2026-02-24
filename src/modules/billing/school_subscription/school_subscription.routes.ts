@@ -88,3 +88,28 @@ router.get(
 );
 
 export default router;
+
+/**
+ * Handler group for school_subscription module.
+ * Import in src/routes/admin.routes.ts — NO auth middleware here.
+ */
+export const schoolSubscriptionHandlers = {
+  // Admin-specific
+  admin: {
+    validateCreate: validate(createSchoolSubscriptionValidation),
+    create: createSchoolSubscription,
+    getBySchool: getSchoolSubscriptions,
+    getActiveBySchool: getActiveSchoolSubscription,
+    getById: getSchoolSubscriptionById,
+    validateUpdate: validate(updateSchoolSubscriptionValidation),
+    update: updateSchoolSubscription,
+    validateRenew: validate(renewSchoolSubscriptionValidation),
+    renew: renewSchoolSubscription,
+    validateCancel: validate(cancelSchoolSubscriptionValidation),
+    cancel: cancelSchoolSubscription,
+    getExpired: getExpiredSubscriptions,
+    validateGenerateCodes: validate(generateStudentCodesSchema),
+    generateCodes: generateStudentCodes,
+    getCodes: getCodesBySchoolSubscription,
+  },
+};

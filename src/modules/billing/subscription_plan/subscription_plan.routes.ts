@@ -46,3 +46,25 @@ router.patch("/:id/activate", verifyAdminToken, activateSubscriptionPlan);
 router.patch("/:id/deactivate", verifyAdminToken, deactivateSubscriptionPlan);
 
 export default router;
+
+/**
+ * Handler group for subscription_plan module.
+ * Import in src/routes/public.routes.ts, admin.routes.ts — NO auth middleware here.
+ */
+export const subscriptionPlanHandlers = {
+  // Public (no auth)
+  public: {
+    getAll: getAllSubscriptionPlans,
+    getById: getSubscriptionPlan,
+  },
+
+  // Admin-specific
+  admin: {
+    validateCreate: validate(createSubscriptionPlanSchema),
+    create: createSubscriptionPlan,
+    validateUpdate: validate(updateSubscriptionPlanSchema),
+    update: updateSubscriptionPlan,
+    activate: activateSubscriptionPlan,
+    deactivate: deactivateSubscriptionPlan,
+  },
+};

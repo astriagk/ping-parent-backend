@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+// ── Legacy module route imports (preserved for backward compatibility) ──
 import {
   adminManagementRoutes,
   auditLogRoutes,
@@ -32,7 +33,21 @@ import {
   studentRoutes,
 } from "@modules/users";
 
+import adminRoutes from "./admin.routes";
+// ── NEW: Role-scoped gateway imports ──
+import newAuthRoutes from "./auth.routes";
+import newDriverRoutes from "./driver.routes";
+import newParentRoutes from "./parent.routes";
+import publicRoutes from "./public.routes";
+import schoolAdminRoutes from "./school-admin.routes";
+import sharedRoutes from "./shared.routes";
+import superadminRoutes from "./superadmin.routes";
+
 const router = Router();
+
+// ══════════════════════════════════════════════════════════════════════
+// LEGACY ROUTES (preserved — remove once clients migrate to new URLs)
+// ══════════════════════════════════════════════════════════════════════
 
 // 01. Authentication & User Management
 router.use("/auth", authRoutes);
@@ -86,5 +101,18 @@ router.use("/roles", roleRoutes);
 
 // Audit Logs (part of Admin Portal)
 router.use("/audit-logs", auditLogRoutes);
+
+// ══════════════════════════════════════════════════════════════════════
+// NEW: Role-scoped gateway routes (use these for all new development)
+// ══════════════════════════════════════════════════════════════════════
+
+router.use("/auth", newAuthRoutes);
+router.use("/public", publicRoutes);
+router.use("/shared", sharedRoutes);
+router.use("/parent", newParentRoutes);
+router.use("/driver", newDriverRoutes);
+router.use("/admin", adminRoutes);
+router.use("/superadmin", superadminRoutes);
+router.use("/school-admin", schoolAdminRoutes);
 
 export default router;
