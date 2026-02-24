@@ -31,3 +31,16 @@ router.put("/:id/mark-as-read", markAsRead);
 router.put("/mark-all-as-read", markAllAsRead);
 
 export default router;
+
+/**
+ * Handler group for notification module.
+ * Import in src/routes/shared.routes.ts — NO auth middleware here.
+ */
+export const notificationHandlers = {
+  // Shared (any authenticated user)
+  getAll: getNotifications,
+  getUnread: getUnreadNotifications,
+  getUnreadCount: getUnreadCount,
+  markAsRead: markAsRead,
+  markAllAsRead: markAllAsRead,
+};

@@ -40,3 +40,18 @@ router.post(
 router.post("/:assignmentId/reject", verifyAdminToken, rejectSchoolAssignment);
 
 export default router;
+
+/**
+ * Handler group for school_assignment module.
+ * Import in src/routes/admin.routes.ts — NO auth middleware here.
+ */
+export const schoolAssignmentHandlers = {
+  admin: {
+    getBySchool: getSchoolAssignments,
+    getPending: getSchoolPendingAssignments,
+    getByDriver: getSchoolDriverAssignments,
+    create: createSchoolAssignment,
+    approve: approveSchoolAssignment,
+    reject: rejectSchoolAssignment,
+  },
+};

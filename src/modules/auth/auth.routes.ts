@@ -81,3 +81,30 @@ router.patch(
 );
 
 export default router;
+
+/**
+ * Handler group for auth module.
+ * Import in src/routes/auth.routes.ts, admin.routes.ts — NO auth middleware here.
+ */
+export const authHandlers = {
+  // Public (no auth)
+  public: {
+    getRoles: getRoles,
+    validateSendOtp: validate(sendOTPSchema),
+    sendPhoneOtp: sendPhoneOtp,
+    validateVerifyOtp: validate(verifyOTPSchema),
+    verifyPhoneOtp: verifyPhoneOtp,
+    sendLoginOtp: sendLoginOtp,
+    verifyLoginOtp: verifyLoginOtp,
+    verifyToken: verifyAuthToken,
+    logout: logout,
+    loginRateLimiter: loginRateLimiter,
+  },
+
+  // Admin-specific
+  admin: {
+    getAllUsers: getAllUsersController,
+    activateUser: activateUserController,
+    deactivateUser: deactivateUserController,
+  },
+};

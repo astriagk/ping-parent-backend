@@ -24,6 +24,7 @@ const path = require("path");
 
 const CONFIG = {
   MODULES_DIR: path.join(__dirname, "../src/modules"),
+  ROUTES_LAYER_DIR: path.join(__dirname, "../src/routes"), // role-scoped gateway files
   ROUTES_FILE: path.join(__dirname, "../src/routes/index.ts"),
   OUTPUT_DIR: path.join(__dirname, "../docs"),
   POSTMAN_DIR: path.join(__dirname, "../docs/postman/collections"),
@@ -599,18 +600,24 @@ function generateFieldExample(fieldName, field) {
 // ============================================================================
 
 /**
- * Find all route files in the modules directory
+ * Find all route files in the modules directory and the role-scoped routes layer.
+ *
+ * Scans two locations:
+ *   1. src/modules/  — legacy module-level route files (Express Router exports)
+ *   2. src/routes/   — new role-gateway route files (parent, driver, admin, etc.)
+ *
+ * Files that have been converted to handler-group exports (no router.get/post calls)
+ * are silently skipped by the existing `endpoints.length === 0` guard in main().
  */
 function findAllRouteFiles() {
   const routeFiles = [];
 
+  // Recursive scan for module-level route files (nested directory structure)
   function traverse(dir) {
     const items = fs.readdirSync(dir);
-
     for (const item of items) {
       const fullPath = path.join(dir, item);
       const stat = fs.statSync(fullPath);
-
       if (stat.isDirectory()) {
         traverse(fullPath);
       } else if (item.endsWith(".routes.ts")) {
@@ -619,7 +626,27 @@ function findAllRouteFiles() {
     }
   }
 
+  // Flat scan for role-gateway route files (flat directory, no nesting)
+  function traverseFlat(dir) {
+    const items = fs.readdirSync(dir);
+    for (const item of items) {
+      const fullPath = path.join(dir, item);
+      const stat = fs.statSync(fullPath);
+      // Only pick up top-level *.routes.ts files (parent.routes.ts, driver.routes.ts, etc.)
+      // Avoid re-scanning src/routes/index.ts or any sub-directories if added later
+      if (!stat.isDirectory() && item.endsWith(".routes.ts")) {
+        routeFiles.push(fullPath);
+      }
+    }
+  }
+
   traverse(CONFIG.MODULES_DIR);
+
+  // Also scan the role-scoped routes layer if it exists
+  if (fs.existsSync(CONFIG.ROUTES_LAYER_DIR)) {
+    traverseFlat(CONFIG.ROUTES_LAYER_DIR);
+  }
+
   return routeFiles;
 }
 
@@ -632,14 +659,27 @@ function parseRouteFile(filePath) {
   const modulePath = path.dirname(filePath);
   const endpoints = [];
 
-  // Load validation schemas
+  // Load validation schemas — supports two import styles:
+  //   1. Relative: from "./feature.validation"       (module-level route files)
+  //   2. Alias:    from "@modules/x/y/y.validation"  (role-gateway route files)
   let validationSchemas = {};
-  const validationMatch = content.match(
+
+  const relativeValidationMatch = content.match(
     /from\s+["']\.\/([^"']+\.validation)["']/,
   );
-  if (validationMatch) {
-    const validationPath = path.join(modulePath, validationMatch[1] + ".ts");
+  if (relativeValidationMatch) {
+    const validationPath = path.join(modulePath, relativeValidationMatch[1] + ".ts");
     validationSchemas = parseValidationFile(validationPath);
+  } else {
+    // Role-gateway files may import multiple validation schemas via @modules/ alias.
+    // Collect and merge all of them.
+    const aliasValidationRegex = /from\s+["']@modules\/([^"']+\.validation)["']/g;
+    let aliasMatch;
+    while ((aliasMatch = aliasValidationRegex.exec(content)) !== null) {
+      const validationPath = path.join(CONFIG.MODULES_DIR, aliasMatch[1] + ".ts");
+      const schemas = parseValidationFile(validationPath);
+      Object.assign(validationSchemas, schemas);
+    }
   }
 
   // Check for router-level middleware (applies to all routes)
@@ -806,6 +846,11 @@ function parseRouteLine(
   let additionalInfo = [];
 
   for (const comment of comments) {
+    // Skip section-header divider comments like "--- Profile ---" or "--- Public sub-routes (no auth) ---"
+    if (/^-{2,}/.test(comment)) {
+      continue;
+    }
+
     // Skip helper comments that describe the request body
     if (
       comment.toLowerCase().startsWith("request body:") ||
@@ -954,7 +999,56 @@ function generateEndpointDescription(
 // ============================================================================
 
 /**
- * Generate Postman Collection v2.1 format
+ * Get sub-folder name from a route path for gateway categories.
+ * Skips the role-prefix segment (e.g. "admin" in /admin/schools) and returns
+ * a title-cased label for the resource segment (e.g. "Schools").
+ */
+function getSubfolderName(route, categoryName) {
+  const segments = route.split("/").filter((p) => p);
+  if (!segments.length) return "General";
+
+  let startIdx = 0;
+
+  // For gateway categories, detect and skip the role prefix segment
+  // e.g. "Admin (Gateway)" → prefix "admin", "School Admin (Gateway)" → "school-admin"
+  if (categoryName && categoryName.endsWith("(Gateway)")) {
+    const gatewayPrefix = categoryName
+      .replace(/ \(Gateway\)$/, "")
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
+    if (segments[0] && segments[0].toLowerCase() === gatewayPrefix) {
+      startIdx = 1;
+    }
+  }
+
+  // Find the first non-param segment after the role prefix
+  for (let i = startIdx; i < segments.length; i++) {
+    if (!segments[i].startsWith(":")) {
+      return titleCase(segments[i].replace(/-/g, " "));
+    }
+  }
+
+  return "General";
+}
+
+/**
+ * Group endpoints into sub-folders keyed by their resource segment.
+ */
+function groupEndpointsBySubfolder(endpoints, categoryName) {
+  const groups = {};
+  for (const ep of endpoints) {
+    const folder = getSubfolderName(ep.route, categoryName);
+    if (!groups[folder]) groups[folder] = [];
+    groups[folder].push(ep);
+  }
+  return groups;
+}
+
+/**
+ * Generate Postman Collection v2.1 format.
+ * Gateway categories (e.g. "Admin (Gateway)") are rendered with resource
+ * sub-folders (Schools, Users, Trips …) for easy navigation.
  */
 function generatePostmanCollection(categories, version) {
   return {
@@ -972,11 +1066,28 @@ function generatePostmanCollection(categories, version) {
     variable: [
       { key: "BASE_URL", value: "http://localhost:3000/api", type: "string" },
     ],
-    item: Object.entries(categories).map(([category, endpoints]) => ({
-      name: category,
-      description: `${category} API endpoints`,
-      item: endpoints.map((ep) => createPostmanRequest(ep)),
-    })),
+    item: Object.entries(categories).map(([category, endpoints]) => {
+      // Gateway files (src/routes/*.routes.ts) get resource sub-folders
+      if (category.endsWith("(Gateway)")) {
+        const subGroups = groupEndpointsBySubfolder(endpoints, category);
+        return {
+          name: category,
+          description: `${category} API endpoints`,
+          item: Object.entries(subGroups).map(([subName, subEndpoints]) => ({
+            name: subName,
+            description: `${subName} endpoints`,
+            item: subEndpoints.map((ep) => createPostmanRequest(ep)),
+          })),
+        };
+      }
+
+      // Module-level categories stay flat
+      return {
+        name: category,
+        description: `${category} API endpoints`,
+        item: endpoints.map((ep) => createPostmanRequest(ep)),
+      };
+    }),
   };
 }
 
@@ -1379,17 +1490,27 @@ function main() {
   let totalEndpoints = 0;
 
   for (const file of routeFiles) {
-    const relativePath = path.relative(CONFIG.MODULES_DIR, file);
-    const parts = relativePath.split(path.sep);
+    // Check if this file is from the role-gateway layer (src/routes/) or the module layer (src/modules/)
+    const isGatewayFile = file.startsWith(CONFIG.ROUTES_LAYER_DIR + path.sep) ||
+      file.startsWith(CONFIG.ROUTES_LAYER_DIR + "/");
 
-    // Determine category name
+    let relativePath;
     let categoryName;
-    if (parts.length > 2) {
-      // Nested module: users/parent -> "Users - Parent"
-      categoryName = `${titleCase(parts[0])} - ${titleCase(parts[1])}`;
+
+    if (isGatewayFile) {
+      // Role-gateway file: parent.routes.ts → category "Parent (Gateway)"
+      relativePath = path.relative(CONFIG.ROUTES_LAYER_DIR, file);
+      const gatewayName = path.basename(file, ".routes.ts"); // e.g. "parent", "driver", "school-admin"
+      categoryName = `${titleCase(gatewayName)} (Gateway)`;
     } else {
-      // Top-level module: auth -> "Auth"
-      categoryName = titleCase(parts[0]);
+      // Module-level file: users/parent/parent.routes.ts → "Users - Parent"
+      relativePath = path.relative(CONFIG.MODULES_DIR, file);
+      const parts = relativePath.split(path.sep);
+      if (parts.length > 2) {
+        categoryName = `${titleCase(parts[0])} - ${titleCase(parts[1])}`;
+      } else {
+        categoryName = titleCase(parts[0]);
+      }
     }
 
     // Parse endpoints

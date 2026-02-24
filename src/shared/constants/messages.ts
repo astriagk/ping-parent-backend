@@ -22,6 +22,10 @@ export const ERROR_MESSAGES = {
     PARENT_ROLE_REQUIRED: "Access denied. Parent role required.",
     DRIVER_ROLE_REQUIRED: "Access denied. Driver role required.",
     ADMIN_ROLE_REQUIRED: "Access denied. Admin role required.",
+    ADMIN_OR_ABOVE_ROLE_REQUIRED:
+      "Access denied. Admin or superadmin role required.",
+    SUPERADMIN_ROLE_REQUIRED: "Access denied. Superadmin role required.",
+    SCHOOL_ADMIN_ROLE_REQUIRED: "Access denied. School admin role required.",
     FAILED_TO_FETCH_ROLES: "Failed to fetch roles",
     UNABLE_TO_VALIDATE_ROLE: "Unable to validate role",
     INVALID_ROLE: "Invalid role",

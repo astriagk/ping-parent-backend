@@ -50,3 +50,21 @@ router.put(
 router.delete("/by-student-id/:student_id", deleteStudentByStudentId);
 
 export default router;
+
+/**
+ * Handler group for student module.
+ * Import in src/routes/parent.routes.ts — NO auth middleware here.
+ */
+export const studentHandlers = {
+  validateCreate: validate(createStudentSchema),
+  create: createStudent,
+  getMyStudents: getMyStudents,
+  getMyActiveStudents: getMyActiveStudents,
+  getById: getStudentProfile,
+  validateUpdate: validate(updateStudentSchema),
+  update: updateStudent,
+  delete: deleteStudent,
+  getByStudentId: getStudentByStudentId,
+  updateByStudentId: updateStudentByStudentId,
+  deleteByStudentId: deleteStudentByStudentId,
+};

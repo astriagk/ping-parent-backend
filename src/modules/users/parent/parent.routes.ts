@@ -46,3 +46,18 @@ router.get("/trips/active", verifyParentToken, getMyActiveTripsParent);
 router.get("/trips", verifyParentToken, getMyAllTrips);
 
 export default router;
+
+/**
+ * Handler group for parent module.
+ * Import in src/routes/parent.routes.ts — NO auth middleware here.
+ */
+export const parentHandlers = {
+  getProfile: getProfileParent,
+  validateUpdate: validate(updateParentProfileSchema),
+  updateProfile: updateProfileParent,
+  getAddress: getAddressParent,
+  validateAddress: validate(updateAddressSchema),
+  updateAddress: updateAddress,
+  getActiveTrips: getMyActiveTripsParent,
+  getAllTrips: getMyAllTrips,
+};

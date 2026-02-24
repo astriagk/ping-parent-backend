@@ -64,3 +64,26 @@ router.post(
 );
 
 export default router;
+
+/**
+ * Handler group for daily_qr_otp module.
+ * Import in src/routes/parent.routes.ts, driver.routes.ts — NO auth middleware here.
+ */
+export const qrOtpHandlers = {
+  // Driver-specific (generate, verify)
+  driver: {
+    validateGenerate: validate(generateQrOtpSchema),
+    generate: generateQrOtp,
+    getForStudentTrip: getQrOtp,
+    validateVerify: validate(verifyQrOtpSchema),
+    verify: verifyQrOtp,
+    validateVerifyAttendance: validate(verifyAndRecordAttendanceSchema),
+    verifyAttendance: verifyAndRecordAttendance,
+  },
+
+  // Parent-specific
+  parent: {
+    getForStudentTrip: getQrOtpForParent,
+    getForTrip: getParentOtpForTrip,
+  },
+};
