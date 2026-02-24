@@ -71,9 +71,9 @@ router.post(
   assignmentHandlers.validateCreate,
   assignmentHandlers.create,
 );
-router.get("/assignments/:id", assignmentHandlers.getById);
-router.get("/assignments/student/:studentId", assignmentHandlers.getByStudent);
 router.get("/assignments/all-drivers", assignmentHandlers.getAllDrivers);
+router.get("/assignments/student/:studentId", assignmentHandlers.getByStudent);
+router.get("/assignments/:id", assignmentHandlers.getById);
 router.put(
   "/assignments/:id",
   assignmentHandlers.validateUpdate,

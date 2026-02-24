@@ -1,6 +1,4 @@
-import { Router } from "express";
-
-import { validate, verifyDriverToken } from "@shared/middlewares";
+import { validate } from "@shared/middlewares";
 
 import {
   getTripStudent,
@@ -26,79 +24,6 @@ import {
   recordPickupSchema,
   updateTripStudentSchema,
 } from "./trip_student.validation";
-
-const router = Router();
-
-// All routes require driver authentication (only drivers can manage trip students)
-router.use(verifyDriverToken);
-
-// 01. Mark Student Attendance
-router.put(
-  "/trip/:tripId/student/:studentId/attendance",
-  validate(markAttendanceSchema),
-  markStudentAttendance,
-);
-
-// 02. Record Pickup
-router.put(
-  "/trip/:tripId/student/:studentId/pickup",
-  validate(recordPickupSchema),
-  recordStudentPickup,
-);
-
-// 03. Record Drop
-router.put(
-  "/trip/:tripId/student/:studentId/drop",
-  validate(recordDropSchema),
-  recordStudentDrop,
-);
-
-// 04. Pickup Point - pickup/drop students at parent location (OTP required)
-router.post(
-  "/trip/:tripId/pickup-point",
-  validate(bulkStopActionSchema),
-  handleBulkStopAction,
-);
-
-// 05. School Point - pickup/drop students at school (No OTP)
-router.post(
-  "/trip/:tripId/school-point",
-  validate(bulkSchoolActionSchema),
-  handleBulkSchoolAction,
-);
-
-// 06. Get Trip Students
-router.get("/trip/:tripId", getTripStudentsByTrip);
-
-// 07. Get Trip Students with Details (for driver selection screen)
-router.get("/trip/:tripId/with-details", getTripStudentsWithDetailsHandler);
-
-// 08. Get Trip Students Grouped by Parent (siblings grouped together)
-router.get(
-  "/trip/:tripId/grouped-by-parent",
-  getTripStudentsGroupedByParentHandler,
-);
-
-// Additional Routes
-// Get trip student by ID
-router.get("/:id", getTripStudent);
-
-// Get all trips for a specific student
-router.get("/student/:studentId", getTripStudentsByStudent);
-
-// Get trip student by trip ID and student ID
-router.get("/trip/:tripId/student/:studentId", getTripStudentByTripStudent);
-
-// Get trip students by attendance status
-router.get("/trip/:tripId/attendance", getTripStudentsByAttendance);
-
-// Get trip students by pickup status
-router.get("/trip/:tripId/pickup", getTripStudentsByPickup);
-
-// Update trip student record (general update)
-router.put("/:id", validate(updateTripStudentSchema), updateTripStudentRecord);
-
-export default router;
 
 /**
  * Handler group for trip_student module.
