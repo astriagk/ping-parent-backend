@@ -1,4 +1,3 @@
-export { default as schoolSubscriptionRoutes } from "./school_subscription.routes";
 export * from "./school_subscription.controller";
 export {
   createSchoolSubscription as createSchoolSubscriptionService,
