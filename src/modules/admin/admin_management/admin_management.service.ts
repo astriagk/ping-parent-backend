@@ -30,7 +30,7 @@ export const verifyPasswordHash = async (
  * Format admin response by removing sensitive fields
  */
 const formatAdminResponse = (admin: WithId<Admin>): AdminResponse => {
-  const { password_hash, _id, ...adminData } = admin;
+  const { password_hash, ...adminData } = admin;
   return adminData as AdminResponse;
 };
 
@@ -45,6 +45,8 @@ export const loginAdmin = async (
   // Find admin by email
   const admin = await adminRepository.findByEmail(email);
 
+  console.log(admin);
+
   if (!admin || !admin.is_active) {
     throw new ApiError(
       HTTP_STATUS.UNAUTHORIZED,
@@ -54,6 +56,8 @@ export const loginAdmin = async (
 
   // Verify password
   const isPasswordValid = await comparePassword(password, admin.password_hash);
+
+  console.log(isPasswordValid);
 
   if (!isPasswordValid) {
     throw new ApiError(
@@ -221,6 +225,7 @@ export const getAdminsBySchool = async (
 export const getAdminById = async (
   id: string,
 ): Promise<AdminResponse | null> => {
+  console.log(id);
   const admin = await adminRepository.findById(id);
   if (!admin) {
     return null;

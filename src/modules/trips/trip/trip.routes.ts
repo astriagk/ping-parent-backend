@@ -1,10 +1,4 @@
-import { Router } from "express";
-
-import {
-  validate,
-  verifyAdminToken,
-  verifyDriverToken,
-} from "@shared/middlewares";
+import { validate } from "@shared/middlewares";
 
 import {
   createTrip,
@@ -25,46 +19,31 @@ import {
   updateTripStatusSchema,
 } from "./trip.validation";
 
-const router = Router();
+/**
+ * Handler group for trip module.
+ * Import in src/routes/driver.routes.ts, admin.routes.ts.
+ * NO auth middleware lives here.
+ */
+export const tripHandlers = {
+  // Driver-specific
+  driver: {
+    validateCreate: validate(createTripSchema),
+    create: createTrip,
+    getMyTrips: getMyTrips,
+    getMyTripsByDate: getMyTripsByDate,
+    validateUpdateStatus: validate(updateTripStatusSchema),
+    updateStatus: updateTripStatus,
+    getActiveTrips: getMyActiveTrips,
+    getProgress: getTripProgress,
+    getCompletedDetails: getCompletedTripDetails,
+    getById: getTripProfile,
+    validateUpdate: validate(updateTripSchema),
+    update: updateTripProfile,
+    delete: deleteTripProfile,
+  },
 
-// Admin routes
-router.get("/admin/all-trips", verifyAdminToken, getAllTripsController);
-
-// All routes require driver authentication
-router.use(verifyDriverToken);
-
-// 01. Create Trip (Driver)
-router.post("/", validate(createTripSchema), createTrip);
-
-// 02. Get My Trips (Driver)
-router.get("/my-trips", getMyTrips);
-
-// 03. Get Trips by Date
-router.get("/my-trips/by-date", getMyTripsByDate);
-
-// 04. Start Trip / Update Trip Status
-router.patch("/:id/status", validate(updateTripStatusSchema), updateTripStatus);
-
-// 05. Complete Trip (handled by Update Trip Status endpoint)
-// (Same as above - uses status field)
-
-// Additional Routes
-// Get Active Trips
-router.get("/my-trips/active", getMyActiveTrips);
-
-// 06. Get Trip Progress (for resume functionality)
-router.get("/:id/progress", getTripProgress);
-
-// 07. Get Completed Trip Details (trip with students and parent data)
-router.get("/:id/completed", getCompletedTripDetails);
-
-// Get Trip Details
-router.get("/:id", getTripProfile);
-
-// Update Trip
-router.put("/:id", validate(updateTripSchema), updateTripProfile);
-
-// Delete Trip
-router.delete("/:id", deleteTripProfile);
-
-export default router;
+  // Admin-specific
+  admin: {
+    getAll: getAllTripsController,
+  },
+};

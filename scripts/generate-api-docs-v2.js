@@ -22,9 +22,13 @@ const path = require("path");
 // CONFIGURATION
 // ============================================================================
 
+// Tracks which category names come from gateway route files (src/routes/).
+// Populated during route parsing; used by getSubfolderName and generatePostmanCollection.
+const gatewayCategories = new Set();
+
 const CONFIG = {
   MODULES_DIR: path.join(__dirname, "../src/modules"),
-  ROUTES_FILE: path.join(__dirname, "../src/routes/index.ts"),
+  ROUTES_LAYER_DIR: path.join(__dirname, "../src/routes"), // role-scoped gateway files
   OUTPUT_DIR: path.join(__dirname, "../docs"),
   POSTMAN_DIR: path.join(__dirname, "../docs/postman/collections"),
   ENV_DIR: path.join(__dirname, "../docs/postman/environments"),
@@ -117,17 +121,6 @@ function titleCase(str) {
   return str.replace(/[-_]/g, " ").replace(/\b\w/g, (l) => l.toUpperCase());
 }
 
-/**
- * Convert camelCase or PascalCase to Title Case
- */
-function camelToTitle(str) {
-  return str
-    .replace(/([A-Z])/g, " $1")
-    .replace(/[-_]/g, " ")
-    .replace(/\b\w/g, (l) => l.toUpperCase())
-    .trim();
-}
-
 // ============================================================================
 // VERSION MANAGEMENT
 // ============================================================================
@@ -158,63 +151,6 @@ function incrementVersion(currentVersion, bumpType = "patch") {
     default:
       return `${major}.${minor}.${patch + 1}`;
   }
-}
-
-// ============================================================================
-// BASE PATH EXTRACTION FROM MAIN ROUTES
-// ============================================================================
-
-/**
- * Parse the main routes file to extract base paths for each module
- */
-function parseMainRoutesFile() {
-  const basePaths = {};
-
-  if (!fs.existsSync(CONFIG.ROUTES_FILE)) {
-    console.warn("⚠️  Main routes file not found");
-    return basePaths;
-  }
-
-  const content = fs.readFileSync(CONFIG.ROUTES_FILE, "utf-8");
-
-  // Match: router.use("/path", routesVariable);
-  const routeUseRegex = /router\.use\(\s*["']([^"']+)["']\s*,\s*(\w+)\s*\)/g;
-  let match;
-
-  while ((match = routeUseRegex.exec(content)) !== null) {
-    const [, basePath, routesVar] = match;
-    // Store the variable name to base path mapping
-    basePaths[routesVar] = basePath;
-  }
-
-  return basePaths;
-}
-
-/**
- * Get the import statement variable name from route file
- */
-function getRouteVariableName(filePath, mainRoutesContent) {
-  const fileName = path.basename(filePath, ".routes.ts");
-
-  // Try different naming conventions
-  const possibleNames = [
-    `${fileName}Routes`,
-    `${fileName.replace(/_/g, "")}Routes`,
-    `${camelCase(fileName)}Routes`,
-    fileName.replace(/_([a-z])/g, (_, l) => l.toUpperCase()) + "Routes",
-  ];
-
-  for (const name of possibleNames) {
-    if (mainRoutesContent.includes(name)) {
-      return name;
-    }
-  }
-
-  return null;
-}
-
-function camelCase(str) {
-  return str.replace(/_([a-z])/g, (_, l) => l.toUpperCase());
 }
 
 // ============================================================================
@@ -595,51 +531,180 @@ function generateFieldExample(fieldName, field) {
 }
 
 // ============================================================================
-// ROUTE FILE PARSING - COMPREHENSIVE
+// HANDLER REGISTRY - Maps handler group references to Joi schema fields
 // ============================================================================
 
 /**
- * Find all route files in the modules directory
+ * Build a global registry mapping handler group references to their Joi schema fields.
+ *
+ * Gateway routes use pre-composed handler groups instead of inline validate() calls:
+ *   parentHandlers.validateUpdate          → flat handler group
+ *   authHandlers.public.validateSendOtp    → nested handler group
+ *
+ * This scans all module-level route files, finds exported *Handlers objects,
+ * and records every validate(schemaName) entry so gateway routes can look them up.
  */
-function findAllRouteFiles() {
-  const routeFiles = [];
+function buildHandlerRegistry(moduleRouteFiles) {
+  const registry = {};
 
-  function traverse(dir) {
-    const items = fs.readdirSync(dir);
+  for (const file of moduleRouteFiles) {
+    const content = fs.readFileSync(file, "utf-8");
+    const modulePath = path.dirname(file);
 
-    for (const item of items) {
-      const fullPath = path.join(dir, item);
-      const stat = fs.statSync(fullPath);
+    // Load validation schemas for this module file (same logic as parseRouteFile)
+    let validationSchemas = {};
+    const relativeValidationMatch = content.match(
+      /from\s+["']\.\/([\w/-]+\.validation)['"]/,
+    );
+    if (relativeValidationMatch) {
+      const validationPath = path.join(
+        modulePath,
+        relativeValidationMatch[1] + ".ts",
+      );
+      validationSchemas = parseValidationFile(validationPath);
+    } else {
+      const aliasValidationRegex =
+        /from\s+["']@modules\/([\w/-]+\.validation)['"]/g;
+      let aliasMatch;
+      while ((aliasMatch = aliasValidationRegex.exec(content)) !== null) {
+        const validationPath = path.join(
+          CONFIG.MODULES_DIR,
+          aliasMatch[1] + ".ts",
+        );
+        const schemas = parseValidationFile(validationPath);
+        Object.assign(validationSchemas, schemas);
+      }
+    }
 
-      if (stat.isDirectory()) {
-        traverse(fullPath);
-      } else if (item.endsWith(".routes.ts")) {
-        routeFiles.push(fullPath);
+    if (Object.keys(validationSchemas).length === 0) continue;
+
+    // Find all exported handler group objects (*Handlers = { ... })
+    const handlerGroupRegex = /export\s+const\s+(\w+)\s*=\s*\{/g;
+    let match;
+
+    while ((match = handlerGroupRegex.exec(content)) !== null) {
+      const handlerVarName = match[1];
+      if (
+        !handlerVarName.endsWith("Handlers") &&
+        !handlerVarName.endsWith("handlers")
+      )
+        continue;
+
+      const startIdx = match.index + match[0].length - 1; // at the opening {
+      const handlerBody = extractBalancedBraces(content, startIdx);
+      if (!handlerBody) continue;
+
+      // Register flat-level validate() calls: propName: validate(schemaName)
+      const flatValidateRegex = /(\w+)\s*:\s*validate\s*\(\s*(\w+)\s*\)/g;
+      let vMatch;
+      while ((vMatch = flatValidateRegex.exec(handlerBody)) !== null) {
+        const propName = vMatch[1];
+        const schemaName = vMatch[2];
+        const schemaFields = validationSchemas[schemaName];
+        if (schemaFields) {
+          registry[`${handlerVarName}.${propName}`] = {
+            schemaFields,
+            schemaName,
+          };
+        }
+      }
+
+      // Register nested group validate() calls: groupName: { propName: validate(schemaName) }
+      const nestedGroupRegex = /(\w+)\s*:\s*\{/g;
+      let ngMatch;
+      while ((ngMatch = nestedGroupRegex.exec(handlerBody)) !== null) {
+        const groupName = ngMatch[1];
+        const ngStartIdx = ngMatch.index + ngMatch[0].length - 1;
+        const nestedBody = extractBalancedBraces(handlerBody, ngStartIdx);
+        if (!nestedBody) continue;
+
+        const nestedValidateRegex = /(\w+)\s*:\s*validate\s*\(\s*(\w+)\s*\)/g;
+        let nvMatch;
+        while ((nvMatch = nestedValidateRegex.exec(nestedBody)) !== null) {
+          const propName = nvMatch[1];
+          const schemaName = nvMatch[2];
+          const schemaFields = validationSchemas[schemaName];
+          if (schemaFields) {
+            registry[`${handlerVarName}.${groupName}.${propName}`] = {
+              schemaFields,
+              schemaName,
+            };
+          }
+        }
       }
     }
   }
 
+  return registry;
+}
+
+// ============================================================================
+// ROUTE FILE PARSING - COMPREHENSIVE
+// ============================================================================
+
+/**
+ * Find all role-gateway route files from src/routes/.
+ * These are the only files that contain router.get/post/etc. definitions.
+ */
+function findAllRouteFiles() {
+  if (!fs.existsSync(CONFIG.ROUTES_LAYER_DIR)) return [];
+  return fs
+    .readdirSync(CONFIG.ROUTES_LAYER_DIR)
+    .filter((item) => item.endsWith(".routes.ts"))
+    .map((item) => path.join(CONFIG.ROUTES_LAYER_DIR, item));
+}
+
+/**
+ * Recursively find all module-level route files from src/modules/.
+ * These export handler groups (no router calls) and are used only for
+ * building the handler registry (resolving validate() schema references).
+ */
+function findModuleRouteFiles() {
+  const files = [];
+  function traverse(dir) {
+    for (const item of fs.readdirSync(dir)) {
+      const fullPath = path.join(dir, item);
+      if (fs.statSync(fullPath).isDirectory()) {
+        traverse(fullPath);
+      } else if (item.endsWith(".routes.ts")) {
+        files.push(fullPath);
+      }
+    }
+  }
   traverse(CONFIG.MODULES_DIR);
-  return routeFiles;
+  return files;
 }
 
 /**
  * Parse a route file and extract all endpoints
  */
-function parseRouteFile(filePath) {
+function parseRouteFile(filePath, handlerRegistry = {}) {
   const content = fs.readFileSync(filePath, "utf-8");
   const fileName = path.basename(filePath, ".routes.ts");
   const modulePath = path.dirname(filePath);
   const endpoints = [];
 
-  // Load validation schemas
+  // Load validation schemas — supports two import styles:
+  //   1. Relative: from "./feature.validation"       (module-level route files)
+  //   2. Alias:    from "@modules/x/y/y.validation"  (role-gateway route files)
   let validationSchemas = {};
-  const validationMatch = content.match(
+
+  const relativeValidationMatch = content.match(
     /from\s+["']\.\/([^"']+\.validation)["']/,
   );
-  if (validationMatch) {
-    const validationPath = path.join(modulePath, validationMatch[1] + ".ts");
+  if (relativeValidationMatch) {
+    const validationPath = path.join(modulePath, relativeValidationMatch[1] + ".ts");
     validationSchemas = parseValidationFile(validationPath);
+  } else {
+    // Role-gateway files may import multiple validation schemas via @modules/ alias.
+    // Collect and merge all of them.
+    const aliasValidationRegex = /from\s+["']@modules\/([^"']+\.validation)["']/g;
+    let aliasMatch;
+    while ((aliasMatch = aliasValidationRegex.exec(content)) !== null) {
+      const validationPath = path.join(CONFIG.MODULES_DIR, aliasMatch[1] + ".ts");
+      const schemas = parseValidationFile(validationPath);
+      Object.assign(validationSchemas, schemas);
+    }
   }
 
   // Check for router-level middleware (applies to all routes)
@@ -693,6 +758,7 @@ function parseRouteFile(filePath) {
           validationSchemas,
           globalAuth,
           fileName,
+          handlerRegistry,
         );
         if (endpoint) {
           endpoints.push(endpoint);
@@ -714,6 +780,7 @@ function parseRouteFile(filePath) {
           validationSchemas,
           globalAuth,
           fileName,
+          handlerRegistry,
         );
         if (endpoint) {
           endpoints.push(endpoint);
@@ -757,6 +824,7 @@ function parseRouteLine(
   validationSchemas,
   globalAuth,
   fileName,
+  handlerRegistry = {},
 ) {
   // Extract HTTP method
   const methodMatch = routeStr.match(
@@ -792,10 +860,24 @@ function parseRouteLine(
   let schemaFields = null;
 
   if (validateMatch) {
+    // Direct: validate(schemaName) found in route args
     const schemaName = validateMatch[1];
     schemaFields = validationSchemas[schemaName];
     if (schemaFields) {
       requestBody = generateExample(schemaFields);
+    }
+  } else if (Object.keys(handlerRegistry).length > 0) {
+    // Gateway routes use handler group references instead of inline validate() calls.
+    // Look for patterns like: handlerVar.propName  or  handlerVar.groupName.propName
+    const handlerRefRegex = /\b(\w+[Hh]andlers(?:\.\w+){1,2})\b/g;
+    let hrMatch;
+    while ((hrMatch = handlerRefRegex.exec(args)) !== null) {
+      const ref = hrMatch[1];
+      if (handlerRegistry[ref]) {
+        schemaFields = handlerRegistry[ref].schemaFields;
+        requestBody = generateExample(schemaFields);
+        break;
+      }
     }
   }
 
@@ -806,6 +888,11 @@ function parseRouteLine(
   let additionalInfo = [];
 
   for (const comment of comments) {
+    // Skip section-header divider comments like "--- Profile ---" or "--- Public sub-routes (no auth) ---"
+    if (/^-{2,}/.test(comment)) {
+      continue;
+    }
+
     // Skip helper comments that describe the request body
     if (
       comment.toLowerCase().startsWith("request body:") ||
@@ -954,7 +1041,55 @@ function generateEndpointDescription(
 // ============================================================================
 
 /**
- * Generate Postman Collection v2.1 format
+ * Get sub-folder name from a route path for gateway categories.
+ * Skips the role-prefix segment (e.g. "admin" in /admin/schools) and returns
+ * a title-cased label for the resource segment (e.g. "Schools").
+ */
+function getSubfolderName(route, categoryName) {
+  const segments = route.split("/").filter((p) => p);
+  if (!segments.length) return "General";
+
+  let startIdx = 0;
+
+  // For gateway categories, detect and skip the role prefix segment
+  // e.g. "Admin (Gateway)" → prefix "admin", "School Admin (Gateway)" → "school-admin"
+  if (categoryName && gatewayCategories.has(categoryName)) {
+    const gatewayPrefix = categoryName
+      .toLowerCase()
+      .replace(/\s+/g, "-");
+
+    if (segments[0] && segments[0].toLowerCase() === gatewayPrefix) {
+      startIdx = 1;
+    }
+  }
+
+  // Find the first non-param segment after the role prefix
+  for (let i = startIdx; i < segments.length; i++) {
+    if (!segments[i].startsWith(":")) {
+      return titleCase(segments[i].replace(/-/g, " "));
+    }
+  }
+
+  return "General";
+}
+
+/**
+ * Group endpoints into sub-folders keyed by their resource segment.
+ */
+function groupEndpointsBySubfolder(endpoints, categoryName) {
+  const groups = {};
+  for (const ep of endpoints) {
+    const folder = getSubfolderName(ep.route, categoryName);
+    if (!groups[folder]) groups[folder] = [];
+    groups[folder].push(ep);
+  }
+  return groups;
+}
+
+/**
+ * Generate Postman Collection v2.1 format.
+ * Gateway categories (e.g. "Admin") are rendered with resource
+ * sub-folders (Schools, Users, Trips …) for easy navigation.
  */
 function generatePostmanCollection(categories, version) {
   return {
@@ -972,11 +1107,28 @@ function generatePostmanCollection(categories, version) {
     variable: [
       { key: "BASE_URL", value: "http://localhost:3000/api", type: "string" },
     ],
-    item: Object.entries(categories).map(([category, endpoints]) => ({
-      name: category,
-      description: `${category} API endpoints`,
-      item: endpoints.map((ep) => createPostmanRequest(ep)),
-    })),
+    item: Object.entries(categories).map(([category, endpoints]) => {
+      // Gateway files (src/routes/*.routes.ts) get resource sub-folders
+      if (gatewayCategories.has(category)) {
+        const subGroups = groupEndpointsBySubfolder(endpoints, category);
+        return {
+          name: category,
+          description: `${category} API endpoints`,
+          item: Object.entries(subGroups).map(([subName, subEndpoints]) => ({
+            name: subName,
+            description: `${subName} endpoints`,
+            item: subEndpoints.map((ep) => createPostmanRequest(ep)),
+          })),
+        };
+      }
+
+      // Module-level categories stay flat
+      return {
+        name: category,
+        description: `${category} API endpoints`,
+        item: endpoints.map((ep) => createPostmanRequest(ep)),
+      };
+    }),
   };
 }
 
@@ -1358,20 +1510,19 @@ function main() {
     if (arg.startsWith("--bump=")) bumpType = arg.split("=")[1];
   });
 
-  // Step 1: Parse main routes for base paths
-  console.log("📍 Step 1: Parsing main routes file...");
-  const basePaths = parseMainRoutesFile();
-  console.log(`   Found ${Object.keys(basePaths).length} route mappings\n`);
-
-  // Read main routes content for variable lookup
-  const mainRoutesContent = fs.existsSync(CONFIG.ROUTES_FILE)
-    ? fs.readFileSync(CONFIG.ROUTES_FILE, "utf-8")
-    : "";
-
-  // Step 2: Discover route files
-  console.log("📁 Step 2: Discovering route files...");
+  // Step 1: Discover gateway route files
+  console.log("📁 Step 1: Discovering gateway route files...");
   const routeFiles = findAllRouteFiles();
-  console.log(`   Found ${routeFiles.length} route files\n`);
+  console.log(`   Found ${routeFiles.length} gateway files\n`);
+
+  // Step 2: Build handler registry from module-level route files
+  // Gateway routes reference handler groups (e.g. parentHandlers.validateUpdate)
+  // instead of inline validate() calls — the registry resolves these to schema fields.
+  console.log("🔗 Step 2: Building handler registry...");
+  const handlerRegistry = buildHandlerRegistry(findModuleRouteFiles());
+  console.log(
+    `   Registered ${Object.keys(handlerRegistry).length} handler-to-schema mappings\n`,
+  );
 
   // Step 3: Parse all routes
   console.log("📋 Step 3: Parsing route definitions...");
@@ -1379,34 +1530,25 @@ function main() {
   let totalEndpoints = 0;
 
   for (const file of routeFiles) {
-    const relativePath = path.relative(CONFIG.MODULES_DIR, file);
-    const parts = relativePath.split(path.sep);
+    // Gateway file: derive category and base path from file name
+    // e.g. parent.routes.ts → category "Parent", base path "/parent"
+    const relativePath = path.relative(CONFIG.ROUTES_LAYER_DIR, file);
+    const gatewayName = path.basename(file, ".routes.ts"); // e.g. "parent", "school-admin"
+    const categoryName = titleCase(gatewayName);
+    const basePath = "/" + gatewayName;
+    gatewayCategories.add(categoryName);
 
-    // Determine category name
-    let categoryName;
-    if (parts.length > 2) {
-      // Nested module: users/parent -> "Users - Parent"
-      categoryName = `${titleCase(parts[0])} - ${titleCase(parts[1])}`;
-    } else {
-      // Top-level module: auth -> "Auth"
-      categoryName = titleCase(parts[0]);
-    }
-
-    // Parse endpoints
-    const endpoints = parseRouteFile(file);
+    // Parse endpoints (handler registry resolves validate() schema references)
+    const endpoints = parseRouteFile(file, handlerRegistry);
 
     if (endpoints.length === 0) {
       console.log(`   ⚠️  ${relativePath}: No endpoints found`);
       continue;
     }
 
-    // Determine base path from main routes
-    const varName = getRouteVariableName(file, mainRoutesContent);
-    const basePath = varName ? basePaths[varName] || "" : "";
-
-    // Apply base path to all endpoints
+    // Prepend the gateway base path (e.g. /parent) to every endpoint route
     endpoints.forEach((ep) => {
-      if (basePath && !ep.route.startsWith(basePath)) {
+      if (!ep.route.startsWith(basePath)) {
         ep.route = basePath + ep.route;
       }
     });

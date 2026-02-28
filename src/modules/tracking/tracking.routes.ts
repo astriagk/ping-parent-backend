@@ -1,10 +1,4 @@
-import { Router } from "express";
-
-import {
-  validate,
-  verifyAdminToken,
-  verifyDriverToken,
-} from "@shared/middlewares";
+import { validate } from "@shared/middlewares";
 
 import {
   calculateOptimalRouteWithTomTomHandler,
@@ -22,51 +16,32 @@ import {
   updatePositionSchema,
 } from "./tracking.validation";
 
-const router = Router();
+/**
+ * Handler group for tracking module.
+ * Import in src/routes/driver.routes.ts, shared.routes.ts, admin.routes.ts — NO auth middleware here.
+ */
+export const trackingHandlers = {
+  // Driver-specific
+  driver: {
+    validateCalculate: validate(calculateRouteSchema),
+    calculate: calculateRouteHandler,
+    validateTomTom: validate(calculateOptimalRouteWithTomTomSchema),
+    calculateTomTom: calculateOptimalRouteWithTomTomHandler,
+    validateRecalculate: validate(calculateOptimalRouteWithTomTomSchema),
+    recalculate: recalculateRouteHandler,
+    validateUpdatePosition: validate(updatePositionSchema),
+    updatePosition: updatePositionHandler,
+  },
 
-// Calculate optimal route (free version - simple distance-based optimization)
-router.post(
-  "/calculate",
-  verifyDriverToken,
-  validate(calculateRouteSchema),
-  calculateRouteHandler,
-);
+  // Shared (any authenticated user)
+  shared: {
+    getTracking: getTrackingHandler,
+    getCurrentPosition: getCurrentPositionHandler,
+    getRouteDetails: getRouteDetailsHandler,
+  },
 
-// Calculate optimal route using TomTom Matrix API (premium - includes navigation & alternatives)
-router.post(
-  "/tomtom",
-  verifyDriverToken,
-  validate(calculateOptimalRouteWithTomTomSchema),
-  calculateOptimalRouteWithTomTomHandler,
-);
-
-// Recalculate route from current position (when driver changes route)
-// Works with both free and TomTom versions based on initial optimization
-router.post(
-  "/:tripId/recalculate",
-  verifyDriverToken,
-  validate(calculateOptimalRouteWithTomTomSchema),
-  recalculateRouteHandler,
-);
-
-// Update driver's current position during trip
-router.patch(
-  "/:tripId/position",
-  verifyDriverToken,
-  validate(updatePositionSchema),
-  updatePositionHandler,
-);
-
-// Get tracking history for a trip (parents can track assigned students' drivers)
-router.get("/:tripId/tracking", getTrackingHandler);
-
-// Get latest driver position for a trip
-router.get("/:tripId/current-position", getCurrentPositionHandler);
-
-// Get complete route details including geometry, waypoints, current position
-router.get("/:tripId/details", getRouteDetailsHandler);
-
-// Clean old tracking data (admin only)
-router.post("/admin/cleanup", verifyAdminToken, cleanTrackingDataHandler);
-
-export default router;
+  // Admin-specific
+  admin: {
+    cleanup: cleanTrackingDataHandler,
+  },
+};

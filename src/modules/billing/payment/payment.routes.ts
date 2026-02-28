@@ -1,10 +1,4 @@
-import { Router } from "express";
-
-import {
-  validate,
-  verifyAdminToken,
-  verifyParentToken,
-} from "@shared/middlewares";
+import { validate } from "@shared/middlewares";
 
 import {
   completePaymentById,
@@ -19,39 +13,28 @@ import {
 } from "./payment.controller";
 import { createPaymentSchema, updatePaymentSchema } from "./payment.validation";
 
-const router = Router();
+/**
+ * Handler group for payment module.
+ * Import in src/routes/parent.routes.ts, admin.routes.ts — NO auth middleware here.
+ */
+export const paymentHandlers = {
+  // Parent-specific
+  parent: {
+    validateCreate: validate(createPaymentSchema),
+    create: createPayment,
+    complete: completePaymentById,
+    getMyPayments: getMyPayments,
+    getMyPending: getMyPendingPayments,
+    getMyCompleted: getMyCompletedPayments,
+    getById: getPaymentByIdController,
+    validateUpdate: validate(updatePaymentSchema),
+    update: updatePaymentById,
+    refund: refundPaymentById,
+  },
 
-// Admin routes (no verifyParentToken)
-router.get("/admin/all-payments", verifyAdminToken, getAllPaymentsController);
-
-router.get("/admin/payment/:id", verifyAdminToken, getPaymentByIdController);
-
-// All routes below require parent authentication
-router.use(verifyParentToken);
-
-// 01. Make Payment
-router.post("/", validate(createPaymentSchema), createPayment);
-
-// 02. Complete Payment
-router.post("/:id/complete", completePaymentById);
-
-// 03. Get Payment History
-router.get("/my-payments", getMyPayments);
-
-// Additional Routes
-// Get Pending Payments
-router.get("/my-payments/pending", getMyPendingPayments);
-
-// Get Completed Payments
-router.get("/my-payments/completed", getMyCompletedPayments);
-
-// Get Payment by ID
-router.get("/:id", getPaymentByIdController);
-
-// Update Payment
-router.put("/:id", validate(updatePaymentSchema), updatePaymentById);
-
-// Refund Payment
-router.post("/:id/refund", refundPaymentById);
-
-export default router;
+  // Admin-specific
+  admin: {
+    getAll: getAllPaymentsController,
+    getById: getPaymentByIdController,
+  },
+};

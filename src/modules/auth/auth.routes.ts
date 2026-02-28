@@ -1,10 +1,4 @@
-import { Router } from "express";
-
-import {
-  loginRateLimiter,
-  validate,
-  verifyAdminToken,
-} from "@shared/middlewares";
+import { loginRateLimiter, validate } from "@shared/middlewares";
 
 import {
   activateUserController,
@@ -20,64 +14,29 @@ import {
 } from "./auth.controller";
 import { sendOTPSchema, verifyOTPSchema } from "./auth.validation";
 
-const router = Router();
+/**
+ * Handler group for auth module.
+ * Import in src/routes/auth.routes.ts, admin.routes.ts — NO auth middleware here.
+ */
+export const authHandlers = {
+  // Public (no auth)
+  public: {
+    getRoles: getRoles,
+    validateSendOtp: validate(sendOTPSchema),
+    sendPhoneOtp: sendPhoneOtp,
+    validateVerifyOtp: validate(verifyOTPSchema),
+    verifyPhoneOtp: verifyPhoneOtp,
+    sendLoginOtp: sendLoginOtp,
+    verifyLoginOtp: verifyLoginOtp,
+    verifyToken: verifyAuthToken,
+    logout: logout,
+    loginRateLimiter: loginRateLimiter,
+  },
 
-// 01. Get All Roles
-router.get("/roles", getRoles);
-
-// 02. Register - Send OTP (Parent/Driver)
-router.post(
-  "/register/send-otp",
-  validate(sendOTPSchema),
-  loginRateLimiter,
-  sendPhoneOtp,
-);
-
-// 03. Register - Verify OTP (Parent/Driver)
-router.post(
-  "/register/verify-otp",
-  validate(verifyOTPSchema),
-  loginRateLimiter,
-  verifyPhoneOtp,
-);
-
-// 04. Login - Send OTP
-router.post(
-  "/login/send-otp",
-  validate(sendOTPSchema),
-  loginRateLimiter,
-  sendLoginOtp,
-);
-
-// 05. Login - Verify OTP
-router.post(
-  "/login/verify-otp",
-  validate(verifyOTPSchema),
-  loginRateLimiter,
-  verifyLoginOtp,
-);
-
-// 06. Verify Token
-router.get("/verify-token", verifyAuthToken);
-
-// 07. Logout
-router.post("/logout", logout);
-
-// 08. Get All Users (Admin)
-router.get("/admin/users", verifyAdminToken, getAllUsersController);
-
-// 09. Activate User (Admin)
-router.patch(
-  "/admin/users/:id/activate",
-  verifyAdminToken,
-  activateUserController,
-);
-
-// 10. Deactivate User (Admin)
-router.patch(
-  "/admin/users/:id/deactivate",
-  verifyAdminToken,
-  deactivateUserController,
-);
-
-export default router;
+  // Admin-specific
+  admin: {
+    getAllUsers: getAllUsersController,
+    activateUser: activateUserController,
+    deactivateUser: deactivateUserController,
+  },
+};

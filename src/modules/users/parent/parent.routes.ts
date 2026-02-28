@@ -1,6 +1,4 @@
-import { Router } from "express";
-
-import { validate, verifyParentToken } from "@shared/middlewares";
+import { validate } from "@shared/middlewares";
 
 import {
   getAddressParent,
@@ -15,34 +13,17 @@ import {
   updateParentProfileSchema,
 } from "./parent.validation";
 
-const router = Router();
-
-// 01. Get Parent Profile
-router.get("/profile", verifyParentToken, getProfileParent);
-
-// 02. Update Parent Profile
-router.put(
-  "/profile",
-  verifyParentToken,
-  validate(updateParentProfileSchema),
-  updateProfileParent,
-);
-
-// 03. Get Parent Address
-router.get("/address", verifyParentToken, getAddressParent);
-
-// 04. Update Parent Address
-router.put(
-  "/address",
-  verifyParentToken,
-  validate(updateAddressSchema),
-  updateAddress,
-);
-
-// 05. Get Active Trips for Parent's Children
-router.get("/trips/active", verifyParentToken, getMyActiveTripsParent);
-
-// 06. Get All Trips for Parent's Children
-router.get("/trips", verifyParentToken, getMyAllTrips);
-
-export default router;
+/**
+ * Handler group for parent module.
+ * Import in src/routes/parent.routes.ts — NO auth middleware here.
+ */
+export const parentHandlers = {
+  getProfile: getProfileParent,
+  validateUpdate: validate(updateParentProfileSchema),
+  updateProfile: updateProfileParent,
+  getAddress: getAddressParent,
+  validateAddress: validate(updateAddressSchema),
+  updateAddress: updateAddress,
+  getActiveTrips: getMyActiveTripsParent,
+  getAllTrips: getMyAllTrips,
+};
