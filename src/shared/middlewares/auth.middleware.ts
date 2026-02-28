@@ -155,7 +155,8 @@ export const verifyAdminOrAboveToken = (
 
     if (
       payload.role !== UserRole.ADMIN &&
-      payload.role !== UserRole.SUPERADMIN
+      payload.role !== UserRole.SUPERADMIN &&
+      payload.role !== UserRole.SCHOOL_ADMIN
     ) {
       return res.status(HTTP_STATUS.FORBIDDEN).json({
         success: false,

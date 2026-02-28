@@ -30,7 +30,7 @@ export const verifyPasswordHash = async (
  * Format admin response by removing sensitive fields
  */
 const formatAdminResponse = (admin: WithId<Admin>): AdminResponse => {
-  const { password_hash, _id, ...adminData } = admin;
+  const { password_hash, ...adminData } = admin;
   return adminData as AdminResponse;
 };
 

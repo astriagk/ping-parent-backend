@@ -1,3 +1,5 @@
+import { ObjectId } from "mongodb";
+
 import { UserRole } from "@shared/constants/enums";
 
 export interface Admin {
@@ -41,7 +43,7 @@ export interface AdminPasswordChangeInput {
 }
 
 export interface AdminResponse {
-  _id: string;
+  _id: ObjectId;
   username: string;
   email: string;
   phone_number?: string;
