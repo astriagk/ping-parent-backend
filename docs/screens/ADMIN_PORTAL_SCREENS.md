@@ -37,12 +37,12 @@
 | 4   | Manage Schools       |     Y      |    Y    |         —         |
 | 5   | Driver Approvals     |     Y      |    Y    |         —         |
 | 6   | Trips & Tracking     |  Y (all)   | Y (all) | Y (school-scoped) |
-| 7   | Subscription Plans   |     Y      |    —    |         —         |
+| 7   | Subscription Plans[^1] |     Y      |    —    |         —         |
 | 8   | School Subscription  |     —      |    —    |         Y         |
 | 9   | Student Codes        |     —      |    —    |         Y         |
 | 10  | Students             |     —      |    —    |   Y (read-only)   |
-| 11  | Driver Assignments   |     —      |    —    |         Y         |
-| 12  | Payments Overview    |     Y      |    —    |         —         |
+| 11  | Driver Assignments[^3]   |     Y      |    Y    |         Y         |
+| 12  | Payments Overview[^2] |     Y      |    Y    |         Y         |
 | 13  | Manage Ads           |     Y      |    Y    |         —         |
 | 14  | School Events        |     —      |    —    |         Y         |
 | 15  | Event RSVPs          |     —      |    —    |         Y         |
@@ -54,11 +54,18 @@
 | 21  | Reports              |     Y      |    Y    |         —         |
 | 22  | System Maintenance   |     Y      |    —    |         —         |
 
-> **⚠️ Conflicts between source documents (resolve before frontend implementation):**
+> **⚠️ Notes / clarifications:**
 >
-> - **Subscription Plans (#7):** Access matrix = SA only. Screens guide = SA + A (full) + SchA (read-only).
-> - **Payments Overview (#12):** Access matrix = SA only. Screens guide = SA + A + SchA (scoped).
-> - **Driver Assignments (#11):** Access matrix = SchA only. Screens guide = SA + A + SchA (all/scoped).
+> * Rows in the matrix show who sees the sidebar item. detailed permissions and scoped views are documented in each screen section below.
+> * Subscription Plans (#7) are manageable only by SA; other roles may query the public `/subscription-plans` endpoint for read‑only display.
+> * Payments Overview (#12) has a dedicated admin page for SA only. A and SchA see payment summaries on the dashboard or via scoped list endpoints (see Screen 2 and Screen 22).
+> * Driver Assignments (#11) is available to SA/A with full visibility; SchA see assignments scoped to their school.
+
+[^1]: SA only for management; other roles can view via `GET /public/subscription-plans`.
+[^2]: Dedicated payments page is SA-only. Dashboard cards and scoped queries provide data for A/SchA.
+[^3]: SA/A see all assignments; SchA scoped to their school (driver‑student assignments).
+
+
 
 ---
 
