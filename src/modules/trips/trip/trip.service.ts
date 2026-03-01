@@ -637,7 +637,6 @@ export const getCompletedTripDetails = async (
       // Stage 11: Project final output
       {
         $project: {
-          _id: 0,
           trip_id: 1,
           driver_id: 1,
           school_id: 1,
