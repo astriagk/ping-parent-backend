@@ -317,7 +317,7 @@ Table daily_qr_otp {
 Table notifications {
   _id ObjectId [pk, note: 'MongoDB auto-generated']
   user_id ObjectId [not null, ref: > users._id]
-  notification_type enum [not null, note: 'pickup_started, approaching, picked_up, dropped, payment_due, general']
+  notification_type enum [not null, note: 'pickup_started, approaching, picked_up, dropped, absent, trip_started, trip_completed, payment_due, general']
   title varchar(200) [not null]
   message text [not null]
   data json [note: 'Additional data']
@@ -329,6 +329,48 @@ Table notifications {
     (user_id, is_read)
     created_at
   }
+}
+
+Table device_tokens {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [not null, ref: > users._id]
+  role varchar(20) [not null, note: 'parent, driver, school_admin, admin, superadmin']
+  fcm_token varchar(500) [not null, note: 'Firebase Cloud Messaging registration token']
+  device_type enum [not null, note: 'android, ios, web']
+  device_id varchar(255) [not null, note: 'Stable device identifier (Android ID, iOS identifierForVendor)']
+  is_active boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    (user_id, is_active)
+    fcm_token [unique]
+    (user_id, device_id)
+  }
+
+  Note: '''Multi-device support: one record per (user, device). A user can have multiple active tokens (e.g., mom phone + dad phone).
+
+  Upsert logic:
+  1. Same user + same device_id → update fcm_token (handles token refresh)
+  2. Same fcm_token, different user → update user/device info (device changed hands)
+  3. New device + new token → create new record
+
+  Deactivated (is_active=false) on logout or when FCM reports token invalid.'''
+}
+
+Table notification_preferences {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [unique, not null, ref: > users._id]
+  push_enabled boolean [default: true, note: 'Global on/off toggle for FCM push notifications']
+  updated_at timestamp
+
+  indexes {
+    user_id [unique]
+  }
+
+  Note: '''One record per user. Controls whether FCM push notifications are sent.
+  When push_enabled=false, FCM is skipped but Socket.IO events and DB notification records are still created.
+  If no record exists for a user, push is enabled by default.'''
 }
 
 Table subscription_plans {

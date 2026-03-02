@@ -209,7 +209,10 @@ export const ERROR_MESSAGES = {
     TITLE_REQUIRED: "Title is required",
     MESSAGE_REQUIRED: "Message is required",
     INVALID_NOTIFICATION_TYPE:
-      "Notification type must be pickup_started, approaching, picked_up, dropped, payment_due, or general",
+      "Notification type must be pickup_started, approaching, picked_up, dropped, absent, trip_started, trip_completed, payment_due, or general",
+    FCM_TOKEN_REQUIRED: "FCM token is required",
+    DEVICE_TYPE_REQUIRED: "Device type is required",
+    INVALID_DEVICE_TYPE: "Device type must be android, ios, or web",
   },
   SUBSCRIPTION_PLAN: {
     NOT_FOUND: "Subscription plan not found",
@@ -498,6 +501,10 @@ export const SUCCESS_MESSAGES = {
   NOTIFICATION: {
     FETCHED_SUCCESSFULLY: "Notifications fetched successfully",
     MARKED_AS_READ_SUCCESSFULLY: "Notification marked as read successfully",
+    TOKEN_REGISTERED: "Device token registered successfully",
+    TOKEN_REMOVED: "Device token removed successfully",
+    PREFERENCES_FETCHED: "Notification preferences fetched successfully",
+    PREFERENCES_UPDATED: "Notification preferences updated successfully",
   },
   SUBSCRIPTION_PLAN: {
     FETCHED_SUCCESSFULLY: "Subscription plans fetched successfully",

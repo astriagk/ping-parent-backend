@@ -1,6 +1,6 @@
 import { ObjectId, WithId } from "mongodb";
 
-import { TrackingSocketService } from "@modules/tracking/tracking.socket.service";
+import { NotificationDispatcher } from "@modules/notification/notification.dispatcher";
 import { getDB } from "@shared/config";
 import {
   AttendanceStatus,
@@ -555,8 +555,13 @@ export const recordPickup = async (
         .collection(TRIPS_COLLECTION)
         .findOne({ _id: new ObjectId(tripId) });
 
-      TrackingSocketService.notifyParentStudentPicked(
+      const parent = await db
+        .collection(PARENTS_COLLECTION)
+        .findOne({ _id: new ObjectId(student.parent_id) });
+
+      NotificationDispatcher.notifyParentStudentPicked(
         student.parent_id,
+        parent?.user_id || student.parent_id,
         tripId,
         studentId,
         student.name || student.first_name || "Your child",
@@ -659,8 +664,13 @@ export const recordDrop = async (
         .collection(TRIPS_COLLECTION)
         .findOne({ _id: new ObjectId(tripId) });
 
-      TrackingSocketService.notifyParentStudentDropped(
+      const parent = await db
+        .collection(PARENTS_COLLECTION)
+        .findOne({ _id: new ObjectId(student.parent_id) });
+
+      NotificationDispatcher.notifyParentStudentDropped(
         student.parent_id,
+        parent?.user_id || student.parent_id,
         tripId,
         studentId,
         student.name || student.first_name || "Your child",
@@ -1034,6 +1044,13 @@ export const bulkStopAction = async (
 
   // Send consolidated notifications using already-fetched student data
   try {
+    // Look up parent's user_id for notification dispatcher
+    const db = await getDB();
+    const parentDoc = await db
+      .collection(PARENTS_COLLECTION)
+      .findOne({ _id: new ObjectId(parentId) });
+    const parentUserId = parentDoc?.user_id || parentId;
+
     // Build notifications for picked/dropped students
     if (result.processed_students.length > 0) {
       const processedStudentDetails = result.processed_students
@@ -1049,15 +1066,17 @@ export const bulkStopAction = async (
 
       if (processedStudentDetails.length > 0) {
         if (tripType === TripType.PICKUP) {
-          TrackingSocketService.notifyParentStudentsPicked(
+          NotificationDispatcher.notifyParentStudentsPicked(
             parentId,
+            parentUserId,
             tripId,
             processedStudentDetails,
             trip?.driver_id,
           );
         } else {
-          TrackingSocketService.notifyParentStudentsDropped(
+          NotificationDispatcher.notifyParentStudentsDropped(
             parentId,
+            parentUserId,
             tripId,
             processedStudentDetails,
             trip?.driver_id,
@@ -1080,8 +1099,9 @@ export const bulkStopAction = async (
         }));
 
       if (absentStudentDetails.length > 0) {
-        TrackingSocketService.notifyParentStudentsAbsent(
+        NotificationDispatcher.notifyParentStudentsAbsent(
           parentId,
+          parentUserId,
           tripId,
           absentStudentDetails,
           trip?.driver_id,
@@ -1324,20 +1344,34 @@ export const bulkSchoolAction = async (
         }
       }
 
+      // Look up parent user_ids for notification dispatcher
+      const db = await getDB();
+      const parentIds = [...studentsByParent.keys()];
+      const parentDocs = await db
+        .collection(PARENTS_COLLECTION)
+        .find({ _id: { $in: parentIds.map((id) => new ObjectId(id)) } })
+        .toArray();
+      const parentUserIdMap = new Map(
+        parentDocs.map((p) => [p._id.toString(), p.user_id]),
+      );
+
       // Send one notification per parent
       for (const [pId, pStudents] of studentsByParent) {
+        const pUserId = parentUserIdMap.get(pId) || pId;
         if (tripType === TripType.PICKUP) {
           // PICKUP trip at school = dropped at school
-          TrackingSocketService.notifyParentStudentsDropped(
+          NotificationDispatcher.notifyParentStudentsDropped(
             pId,
+            pUserId,
             tripId,
             pStudents,
             trip?.driver_id,
           );
         } else {
           // DROP trip at school = picked from school
-          TrackingSocketService.notifyParentStudentsPicked(
+          NotificationDispatcher.notifyParentStudentsPicked(
             pId,
+            pUserId,
             tripId,
             pStudents,
             trip?.driver_id,

@@ -1,6 +1,8 @@
 import { Router } from "express";
 
+import { deviceTokenHandlers } from "@modules/device_token/device-token.routes";
 import { notificationHandlers } from "@modules/notification/notification.routes";
+import { notificationPreferencesHandlers } from "@modules/notification_preferences/notification-preferences.routes";
 import { schoolHandlers } from "@modules/school/school.routes";
 import { trackingHandlers } from "@modules/tracking/tracking.routes";
 import { verifyToken_Middleware } from "@shared/middlewares";
@@ -21,6 +23,29 @@ router.put("/notifications/:id/mark-as-read", notificationHandlers.markAsRead);
 router.put(
   "/notifications/mark-all-as-read",
   notificationHandlers.markAllAsRead,
+);
+
+// --- Notification Preferences ---
+router.get(
+  "/notifications/preferences",
+  notificationPreferencesHandlers.shared.get,
+);
+router.put(
+  "/notifications/preferences",
+  notificationPreferencesHandlers.shared.validateUpdate,
+  notificationPreferencesHandlers.shared.update,
+);
+
+// --- Device Tokens (FCM push notifications) ---
+router.post(
+  "/device-tokens/register",
+  deviceTokenHandlers.shared.validateRegister,
+  deviceTokenHandlers.shared.register,
+);
+router.post(
+  "/device-tokens/remove",
+  deviceTokenHandlers.shared.validateRemove,
+  deviceTokenHandlers.shared.remove,
 );
 
 // --- Tracking (read-only for any authenticated user) ---
