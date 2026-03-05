@@ -27,7 +27,6 @@ import {
 export const getAllPaymentsController = asyncHandler(
   async (req: Request, res: Response) => {
     const payments = await getAllPayments();
-
     return res.json({
       success: true,
       data: payments,

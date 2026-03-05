@@ -235,13 +235,13 @@ export const getCompleteParentDetailsById = async (
 ): Promise<any> => {
   try {
     const db = await getDB();
-
+    console.log(parentId);
     const result = await db
       .collection(PARENTS_COLLECTION)
       .aggregate([
         {
           $match: {
-            _id: ObjectId.isValid(parentId) ? new ObjectId(parentId) : parentId,
+            user_id: parentId,
           },
         },
         {

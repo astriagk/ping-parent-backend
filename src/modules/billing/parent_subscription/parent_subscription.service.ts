@@ -5,10 +5,13 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   PARENTS_COLLECTION,
+  PARENT_SUBSCRIPTIONS_COLLECTION,
   PlanType,
   PricingModel,
+  SUBSCRIPTION_PLANS_COLLECTION,
   SubscriptionSource,
   SubscriptionStatus,
+  USERS_COLLECTION,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 
@@ -758,9 +761,76 @@ export const getParentSubscriptionById = async (
 };
 
 export const getAllParentSubscriptions = async (): Promise<
-  WithId<ParentSubscription>[]
+  Record<string, unknown>[]
 > => {
-  return await parentSubscriptionRepository.findMany();
+  const db = await getDB();
+  return await db
+    .collection(PARENT_SUBSCRIPTIONS_COLLECTION)
+    .aggregate([
+      {
+        $addFields: {
+          parent_obj_id: { $toObjectId: "$parent_id" },
+          plan_obj_id: { $toObjectId: "$plan_id" },
+        },
+      },
+      {
+        $lookup: {
+          from: PARENTS_COLLECTION,
+          localField: "parent_obj_id",
+          foreignField: "_id",
+          as: "parent",
+        },
+      },
+      { $unwind: { path: "$parent", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          parent_user_obj_id: {
+            $cond: [
+              { $ne: ["$parent.user_id", null] },
+              { $toObjectId: "$parent.user_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          localField: "parent_user_obj_id",
+          foreignField: "_id",
+          as: "parent_user",
+        },
+      },
+      { $unwind: { path: "$parent_user", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: SUBSCRIPTION_PLANS_COLLECTION,
+          localField: "plan_obj_id",
+          foreignField: "_id",
+          as: "plan",
+        },
+      },
+      { $unwind: { path: "$plan", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          parent_name: "$parent.name",
+          parent_phone: "$parent_user.phone_number",
+          plan_name: "$plan.plan_name",
+          plan_type: "$plan.plan_type",
+        },
+      },
+      {
+        $project: {
+          parent_obj_id: 0,
+          plan_obj_id: 0,
+          parent_user_obj_id: 0,
+          parent: 0,
+          parent_user: 0,
+          plan: 0,
+        },
+      },
+    ])
+    .toArray();
 };
 
 export const getParentSubscriptionsByUserId = async (

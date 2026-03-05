@@ -17,6 +17,7 @@ import {
   SchoolSubscription,
   SchoolSubscriptionInput,
   SchoolSubscriptionUpdateInput,
+  SchoolSubscriptionWithPlan,
 } from "./school_subscription.type";
 
 /**
@@ -70,7 +71,7 @@ export const getActiveSchoolSubscription = async (
  */
 export const getSchoolSubscriptions = async (
   schoolId: string,
-): Promise<WithId<SchoolSubscription>[]> => {
+): Promise<SchoolSubscriptionWithPlan[]> => {
   return await schoolSubscriptionRepository.findAllBySchool(schoolId);
 };
 

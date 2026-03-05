@@ -13,6 +13,7 @@ import { assignmentHandlers } from "@modules/trips/driver_student_assignment/dri
 import { schoolAssignmentHandlers } from "@modules/trips/school_assignment/school_assignment.routes";
 import { tripHandlers } from "@modules/trips/trip/trip.routes";
 import { schoolDriverHandlers } from "@modules/users/school_driver/school_driver.routes";
+import { studentHandlers } from "@modules/users/student/student.routes";
 import { verifyAdminOrAboveToken } from "@shared/middlewares";
 
 const router = Router();
@@ -125,6 +126,7 @@ router.get(
 );
 router.post(
   "/school-assignments/:schoolId/create",
+  schoolAssignmentHandlers.admin.validateCreate,
   schoolAssignmentHandlers.admin.create,
 );
 router.post(
@@ -133,8 +135,12 @@ router.post(
 );
 router.post(
   "/school-assignments/:assignmentId/reject",
+  schoolAssignmentHandlers.admin.validateReject,
   schoolAssignmentHandlers.admin.reject,
 );
+
+// --- Students ---
+router.get("/students/school/:schoolId", studentHandlers.getBySchool);
 
 // --- Assignments ---
 router.get("/assignments", assignmentHandlers.admin.getAll);

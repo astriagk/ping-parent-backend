@@ -8,6 +8,7 @@ import {
   getMyStudents,
   getStudentByStudentId,
   getStudentProfile,
+  getStudentsBySchool,
   updateStudent,
   updateStudentByStudentId,
 } from "./student.controller";
@@ -29,4 +30,5 @@ export const studentHandlers = {
   getByStudentId: getStudentByStudentId,
   updateByStudentId: updateStudentByStudentId,
   deleteByStudentId: deleteStudentByStudentId,
+  getBySchool: getStudentsBySchool,
 };

@@ -1,6 +1,13 @@
 import { WithId } from "mongodb";
 
-import { ERROR_MESSAGES, HTTP_STATUS } from "@shared/constants";
+import { getDB } from "@shared/config";
+import {
+  DRIVERS_COLLECTION,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  SCHOOLS_COLLECTION,
+  STUDENTS_COLLECTION,
+} from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 
 import { schoolRepository } from "./school.repository";
@@ -31,8 +38,51 @@ export const createSchool = async (
   return await schoolRepository.create(schoolData);
 };
 
-export const getAllSchools = async (): Promise<WithId<School>[]> => {
-  return await schoolRepository.findMany();
+export const getAllSchools = async (): Promise<Record<string, unknown>[]> => {
+  const db = await getDB();
+  return await db
+    .collection(SCHOOLS_COLLECTION)
+    .aggregate([
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          let: { schoolIdStr: { $toString: "$_id" } },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$school_id", "$$schoolIdStr"] } } },
+            { $count: "count" },
+          ],
+          as: "student_count_arr",
+        },
+      },
+      {
+        $lookup: {
+          from: DRIVERS_COLLECTION,
+          let: { schoolIdStr: { $toString: "$_id" } },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$school_id", "$$schoolIdStr"] } } },
+            { $count: "count" },
+          ],
+          as: "driver_count_arr",
+        },
+      },
+      {
+        $addFields: {
+          student_count: {
+            $ifNull: [{ $arrayElemAt: ["$student_count_arr.count", 0] }, 0],
+          },
+          driver_count: {
+            $ifNull: [{ $arrayElemAt: ["$driver_count_arr.count", 0] }, 0],
+          },
+        },
+      },
+      {
+        $project: {
+          student_count_arr: 0,
+          driver_count_arr: 0,
+        },
+      },
+    ])
+    .toArray();
 };
 
 export const getSchoolsByCity = async (

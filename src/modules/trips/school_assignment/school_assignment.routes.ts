@@ -1,3 +1,5 @@
+import { validate } from "@shared/middlewares";
+
 import {
   approveSchoolAssignment,
   createSchoolAssignment,
@@ -6,6 +8,10 @@ import {
   getSchoolPendingAssignments,
   rejectSchoolAssignment,
 } from "./school_assignment.controller";
+import {
+  createSchoolAssignmentSchema,
+  rejectSchoolAssignmentSchema,
+} from "./school_assignment.validation";
 
 /**
  * Handler group for school_assignment module.
@@ -16,8 +22,10 @@ export const schoolAssignmentHandlers = {
     getBySchool: getSchoolAssignments,
     getPending: getSchoolPendingAssignments,
     getByDriver: getSchoolDriverAssignments,
+    validateCreate: validate(createSchoolAssignmentSchema),
     create: createSchoolAssignment,
     approve: approveSchoolAssignment,
+    validateReject: validate(rejectSchoolAssignmentSchema),
     reject: rejectSchoolAssignment,
   },
 };
