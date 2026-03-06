@@ -340,6 +340,12 @@ export const ERROR_MESSAGES = {
     NOT_FOUND: "Audit log not found",
     FAILED_TO_FETCH: "Failed to fetch audit logs",
   },
+  SUPPORT_TICKET: {
+    NOT_FOUND: "Support ticket not found",
+    FAILED_TO_CREATE: "Failed to create support ticket",
+    FAILED_TO_FETCH: "Failed to fetch support ticket",
+    FAILED_TO_UPDATE: "Failed to update support ticket",
+  },
   TRACKING: {
     TRIP_NOT_FOUND: "Trip not found",
     PERMISSION_DENIED:
@@ -591,6 +597,14 @@ export const SUCCESS_MESSAGES = {
   AUDIT_LOG: {
     FETCHED_SUCCESSFULLY: "Audit log fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Audit logs fetched successfully",
+  },
+  SUPPORT_TICKET: {
+    CREATED_SUCCESSFULLY: "Support ticket created successfully",
+    FETCHED_SUCCESSFULLY: "Support ticket fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Support tickets list fetched successfully",
+    CLOSED_SUCCESSFULLY: "Support ticket closed successfully",
+    STATUS_UPDATED_SUCCESSFULLY: "Support ticket status updated successfully",
+    ASSIGNED_SUCCESSFULLY: "Support ticket assigned successfully",
   },
   ROUTE: {
     CALCULATED_SUCCESSFULLY: "Route calculated and optimized successfully",

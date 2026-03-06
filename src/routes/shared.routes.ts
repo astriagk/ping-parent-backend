@@ -4,6 +4,7 @@ import { deviceTokenHandlers } from "@modules/device_token/device-token.routes";
 import { notificationHandlers } from "@modules/notification/notification.routes";
 import { notificationPreferencesHandlers } from "@modules/notification_preferences/notification-preferences.routes";
 import { schoolHandlers } from "@modules/school/school.routes";
+import { supportTicketHandlers } from "@modules/support_tickets/support_tickets.routes";
 import { trackingHandlers } from "@modules/tracking/tracking.routes";
 import { verifyToken_Middleware } from "@shared/middlewares";
 
@@ -62,5 +63,15 @@ router.get(
 // --- Schools (read-only for any authenticated user) ---
 router.get("/schools", schoolHandlers.shared.getAll);
 router.get("/schools/:school_id", schoolHandlers.shared.getById);
+
+// --- Support Tickets ---
+router.post(
+  "/support-tickets",
+  supportTicketHandlers.shared.validateCreate,
+  supportTicketHandlers.shared.create,
+);
+router.get("/support-tickets", supportTicketHandlers.shared.getMyTickets);
+router.get("/support-tickets/:id", supportTicketHandlers.shared.getById);
+router.post("/support-tickets/:id/close", supportTicketHandlers.shared.close);
 
 export default router;
