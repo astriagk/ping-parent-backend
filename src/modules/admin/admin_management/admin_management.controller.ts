@@ -377,6 +377,7 @@ export const verifyAdminAuthToken = asyncHandler(
         data: {
           adminId: payload.adminId,
           role: payload.role || "",
+          school_id: payload.school_id,
           tokenValid: true,
         },
       });
@@ -395,6 +396,9 @@ export const verifyAdminAuthToken = asyncHandler(
               const newToken = generateAdminAccessToken({
                 adminId: refreshPayload.adminId,
                 role: refreshPayload.role,
+                ...(refreshPayload.school_id && {
+                  school_id: refreshPayload.school_id,
+                }),
               });
 
               return res.json({
@@ -402,6 +406,7 @@ export const verifyAdminAuthToken = asyncHandler(
                 data: {
                   adminId: refreshPayload.adminId,
                   role: refreshPayload.role || "",
+                  school_id: refreshPayload.school_id,
                   tokenValid: true,
                   newToken,
                 },

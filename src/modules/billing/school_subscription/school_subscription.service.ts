@@ -11,12 +11,16 @@ import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
 
 import { schoolStudentCodeRepository } from "./school_student_code.repository";
-import { SchoolStudentCode } from "./school_student_code.type";
+import {
+  SchoolStudentCode,
+  SchoolStudentCodeListItem,
+} from "./school_student_code.type";
 import { schoolSubscriptionRepository } from "./school_subscription.repository";
 import {
   SchoolSubscription,
   SchoolSubscriptionInput,
   SchoolSubscriptionUpdateInput,
+  SchoolSubscriptionWithPlan,
 } from "./school_subscription.type";
 
 /**
@@ -70,7 +74,7 @@ export const getActiveSchoolSubscription = async (
  */
 export const getSchoolSubscriptions = async (
   schoolId: string,
-): Promise<WithId<SchoolSubscription>[]> => {
+): Promise<SchoolSubscriptionWithPlan[]> => {
   return await schoolSubscriptionRepository.findAllBySchool(schoolId);
 };
 
@@ -256,7 +260,7 @@ export const generateStudentCodes = async (
  */
 export const getCodesBySchoolSubscription = async (
   subscriptionId: string,
-): Promise<WithId<SchoolStudentCode>[]> => {
+): Promise<SchoolStudentCodeListItem[]> => {
   return await schoolStudentCodeRepository.findBySchoolSubscriptionId(
     subscriptionId,
   );

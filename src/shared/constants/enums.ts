@@ -108,6 +108,9 @@ export enum NotificationType {
   APPROACHING = "approaching",
   PICKED_UP = "picked_up",
   DROPPED = "dropped",
+  ABSENT = "absent",
+  TRIP_STARTED = "trip_started",
+  TRIP_COMPLETED = "trip_completed",
   PAYMENT_DUE = "payment_due",
   GENERAL = "general",
 }
@@ -223,4 +226,10 @@ export enum SocketRoom {
   TRIP = "trip", // trip:{tripId} - shared room for driver and parents on a trip
   TRIP_DRIVER = "driver", // trip:{tripId} - for driver of a trip
   PARENT = "parent", // parent:{parentId} - for sending to specific parent
+}
+
+export enum DeviceType {
+  ANDROID = "android",
+  IOS = "ios",
+  WEB = "web",
 }

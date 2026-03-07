@@ -1,5 +1,6 @@
 import { Request, Response } from "express";
 
+import { userRepository } from "@modules/auth/auth.repository";
 import { schoolSubscriptionRepository } from "@modules/billing/school_subscription/school_subscription.repository";
 import {
   ERROR_MESSAGES,
@@ -27,7 +28,6 @@ export const getSchoolDrivers = asyncHandler(
 
     const drivers = await driverRepository.findMany({
       school_id: schoolId,
-      is_active: true,
     });
 
     return res.json({
@@ -45,7 +45,6 @@ export const getSchoolDrivers = asyncHandler(
 export const assignDriverToSchool = asyncHandler(
   async (req: Request, res: Response) => {
     const { driverId, schoolId } = req.body;
-
     if (!driverId || !schoolId) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
@@ -53,7 +52,16 @@ export const assignDriverToSchool = asyncHandler(
       );
     }
 
-    const driver = await driverRepository.findById(driverId);
+    const user = await userRepository.findById(driverId);
+
+    if (!user) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.SCHOOL_DRIVER.DRIVER_NOT_FOUND,
+      );
+    }
+
+    const driver = await driverRepository.findByUserId(user._id.toString());
 
     if (!driver) {
       throw new ApiError(
@@ -63,30 +71,33 @@ export const assignDriverToSchool = asyncHandler(
     }
 
     // Check if school has active subscription capacity for drivers
-    const subscription =
-      await schoolSubscriptionRepository.findActiveBySchoolId(schoolId);
+    // const subscription =
+    //   await schoolSubscriptionRepository.findActiveBySchoolId(schoolId);
 
-    if (subscription && subscription.max_drivers) {
-      const existingDrivers = await driverRepository.findMany({
-        school_id: schoolId,
-        is_active: true,
-      });
+    // if (subscription && subscription.max_drivers) {
+    //   const existingDrivers = await driverRepository.findMany({
+    //     school_id: schoolId,
+    //     is_active: true,
+    //   });
 
-      if (existingDrivers.length >= subscription.max_drivers) {
-        throw new ApiError(
-          HTTP_STATUS.BAD_REQUEST,
-          `${ERROR_MESSAGES.SCHOOL_DRIVER.CAPACITY_REACHED.replace("{capacity}", subscription.max_drivers.toString())}`,
-        );
-      }
-    }
+    //   if (existingDrivers.length >= subscription.max_drivers) {
+    //     throw new ApiError(
+    //       HTTP_STATUS.BAD_REQUEST,
+    //       `${ERROR_MESSAGES.SCHOOL_DRIVER.CAPACITY_REACHED.replace("{capacity}", subscription.max_drivers.toString())}`,
+    //     );
+    //   }
+    // }
 
     // Assign driver to school
-    const updatedDriver = await driverRepository.updateById(driverId, {
-      $set: {
-        school_id: schoolId,
-        updated_at: new Date(),
+    const updatedDriver = await driverRepository.updateById(
+      driver._id.toString(),
+      {
+        $set: {
+          school_id: schoolId,
+          updated_at: new Date(),
+        },
       },
-    });
+    );
 
     return res.json({
       success: true,
@@ -111,7 +122,16 @@ export const removeDriverFromSchool = asyncHandler(
       );
     }
 
-    const driver = await driverRepository.findById(driverId);
+    const user = await userRepository.findById(driverId);
+
+    if (!user) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.SCHOOL_DRIVER.DRIVER_NOT_FOUND,
+      );
+    }
+
+    const driver = await driverRepository.findByUserId(user._id.toString());
 
     if (!driver) {
       throw new ApiError(
@@ -121,12 +141,15 @@ export const removeDriverFromSchool = asyncHandler(
     }
 
     // Remove driver from school
-    const updatedDriver = await driverRepository.updateById(driverId, {
-      $set: {
-        school_id: undefined,
-        updated_at: new Date(),
+    const updatedDriver = await driverRepository.updateById(
+      driver._id.toString(),
+      {
+        $set: {
+          school_id: undefined,
+          updated_at: new Date(),
+        },
       },
-    });
+    );
 
     return res.json({
       success: true,

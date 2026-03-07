@@ -14,6 +14,7 @@ import {
   getActiveStudentsByUserId,
   getStudentById,
   getStudentByStudentId as getStudentByStudentIdService,
+  getStudentsBySchoolId,
   getStudentsByUserId,
   updateStudentByStudentId as updateStudentByStudentIdService,
   updateStudent as updateStudentService,
@@ -186,6 +187,20 @@ export const deleteStudent = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       message: SUCCESS_MESSAGES.STUDENT.DELETED_SUCCESSFULLY,
+    });
+  },
+);
+
+export const getStudentsBySchool = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { schoolId } = req.params as Record<string, string>;
+
+    const students = await getStudentsBySchoolId(schoolId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: students,
+      message: SUCCESS_MESSAGES.STUDENT.LIST_FETCHED_SUCCESSFULLY,
     });
   },
 );

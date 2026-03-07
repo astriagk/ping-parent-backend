@@ -47,13 +47,6 @@ export const getSchoolSubscriptions = asyncHandler(
   async (req: Request, res: Response) => {
     const { schoolId } = req.params as Record<string, string>;
 
-    if (!schoolId) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.SCHOOL_SUBSCRIPTION.SCHOOL_ID_REQUIRED,
-      );
-    }
-
     const subscriptions = await getSchoolSubscriptionsService(schoolId);
 
     return res.json({

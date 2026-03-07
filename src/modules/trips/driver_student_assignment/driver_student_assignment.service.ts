@@ -7,9 +7,11 @@ import {
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
+  PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
+  USERS_COLLECTION,
   UserRole,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
@@ -141,10 +143,132 @@ export const getAssignmentById = async (
 /**
  * Get all assignments across the system (admin only)
  */
+/**
+ * Get all assignments (admin) — with driver, student, parent and school details joined
+ */
 export const getAllAssignments = async (): Promise<
-  WithId<DriverStudentAssignment>[]
+  Record<string, unknown>[]
 > => {
-  return await driverStudentAssignmentRepository.findMany();
+  const db = await getDB();
+  return await db
+    .collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION)
+    .aggregate([
+      {
+        $lookup: {
+          from: DRIVERS_COLLECTION,
+          localField: "driver_unique_id",
+          foreignField: "driver_unique_id",
+          as: "driver",
+        },
+      },
+      { $unwind: { path: "$driver", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          driver_user_obj_id: {
+            $cond: [
+              { $ne: ["$driver.user_id", null] },
+              { $toObjectId: "$driver.user_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          localField: "driver_user_obj_id",
+          foreignField: "_id",
+          as: "driver_user",
+        },
+      },
+      { $unwind: { path: "$driver_user", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: STUDENTS_COLLECTION,
+          let: { studentId: { $toObjectId: "$student_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
+          as: "student",
+        },
+      },
+      { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          parent_obj_id: {
+            $cond: [
+              { $ne: ["$student.parent_id", null] },
+              { $toObjectId: "$student.parent_id" },
+              null,
+            ],
+          },
+          school_obj_id: {
+            $cond: [
+              { $ne: ["$student.school_id", null] },
+              { $toObjectId: "$student.school_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: PARENTS_COLLECTION,
+          localField: "parent_obj_id",
+          foreignField: "_id",
+          as: "parent",
+        },
+      },
+      { $unwind: { path: "$parent", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: SCHOOLS_COLLECTION,
+          localField: "school_obj_id",
+          foreignField: "_id",
+          as: "school",
+        },
+      },
+      { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          driver_user_obj_id: 0,
+          parent_obj_id: 0,
+          school_obj_id: 0,
+        },
+      },
+      {
+        $addFields: {
+          driver: {
+            $cond: {
+              if: { $ne: ["$driver", null] },
+              then: {
+                driver_id: { $toString: "$driver._id" },
+                name: "$driver.name",
+                driver_unique_id: "$driver.driver_unique_id",
+                vehicle_type: "$driver.vehicle_type",
+                vehicle_number: "$driver.vehicle_number",
+                phone_number: "$driver_user.phone_number",
+              },
+              else: null,
+            },
+          },
+          student: {
+            $cond: {
+              if: { $ne: ["$student", null] },
+              then: {
+                student_id: { $toString: "$student._id" },
+                student_name: "$student.student_name",
+                class: "$student.class",
+                section: "$student.section",
+              },
+              else: null,
+            },
+          },
+          parent_name: "$parent.name",
+          school_name: "$school.school_name",
+        },
+      },
+      { $project: { driver_user: 0, parent: 0, school: 0 } },
+    ])
+    .toArray();
 };
 
 /**

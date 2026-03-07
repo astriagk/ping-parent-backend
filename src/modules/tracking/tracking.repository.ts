@@ -268,7 +268,6 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         // Stage 12: Project and transform to waypoint format
         {
           $project: {
-            _id: 0,
             student_id: "$student_id",
             student_name: "$studentDetails.student_name",
             student_roll_number: "$studentDetails.roll_number",
