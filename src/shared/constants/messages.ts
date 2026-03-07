@@ -209,7 +209,10 @@ export const ERROR_MESSAGES = {
     TITLE_REQUIRED: "Title is required",
     MESSAGE_REQUIRED: "Message is required",
     INVALID_NOTIFICATION_TYPE:
-      "Notification type must be pickup_started, approaching, picked_up, dropped, payment_due, or general",
+      "Notification type must be pickup_started, approaching, picked_up, dropped, absent, trip_started, trip_completed, payment_due, or general",
+    FCM_TOKEN_REQUIRED: "FCM token is required",
+    DEVICE_TYPE_REQUIRED: "Device type is required",
+    INVALID_DEVICE_TYPE: "Device type must be android, ios, or web",
   },
   SUBSCRIPTION_PLAN: {
     NOT_FOUND: "Subscription plan not found",
@@ -336,6 +339,12 @@ export const ERROR_MESSAGES = {
   AUDIT_LOG: {
     NOT_FOUND: "Audit log not found",
     FAILED_TO_FETCH: "Failed to fetch audit logs",
+  },
+  SUPPORT_TICKET: {
+    NOT_FOUND: "Support ticket not found",
+    FAILED_TO_CREATE: "Failed to create support ticket",
+    FAILED_TO_FETCH: "Failed to fetch support ticket",
+    FAILED_TO_UPDATE: "Failed to update support ticket",
   },
   TRACKING: {
     TRIP_NOT_FOUND: "Trip not found",
@@ -498,6 +507,10 @@ export const SUCCESS_MESSAGES = {
   NOTIFICATION: {
     FETCHED_SUCCESSFULLY: "Notifications fetched successfully",
     MARKED_AS_READ_SUCCESSFULLY: "Notification marked as read successfully",
+    TOKEN_REGISTERED: "Device token registered successfully",
+    TOKEN_REMOVED: "Device token removed successfully",
+    PREFERENCES_FETCHED: "Notification preferences fetched successfully",
+    PREFERENCES_UPDATED: "Notification preferences updated successfully",
   },
   SUBSCRIPTION_PLAN: {
     FETCHED_SUCCESSFULLY: "Subscription plans fetched successfully",
@@ -584,6 +597,14 @@ export const SUCCESS_MESSAGES = {
   AUDIT_LOG: {
     FETCHED_SUCCESSFULLY: "Audit log fetched successfully",
     LIST_FETCHED_SUCCESSFULLY: "Audit logs fetched successfully",
+  },
+  SUPPORT_TICKET: {
+    CREATED_SUCCESSFULLY: "Support ticket created successfully",
+    FETCHED_SUCCESSFULLY: "Support ticket fetched successfully",
+    LIST_FETCHED_SUCCESSFULLY: "Support tickets list fetched successfully",
+    CLOSED_SUCCESSFULLY: "Support ticket closed successfully",
+    STATUS_UPDATED_SUCCESSFULLY: "Support ticket status updated successfully",
+    ASSIGNED_SUCCESSFULLY: "Support ticket assigned successfully",
   },
   ROUTE: {
     CALCULATED_SUCCESSFULLY: "Route calculated and optimized successfully",

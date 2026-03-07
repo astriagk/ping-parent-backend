@@ -1,4 +1,11 @@
+import { WithId } from "mongodb";
+
+import { SubscriptionPlan } from "@modules/billing/subscription_plan/subscription_plan.type";
 import { SchoolSubscriptionStatus } from "@shared/constants";
+
+export type SchoolSubscriptionWithPlan = WithId<SchoolSubscription> & {
+  plan?: WithId<SubscriptionPlan>;
+};
 
 export interface SchoolSubscription {
   _id?: any;

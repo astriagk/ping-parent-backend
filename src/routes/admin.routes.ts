@@ -8,11 +8,13 @@ import { paymentHandlers } from "@modules/billing/payment/payment.routes";
 import { schoolSubscriptionHandlers } from "@modules/billing/school_subscription/school_subscription.routes";
 import { subscriptionPlanHandlers } from "@modules/billing/subscription_plan/subscription_plan.routes";
 import { schoolHandlers } from "@modules/school/school.routes";
+import { supportTicketHandlers } from "@modules/support_tickets/support_tickets.routes";
 import { trackingHandlers } from "@modules/tracking/tracking.routes";
 import { assignmentHandlers } from "@modules/trips/driver_student_assignment/driver_student_assignment.routes";
 import { schoolAssignmentHandlers } from "@modules/trips/school_assignment/school_assignment.routes";
 import { tripHandlers } from "@modules/trips/trip/trip.routes";
 import { schoolDriverHandlers } from "@modules/users/school_driver/school_driver.routes";
+import { studentHandlers } from "@modules/users/student/student.routes";
 import { verifyAdminOrAboveToken } from "@shared/middlewares";
 
 const router = Router();
@@ -125,6 +127,7 @@ router.get(
 );
 router.post(
   "/school-assignments/:schoolId/create",
+  schoolAssignmentHandlers.admin.validateCreate,
   schoolAssignmentHandlers.admin.create,
 );
 router.post(
@@ -133,8 +136,12 @@ router.post(
 );
 router.post(
   "/school-assignments/:assignmentId/reject",
+  schoolAssignmentHandlers.admin.validateReject,
   schoolAssignmentHandlers.admin.reject,
 );
+
+// --- Students ---
+router.get("/students/school/:schoolId", studentHandlers.getBySchool);
 
 // --- Assignments ---
 router.get("/assignments", assignmentHandlers.admin.getAll);
@@ -226,5 +233,19 @@ router.post("/tracking/cleanup", trackingHandlers.admin.cleanup);
 // --- Audit Logs ---
 router.get("/audit-logs", auditLogHandlers.getAll);
 router.get("/audit-logs/:id", auditLogHandlers.getById);
+
+// --- Support Tickets ---
+router.get("/support-tickets", supportTicketHandlers.admin.getAll);
+router.get("/support-tickets/:id", supportTicketHandlers.admin.getById);
+router.put(
+  "/support-tickets/:id/status",
+  supportTicketHandlers.admin.validateUpdateStatus,
+  supportTicketHandlers.admin.updateStatus,
+);
+router.put(
+  "/support-tickets/:id/assign",
+  supportTicketHandlers.admin.validateAssign,
+  supportTicketHandlers.admin.assign,
+);
 
 export default router;

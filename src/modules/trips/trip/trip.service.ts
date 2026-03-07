@@ -10,6 +10,7 @@ import {
   HTTP_STATUS,
   PARENTS_COLLECTION,
   PickupStatus,
+  SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
   TRIP_STUDENTS_COLLECTION,
@@ -158,10 +159,113 @@ export const getTripById = async (id: string): Promise<WithId<Trip> | null> => {
 };
 
 /**
- * Get all trips across the system (admin only)
+ * Get all trips across the system (admin only) — with driver, school and student count joined
  */
-export const getAllTrips = async (): Promise<WithId<Trip>[]> => {
-  return await tripRepository.findMany();
+export const getAllTrips = async (): Promise<Record<string, unknown>[]> => {
+  const db = await getDB();
+  return await db
+    .collection(TRIPS_COLLECTION)
+    .aggregate([
+      {
+        $addFields: {
+          driver_obj_id: { $toObjectId: "$driver_id" },
+          school_obj_id: { $toObjectId: "$school_id" },
+        },
+      },
+      {
+        $lookup: {
+          from: DRIVERS_COLLECTION,
+          localField: "driver_obj_id",
+          foreignField: "_id",
+          as: "driver",
+        },
+      },
+      { $unwind: { path: "$driver", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          driver_user_obj_id: {
+            $cond: [
+              { $ne: ["$driver.user_id", null] },
+              { $toObjectId: "$driver.user_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          localField: "driver_user_obj_id",
+          foreignField: "_id",
+          as: "driver_user",
+        },
+      },
+      { $unwind: { path: "$driver_user", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: SCHOOLS_COLLECTION,
+          localField: "school_obj_id",
+          foreignField: "_id",
+          as: "school",
+        },
+      },
+      { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: TRIP_STUDENTS_COLLECTION,
+          let: { tripIdStr: { $toString: "$_id" } },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$trip_id", "$$tripIdStr"] } } },
+            { $count: "count" },
+          ],
+          as: "student_count_arr",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          driver_id: 1,
+          school_id: 1,
+          trip_type: 1,
+          trip_date: 1,
+          trip_status: 1,
+          start_time: 1,
+          end_time: 1,
+          total_distance: 1,
+          created_at: 1,
+          updated_at: 1,
+          student_count: {
+            $ifNull: [{ $arrayElemAt: ["$student_count_arr.count", 0] }, 0],
+          },
+          driver: {
+            $cond: {
+              if: { $ne: ["$driver", null] },
+              then: {
+                driver_id: { $toString: "$driver._id" },
+                name: "$driver.name",
+                driver_unique_id: "$driver.driver_unique_id",
+                vehicle_type: "$driver.vehicle_type",
+                vehicle_number: "$driver.vehicle_number",
+                phone_number: "$driver_user.phone_number",
+              },
+              else: null,
+            },
+          },
+          school: {
+            $cond: {
+              if: { $ne: ["$school", null] },
+              then: {
+                school_id: { $toString: "$school._id" },
+                school_name: "$school.school_name",
+                city: "$school.city",
+              },
+              else: null,
+            },
+          },
+        },
+      },
+    ])
+    .toArray();
 };
 
 export const getTripsByUserId = async (
@@ -637,7 +741,6 @@ export const getCompletedTripDetails = async (
       // Stage 11: Project final output
       {
         $project: {
-          _id: 0,
           trip_id: 1,
           driver_id: 1,
           school_id: 1,

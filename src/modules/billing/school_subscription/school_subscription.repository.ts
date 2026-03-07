@@ -2,11 +2,15 @@ import { WithId } from "mongodb";
 
 import {
   SCHOOL_SUBSCRIPTIONS_COLLECTION,
+  SUBSCRIPTION_PLANS_COLLECTION,
   SchoolSubscriptionStatus,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { SchoolSubscription } from "./school_subscription.type";
+import {
+  SchoolSubscription,
+  SchoolSubscriptionWithPlan,
+} from "./school_subscription.type";
 
 export class SchoolSubscriptionRepository extends BaseRepository<SchoolSubscription> {
   constructor() {
@@ -35,12 +39,60 @@ export class SchoolSubscriptionRepository extends BaseRepository<SchoolSubscript
   }
 
   async findAllBySchool(
-    schoolId: string,
-  ): Promise<WithId<SchoolSubscription>[]> {
+    schoolId?: string,
+  ): Promise<SchoolSubscriptionWithPlan[]> {
     const collection = this.getCollection();
+    const pipeline: any[] = [];
+
+    if (schoolId !== undefined) {
+      pipeline.push({ $match: { school_id: schoolId } });
+    }
+
+    pipeline.push(
+      {
+        $addFields: {
+          plan_id_obj: { $toObjectId: "$plan_id" },
+          school_id_obj: { $toObjectId: "$school_id" },
+        },
+      },
+      {
+        $lookup: {
+          from: SUBSCRIPTION_PLANS_COLLECTION,
+          localField: "plan_id_obj",
+          foreignField: "_id",
+          as: "plan",
+        },
+      },
+      {
+        $lookup: {
+          from: "schools",
+          localField: "school_id_obj",
+          foreignField: "_id",
+          as: "school",
+        },
+      },
+      { $unwind: { path: "$plan", preserveNullAndEmptyArrays: true } },
+      { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          _id: 1,
+          subscription_id: 1,
+          school_name: "$school.school_name",
+          plan: 1,
+          subscription_status: 1,
+          start_date: 1,
+          end_date: 1,
+          max_drivers: 1,
+          max_students: 1,
+          billing_contact: 1,
+          auto_renew: 1,
+          created_at: 1,
+        },
+      },
+      { $sort: { created_at: -1 } },
+    );
     return await collection
-      .find({ school_id: schoolId })
-      .sort({ created_at: -1 })
+      .aggregate<SchoolSubscriptionWithPlan>(pipeline)
       .toArray();
   }
 

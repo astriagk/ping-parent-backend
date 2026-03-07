@@ -72,6 +72,12 @@ export const createStudent = async (
   return await studentRepository.create(studentData);
 };
 
+export const getStudentsBySchoolId = async (
+  schoolId: string,
+): Promise<WithId<Student>[]> => {
+  return await studentRepository.findBySchoolId(schoolId);
+};
+
 export const getStudentById = async (
   id: string,
 ): Promise<WithId<Student> | null> => {

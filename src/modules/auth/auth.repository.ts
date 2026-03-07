@@ -69,6 +69,7 @@ export class UserRepository extends BaseRepository<User> {
             name: "$profile.name",
             email: "$profile.email",
             photo_url: "$profile.photo_url",
+            approval_status: "$profile.approval_status",
           },
         },
         {

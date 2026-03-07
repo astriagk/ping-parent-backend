@@ -4,6 +4,7 @@ import { createServer } from "http";
 import path from "path";
 
 import { connectDB } from "@shared/config";
+import { initializeFirebase } from "@shared/services/fcm.service";
 import { initializeSocket } from "@shared/services/socket.service";
 
 import app from "./app";
@@ -26,6 +27,7 @@ async function startServer() {
   try {
     await connectDB();
     // await connectRedis();
+    initializeFirebase();
     const httpServer = createServer(app);
 
     // Initialize Socket.IO for real-time tracking

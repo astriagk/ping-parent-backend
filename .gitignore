@@ -10,3 +10,6 @@ uploads/
 # Local environment files with actual secrets (never commit)
 environment/.env.dev.local
 .env.dev.local
+
+# Firebase service account (contains private keys)
+**/firebase-service-account*.json

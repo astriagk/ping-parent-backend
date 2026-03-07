@@ -308,4 +308,13 @@ export const VALIDATION_MESSAGES = {
     ACCURACY_OPTIONAL: "Accuracy is optional",
     ACCURACY_MIN: "Accuracy must be greater than or equal to 0",
   },
+  SUPPORT_TICKET: {
+    SUBJECT_REQUIRED: "Subject is required",
+    SUBJECT_MAX: "Subject cannot exceed 200 characters",
+    DESCRIPTION_REQUIRED: "Description is required",
+    PRIORITY_INVALID: "Priority must be one of: low, medium, high, urgent",
+    STATUS_REQUIRED: "Ticket status is required",
+    STATUS_INVALID: "Status must be one of: in_progress, resolved, closed",
+    ASSIGNED_TO_REQUIRED: "Assigned admin ID is required",
+  },
 };
