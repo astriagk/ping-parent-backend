@@ -87,10 +87,10 @@ export class NotificationDispatcher {
           stringData,
         );
 
-        // Clean up invalid tokens
-        if (result.failedTokens.length > 0) {
-          await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
-        }
+        // TODO: Clean up invalid tokens
+        // if (result.failedTokens.length > 0) {
+        //   await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
+        // }
       }
     } catch (error) {
       logger.error("[Dispatcher] Failed to send FCM push:", error as Error);

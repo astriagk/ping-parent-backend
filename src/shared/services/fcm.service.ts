@@ -11,7 +11,6 @@ export function initializeFirebase(): void {
   const serviceAccountPath =
     process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
     "./environment/firebase-service-account.json";
-  console.log(serviceAccountPath);
   try {
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     const serviceAccount = require(path.resolve(serviceAccountPath));
