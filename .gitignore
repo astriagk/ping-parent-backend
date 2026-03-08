@@ -8,8 +8,8 @@ Database/ping_parent_dbdiagram.dbdiagram
 # Local file uploads (development only)
 uploads/
 # Local environment files with actual secrets (never commit)
-environment/.env.dev.local
-.env.dev.local
+environment/.env.dev
+.env.dev
 
 # Firebase service account (contains private keys)
 **/firebase-service-account*.json

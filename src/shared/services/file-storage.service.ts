@@ -1,6 +1,10 @@
 import { v4 as uuidv4 } from "uuid";
 
-import { PutObjectCommand, S3Client } from "@aws-sdk/client-s3";
+import {
+  DeleteObjectCommand,
+  PutObjectCommand,
+  S3Client,
+} from "@aws-sdk/client-s3";
 
 // S3-compatible client works with: AWS S3, DigitalOcean Spaces, Wasabi, MinIO
 const s3Client = new S3Client({
@@ -40,4 +44,36 @@ export const uploadFileToStorage = async (
   }
 
   return fileUrl;
+};
+
+export const deleteFileFromStorage = async (fileUrl: string): Promise<void> => {
+  if (!fileUrl) {
+    return;
+  }
+
+  try {
+    // Extract the object key from the URL
+    let objectKey: string;
+
+    if (process.env.STORAGE_ENDPOINT) {
+      // DigitalOcean Spaces or Wasabi format: https://endpoint/bucket/folder/filename
+      const url = new URL(fileUrl);
+      // Remove leading slash and bucket name from path
+      objectKey = url.pathname.substring(`/${BUCKET_NAME}/`.length);
+    } else {
+      // AWS S3 format: https://bucket.s3.region.amazonaws.com/folder/filename
+      const url = new URL(fileUrl);
+      objectKey = url.pathname.substring(1); // Remove leading slash
+    }
+
+    const command = new DeleteObjectCommand({
+      Bucket: BUCKET_NAME,
+      Key: objectKey,
+    });
+
+    await s3Client.send(command);
+  } catch (error) {
+    // Log error but don't throw - file deletion failure shouldn't block updates
+    console.error(`Failed to delete cloud file: ${fileUrl}`, error);
+  }
 };
