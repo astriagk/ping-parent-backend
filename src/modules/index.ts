@@ -1,6 +1,7 @@
 export * from "./admin";
 export * from "./auth";
 export * from "./billing";
+export * from "./file-upload";
 export * from "./notification";
 export * from "./school";
 export * from "./support_tickets";

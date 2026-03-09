@@ -30,3 +30,22 @@ export const uploadFileToLocal = async (
   const relativeUrl = `/uploads/${folder}/${fileName}`;
   return relativeUrl;
 };
+
+export const deleteFileFromLocal = async (fileUrl: string): Promise<void> => {
+  if (!fileUrl) {
+    return;
+  }
+
+  // Extract file path from URL (e.g., "/uploads/driver-documents/driving-licenses/filename.jpg")
+  const urlPath = fileUrl.startsWith("/") ? fileUrl : `/${fileUrl}`;
+  const filePath = path.join(process.cwd(), urlPath);
+
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+  } catch (error) {
+    // Log error but don't throw - file deletion failure shouldn't block updates
+    console.error(`Failed to delete local file: ${filePath}`, error);
+  }
+};

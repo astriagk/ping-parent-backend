@@ -1,6 +1,7 @@
 import { Router } from "express";
 
 import { deviceTokenHandlers } from "@modules/device_token/device-token.routes";
+import { fileUploadHandlers } from "@modules/file-upload/file-upload.routes";
 import { notificationHandlers } from "@modules/notification/notification.routes";
 import { notificationPreferencesHandlers } from "@modules/notification_preferences/notification-preferences.routes";
 import { schoolHandlers } from "@modules/school/school.routes";
@@ -73,5 +74,17 @@ router.post(
 router.get("/support-tickets", supportTicketHandlers.shared.getMyTickets);
 router.get("/support-tickets/:id", supportTicketHandlers.shared.getById);
 router.post("/support-tickets/:id/close", supportTicketHandlers.shared.close);
+
+// --- File Upload ---
+router.post(
+  "/upload",
+  fileUploadHandlers.shared.uploadMiddleware,
+  fileUploadHandlers.shared.upload,
+);
+router.put(
+  "/upload",
+  fileUploadHandlers.shared.uploadMiddleware,
+  fileUploadHandlers.shared.update,
+);
 
 export default router;
