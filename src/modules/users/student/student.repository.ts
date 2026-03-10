@@ -84,8 +84,8 @@ export class StudentRepository extends BaseRepository<Student> {
         {
           $lookup: {
             from: DRIVERS_COLLECTION,
-            localField: "driver_assignment.driver_unique_id",
-            foreignField: "driver_unique_id",
+            let: { driverId: { $toObjectId: "$driver_assignment.driver_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$driverId"] } } }],
             as: "driver",
           },
         },
@@ -180,8 +180,8 @@ export class StudentRepository extends BaseRepository<Student> {
         {
           $lookup: {
             from: DRIVERS_COLLECTION,
-            localField: "driver_assignment.driver_unique_id",
-            foreignField: "driver_unique_id",
+            let: { driverId: { $toObjectId: "$driver_assignment.driver_id" } },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$driverId"] } } }],
             as: "driver",
           },
         },

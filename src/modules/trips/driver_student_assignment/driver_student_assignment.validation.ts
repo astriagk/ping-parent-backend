@@ -9,11 +9,9 @@ export const createDriverStudentAssignmentSchema = Joi.object({
     "any.required":
       VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.STUDENT_ID_REQUIRED,
   }),
-  driver_unique_id: Joi.string().max(20).required().messages({
+  driver_id: Joi.string().required().messages({
     "any.required":
-      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_UNIQUE_ID_REQUIRED,
-    "string.max":
-      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_UNIQUE_ID_MAX,
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_ID_REQUIRED,
   }),
   monthly_fee: Joi.number().min(0).optional().messages({
     "number.base":
@@ -64,16 +62,27 @@ export const updateDriverStudentAssignmentSchema = Joi.object({
   }),
 });
 
-// Schema for parent requesting assignment by driver unique ID
+// Schema for parent requesting assignment by driver ID
 export const requestAssignmentByDriverIdSchema = Joi.object({
-  driver_unique_id: Joi.string().max(20).required().messages({
+  driver_id: Joi.string().required().messages({
     "any.required":
-      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_UNIQUE_ID_REQUIRED,
-    "string.max":
-      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_UNIQUE_ID_MAX,
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_ID_REQUIRED,
   }),
   student_id: Joi.string().required().messages({
     "any.required":
       VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.STUDENT_ID_REQUIRED,
+  }),
+});
+
+// Schema for reassigning a driver to an existing assignment
+export const reassignDriverSchema = Joi.object({
+  driver_id: Joi.string().required().messages({
+    "any.required":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_ID_REQUIRED,
+  }),
+  monthly_fee: Joi.number().min(0).optional().messages({
+    "number.base":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.MONTHLY_FEE_INVALID,
+    "number.min": VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.MONTHLY_FEE_MIN,
   }),
 });

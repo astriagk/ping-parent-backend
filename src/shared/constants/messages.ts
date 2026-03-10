@@ -142,6 +142,10 @@ export const ERROR_MESSAGES = {
     CREATOR_CANNOT_APPROVE: "You cannot approve an assignment you created.",
     CANNOT_REJECT:
       "Only pending or parent-requested assignments can be rejected",
+    CANNOT_REASSIGN:
+      "Only active or parent-requested assignments can be reassigned",
+    SAME_DRIVER: "New driver is the same as the current driver",
+    STUDENT_NOT_OWNED: "You do not have permission to modify this assignment",
   },
   TRIP: {
     NOT_FOUND: "Trip not found",
@@ -464,6 +468,7 @@ export const SUCCESS_MESSAGES = {
     ACTIVATED_SUCCESSFULLY: "Assignment activated successfully",
     DEACTIVATED_SUCCESSFULLY: "Assignment deactivated successfully",
     DRIVERS_RETRIEVED_SUCCESSFULLY: "Drivers retrieved successfully",
+    REASSIGNED_SUCCESSFULLY: "Driver reassigned successfully",
   },
   SUBSCRIPTION_REDEMPTION: {
     CODE_REDEEMED_SUCCESSFULLY: "Subscription code redeemed successfully",

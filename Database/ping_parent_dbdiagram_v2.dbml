@@ -167,11 +167,10 @@ Table students {
 
 Table driver_student_assignments {
   _id ObjectId [pk, note: 'MongoDB auto-generated']
-  driver_id ObjectId [not null, ref: > drivers._id]
+  driver_id ObjectId [not null, ref: > drivers._id, note: 'References drivers._id — used for all lookups and joins']
   student_id ObjectId [not null, ref: > students._id]
-  driver_unique_id varchar(20) [not null, note: 'Unique ID parents use to find driver']
   monthly_fee decimal(10,2)
-  assignment_status enum [default: 'pending', note: 'active, inactive, pending, parent_requested']
+  assignment_status enum [default: 'pending', note: 'active, inactive, pending, parent_requested, rejected']
   assignment_source enum [default: 'parent', note: 'parent or school - indicates assignment source']
   assigned_by ObjectId [note: 'References parents._id or admin_portal._id depending on assignment_source']
   assigned_date date [not null]
@@ -185,7 +184,6 @@ Table driver_student_assignments {
     student_id
     assignment_status
     (driver_id, assignment_status)
-    driver_unique_id
   }
 
   Note: 'Parents or schools assign drivers to students. assignment_source tracks who assigned (parent or school).'

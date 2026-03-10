@@ -277,7 +277,6 @@ export const createSchoolAssignment = async (
       driver_id: data.driver_id,
       student_id: studentId,
       school_id: schoolId,
-      driver_unique_id: driver.driver_unique_id,
       monthly_fee: data.monthly_fee,
       assignment_status: AssignmentStatus.ACTIVE,
       assigned_date: new Date(data.start_date || Date.now()),

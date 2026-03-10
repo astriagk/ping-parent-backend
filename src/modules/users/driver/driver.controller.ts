@@ -8,7 +8,7 @@ import {
   VehicleTypesArray,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { uploadFile } from "@shared/services/storage.factory";
+import { deleteFile, uploadFile } from "@shared/services/storage.factory";
 import { assignTrimmedFields } from "@shared/utils";
 
 import { driverOnboardingRepository } from "./driver.repository";
@@ -428,40 +428,25 @@ export const createDocuments = asyncHandler(
     const files = req.files as { [key: string]: Express.Multer.File[] };
 
     // Original uploadFile code (commented out)
-    // if (files?.driving_license_photo?.[0]) {
-    //   documentsData.driving_license_photo_url = await uploadFile(
-    //     files.driving_license_photo[0],
-    //     "driver-documents/driving-licenses",
-    //   );
-    // }
-    //
-    // if (files?.vehicle_license_photo?.[0]) {
-    //   documentsData.vehicle_license_photo_url = await uploadFile(
-    //     files.vehicle_license_photo[0],
-    //     "driver-documents/vehicle-licenses",
-    //   );
-    // }
-    //
-    // if (files?.insurance_photo?.[0]) {
-    //   documentsData.insurance_photo_url = await uploadFile(
-    //     files.insurance_photo[0],
-    //     "driver-documents/insurance",
-    //   );
-    // }
-
-    // New code: Using placeholder URL
-    const placeholderUrl = "https://picsum.photos/seed/picsum/200/300";
-
     if (files?.driving_license_photo?.[0]) {
-      documentsData.driving_license_photo_url = placeholderUrl;
+      documentsData.driving_license_photo_url = await uploadFile(
+        files.driving_license_photo[0],
+        `driver-documents/driving-licenses/${userId}`,
+      );
     }
 
     if (files?.vehicle_license_photo?.[0]) {
-      documentsData.vehicle_license_photo_url = placeholderUrl;
+      documentsData.vehicle_license_photo_url = await uploadFile(
+        files.vehicle_license_photo[0],
+        `driver-documents/vehicle-licenses/${userId}`,
+      );
     }
 
     if (files?.insurance_photo?.[0]) {
-      documentsData.insurance_photo_url = placeholderUrl;
+      documentsData.insurance_photo_url = await uploadFile(
+        files.insurance_photo[0],
+        `driver-documents/insurance/${userId}`,
+      );
     }
 
     const success = await upsertDriverDocumentsByUserId(userId, documentsData);
@@ -506,41 +491,40 @@ export const updateDocuments = asyncHandler(
     // Handle file uploads
     const files = req.files as { [key: string]: Express.Multer.File[] };
 
-    // Original uploadFile code (commented out)
-    // if (files?.driving_license_photo?.[0]) {
-    //   documents.driving_license_photo_url = await uploadFile(
-    //     files.driving_license_photo[0],
-    //     "driver-documents/driving-licenses",
-    //   );
-    // }
-    //
-    // if (files?.vehicle_license_photo?.[0]) {
-    //   documents.vehicle_license_photo_url = await uploadFile(
-    //     files.vehicle_license_photo[0],
-    //     "driver-documents/vehicle-licenses",
-    //   );
-    // }
-    //
-    // if (files?.insurance_photo?.[0]) {
-    //   documents.insurance_photo_url = await uploadFile(
-    //     files.insurance_photo[0],
-    //     "driver-documents/insurance",
-    //   );
-    // }
+    // Get existing documents to delete old files
+    const existingDocuments = await getDriverDocumentsByUserId(userId);
 
-    // New code: Using placeholder URL
-    const placeholderUrl = "https://picsum.photos/seed/picsum/200/300";
-
+    // Delete and upload driving license photo
     if (files?.driving_license_photo?.[0]) {
-      documents.driving_license_photo_url = placeholderUrl;
+      if (existingDocuments?.driving_license_photo_url) {
+        await deleteFile(existingDocuments.driving_license_photo_url);
+      }
+      documents.driving_license_photo_url = await uploadFile(
+        files.driving_license_photo[0],
+        `driver-documents/driving-licenses/${userId}`,
+      );
     }
 
+    // Delete and upload vehicle license photo
     if (files?.vehicle_license_photo?.[0]) {
-      documents.vehicle_license_photo_url = placeholderUrl;
+      if (existingDocuments?.vehicle_license_photo_url) {
+        await deleteFile(existingDocuments.vehicle_license_photo_url);
+      }
+      documents.vehicle_license_photo_url = await uploadFile(
+        files.vehicle_license_photo[0],
+        `driver-documents/vehicle-licenses/${userId}`,
+      );
     }
 
+    // Delete and upload insurance photo
     if (files?.insurance_photo?.[0]) {
-      documents.insurance_photo_url = placeholderUrl;
+      if (existingDocuments?.insurance_photo_url) {
+        await deleteFile(existingDocuments.insurance_photo_url);
+      }
+      documents.insurance_photo_url = await uploadFile(
+        files.insurance_photo[0],
+        `driver-documents/insurance/${userId}`,
+      );
     }
 
     if (Object.keys(documents).length === 0) {
