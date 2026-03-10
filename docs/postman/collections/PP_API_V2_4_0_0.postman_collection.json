@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Ping Parent API v3.0.0",
-    "description": "# Ping Parent API v3.0.0\n\nGenerated: 2026-03-10T04:55:19.156Z\n\n## Summary\n- **Total Endpoints:** 224\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 60 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 52 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 20 endpoints\n- **Superadmin**: 17 endpoints\n",
+    "name": "Ping Parent API v4.0.0",
+    "description": "# Ping Parent API v4.0.0\n\nGenerated: 2026-03-10T09:56:44.012Z\n\n## Summary\n- **Total Endpoints:** 231\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 61 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 55 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 23 endpoints\n- **Superadmin**: 17 endpoints\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "3.0.0"
+    "version": "4.0.0"
   },
   "auth": {
     "type": "bearer",
@@ -4153,6 +4153,79 @@
                   "path": [
                     "admin",
                     "tracking",
+                    "cleanup"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Cleanup successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Googlemaps",
+          "description": "Googlemaps endpoints",
+          "item": [
+            {
+              "name": "Create Cleanup",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/googlemaps/cleanup",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "googlemaps",
                     "cleanup"
                   ]
                 },
@@ -9207,6 +9280,271 @@
                   "path": [
                     "driver",
                     "tracking",
+                    "{{TRIPID}}",
+                    "position"
+                  ],
+                  "variable": [
+                    {
+                      "key": "tripId",
+                      "value": "{{TRIPID}}",
+                      "description": "TripId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• latitude: number (required)\n• longitude: number (required)\n• speed: number (optional)\n• heading: number (optional)\n• accuracy: number (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{DRIVER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"speed\": 0,\n  \"heading\": 0,\n  \"accuracy\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Position successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Googlemaps",
+          "description": "Googlemaps endpoints",
+          "item": [
+            {
+              "name": "Create Calculate",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/driver/googlemaps/calculate",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "driver",
+                    "googlemaps",
+                    "calculate"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{DRIVER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"best_guess\",\n  \"avoid\": \"tolls\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Calculate successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Recalculate",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/driver/googlemaps/{{tripId}}/recalculate",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "driver",
+                    "googlemaps",
+                    "{{TRIPID}}",
+                    "recalculate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "tripId",
+                      "value": "{{TRIPID}}",
+                      "description": "TripId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)\n• force_recalculate: boolean (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{DRIVER_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"best_guess\",\n  \"avoid\": \"tolls\",\n  \"force_recalculate\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Recalculate successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Position",
+              "request": {
+                "method": "PATCH",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/driver/googlemaps/{{tripId}}/position",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "driver",
+                    "googlemaps",
                     "{{TRIPID}}",
                     "position"
                   ],
@@ -15796,6 +16134,237 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Update Upload successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Googlemaps",
+          "description": "Googlemaps endpoints",
+          "item": [
+            {
+              "name": "Get Tracking",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/googlemaps/{{tripId}}/tracking",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "googlemaps",
+                    "{{TRIPID}}",
+                    "tracking"
+                  ],
+                  "variable": [
+                    {
+                      "key": "tripId",
+                      "value": "{{TRIPID}}",
+                      "description": "TripId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Tracking successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Current Position",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/googlemaps/{{tripId}}/current-position",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "googlemaps",
+                    "{{TRIPID}}",
+                    "current-position"
+                  ],
+                  "variable": [
+                    {
+                      "key": "tripId",
+                      "value": "{{TRIPID}}",
+                      "description": "TripId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Current Position successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Details",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/googlemaps/{{tripId}}/details",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "googlemaps",
+                    "{{TRIPID}}",
+                    "details"
+                  ],
+                  "variable": [
+                    {
+                      "key": "tripId",
+                      "value": "{{TRIPID}}",
+                      "description": "TripId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Details successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",

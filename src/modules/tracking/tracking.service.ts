@@ -9,17 +9,18 @@ import {
 } from "@shared/constants";
 import { SUCCESS_MESSAGES } from "@shared/constants/messages";
 import { ApiError } from "@shared/middlewares";
+import { BroadcastService } from "@shared/services/broadcast.service";
 import {
   calculateOptimalSequence,
   calculateWaypointMetrics,
   getHaversineRouteGeometry,
   isPointWithinRouteCorridor,
 } from "@shared/services/geo-util.service";
+import { googleMapsApiService } from "@shared/services/googlemaps-api.service";
 import { tomTomService } from "@shared/services/tomtom.service";
 import { logger } from "@shared/utils";
 
 import { trackingRepository } from "./tracking.repository";
-import { TrackingSocketService } from "./tracking.socket.service";
 import {
   LocationTracking,
   RouteCalculationRequest,
@@ -284,7 +285,7 @@ const updateAndBroadcastRoute = async (
     studentUpdates,
   );
 
-  TrackingSocketService.broadcastRouteCalculated(tripId, {
+  BroadcastService.broadcastRouteCalculated(tripId, {
     waypoints: waypointsWithMetrics,
     total_distance: routeData.total_distance,
     total_duration: routeData.total_duration,
@@ -439,10 +440,15 @@ export const updateDriverPosition = async (
     );
   }
 
-  if (trip.optimized_route_data?.coordinates) {
+  if (trip.optimized_route_data?.polyline_encoded) {
+    // Decode encoded polyline only for deviation checking (internal use only)
+    const routeCoordinates = googleMapsApiService.decodePolylineForDeviation(
+      trip.optimized_route_data.polyline_encoded,
+    );
+
     const isWithinCorridor = isPointWithinRouteCorridor(
       { latitude, longitude },
-      trip.optimized_route_data.coordinates,
+      routeCoordinates,
       200,
     );
 
@@ -471,7 +477,7 @@ export const updateDriverPosition = async (
     );
   }
 
-  TrackingSocketService.broadcastPositionUpdate(tripId, {
+  BroadcastService.broadcastPositionUpdate(tripId, {
     driverId,
     latitude,
     longitude,
@@ -631,7 +637,7 @@ export const recalculateRoute = async (
     studentUpdates,
   );
 
-  TrackingSocketService.broadcastRouteCalculated(data.trip_id, {
+  BroadcastService.broadcastRouteCalculated(data.trip_id, {
     waypoints: waypointsWithMetrics,
     total_distance: routeData.total_distance,
     total_duration: routeData.total_duration,

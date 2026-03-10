@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Ping Parent API
-  version: 3.0.0
+  version: 4.0.0
   description: School transport tracking and management API
   contact:
     name: Ping Parent Team
@@ -2081,6 +2081,31 @@ paths:
       summary: Create Cleanup
       description: "\n\n🔐 Requires Admin authentication"
       operationId: post_admin_tracking_cleanup
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+  /admin/googlemaps/cleanup:
+    post:
+      tags:
+        - Admin
+      summary: Create Cleanup
+      description: "\n\n🔐 Requires Admin authentication"
+      operationId: post_admin_googlemaps_cleanup
       responses:
         200:
           description: Successful operation
@@ -4737,6 +4762,212 @@ paths:
       summary: Update Position
       description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• latitude: number (required)\n• longitude: number (required)\n• speed: number (optional)\n• heading: number (optional)\n• accuracy: number (optional)"
       operationId: patch_driver_tracking__tripId_position
+      parameters:
+        -
+          name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: TripId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          DriverAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                speed:
+                  type: number
+                  minimum: 0
+                heading:
+                  type: number
+                  minimum: 0
+                  maximum: 360
+                accuracy:
+                  type: number
+                  minimum: 0
+              required:
+                - latitude
+                - longitude
+            example:
+              latitude: 19.076
+              longitude: 72.8777
+              speed: 0
+              heading: 0
+              accuracy: 0
+  /driver/googlemaps/calculate:
+    post:
+      tags:
+        - Driver
+      summary: Create Calculate
+      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)"
+      operationId: post_driver_googlemaps_calculate
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          DriverAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                trip_id:
+                  type: string
+                current_latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                current_longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                traffic_model:
+                  type: string
+                  enum:
+                    - best_guess
+                    - pessimistic
+                    - optimistic
+                avoid:
+                  type: array
+                  enum:
+                    - tolls
+                    - highways
+                    - ferries
+              required:
+                - trip_id
+                - current_latitude
+                - current_longitude
+            example:
+              trip_id: 550e8400-e29b-41d4-a716-446655440000
+              current_latitude: 19.076
+              current_longitude: 72.8777
+              traffic_model: best_guess
+              avoid: tolls
+  /driver/googlemaps/{tripId}/recalculate:
+    post:
+      tags:
+        - Driver
+      summary: Create Recalculate
+      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)\n• force_recalculate: boolean (optional)"
+      operationId: post_driver_googlemaps__tripId_recalculate
+      parameters:
+        -
+          name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: TripId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          DriverAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                trip_id:
+                  type: string
+                current_latitude:
+                  type: number
+                  minimum: -90
+                  maximum: 90
+                current_longitude:
+                  type: number
+                  minimum: -180
+                  maximum: 180
+                traffic_model:
+                  type: string
+                  enum:
+                    - best_guess
+                    - pessimistic
+                    - optimistic
+                avoid:
+                  type: array
+                  enum:
+                    - tolls
+                    - highways
+                    - ferries
+                force_recalculate:
+                  type: boolean
+              required:
+                - trip_id
+                - current_latitude
+                - current_longitude
+            example:
+              trip_id: 550e8400-e29b-41d4-a716-446655440000
+              current_latitude: 19.076
+              current_longitude: 72.8777
+              traffic_model: best_guess
+              avoid: tolls
+              force_recalculate: false
+  /driver/googlemaps/{tripId}/position:
+    patch:
+      tags:
+        - Driver
+      summary: Update Position
+      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• latitude: number (required)\n• longitude: number (required)\n• speed: number (optional)\n• heading: number (optional)\n• accuracy: number (optional)"
+      operationId: patch_driver_googlemaps__tripId_position
       parameters:
         -
           name: tripId
@@ -7867,6 +8098,105 @@ paths:
       summary: Update Upload
       description: "\n\n🔐 Requires Authenticated User authentication"
       operationId: put_shared_upload
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/googlemaps/{tripId}/tracking:
+    get:
+      tags:
+        - Shared
+      summary: Get Tracking
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: get_shared_googlemaps__tripId_tracking
+      parameters:
+        -
+          name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: TripId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/googlemaps/{tripId}/current-position:
+    get:
+      tags:
+        - Shared
+      summary: Get Current Position
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: get_shared_googlemaps__tripId_current-position
+      parameters:
+        -
+          name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: TripId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/googlemaps/{tripId}/details:
+    get:
+      tags:
+        - Shared
+      summary: Get Details
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: get_shared_googlemaps__tripId_details
+      parameters:
+        -
+          name: tripId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: TripId identifier
       responses:
         200:
           description: Successful operation
