@@ -23,6 +23,7 @@ import {
   getParentRequestedAssignments,
   getParentRequestedAssignmentsByDriver,
   getPendingAssignmentsByDriverUserId,
+  reassignDriver,
   rejectAssignment,
   updateAssignment,
 } from "./driver_student_assignment.service";
@@ -418,6 +419,37 @@ export const getAllDrivers = asyncHandler(
         SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT
           .DRIVERS_RETRIEVED_SUCCESSFULLY,
       data: drivers,
+    });
+  },
+);
+
+/**
+ * Reassign driver for an existing assignment
+ */
+export const reassignDriverStudentAssignment = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+    const userId = req.user?.userId;
+
+    if (!userId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.DRIVER.USER_NOT_AUTHENTICATED,
+      );
+    }
+
+    const { driver_id, monthly_fee } = req.body;
+
+    const result = await reassignDriver(id, userId, {
+      driver_id,
+      monthly_fee,
+    });
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: result,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.REASSIGNED_SUCCESSFULLY,
     });
   },
 );

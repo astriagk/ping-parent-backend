@@ -4,7 +4,6 @@ export interface DriverStudentAssignment {
   _id?: any;
   driver_id: string;
   student_id: string;
-  driver_unique_id: string;
   monthly_fee?: number;
   assignment_status: AssignmentStatus;
   assigned_date: Date;

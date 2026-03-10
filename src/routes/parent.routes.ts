@@ -80,6 +80,11 @@ router.put(
   assignmentHandlers.update,
 );
 router.delete("/assignments/:id", assignmentHandlers.delete);
+router.post(
+  "/assignments/:id/reassign",
+  assignmentHandlers.parent.validateReassign,
+  assignmentHandlers.parent.reassign,
+);
 
 // --- QR / OTP ---
 router.get(

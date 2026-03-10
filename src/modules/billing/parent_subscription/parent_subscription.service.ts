@@ -68,7 +68,7 @@ const calculateEndDate = (startDate: Date, planType: PlanType): Date => {
  * Detect same-trip groups: kids sharing the same driver + school
  */
 interface SameTripGroup {
-  driver_unique_id: string;
+  driver_id: string;
   school_id: string;
   student_ids: string[];
   count: number;
@@ -87,7 +87,7 @@ const detectSameTripGroups = async (
 
     if (assignments.length > 0) {
       const assignment = assignments[0];
-      const key = `${assignment.driver_unique_id}_${assignment.school_id}`;
+      const key = `${assignment.driver_id}_${assignment.school_id}`;
 
       if (groupMap.has(key)) {
         const group = groupMap.get(key)!;
@@ -95,7 +95,7 @@ const detectSameTripGroups = async (
         group.count++;
       } else {
         groupMap.set(key, {
-          driver_unique_id: assignment.driver_unique_id,
+          driver_id: assignment.driver_id,
           school_id: assignment.school_id,
           student_ids: [studentId],
           count: 1,
@@ -249,7 +249,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
         class: student.class,
         section: student.section,
         school_id: student.school_id,
-        driver_unique_id: assignment?.driver_unique_id ?? null,
+        driver_id: assignment?.driver_id ?? null,
         has_driver: !!assignment,
       };
     }),
@@ -332,7 +332,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
         total_kids: totalKids,
         kids: kidsWithDetails,
         same_trip_groups: sameTripGroups.map((g) => ({
-          driver_unique_id: g.driver_unique_id,
+          driver_id: g.driver_id,
           school_id: g.school_id,
           kids: g.student_ids,
           count: g.count,
@@ -409,7 +409,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
       total_kids: totalKids,
       kids: kidsWithDetails,
       same_trip_groups: sameTripGroups.map((g) => ({
-        driver_unique_id: g.driver_unique_id,
+        driver_id: g.driver_id,
         school_id: g.school_id,
         kids: g.student_ids,
         count: g.count,

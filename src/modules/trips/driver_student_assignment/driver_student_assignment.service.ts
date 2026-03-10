@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
@@ -38,22 +38,22 @@ const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
 };
 
 /**
- * Helper function to get driver by driver_unique_id
+ * Helper function to get driver by _id
  */
-const getDriverByUniqueId = async (
-  driverUniqueId: string,
+const getDriverById = async (
+  driverId: string,
 ): Promise<Record<string, unknown> | null> => {
   const db = await getDB();
   const driver = await db
     .collection(DRIVERS_COLLECTION)
-    .findOne({ driver_unique_id: driverUniqueId });
+    .findOne({ _id: new ObjectId(driverId) });
 
   return driver;
 };
 
 type CreateAssignmentData = Omit<
   DriverStudentAssignment,
-  "driver_id" | "created_at" | "assignment_status"
+  "created_at" | "assignment_status"
 >;
 
 /**
@@ -80,8 +80,8 @@ export const createDriverStudentAssignment = async (
 
     assignmentStatus = AssignmentStatus.PENDING;
   } else {
-    // Parent requesting assignment - find driver by driver_unique_id
-    const driver = await getDriverByUniqueId(data.driver_unique_id);
+    // Parent requesting assignment - find driver by _id
+    const driver = await getDriverById(data.driver_id);
 
     if (!driver) {
       throw new ApiError(
@@ -119,8 +119,8 @@ export const createDriverStudentAssignment = async (
   }
 
   const assignmentData: DriverStudentAssignment = {
-    driver_id: driverId,
     ...data,
+    driver_id: driverId,
     assignment_status: assignmentStatus,
     assigned_date: new Date(),
     created_at: new Date(),
@@ -156,8 +156,8 @@ export const getAllAssignments = async (): Promise<
       {
         $lookup: {
           from: DRIVERS_COLLECTION,
-          localField: "driver_unique_id",
-          foreignField: "driver_unique_id",
+          let: { driverId: { $toObjectId: "$driver_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$driverId"] } } }],
           as: "driver",
         },
       },
@@ -498,8 +498,8 @@ export const getParentRequestedAssignments = async (
       {
         $lookup: {
           from: DRIVERS_COLLECTION,
-          localField: "driver_unique_id",
-          foreignField: "driver_unique_id",
+          let: { driverId: { $toObjectId: "$driver_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$driverId"] } } }],
           as: "driver",
         },
       },
@@ -617,8 +617,8 @@ export const getParentRequestedAssignmentsByDriver = async (
       {
         $lookup: {
           from: DRIVERS_COLLECTION,
-          localField: "driver_unique_id",
-          foreignField: "driver_unique_id",
+          let: { driverId: { $toObjectId: "$driver_id" } },
+          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$driverId"] } } }],
           as: "driver",
         },
       },
@@ -702,4 +702,134 @@ export const getParentRequestedAssignmentsByDriver = async (
     .toArray();
 
   return assignments;
+};
+
+/**
+ * Helper function to convert userId to parent_id
+ */
+const getParentIdByUserId = async (userId: string): Promise<string | null> => {
+  const db = await getDB();
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ user_id: userId });
+
+  return parent ? String(parent._id) : null;
+};
+
+/**
+ * Reassign driver for an existing assignment
+ * Deactivates old assignment and creates a new PARENT_REQUESTED assignment
+ */
+export const reassignDriver = async (
+  assignmentId: string,
+  userId: string,
+  data: { driver_id: string; monthly_fee?: number },
+): Promise<{
+  deactivated_assignment: WithId<DriverStudentAssignment>;
+  new_assignment: WithId<DriverStudentAssignment>;
+}> => {
+  const { ObjectId } = await import("mongodb");
+
+  // 1. Find existing assignment
+  const existingAssignment =
+    await driverStudentAssignmentRepository.findById(assignmentId);
+
+  if (!existingAssignment) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.NOT_FOUND,
+    );
+  }
+
+  // 2. Validate status
+  if (
+    existingAssignment.assignment_status !== AssignmentStatus.ACTIVE &&
+    existingAssignment.assignment_status !== AssignmentStatus.PARENT_REQUESTED
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CANNOT_REASSIGN,
+    );
+  }
+
+  // 3. Verify parent ownership
+  const parentId = await getParentIdByUserId(userId);
+  if (!parentId) {
+    throw new ApiError(HTTP_STATUS.FORBIDDEN, ERROR_MESSAGES.COMMON.FORBIDDEN);
+  }
+
+  const db = await getDB();
+  const student = await db
+    .collection(STUDENTS_COLLECTION)
+    .findOne({ _id: new ObjectId(existingAssignment.student_id) });
+
+  if (!student || String(student.parent_id) !== parentId) {
+    throw new ApiError(
+      HTTP_STATUS.FORBIDDEN,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.STUDENT_NOT_OWNED,
+    );
+  }
+
+  // 4. Find new driver
+  const newDriver = await getDriverById(data.driver_id);
+  if (!newDriver) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_NOT_FOUND,
+    );
+  }
+
+  const newDriverId = String(newDriver._id);
+
+  // 5. Check new driver is different
+  if (newDriverId === existingAssignment.driver_id) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.SAME_DRIVER,
+    );
+  }
+
+  // 6. Check for duplicate with new driver
+  const duplicate =
+    await driverStudentAssignmentRepository.findDuplicateAssignment(
+      newDriverId,
+      existingAssignment.student_id,
+    );
+
+  if (duplicate) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.ALREADY_EXISTS,
+    );
+  }
+
+  // 7. Deactivate old assignment
+  const deactivated = await driverStudentAssignmentRepository.updateById(
+    assignmentId,
+    {
+      $set: {
+        assignment_status: AssignmentStatus.INACTIVE,
+        end_date: new Date(),
+        updated_at: new Date(),
+      },
+    },
+  );
+
+  // 8. Create new assignment
+  const newAssignment = await driverStudentAssignmentRepository.create({
+    driver_id: newDriverId,
+    student_id: existingAssignment.student_id,
+    school_id: existingAssignment.school_id,
+    monthly_fee: data.monthly_fee ?? existingAssignment.monthly_fee,
+    assignment_status: AssignmentStatus.PARENT_REQUESTED,
+    assignment_source: existingAssignment.assignment_source,
+    assigned_date: new Date(),
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+
+  return {
+    deactivated_assignment: deactivated!,
+    new_assignment: newAssignment,
+  };
 };

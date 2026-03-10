@@ -382,12 +382,14 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
             preserveNullAndEmptyArrays: true,
           },
         },
-        // Join driver details via driver_unique_id
+        // Join driver details via driver_id
         {
           $lookup: {
             from: DRIVERS_COLLECTION,
-            localField: "students.assignment.driver_unique_id",
-            foreignField: "driver_unique_id",
+            let: {
+              driverId: { $toObjectId: "$students.assignment.driver_id" },
+            },
+            pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$driverId"] } } }],
             as: "students.driver",
           },
         },
@@ -432,9 +434,10 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
                 driver: {
                   $cond: {
                     if: {
-                      $ifNull: ["$students.driver.driver_unique_id", false],
+                      $ifNull: ["$students.driver._id", false],
                     },
                     then: {
+                      driver_id: { $toString: "$students.driver._id" },
                       driver_unique_id: "$students.driver.driver_unique_id",
                       name: "$students.driver.name",
                       phone_number: "$students.driver.phone_number",
