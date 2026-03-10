@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Ping Parent API
-  version: 2.0.1
+  version: 3.0.0
   description: School transport tracking and management API
   contact:
     name: Ping Parent Team
@@ -1107,7 +1107,7 @@ paths:
       tags:
         - Admin
       summary: Create Create
-      description: "\n\n🔐 Requires Admin authentication"
+      description: "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• student_ids: array (required)\n• monthly_fee: number (optional)\n• start_date: string (optional)"
       operationId: post_admin_school-assignments__schoolId_create
       parameters:
         -
@@ -1135,6 +1135,31 @@ paths:
       security:
         -
           AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                student_ids:
+                  type: array
+                  minimum: 1
+                monthly_fee:
+                  type: number
+                  minimum: 0
+                start_date:
+                  type: string
+              required:
+                - driver_id
+                - student_ids
+            example:
+              driver_id: 550e8400-e29b-41d4-a716-446655440000
+              student_ids: []
+              monthly_fee: 0
+              start_date: sample_string
   /admin/school-assignments/{assignmentId}/approve:
     post:
       tags:
@@ -1173,7 +1198,7 @@ paths:
       tags:
         - Admin
       summary: Create Reject
-      description: "\n\n🔐 Requires Admin authentication"
+      description: "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• rejection_reason: string (optional)"
       operationId: post_admin_school-assignments__assignmentId_reject
       parameters:
         -
@@ -1183,6 +1208,51 @@ paths:
           schema:
             type: string
           description: AssignmentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                rejection_reason:
+                  type: string
+                  maximum: 500
+            example:
+              rejection_reason: sample_string
+  /admin/students/school/{schoolId}:
+    get:
+      tags:
+        - Admin
+      summary: Get School
+      description: "\n\n🔐 Requires Admin authentication"
+      operationId: get_admin_students_school__schoolId
+      parameters:
+        -
+          name: schoolId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: SchoolId identifier
       responses:
         200:
           description: Successful operation
@@ -2087,6 +2157,160 @@ paths:
       security:
         -
           AdminAuth: []
+  /admin/support-tickets:
+    get:
+      tags:
+        - Admin
+      summary: Get All Support Tickets
+      description: "\n\n🔐 Requires Admin authentication"
+      operationId: get_admin_support-tickets
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+  /admin/support-tickets/{id}:
+    get:
+      tags:
+        - Admin
+      summary: Get Support Tickets
+      description: "\n\n🔐 Requires Admin authentication"
+      operationId: get_admin_support-tickets__id
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+  /admin/support-tickets/{id}/status:
+    put:
+      tags:
+        - Admin
+      summary: Update Status
+      description: "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• ticket_status: string (required)"
+      operationId: put_admin_support-tickets__id_status
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ticket_status:
+                  type: string
+                  enum:
+                    - in_progress
+                    - resolved
+                    - closed
+              required:
+                - ticket_status
+            example:
+              ticket_status: in_progress
+  /admin/support-tickets/{id}/assign:
+    put:
+      tags:
+        - Admin
+      summary: Update Assign
+      description: "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• assigned_to: string (required)"
+      operationId: put_admin_support-tickets__id_assign
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                assigned_to:
+                  type: string
+              required:
+                - assigned_to
+            example:
+              assigned_to: sample_string
   /auth/roles:
     get:
       tags:
@@ -3798,7 +4022,7 @@ paths:
       tags:
         - Driver
       summary: Create Assignments
-      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_unique_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)"
+      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)"
       operationId: post_driver_assignments
       responses:
         200:
@@ -3827,9 +4051,8 @@ paths:
               properties:
                 student_id:
                   type: string
-                driver_unique_id:
+                driver_id:
                   type: string
-                  maximum: 20
                 monthly_fee:
                   type: number
                   minimum: 0
@@ -3845,10 +4068,10 @@ paths:
                   type: string
               required:
                 - student_id
-                - driver_unique_id
+                - driver_id
             example:
               student_id: 550e8400-e29b-41d4-a716-446655440000
-              driver_unique_id: 550e8400-e29b-41d4-a716-446655440000
+              driver_id: 550e8400-e29b-41d4-a716-446655440000
               monthly_fee: 0
               assignment_status: values(assignmentstatus
               assigned_date: sample_string
@@ -5223,7 +5446,7 @@ paths:
       tags:
         - Parent
       summary: Create Assignments
-      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_unique_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)"
+      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)"
       operationId: post_parent_assignments
       responses:
         200:
@@ -5252,9 +5475,8 @@ paths:
               properties:
                 student_id:
                   type: string
-                driver_unique_id:
+                driver_id:
                   type: string
-                  maximum: 20
                 monthly_fee:
                   type: number
                   minimum: 0
@@ -5270,10 +5492,10 @@ paths:
                   type: string
               required:
                 - student_id
-                - driver_unique_id
+                - driver_id
             example:
               student_id: 550e8400-e29b-41d4-a716-446655440000
-              driver_unique_id: 550e8400-e29b-41d4-a716-446655440000
+              driver_id: 550e8400-e29b-41d4-a716-446655440000
               monthly_fee: 0
               assignment_status: values(assignmentstatus
               assigned_date: sample_string
@@ -5457,6 +5679,56 @@ paths:
       security:
         -
           ParentAuth: []
+  /parent/assignments/{id}/reassign:
+    post:
+      tags:
+        - Parent
+      summary: Create Reassign
+      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• monthly_fee: number (optional)"
+      operationId: post_parent_assignments__id_reassign
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                monthly_fee:
+                  type: number
+                  minimum: 0
+              required:
+                - driver_id
+            example:
+              driver_id: 550e8400-e29b-41d4-a716-446655440000
+              monthly_fee: 0
   /parent/qr-otp/student/{studentId}/trip/{tripId}:
     get:
       tags:
@@ -7119,6 +7391,156 @@ paths:
       security:
         -
           ParentAuth: []
+  /shared/notifications/preferences:
+    get:
+      tags:
+        - Shared
+      summary: Get All Preferences
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: get_shared_notifications_preferences
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+    put:
+      tags:
+        - Shared
+      summary: Update Preferences
+      description: "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• push_enabled: boolean (required)"
+      operationId: put_shared_notifications_preferences
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                push_enabled:
+                  type: boolean
+              required:
+                - push_enabled
+            example:
+              push_enabled: false
+  /shared/device-tokens/register:
+    post:
+      tags:
+        - Shared
+      summary: Create Register
+      description: "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• fcm_token: string (required)\n• device_type: string (required)\n• device_id: string (required)"
+      operationId: post_shared_device-tokens_register
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fcm_token:
+                  type: string
+                device_type:
+                  type: string
+                  enum:
+                    - android
+                    - ios
+                    - web
+                device_id:
+                  type: string
+              required:
+                - fcm_token
+                - device_type
+                - device_id
+            example:
+              fcm_token: fcm_token_string
+              device_type: android
+              device_id: 550e8400-e29b-41d4-a716-446655440000
+  /shared/device-tokens/remove:
+    post:
+      tags:
+        - Shared
+      summary: Create Remove
+      description: "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• fcm_token: string (required)"
+      operationId: post_shared_device-tokens_remove
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                fcm_token:
+                  type: string
+              required:
+                - fcm_token
+            example:
+              fcm_token: fcm_token_string
   /shared/tracking/{tripId}/tracking:
     get:
       tags:
@@ -7258,6 +7680,193 @@ paths:
           schema:
             type: string
           description: School Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/support-tickets:
+    post:
+      tags:
+        - Shared
+      summary: Create Support Tickets
+      description: "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• subject: string (required)\n• description: string (required)\n• priority: string (optional)"
+      operationId: post_shared_support-tickets
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                subject:
+                  type: string
+                  maximum: 200
+                description:
+                  type: string
+                priority:
+                  type: string
+                  enum:
+                    - values(ticketpriority
+              required:
+                - subject
+                - description
+            example:
+              subject: sample_string
+              description: Additional notes or description
+              priority: values(ticketpriority
+    get:
+      tags:
+        - Shared
+      summary: Get All Support Tickets
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: get_shared_support-tickets
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/support-tickets/{id}:
+    get:
+      tags:
+        - Shared
+      summary: Get Support Tickets
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: get_shared_support-tickets__id
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/support-tickets/{id}/close:
+    post:
+      tags:
+        - Shared
+      summary: Create Close
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: post_shared_support-tickets__id_close
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+  /shared/upload:
+    post:
+      tags:
+        - Shared
+      summary: Create Upload
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: post_shared_upload
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          ParentAuth: []
+    put:
+      tags:
+        - Shared
+      summary: Update Upload
+      description: "\n\n🔐 Requires Authenticated User authentication"
+      operationId: put_shared_upload
       responses:
         200:
           description: Successful operation

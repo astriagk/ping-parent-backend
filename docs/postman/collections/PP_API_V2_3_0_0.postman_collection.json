@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Ping Parent API v2.0.1",
-    "description": "# Ping Parent API v2.0.1\n\nGenerated: 2026-02-24T13:34:07.024Z\n\n## Summary\n- **Total Endpoints:** 208\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 55 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 52 endpoints\n- **Parent**: 52 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 10 endpoints\n- **Superadmin**: 17 endpoints\n",
+    "name": "Ping Parent API v3.0.0",
+    "description": "# Ping Parent API v3.0.0\n\nGenerated: 2026-03-10T04:55:19.156Z\n\n## Summary\n- **Total Endpoints:** 224\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 60 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 52 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 20 endpoints\n- **Superadmin**: 17 endpoints\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "2.0.1"
+    "version": "3.0.0"
   },
   "auth": {
     "type": "bearer",
@@ -2242,7 +2242,12 @@
               "name": "Create Create",
               "request": {
                 "method": "POST",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{BASE_URL}}/admin/school-assignments/{{schoolId}}/create",
                   "host": [
@@ -2262,7 +2267,7 @@
                     }
                   ]
                 },
-                "description": "\n\n🔐 Requires Admin authentication",
+                "description": "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• student_ids: array (required)\n• monthly_fee: number (optional)\n• start_date: string (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -2272,6 +2277,15 @@
                       "type": "string"
                     }
                   ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"driver_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"student_ids\": [],\n  \"monthly_fee\": 0,\n  \"start_date\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
                 }
               },
               "response": [
@@ -2392,7 +2406,12 @@
               "name": "Create Reject",
               "request": {
                 "method": "POST",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
                   "raw": "{{BASE_URL}}/admin/school-assignments/{{assignmentId}}/reject",
                   "host": [
@@ -2409,6 +2428,96 @@
                       "key": "assignmentId",
                       "value": "{{ASSIGNMENTID}}",
                       "description": "AssignmentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• rejection_reason: string (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"rejection_reason\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Students",
+          "description": "Students endpoints",
+          "item": [
+            {
+              "name": "Get School",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/students/school/{{schoolId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "students",
+                    "school",
+                    "{{SCHOOLID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "schoolId",
+                      "value": "{{SCHOOLID}}",
+                      "description": "SchoolId ID"
                     }
                   ]
                 },
@@ -2435,7 +2544,7 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Reject successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get School successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -4217,6 +4326,330 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Get Audit Logs successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Support Tickets",
+          "description": "Support Tickets endpoints",
+          "item": [
+            {
+              "name": "Get All Support Tickets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/support-tickets",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "support-tickets"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get All Support Tickets successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Support Tickets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/support-tickets/{{id}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "support-tickets",
+                    "{{ID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Support Tickets successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Status",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/support-tickets/{{id}}/status",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "support-tickets",
+                    "{{ID}}",
+                    "status"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• ticket_status: string (required)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"ticket_status\": \"in_progress\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Status successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Assign",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/support-tickets/{{id}}/assign",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "support-tickets",
+                    "{{ID}}",
+                    "assign"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• assigned_to: string (required)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"assigned_to\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Assign successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -7542,7 +7975,7 @@
                     "assignments"
                   ]
                 },
-                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_unique_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)",
+                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -7555,7 +7988,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"student_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"driver_unique_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0,\n  \"assignment_status\": \"values(assignmentstatus\",\n  \"assigned_date\": \"sample_string\",\n  \"start_date\": \"sample_string\",\n  \"end_date\": \"sample_string\"\n}",
+                  "raw": "{\n  \"student_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"driver_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0,\n  \"assignment_status\": \"values(assignmentstatus\",\n  \"assigned_date\": \"sample_string\",\n  \"start_date\": \"sample_string\",\n  \"end_date\": \"sample_string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10014,7 +10447,7 @@
                     "assignments"
                   ]
                 },
-                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_unique_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)",
+                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_id: string (required)\n• driver_id: string (required)\n• monthly_fee: number (optional)\n• assignment_status: string (optional)\n• assigned_date: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -10027,7 +10460,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"student_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"driver_unique_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0,\n  \"assignment_status\": \"values(assignmentstatus\",\n  \"assigned_date\": \"sample_string\",\n  \"start_date\": \"sample_string\",\n  \"end_date\": \"sample_string\"\n}",
+                  "raw": "{\n  \"student_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"driver_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0,\n  \"assignment_status\": \"values(assignmentstatus\",\n  \"assigned_date\": \"sample_string\",\n  \"start_date\": \"sample_string\",\n  \"end_date\": \"sample_string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10425,6 +10858,95 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Delete Assignments successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Reassign",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/parent/assignments/{{id}}/reassign",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "parent",
+                    "assignments",
+                    "{{ID}}",
+                    "reassign"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• monthly_fee: number (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{PARENT_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"driver_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Reassign successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -14168,6 +14690,322 @@
                   "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
                 }
               ]
+            },
+            {
+              "name": "Get All Preferences",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/notifications/preferences",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "notifications",
+                    "preferences"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get All Preferences successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Preferences",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/notifications/preferences",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "notifications",
+                    "preferences"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• push_enabled: boolean (required)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"push_enabled\": false\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Preferences successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Device Tokens",
+          "description": "Device Tokens endpoints",
+          "item": [
+            {
+              "name": "Create Register",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/device-tokens/register",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "device-tokens",
+                    "register"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• fcm_token: string (required)\n• device_type: string (required)\n• device_id: string (required)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fcm_token\": \"fcm_token_string\",\n  \"device_type\": \"android\",\n  \"device_id\": \"550e8400-e29b-41d4-a716-446655440000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Register successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Remove",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/device-tokens/remove",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "device-tokens",
+                    "remove"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• fcm_token: string (required)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"fcm_token\": \"fcm_token_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Remove successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
             }
           ]
         },
@@ -14519,6 +15357,445 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Get Schools successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Support Tickets",
+          "description": "Support Tickets endpoints",
+          "item": [
+            {
+              "name": "Create Support Tickets",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/support-tickets",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "support-tickets"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication\n\n\n📋 Request Body Fields:\n• subject: string (required)\n• description: string (required)\n• priority: string (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"subject\": \"sample_string\",\n  \"description\": \"Additional notes or description\",\n  \"priority\": \"values(ticketpriority\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Support Tickets successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get All Support Tickets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/support-tickets",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "support-tickets"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get All Support Tickets successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Support Tickets",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/support-tickets/{{id}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "support-tickets",
+                    "{{ID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Support Tickets successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Close",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/support-tickets/{{id}}/close",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "support-tickets",
+                    "{{ID}}",
+                    "close"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Close successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Upload",
+          "description": "Upload endpoints",
+          "item": [
+            {
+              "name": "Create Upload",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/upload",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "upload"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Upload successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Upload",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/shared/upload",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "shared",
+                    "upload"
+                  ]
+                },
+                "description": "\n\n🔐 Requires Authenticated User authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Upload successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
