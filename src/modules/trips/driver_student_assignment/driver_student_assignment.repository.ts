@@ -54,12 +54,6 @@ export class DriverStudentAssignmentRepository extends BaseRepository<DriverStud
     });
   }
 
-  async findByDriverUniqueId(
-    driverUniqueId: string,
-  ): Promise<WithId<DriverStudentAssignment>[]> {
-    return await this.findMany({ driver_unique_id: driverUniqueId });
-  }
-
   async findDuplicateAssignment(
     driverId: string,
     studentId: string,

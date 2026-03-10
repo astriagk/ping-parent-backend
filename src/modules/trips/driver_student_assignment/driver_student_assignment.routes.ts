@@ -14,11 +14,13 @@ import {
   getMyAssignments,
   getMyPendingAssignments,
   getParentRequestedAssignmentsData,
+  reassignDriverStudentAssignment,
   rejectDriverStudentAssignment,
   updateDriverStudentAssignment,
 } from "./driver_student_assignment.controller";
 import {
   createDriverStudentAssignmentSchema,
+  reassignDriverSchema,
   updateDriverStudentAssignmentSchema,
 } from "./driver_student_assignment.validation";
 
@@ -37,6 +39,12 @@ export const assignmentHandlers = {
   validateUpdate: validate(updateDriverStudentAssignmentSchema),
   update: updateDriverStudentAssignment,
   delete: deleteDriverStudentAssignment,
+
+  // Parent-specific
+  parent: {
+    validateReassign: validate(reassignDriverSchema),
+    reassign: reassignDriverStudentAssignment,
+  },
 
   // Driver-specific
   driver: {
