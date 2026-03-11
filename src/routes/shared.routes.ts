@@ -2,6 +2,7 @@ import { Router } from "express";
 
 import { deviceTokenHandlers } from "@modules/device_token/device-token.routes";
 import { fileUploadHandlers } from "@modules/file-upload/file-upload.routes";
+import { googlemapsHandlers } from "@modules/googlemaps/googlemaps.routes";
 import { notificationHandlers } from "@modules/notification/notification.routes";
 import { notificationPreferencesHandlers } from "@modules/notification_preferences/notification-preferences.routes";
 import { schoolHandlers } from "@modules/school/school.routes";
@@ -85,6 +86,20 @@ router.put(
   "/upload",
   fileUploadHandlers.shared.uploadMiddleware,
   fileUploadHandlers.shared.update,
+);
+
+// --- Google Maps (read-only for any authenticated user) ---
+router.get(
+  "/googlemaps/:tripId/tracking",
+  googlemapsHandlers.shared.getTracking,
+);
+router.get(
+  "/googlemaps/:tripId/current-position",
+  googlemapsHandlers.shared.getCurrentPosition,
+);
+router.get(
+  "/googlemaps/:tripId/details",
+  googlemapsHandlers.shared.getRouteDetails,
 );
 
 export default router;

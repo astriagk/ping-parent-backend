@@ -1,5 +1,6 @@
 import { Router } from "express";
 
+import { googlemapsHandlers } from "@modules/googlemaps/googlemaps.routes";
 import { trackingHandlers } from "@modules/tracking/tracking.routes";
 import { qrOtpHandlers } from "@modules/trips/daily_qr_otp/daily_qr_otp.routes";
 import { assignmentHandlers } from "@modules/trips/driver_student_assignment/driver_student_assignment.routes";
@@ -207,6 +208,23 @@ router.patch(
   "/tracking/:tripId/position",
   trackingHandlers.driver.validateUpdatePosition,
   trackingHandlers.driver.updatePosition,
+);
+
+// --- Google Maps ---
+router.post(
+  "/googlemaps/calculate",
+  googlemapsHandlers.driver.validateCalculate,
+  googlemapsHandlers.driver.calculate,
+);
+router.post(
+  "/googlemaps/:tripId/recalculate",
+  googlemapsHandlers.driver.validateRecalculate,
+  googlemapsHandlers.driver.recalculate,
+);
+router.patch(
+  "/googlemaps/:tripId/position",
+  googlemapsHandlers.driver.validateUpdatePosition,
+  googlemapsHandlers.driver.updatePosition,
 );
 
 export default router;

@@ -113,6 +113,7 @@ export enum NotificationType {
   TRIP_COMPLETED = "trip_completed",
   PAYMENT_DUE = "payment_due",
   GENERAL = "general",
+  ROUTE_RECALCULATED = "route_recalculated",
 }
 
 export enum PlanType {

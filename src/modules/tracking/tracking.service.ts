@@ -1,3 +1,4 @@
+import { decodePolyline } from "@modules/googlemaps/googlemaps.data-mapper";
 import { tripRepository } from "@modules/trips/trip/trip.repository";
 import { getDB } from "@shared/config";
 import {
@@ -16,7 +17,6 @@ import {
   getHaversineRouteGeometry,
   isPointWithinRouteCorridor,
 } from "@shared/services/geo-util.service";
-import { googleMapsApiService } from "@shared/services/googlemaps-api.service";
 import { tomTomService } from "@shared/services/tomtom.service";
 import { logger } from "@shared/utils";
 
@@ -442,7 +442,7 @@ export const updateDriverPosition = async (
 
   if (trip.optimized_route_data?.polyline_encoded) {
     // Decode encoded polyline only for deviation checking (internal use only)
-    const routeCoordinates = googleMapsApiService.decodePolylineForDeviation(
+    const routeCoordinates = decodePolyline(
       trip.optimized_route_data.polyline_encoded,
     );
 
