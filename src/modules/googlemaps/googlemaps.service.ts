@@ -11,7 +11,7 @@ import {
 import { SUCCESS_MESSAGES } from "@shared/constants/messages";
 import { ApiError } from "@shared/middlewares";
 import { BroadcastService } from "@shared/services/broadcast.service";
-import { isPointWithinRouteCorridor } from "@shared/services/geo-util.service";
+import { calculateHaversineDistance } from "@shared/services/geo-util.service";
 import { googleMapsApiService } from "@shared/services/googlemaps-api.service";
 import { logger } from "@shared/utils";
 
@@ -396,11 +396,21 @@ export const updateGoogleDriverPosition = async (
       trip.optimized_route_data.polyline_encoded,
     );
 
-    const isWithinCorridor = isPointWithinRouteCorridor(
-      { latitude, longitude },
-      routeCoordinates,
-      100,
-    );
+    // Simple corridor check: driver within 100m of any route point
+    const bufferKm = 0.1; // 100 meters
+    let isWithinCorridor = false;
+    for (const point of routeCoordinates) {
+      const distance = calculateHaversineDistance(
+        latitude,
+        longitude,
+        point[0],
+        point[1],
+      );
+      if (distance <= bufferKm) {
+        isWithinCorridor = true;
+        break;
+      }
+    }
 
     if (!isWithinCorridor) {
       logger.warn(ERROR_MESSAGES.GOOGLEMAPS.DRIVER_OUTSIDE_CORRIDOR);

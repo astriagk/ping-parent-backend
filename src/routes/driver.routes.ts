@@ -188,20 +188,15 @@ router.post(
   qrOtpHandlers.driver.verifyAttendance,
 );
 
-// --- Tracking ---
+// --- Tracking (TomTom-only) ---
 router.post(
   "/tracking/calculate",
-  trackingHandlers.driver.validateCalculate,
-  trackingHandlers.driver.calculate,
-);
-router.post(
-  "/tracking/tomtom",
-  trackingHandlers.driver.validateTomTom,
-  trackingHandlers.driver.calculateTomTom,
+  trackingHandlers.driver.validateOptimal,
+  trackingHandlers.driver.calculateOptimal,
 );
 router.post(
   "/tracking/:tripId/recalculate",
-  trackingHandlers.driver.validateRecalculate,
+  trackingHandlers.driver.validateOptimal,
   trackingHandlers.driver.recalculate,
 );
 router.patch(

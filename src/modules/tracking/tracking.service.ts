@@ -1,4 +1,3 @@
-import { decodePolyline } from "@modules/googlemaps/googlemaps.data-mapper";
 import { tripRepository } from "@modules/trips/trip/trip.repository";
 import { getDB } from "@shared/config";
 import {
@@ -11,18 +10,14 @@ import {
 import { SUCCESS_MESSAGES } from "@shared/constants/messages";
 import { ApiError } from "@shared/middlewares";
 import { BroadcastService } from "@shared/services/broadcast.service";
-import {
-  calculateOptimalSequence,
-  calculateWaypointMetrics,
-  getHaversineRouteGeometry,
-  isPointWithinRouteCorridor,
-} from "@shared/services/geo-util.service";
+import { calculateHaversineDistance } from "@shared/services/geo-util.service";
 import { tomTomService } from "@shared/services/tomtom.service";
 import { logger } from "@shared/utils";
 
 import { trackingRepository } from "./tracking.repository";
 import {
   LocationTracking,
+  NavigationInstruction,
   RouteCalculationRequest,
   RouteCalculationResponse,
   RouteGeometry,
@@ -181,16 +176,21 @@ const validateAndPrepareRoute = async (
   return { driverId, trip, uniqueWaypoints, schoolLocation };
 };
 
-// Calculates route geometry and metrics using Haversine distance
-const calculateGeometryAndETasHaversine = async (
+/**
+ * Calculate route using TomTom API
+ * Uses TomTom response directly - NO manual distance/duration calculations
+ * Extracts turn-by-turn navigation instructions
+ */
+const calculateRouteWithTomTom = async (
   startPoint: { latitude: number; longitude: number },
   optimizedWaypoints: RouteWaypoint[],
 ): Promise<{
   waypointsWithMetrics: RouteWaypoint[];
   routeData: RouteGeometry;
-  routeGeometry: any;
+  navigationInstructions: NavigationInstruction[];
 }> => {
-  const routeGeometry = getHaversineRouteGeometry(
+  // Get full route response from TomTom
+  const tomtomRoute = await tomTomService.getRouteGeometry(
     startPoint,
     optimizedWaypoints.map((wp) => ({
       latitude: wp.latitude,
@@ -198,59 +198,51 @@ const calculateGeometryAndETasHaversine = async (
     })),
   );
 
-  const waypointsWithMetrics = calculateWaypointMetrics(
-    optimizedWaypoints,
-    routeGeometry.legs,
-  ) as RouteWaypoint[];
+  // Extract navigation instructions from TomTom guides
+  const navigationInstructions =
+    await tomTomService.extractNavigationInstructions(
+      startPoint,
+      optimizedWaypoints,
+    );
 
+  // Calculate waypoint metrics using TomTom's actual leg data (no Haversine)
+  const waypointsWithMetrics = tomtomRoute.legs.map((leg, idx) => {
+    const waypoint = optimizedWaypoints[idx];
+    const cumulativeDuration = tomtomRoute.legs
+      .slice(0, idx + 1)
+      .reduce((sum, l) => sum + l.duration, 0);
+
+    return {
+      ...waypoint,
+      distance_from_previous: leg.distance / 1000, // TomTom meters → km
+      duration_from_previous: leg.duration, // TomTom seconds (with traffic)
+      estimated_arrival_time: new Date(Date.now() + cumulativeDuration * 1000),
+    };
+  });
+
+  // Build route data using TomTom polyline points (NO SLERP interpolation)
   const routeData: RouteGeometry = {
     waypoints: waypointsWithMetrics,
-    total_distance: routeGeometry.totalDistance / 1000,
-    total_duration: routeGeometry.totalDuration,
-    coordinates: routeGeometry.coordinates,
+    total_distance: tomtomRoute.totalDistance / 1000, // meters → km
+    total_duration: tomtomRoute.totalDuration, // TomTom seconds
+    coordinates: tomtomRoute.coordinates, // Direct from TomTom legs.points
+    navigation_instructions: navigationInstructions,
+    route_type: tomtomRoute.routeType,
+    has_alternatives: tomtomRoute.hasAlternatives,
+    alternative_routes_count: tomtomRoute.alternativeRoutesCount,
+    traffic_delay: tomtomRoute.trafficDelay,
+    route_confidence: tomtomRoute.confidence,
   };
 
-  return { waypointsWithMetrics, routeData, routeGeometry };
-};
-
-// Calculates route geometry and metrics using TomTom API
-const calculateGeometryAndETasTomTom = async (
-  startPoint: { latitude: number; longitude: number },
-  optimizedWaypoints: RouteWaypoint[],
-): Promise<{
-  waypointsWithMetrics: RouteWaypoint[];
-  routeData: RouteGeometry;
-  routeGeometry: any;
-}> => {
-  const routeGeometry = await tomTomService.getRouteGeometry(
-    startPoint,
-    optimizedWaypoints.map((wp) => ({
-      latitude: wp.latitude,
-      longitude: wp.longitude,
-    })),
-  );
-
-  const waypointsWithMetrics = calculateWaypointMetrics(
-    optimizedWaypoints,
-    routeGeometry.legs,
-  ) as RouteWaypoint[];
-
-  const routeData: RouteGeometry = {
-    waypoints: waypointsWithMetrics,
-    total_distance: routeGeometry.totalDistance / 1000,
-    total_duration: routeGeometry.totalDuration,
-    coordinates: routeGeometry.coordinates,
-  };
-
-  return { waypointsWithMetrics, routeData, routeGeometry };
+  return { waypointsWithMetrics, routeData, navigationInstructions };
 };
 
 /**
- * Update trip in database and broadcast to WebSocket subscribers
- * Common logic for all route calculation functions
+ * Commit trip route plan to database and broadcast to WebSocket subscribers
+ * Finalizes route calculation after optimization
  * Separates student-only waypoints for DB updates from full waypoints for response
  */
-const updateAndBroadcastRoute = async (
+const commitTripRoute = async (
   tripId: string,
   routeData: RouteGeometry,
   waypointsWithMetrics: RouteWaypoint[],
@@ -285,17 +277,29 @@ const updateAndBroadcastRoute = async (
     studentUpdates,
   );
 
+  // Broadcast includes navigation instructions and route clarity metadata
   BroadcastService.broadcastRouteCalculated(tripId, {
     waypoints: waypointsWithMetrics,
     total_distance: routeData.total_distance,
     total_duration: routeData.total_duration,
     coordinates: routeData.coordinates,
+    navigation_instructions: routeData.navigation_instructions,
+    route_type: routeData.route_type,
+    has_alternatives: routeData.has_alternatives,
+    alternative_routes_count: routeData.alternative_routes_count,
+    traffic_delay: routeData.traffic_delay,
+    route_confidence: routeData.route_confidence,
   });
 
   return updatedCount;
 };
 
-export const calculateRoute = async (
+/**
+ * Calculate route with TomTom Matrix API optimization
+ * Used for both initial TomTom-optimized calculation and recalculation from new position
+ * Consolidates logic from calculateOptimalRouteWithTomTom and recalculateRoute
+ */
+const calculateOptimalRoute = async (
   userId: string,
   data: RouteCalculationRequest,
 ): Promise<RouteCalculationResponse> => {
@@ -307,66 +311,9 @@ export const calculateRoute = async (
     longitude: data.current_longitude,
   };
 
-  // For PICKUP: optimize homes, add school at end
-  // For DROP: optimize homes from current location (at/near school)
   const waypointsToOptimize = uniqueWaypoints;
 
-  const sequence = calculateOptimalSequence(
-    startPoint,
-    waypointsToOptimize.map((wp) => ({
-      latitude: wp.latitude,
-      longitude: wp.longitude,
-    })),
-  );
-
-  const optimizedWaypoints = sequence.map((idx) => waypointsToOptimize[idx]);
-
-  // Build final waypoints:
-  // PICKUP: optimized homes → school (last)
-  // DROP: school (first) → optimized homes
-  const finalWaypoints =
-    trip.trip_type === TripType.PICKUP && schoolLocation
-      ? [...optimizedWaypoints, schoolLocation]
-      : trip.trip_type === TripType.DROP && schoolLocation
-        ? [schoolLocation, ...optimizedWaypoints]
-        : optimizedWaypoints;
-
-  const { waypointsWithMetrics, routeData } =
-    await calculateGeometryAndETasHaversine(startPoint, finalWaypoints);
-
-  const updatedCount = await updateAndBroadcastRoute(
-    data.trip_id,
-    routeData,
-    waypointsWithMetrics,
-  );
-
-  return {
-    success: true,
-    _id: trip._id?.toString(),
-    trip_id: data.trip_id,
-    route_geometry: routeData,
-    total_distance: routeData.total_distance,
-    total_duration: routeData.total_duration,
-    trip_students_updated: updatedCount,
-    message: SUCCESS_MESSAGES.ROUTE.CALCULATED_SUCCESSFULLY,
-  };
-};
-
-export const calculateOptimalRouteWithTomTom = async (
-  userId: string,
-  data: RouteCalculationRequest,
-): Promise<RouteCalculationResponse> => {
-  const { uniqueWaypoints, trip, schoolLocation } =
-    await validateAndPrepareRoute(userId, data.trip_id);
-
-  const startPoint = {
-    latitude: data.current_latitude,
-    longitude: data.current_longitude,
-  };
-
-  // For both PICKUP and DROP: optimize student homes from current location
-  const waypointsToOptimize = uniqueWaypoints;
-
+  // Use TomTom Matrix API for optimal sequencing
   const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
     startPoint,
     waypointsToOptimize.map((wp) => ({
@@ -387,10 +334,10 @@ export const calculateOptimalRouteWithTomTom = async (
         ? [schoolLocation, ...optimizedWaypoints]
         : optimizedWaypoints;
 
-  const { waypointsWithMetrics, routeData } =
-    await calculateGeometryAndETasTomTom(startPoint, finalWaypoints);
+  const { waypointsWithMetrics, routeData, navigationInstructions } =
+    await calculateRouteWithTomTom(startPoint, finalWaypoints);
 
-  const updatedCount = await updateAndBroadcastRoute(
+  const updatedCount = await commitTripRoute(
     data.trip_id,
     routeData,
     waypointsWithMetrics,
@@ -404,11 +351,14 @@ export const calculateOptimalRouteWithTomTom = async (
     total_distance: routeData.total_distance,
     total_duration: routeData.total_duration,
     trip_students_updated: updatedCount,
+    navigation_instructions: navigationInstructions,
     message: SUCCESS_MESSAGES.ROUTE.TOMTOM_ROUTE_CALCULATED,
   };
 };
 
-export const updateDriverPosition = async (
+export const calculateOptimalRouteWithTomTom = calculateOptimalRoute;
+
+export const recordLiveLocation = async (
   userId: string,
   tripId: string,
   latitude: number,
@@ -440,17 +390,27 @@ export const updateDriverPosition = async (
     );
   }
 
-  if (trip.optimized_route_data?.polyline_encoded) {
-    // Decode encoded polyline only for deviation checking (internal use only)
-    const routeCoordinates = decodePolyline(
-      trip.optimized_route_data.polyline_encoded,
-    );
+  if (
+    trip.optimized_route_data?.coordinates &&
+    trip.optimized_route_data.coordinates.length > 0
+  ) {
+    // Check if driver position is within 200m of any route coordinate
+    const routeCoordinates = trip.optimized_route_data.coordinates;
+    const bufferKm = 0.2; // 200 meters
 
-    const isWithinCorridor = isPointWithinRouteCorridor(
-      { latitude, longitude },
-      routeCoordinates,
-      200,
-    );
+    let isWithinCorridor = false;
+    for (const routePoint of routeCoordinates) {
+      const distance = calculateHaversineDistance(
+        latitude,
+        longitude,
+        routePoint[0],
+        routePoint[1],
+      );
+      if (distance <= bufferKm) {
+        isWithinCorridor = true;
+        break;
+      }
+    }
 
     if (!isWithinCorridor) {
       logger.warn(ERROR_MESSAGES.TRACKING.DRIVER_POSITION_OUTSIDE_CORRIDOR);
@@ -567,91 +527,106 @@ export const cleanOldTrackingData = async (
 /**
  * Recalculate route from current position
  * Used when driver changes route or wants alternative
- * Handles both PICKUP (home → school) and DROP (school → home) trips
+ * Now uses consolidated calculateOptimalRoute logic
  */
 export const recalculateRoute = async (
   userId: string,
-  data: any, // RecalculateRouteRequest
-): Promise<any> => {
-  // Validate and prepare
-  const { uniqueWaypoints, trip, schoolLocation } =
-    await validateAndPrepareRoute(userId, data.trip_id);
+  data: RouteCalculationRequest,
+): Promise<RouteCalculationResponse> => {
+  // Use the same consolidated optimal route calculation
+  const result = await calculateOptimalRoute(userId, data);
 
-  const startPoint = {
-    latitude: data.current_latitude,
-    longitude: data.current_longitude,
-  };
-
-  // Optimize only student homes from current location
-  const waypointsToOptimize = uniqueWaypoints;
-
-  // Recalculate optimal sequence with new start point using grouped waypoints
-  const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
-    startPoint,
-    waypointsToOptimize.map((wp) => ({
-      latitude: wp.latitude,
-      longitude: wp.longitude,
-    })),
-  );
-
-  const optimizedWaypoints = sequence.map((idx) => waypointsToOptimize[idx]);
-
-  // Build final waypoints:
-  // PICKUP: optimized homes → school (last)
-  // DROP: school (first) → optimized homes
-  const finalWaypoints =
-    trip.trip_type === TripType.PICKUP && schoolLocation
-      ? [...optimizedWaypoints, schoolLocation]
-      : trip.trip_type === TripType.DROP && schoolLocation
-        ? [schoolLocation, ...optimizedWaypoints]
-        : optimizedWaypoints;
-
-  // Calculate geometry and ETAs using TomTom version (accurate API-based)
-  const { waypointsWithMetrics, routeData } =
-    await calculateGeometryAndETasTomTom(startPoint, finalWaypoints);
-
-  await trackingRepository.updateTripRouteData(
-    data.trip_id,
-    routeData,
-    routeData.total_distance,
-  );
-
-  const studentUpdates = waypointsWithMetrics
-    .filter((wp) => wp.student_id && wp.student_id[0] !== "SCHOOL")
-    .flatMap((wp, idx) => {
-      const studentIds = Array.isArray(wp.student_id)
-        ? wp.student_id
-        : [wp.student_id];
-
-      return studentIds
-        .filter((id) => id)
-        .map((id) => ({
-          student_id: id,
-          sequence_order: idx + 1,
-          estimated_arrival_time: wp.estimated_arrival_time || new Date(),
-        }));
-    });
-
-  await trackingRepository.updateTripStudentsSequence(
-    data.trip_id,
-    studentUpdates,
-  );
-
-  BroadcastService.broadcastRouteCalculated(data.trip_id, {
-    waypoints: waypointsWithMetrics,
-    total_distance: routeData.total_distance,
-    total_duration: routeData.total_duration,
-    coordinates: routeData.coordinates,
-    recalculated_at: new Date(),
-  });
-
+  // Add recalculated_at metadata
   return {
-    success: true,
-    trip_id: data.trip_id,
-    recalculated_at: new Date(),
-    route_geometry: routeData,
-    total_distance: routeData.total_distance,
-    total_duration: routeData.total_duration,
+    ...result,
     message: SUCCESS_MESSAGES.ROUTE.RECALCULATED_SUCCESSFULLY,
   };
+};
+
+/**
+ * Get alternative routes for a trip when driver is confused or wants options
+ * Returns up to 2 alternative routes with distance/duration comparisons
+ * Helps clarify multiple ways shown on map
+ */
+export const getAlternativeRoutesForTrip = async (
+  tripId: string,
+  currentLatitude: number,
+  currentLongitude: number,
+): Promise<
+  Array<{
+    route_id: string;
+    is_primary: boolean;
+    total_distance: number; // in km
+    total_duration: number; // in seconds
+    distance_difference?: number; // difference from primary in km
+    duration_difference?: number; // difference from primary in seconds
+    coordinates: [number, number][];
+    confidence: "high" | "medium" | "low";
+  }>
+> => {
+  const trip = await tripRepository.findById(tripId);
+  if (!trip) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.TRACKING.TRIP_NOT_FOUND,
+    );
+  }
+
+  if (!trip.optimized_route_data?.coordinates) {
+    return [];
+  }
+
+  const primaryRoute = trip.optimized_route_data;
+  const primaryDistance = primaryRoute.total_distance;
+  const primaryDuration = primaryRoute.total_duration;
+
+  // Get alternative routes from TomTom (up to 2 alternatives)
+  const alternatives = await tomTomService.getAlternativeRoutes(
+    { latitude: currentLatitude, longitude: currentLongitude },
+    {
+      latitude:
+        primaryRoute.waypoints[primaryRoute.waypoints.length - 1]?.latitude ||
+        0,
+      longitude:
+        primaryRoute.waypoints[primaryRoute.waypoints.length - 1]?.longitude ||
+        0,
+    },
+    2,
+  );
+
+  const routes = [
+    {
+      route_id: "primary",
+      is_primary: true,
+      total_distance: primaryDistance,
+      total_duration: primaryDuration,
+      distance_difference: 0, // Primary route has 0 difference
+      duration_difference: 0, // Primary route has 0 difference
+      coordinates: primaryRoute.coordinates,
+      confidence: primaryRoute.route_confidence || "high",
+    },
+  ];
+
+  // Add alternative routes with comparison metrics
+  for (let i = 0; i < alternatives.length; i++) {
+    const alt = alternatives[i];
+    routes.push({
+      route_id: `alternative_${i + 1}`,
+      is_primary: false,
+      total_distance: alt.totalDistance / 1000, // meters to km
+      total_duration: alt.totalDuration,
+      distance_difference: alt.totalDistance / 1000 - primaryDistance,
+      duration_difference: alt.totalDuration - primaryDuration,
+      coordinates: alt.coordinates,
+      confidence: "medium",
+    });
+  }
+
+  logger.info("Retrieved alternative routes for trip", {
+    tripId,
+    primaryDistance,
+    alternativesCount: routes.length - 1,
+  });
+
+  return routes;
 };

@@ -62,7 +62,13 @@ export interface RouteGeometry {
   waypoints: RouteWaypoint[];
   total_distance: number; // in kilometers
   total_duration: number; // in seconds
-  coordinates: [number, number][]; // array of [lat, lng]
+  coordinates: [number, number][]; // Direct from TomTom leg.points
+  navigation_instructions?: NavigationInstruction[]; // Turn-by-turn from TomTom guides
+  route_type?: "primary" | "alternative"; // indicates if this is primary or alternative route
+  has_alternatives?: boolean; // whether alternative routes exist
+  alternative_routes_count?: number; // count of available alternatives
+  traffic_delay?: number; // traffic delay in seconds
+  route_confidence?: "high" | "medium" | "low"; // accuracy/reliability of route
 }
 
 export interface LocationTracking {
@@ -93,6 +99,7 @@ export interface RouteCalculationResponse {
   total_distance: number;
   total_duration: number;
   trip_students_updated: number; // count of updated trip_students
+  navigation_instructions?: NavigationInstruction[]; // Turn-by-turn directions
   message: string;
 }
 

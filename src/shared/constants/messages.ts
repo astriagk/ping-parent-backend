@@ -365,6 +365,8 @@ export const ERROR_MESSAGES = {
     DAYS_OLD_INVALID: "daysOld must be at least 1",
     RECALCULATION_FAILED: "Failed to recalculate route",
     TRACKING_DATA_NOT_FOUND: "No tracking data found",
+    INVALID_COORDINATES:
+      "Invalid coordinates - latitude and longitude required",
   },
   SCHOOL_SUBSCRIPTION: {
     NOT_FOUND: "School subscription not found",
@@ -644,6 +646,10 @@ export const SUCCESS_MESSAGES = {
     CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
     RECALCULATED_SUCCESSFULLY: "Route recalculated successfully",
     TOMTOM_ROUTE_CALCULATED: "Optimal route calculated using TomTom Matrix API",
+    ALTERNATIVE_ROUTES_FOUND:
+      "Alternative routes found - primary and alternatives available",
+    NO_ALTERNATIVE_ROUTES_AVAILABLE:
+      "Primary route shown - no alternatives available",
   },
   GOOGLEMAPS: {
     ROUTE_CALCULATED: "Optimal route calculated using Google Maps",

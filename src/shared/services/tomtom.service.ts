@@ -160,6 +160,8 @@ class TomTomService {
 
   /**
    * Get route geometry and duration between multiple waypoints
+   * Returns primary route with metadata about alternatives (if available)
+   * This prevents confusion when multiple valid routes exist
    */
   async getRouteGeometry(
     startPoint: Coordinate,
@@ -172,6 +174,11 @@ class TomTomService {
       distance: number;
       duration: number;
     }>;
+    routeType: "primary" | "alternative"; // indicates route type
+    hasAlternatives: boolean; // whether other valid routes exist
+    alternativeRoutesCount: number; // number of alternative routes (if any)
+    trafficDelay?: number; // traffic delay in seconds (if available)
+    confidence: "high" | "medium" | "low"; // route quality confidence
   }> {
     try {
       const allPoints = [startPoint, ...waypoints];
@@ -194,6 +201,22 @@ class TomTomService {
       const route = response.data.routes[0];
       const totalDistance = route.summary.lengthInMeters;
       const totalDuration = route.summary.travelTimeInSeconds;
+      const trafficDelay = route.summary.trafficDelayInSeconds || 0;
+
+      // Check if alternative routes exist (TomTom sometimes returns multiple routes)
+      const hasAlternatives = response.data.routes.length > 1;
+      const alternativeRoutesCount = Math.max(
+        0,
+        response.data.routes.length - 1,
+      );
+
+      // Determine route confidence based on traffic delay ratio
+      // High confidence: minimal traffic delay, Medium: moderate delay, Low: significant delay
+      const delayRatio = trafficDelay / totalDuration;
+      let confidence: "high" | "medium" | "low" = "high";
+      if (delayRatio > 0.3)
+        confidence = "low"; // >30% delay
+      else if (delayRatio > 0.15) confidence = "medium"; // >15% delay
 
       // Flatten all coordinates from all legs
       const coordinates: [number, number][] = [];
@@ -210,14 +233,94 @@ class TomTomService {
         }
       }
 
+      logger.info("TomTom route computed", {
+        routeType: "primary",
+        hasAlternatives,
+        alternativeRoutesCount,
+        confidence,
+        totalDistance,
+        totalDuration,
+      });
+
       return {
         totalDistance,
         totalDuration,
         coordinates,
         legs,
+        routeType: "primary",
+        hasAlternatives,
+        alternativeRoutesCount,
+        trafficDelay,
+        confidence,
       };
     } catch (error) {
+      logger.error("Error getting route geometry from TomTom:", { error });
       throw error;
+    }
+  }
+
+  /**
+   * Extract turn-by-turn navigation instructions from TomTom response
+   */
+  async extractNavigationInstructions(
+    startPoint: Coordinate,
+    waypoints: Coordinate[],
+  ): Promise<
+    Array<{
+      route_index: number;
+      instruction: string;
+      distance: number; // in km
+      duration: number; // in seconds
+      coordinates: [number, number][];
+    }>
+  > {
+    try {
+      const allPoints = [startPoint, ...waypoints];
+      const pointsString = allPoints
+        .map((p) => `${p.latitude},${p.longitude}`)
+        .join(":");
+
+      const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
+
+      const response = await axios.get<TomTomRouteResponse>(url, {
+        params: {
+          key: this.apiKey,
+          instructionsType: "text",
+          language: "en",
+        },
+      });
+
+      if (!response.data.routes || response.data.routes.length === 0) {
+        return [];
+      }
+
+      const route = response.data.routes[0];
+      const instructions: any[] = [];
+      let instructionIndex = 0;
+
+      // TomTom response has legs which represent segments between waypoints
+      // Each leg is one navigation step
+      for (let legIdx = 0; legIdx < route.legs.length; legIdx++) {
+        const leg = route.legs[legIdx];
+
+        // Get coordinates for this leg
+        const segmentCoordinates = leg.points
+          ? leg.points.map((p) => [p.latitude, p.longitude] as [number, number])
+          : [];
+
+        instructions.push({
+          route_index: instructionIndex++,
+          instruction: `Navigate to waypoint ${legIdx + 1}`,
+          distance: leg.summary.lengthInMeters / 1000, // meters → km
+          duration: leg.summary.travelTimeInSeconds,
+          coordinates: segmentCoordinates,
+        });
+      }
+
+      return instructions;
+    } catch (error) {
+      logger.error("Error extracting navigation instructions:", { error });
+      return [];
     }
   }
 
