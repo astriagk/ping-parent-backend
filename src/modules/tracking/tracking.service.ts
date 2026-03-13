@@ -16,12 +16,14 @@ import { logger } from "@shared/utils";
 
 import { trackingRepository } from "./tracking.repository";
 import {
+  GroupedWaypoint,
   LocationTracking,
   NavigationInstruction,
   RouteCalculationRequest,
   RouteCalculationResponse,
+  RouteDetailsResponse,
   RouteGeometry,
-  RouteWaypoint,
+  StudentWaypoint,
 } from "./tracking.type";
 
 const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
@@ -34,28 +36,26 @@ const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
 };
 
 // Groups students by parent_id to create unique waypoints per location
-const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
-  const grouped = new Map<string, RouteWaypoint[]>();
+// Also tracks school_ids for multi-school parent support
+const groupStudentsByParent = (
+  students: StudentWaypoint[],
+): GroupedWaypoint[] => {
+  const grouped = new Map<string, StudentWaypoint[]>();
 
   for (const student of students) {
     const parentId =
-      student.student_parent_id || `default-${student.student_id[0]}`;
+      student.student_parent_id || `default-${student.student_id}`;
     if (!grouped.has(parentId)) {
       grouped.set(parentId, []);
     }
     grouped.get(parentId)!.push(student);
   }
 
-  const uniqueWaypoints: RouteWaypoint[] = [];
+  const uniqueWaypoints: GroupedWaypoint[] = [];
   for (const [parentId, studentList] of grouped.entries()) {
     const firstStudent = studentList[0];
 
-    const studentIds = studentList.flatMap((s) => {
-      if (Array.isArray(s.student_id)) {
-        return s.student_id;
-      }
-      return s.student_id ? [s.student_id] : [];
-    });
+    const studentIds = studentList.map((s) => s.student_id).filter(Boolean);
 
     const studentNames = studentList
       .map((s) => s.student_name)
@@ -77,6 +77,25 @@ const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
       .map((s) => s.student_class)
       .filter(Boolean) as string[];
 
+    // Extract all unique schools for students at this location (multi-school parent support)
+    const schoolIdsSet = new Set<string>();
+    const schoolIdMap: Record<string, string> = {};
+
+    for (const student of studentList) {
+      const studentId = student.student_id;
+      const schoolId = student.school?.school_id
+        ? String(student.school.school_id)
+        : undefined;
+
+      if (schoolId) {
+        schoolIdsSet.add(schoolId);
+        // Map individual student to their school
+        if (studentId) {
+          schoolIdMap[studentId] = schoolId;
+        }
+      }
+    }
+
     uniqueWaypoints.push({
       latitude: firstStudent.latitude,
       longitude: firstStudent.longitude,
@@ -94,6 +113,10 @@ const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
       parent_email: firstStudent.parent_email,
       parent_phone_number: firstStudent.parent_phone_number,
       parent_user_id: firstStudent.parent_user_id,
+      school: firstStudent.school, // Preserve school object from first student
+      school_ids: Array.from(schoolIdsSet), // All schools for this location
+      school_id_map:
+        Object.keys(schoolIdMap).length > 0 ? schoolIdMap : undefined, // Mapping for bulk operations
     });
   }
 
@@ -101,7 +124,75 @@ const groupStudentsByParent = (students: RouteWaypoint[]): RouteWaypoint[] => {
 };
 
 /**
+ * Extract all unique schools from students and create school waypoints
+ * Handles cases where students belong to different schools
+ * Uses school_id_map from grouped waypoints to correctly identify student->school relationships
+ */
+const extractUniqueSchoolWaypoints = (
+  students: StudentWaypoint[],
+): GroupedWaypoint[] => {
+  const schoolMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      latitude: number;
+      longitude: number;
+      address: string;
+      studentIds: string[];
+    }
+  >();
+
+  // Collect all unique schools from students with their student assignments
+  for (const student of students) {
+    if (student.school && student.school.school_id) {
+      const schoolId = String(student.school.school_id);
+      const studentIds = [student.student_id];
+
+      if (!schoolMap.has(schoolId)) {
+        schoolMap.set(schoolId, {
+          id: schoolId,
+          name: student.school.school_name || "School",
+          latitude: student.school.school_latitude || 0,
+          longitude: student.school.school_longitude || 0,
+          address:
+            student.school.school_address ||
+            student.school.school_name ||
+            "School",
+          studentIds: studentIds,
+        });
+      } else {
+        // Add students to existing school
+        const existing = schoolMap.get(schoolId)!;
+        existing.studentIds = [
+          ...new Set([...existing.studentIds, ...studentIds]),
+        ];
+      }
+    }
+  }
+
+  // Create a waypoint for each unique school
+  const schoolWaypoints: GroupedWaypoint[] = [];
+  for (const [schoolId, schoolData] of schoolMap.entries()) {
+    schoolWaypoints.push({
+      latitude: schoolData.latitude,
+      longitude: schoolData.longitude,
+      address: schoolData.address,
+      student_id: ["SCHOOL"],
+      student_parent_id: "SCHOOL_LOCATION",
+      student_names: [schoolData.name],
+      school_id: schoolId, // Include school ID for identification
+      school_ids: [schoolId], // Consistency: also add to array form for unified handling
+    });
+  }
+
+  return schoolWaypoints;
+};
+
+/**
  * Validate trip ownership and get prepared waypoints
+ * Supports multiple schools - extracts all unique schools from students
+ * Returns student waypoints grouped by parent with school mapping, and separate school waypoints
  */
 const validateAndPrepareRoute = async (
   userId: string,
@@ -109,8 +200,8 @@ const validateAndPrepareRoute = async (
 ): Promise<{
   driverId: string;
   trip: any;
-  uniqueWaypoints: RouteWaypoint[];
-  schoolLocation?: RouteWaypoint;
+  uniqueWaypoints: GroupedWaypoint[];
+  schoolWaypoints: GroupedWaypoint[];
 }> => {
   const driverId = await getDriverIdByUserId(userId);
   if (!driverId) {
@@ -156,59 +247,40 @@ const validateAndPrepareRoute = async (
 
   const uniqueWaypoints = groupStudentsByParent(waypointsToOptimize);
 
-  let schoolLocation: RouteWaypoint | undefined;
-  const firstStudent = waypointsToOptimize[0] as any;
-  if (
-    firstStudent?.school?.school_latitude &&
-    firstStudent?.school?.school_longitude
-  ) {
-    schoolLocation = {
-      latitude: firstStudent.school.school_latitude,
-      longitude: firstStudent.school.school_longitude,
-      address:
-        firstStudent.school.school_address || firstStudent.school.school_name,
-      student_id: ["SCHOOL"],
-      student_parent_id: "SCHOOL_LOCATION",
-      student_names: [firstStudent.school.school_name || "School"],
-    };
-  }
+  // Extract all unique schools from students (supports multiple schools)
+  const schoolWaypoints = extractUniqueSchoolWaypoints(waypointsToOptimize);
 
-  return { driverId, trip, uniqueWaypoints, schoolLocation };
+  return { driverId, trip, uniqueWaypoints, schoolWaypoints };
 };
 
 /**
  * Calculate route using TomTom API
+ * OPTIMIZED: Single API call returns both route geometry AND navigation instructions
+ * Previously made 2 API calls - now makes 1
  * Uses TomTom response directly - NO manual distance/duration calculations
- * Extracts turn-by-turn navigation instructions
  */
 const calculateRouteWithTomTom = async (
   startPoint: { latitude: number; longitude: number },
-  optimizedWaypoints: RouteWaypoint[],
+  optimizedWaypoints: GroupedWaypoint[],
 ): Promise<{
-  waypointsWithMetrics: RouteWaypoint[];
+  waypointsWithMetrics: GroupedWaypoint[];
   routeData: RouteGeometry;
   navigationInstructions: NavigationInstruction[];
 }> => {
-  // Get full route response from TomTom
-  const tomtomRoute = await tomTomService.getRouteGeometry(
-    startPoint,
-    optimizedWaypoints.map((wp) => ({
-      latitude: wp.latitude,
-      longitude: wp.longitude,
-    })),
-  );
-
-  // Extract navigation instructions from TomTom guides
-  const navigationInstructions =
-    await tomTomService.extractNavigationInstructions(
+  // Get route geometry AND navigation instructions in single API call
+  const { routeGeometry, navigationInstructions } =
+    await tomTomService.getRouteGeometryWithInstructions(
       startPoint,
-      optimizedWaypoints,
+      optimizedWaypoints.map((wp) => ({
+        latitude: wp.latitude,
+        longitude: wp.longitude,
+      })),
     );
 
   // Calculate waypoint metrics using TomTom's actual leg data (no Haversine)
-  const waypointsWithMetrics = tomtomRoute.legs.map((leg, idx) => {
+  const waypointsWithMetrics = routeGeometry.legs.map((leg, idx) => {
     const waypoint = optimizedWaypoints[idx];
-    const cumulativeDuration = tomtomRoute.legs
+    const cumulativeDuration = routeGeometry.legs
       .slice(0, idx + 1)
       .reduce((sum, l) => sum + l.duration, 0);
 
@@ -223,15 +295,20 @@ const calculateRouteWithTomTom = async (
   // Build route data using TomTom polyline points (NO SLERP interpolation)
   const routeData: RouteGeometry = {
     waypoints: waypointsWithMetrics,
-    total_distance: tomtomRoute.totalDistance / 1000, // meters → km
-    total_duration: tomtomRoute.totalDuration, // TomTom seconds
-    coordinates: tomtomRoute.coordinates, // Direct from TomTom legs.points
+    total_distance: routeGeometry.totalDistance / 1000, // meters → km
+    total_duration: routeGeometry.totalDuration, // TomTom seconds
+    coordinates: routeGeometry.coordinates, // Full route polyline
+    legs: routeGeometry.legs.map((leg) => ({
+      distance: leg.distance / 1000, // meters → km
+      duration: leg.duration,
+      coordinates: leg.coordinates, // Per-segment coordinates
+    })),
     navigation_instructions: navigationInstructions,
-    route_type: tomtomRoute.routeType,
-    has_alternatives: tomtomRoute.hasAlternatives,
-    alternative_routes_count: tomtomRoute.alternativeRoutesCount,
-    traffic_delay: tomtomRoute.trafficDelay,
-    route_confidence: tomtomRoute.confidence,
+    route_type: routeGeometry.routeType,
+    has_alternatives: routeGeometry.hasAlternatives,
+    alternative_routes_count: routeGeometry.alternativeRoutesCount,
+    traffic_delay: routeGeometry.trafficDelay,
+    route_confidence: routeGeometry.confidence,
   };
 
   return { waypointsWithMetrics, routeData, navigationInstructions };
@@ -245,7 +322,7 @@ const calculateRouteWithTomTom = async (
 const commitTripRoute = async (
   tripId: string,
   routeData: RouteGeometry,
-  waypointsWithMetrics: RouteWaypoint[],
+  waypointsWithMetrics: GroupedWaypoint[],
 ): Promise<number> => {
   // Update trip with route data (full route including school if present)
   await trackingRepository.updateTripRouteData(
@@ -259,13 +336,9 @@ const commitTripRoute = async (
   );
 
   const studentUpdates = studentWaypoints.flatMap((wp, idx) => {
-    const studentIds = Array.isArray(wp.student_id)
-      ? wp.student_id
-      : [wp.student_id];
-
-    return studentIds
-      .filter((id) => id)
-      .map((id) => ({
+    return wp.student_id
+      .filter((id: string) => id)
+      .map((id: string) => ({
         student_id: id,
         sequence_order: idx + 1,
         estimated_arrival_time: wp.estimated_arrival_time || new Date(),
@@ -283,6 +356,7 @@ const commitTripRoute = async (
     total_distance: routeData.total_distance,
     total_duration: routeData.total_duration,
     coordinates: routeData.coordinates,
+    legs: routeData.legs,
     navigation_instructions: routeData.navigation_instructions,
     route_type: routeData.route_type,
     has_alternatives: routeData.has_alternatives,
@@ -303,7 +377,7 @@ const calculateOptimalRoute = async (
   userId: string,
   data: RouteCalculationRequest,
 ): Promise<RouteCalculationResponse> => {
-  const { uniqueWaypoints, trip, schoolLocation } =
+  const { uniqueWaypoints, trip, schoolWaypoints } =
     await validateAndPrepareRoute(userId, data.trip_id);
 
   const startPoint = {
@@ -322,20 +396,26 @@ const calculateOptimalRoute = async (
     })),
   );
 
-  const optimizedWaypoints = sequence.map((idx) => waypointsToOptimize[idx]);
+  const optimizedWaypoints = sequence
+    .filter((idx) => idx != null && waypointsToOptimize[idx] != null)
+    .map((idx) => waypointsToOptimize[idx]);
 
   // Build final waypoints:
-  // PICKUP: optimized homes → school (last)
-  // DROP: school (first) → optimized homes
-  const finalWaypoints =
-    trip.trip_type === TripType.PICKUP && schoolLocation
-      ? [...optimizedWaypoints, schoolLocation]
-      : trip.trip_type === TripType.DROP && schoolLocation
-        ? [schoolLocation, ...optimizedWaypoints]
-        : optimizedWaypoints;
+  // PICKUP: optimized homes → all schools (last)
+  // DROP: all schools (first) → optimized homes
+  // If multiple schools exist, all are included in the route
+  let finalWaypoints: GroupedWaypoint[] = optimizedWaypoints;
+  if (schoolWaypoints && schoolWaypoints.length > 0) {
+    finalWaypoints =
+      trip.trip_type === TripType.PICKUP
+        ? [...optimizedWaypoints, ...schoolWaypoints]
+        : [...schoolWaypoints, ...optimizedWaypoints];
+  }
 
-  const { waypointsWithMetrics, routeData, navigationInstructions } =
-    await calculateRouteWithTomTom(startPoint, finalWaypoints);
+  const { waypointsWithMetrics, routeData } = await calculateRouteWithTomTom(
+    startPoint,
+    finalWaypoints,
+  );
 
   const updatedCount = await commitTripRoute(
     data.trip_id,
@@ -344,14 +424,10 @@ const calculateOptimalRoute = async (
   );
 
   return {
-    success: true,
     _id: trip._id?.toString(),
     trip_id: data.trip_id,
     route_geometry: routeData,
-    total_distance: routeData.total_distance,
-    total_duration: routeData.total_duration,
     trip_students_updated: updatedCount,
-    navigation_instructions: navigationInstructions,
     message: SUCCESS_MESSAGES.ROUTE.TOMTOM_ROUTE_CALCULATED,
   };
 };
@@ -493,7 +569,9 @@ export const getLatestDriverPosition = async (
     : null;
 };
 
-export const getRouteDetails = async (tripId: string): Promise<any> => {
+export const getRouteDetails = async (
+  tripId: string,
+): Promise<RouteDetailsResponse> => {
   const trip = await tripRepository.findById(tripId);
 
   if (!trip) {
@@ -511,8 +589,8 @@ export const getRouteDetails = async (tripId: string): Promise<any> => {
     trip_type: trip.trip_type,
     trip_status: trip.trip_status,
     trip_date: trip.trip_date,
-    total_distance: trip.total_distance,
-    optimized_route_data: trip.optimized_route_data,
+    total_distance: trip.total_distance || 0,
+    optimized_route_data: trip.optimized_route_data || null,
     current_position: latestPosition,
     trip_students: tripStudents,
   };

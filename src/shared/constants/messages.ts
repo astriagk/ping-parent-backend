@@ -190,6 +190,7 @@ export const ERROR_MESSAGES = {
     PICKUP_STATUS_REQUIRED: "Pickup status is required",
     MUST_BE_PICKED_BEFORE_DROP: "Student must be picked up before dropping off",
     NO_STUDENTS_PROVIDED: "At least one student must be provided",
+    STUDENT_NOT_IN_SCHOOL: "Student does not belong to the specified school",
   },
   DAILY_QR_OTP: {
     NOT_FOUND: "QR code/OTP not found",

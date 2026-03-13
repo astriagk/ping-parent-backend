@@ -13,7 +13,7 @@ import {
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { LocationTracking, RouteWaypoint } from "./tracking.type";
+import { LocationTracking, StudentWaypoint } from "./tracking.type";
 
 class TrackingRepository extends BaseRepository<LocationTracking> {
   constructor() {
@@ -168,7 +168,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
   async getTripStudentsWithDetails(
     tripId: string,
     pickupStatusFilter?: string,
-  ): Promise<RouteWaypoint[]> {
+  ): Promise<StudentWaypoint[]> {
     const db = await getDB();
     // Build match condition - always filter by trip_id, optionally by pickup_status
     const matchCondition: Record<string, any> = { trip_id: tripId };
@@ -178,7 +178,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
 
     return db
       .collection(TRIP_STUDENTS_COLLECTION)
-      .aggregate<RouteWaypoint>([
+      .aggregate<StudentWaypoint>([
         // Stage 1: Match students for this trip (with optional pickup_status filter)
         {
           $match: matchCondition,

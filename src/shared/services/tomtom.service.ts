@@ -2,6 +2,18 @@ import axios from "axios";
 
 import { logger } from "@shared/utils";
 
+interface TomTomGuidanceInstruction {
+  routeOffsetInMeters: number;
+  travelTimeInSeconds: number;
+  point: { latitude: number; longitude: number };
+  instructionType: string;
+  message: string;
+  street?: string;
+  junctionType?: string;
+  turnAngleInDecimalDegrees?: number;
+  possibleCombineWithNext?: boolean;
+}
+
 interface TomTomRouteResponse {
   routes: Array<{
     summary: {
@@ -19,6 +31,19 @@ interface TomTomRouteResponse {
         longitude: number;
       }>;
     }>;
+    guidance?: {
+      instructions: TomTomGuidanceInstruction[];
+      instructionGroups?: Array<{
+        firstInstructionIndex: number;
+        lastInstructionIndex: number;
+        groupMessage: string;
+        groupLengthInMeters: number;
+      }>;
+    };
+  }>;
+  optimizedWaypoints?: Array<{
+    providedIndex: number;
+    optimizedIndex: number;
   }>;
 }
 
@@ -39,9 +64,9 @@ class TomTomService {
   }
 
   /**
-   * Calculate optimal sequence using TomTom Matrix API
-   * Uses real road distances for accurate route optimization
-   * Returns optimal order of waypoints to minimize total distance
+   * Calculate optimal sequence using TomTom API with computeBestOrder
+   * TomTom solves the TSP (Travelling Salesman Problem) server-side
+   * Returns optimal order of waypoints to minimize total travel time
    */
   async calculateOptimalSequenceWithTomTom(
     startPoint: Coordinate,
@@ -60,39 +85,47 @@ class TomTomService {
         return { sequence: [0], distances: [0], totalDistance: 0 };
       }
 
-      // Use routing API to calculate distances from start to each waypoint
-      // Build array of route requests (start -> each waypoint)
-      const distances: number[] = [];
+      const allPoints = [startPoint, ...waypoints];
+      const pointsString = allPoints
+        .map((p) => `${p.latitude},${p.longitude}`)
+        .join(":");
 
-      for (let i = 0; i < waypoints.length; i++) {
-        try {
-          const waypoint = waypoints[i];
-          const pointsString = `${startPoint.latitude},${startPoint.longitude}:${waypoint.latitude},${waypoint.longitude}`;
-          const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
+      const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
+      const response = await axios.get<TomTomRouteResponse>(url, {
+        params: {
+          key: this.apiKey,
+          computeBestOrder: true,
+        },
+      });
 
-          const response = await axios.get<TomTomRouteResponse>(url, {
-            params: {
-              key: this.apiKey,
-            },
-          });
-
-          if (response.data.routes && response.data.routes.length > 0) {
-            const distance = response.data.routes[0].summary.lengthInMeters;
-            distances.push(distance);
-          } else {
-            distances.push(0);
-          }
-        } catch (err) {
-          logger.error(`Error calculating distance to waypoint ${i}:`, { err });
-          distances.push(0);
-        }
+      if (!response.data.routes || response.data.routes.length === 0) {
+        throw new Error("No route found for sequence optimization");
       }
 
-      // Sort waypoints by distance and return indices
-      const sequence = waypoints
-        .map((_, i) => ({ index: i, distance: distances[i] }))
-        .sort((a, b) => a.distance - b.distance)
-        .map((item) => item.index);
+      const route = response.data.routes[0];
+
+      // Extract distances from each leg
+      const distances: number[] = route.legs.map(
+        (leg) => leg.summary.lengthInMeters,
+      );
+
+      // Use TomTom's optimizedWaypoints for proper TSP-solved order
+      // optimizedWaypoints maps providedIndex → optimizedIndex (0-based, relative to waypoints only, not start)
+      let sequence: number[];
+      if (
+        response.data.optimizedWaypoints &&
+        response.data.optimizedWaypoints.length > 0
+      ) {
+        // Build sequence: for each optimized position, find which original waypoint goes there
+        const optimizedMap = response.data.optimizedWaypoints;
+        sequence = Array.from({ length: waypoints.length }, (_, i) => i);
+        for (const wp of optimizedMap) {
+          sequence[wp.optimizedIndex] = wp.providedIndex;
+        }
+      } else {
+        // Fallback: use leg order as-is (waypoints in order they were given)
+        sequence = waypoints.map((_, i) => i);
+      }
 
       const totalDistance = distances.reduce(
         (a: number, b: number) => a + b,
@@ -159,26 +192,36 @@ class TomTomService {
   }
 
   /**
-   * Get route geometry and duration between multiple waypoints
-   * Returns primary route with metadata about alternatives (if available)
-   * This prevents confusion when multiple valid routes exist
+   * Get route geometry AND navigation instructions in single API call
+   * Combines what was previously two separate API calls
+   * OPTIMIZED: Single call returns route data + instructions
    */
-  async getRouteGeometry(
+  async getRouteGeometryWithInstructions(
     startPoint: Coordinate,
     waypoints: Coordinate[],
   ): Promise<{
-    totalDistance: number; // in meters
-    totalDuration: number; // in seconds
-    coordinates: [number, number][];
-    legs: Array<{
+    routeGeometry: {
+      totalDistance: number;
+      totalDuration: number;
+      coordinates: [number, number][];
+      legs: Array<{
+        distance: number;
+        duration: number;
+        coordinates: [number, number][];
+      }>;
+      routeType: "primary" | "alternative";
+      hasAlternatives: boolean;
+      alternativeRoutesCount: number;
+      trafficDelay?: number;
+      confidence: "high" | "medium" | "low";
+    };
+    navigationInstructions: Array<{
+      route_index: number;
+      instruction: string;
       distance: number;
       duration: number;
+      coordinates: [number, number][];
     }>;
-    routeType: "primary" | "alternative"; // indicates route type
-    hasAlternatives: boolean; // whether other valid routes exist
-    alternativeRoutesCount: number; // number of alternative routes (if any)
-    trafficDelay?: number; // traffic delay in seconds (if available)
-    confidence: "high" | "medium" | "low"; // route quality confidence
   }> {
     try {
       const allPoints = [startPoint, ...waypoints];
@@ -191,6 +234,7 @@ class TomTomService {
       const response = await axios.get<TomTomRouteResponse>(url, {
         params: {
           key: this.apiKey,
+          instructionsType: "text",
         },
       });
 
@@ -203,125 +247,161 @@ class TomTomService {
       const totalDuration = route.summary.travelTimeInSeconds;
       const trafficDelay = route.summary.trafficDelayInSeconds || 0;
 
-      // Check if alternative routes exist (TomTom sometimes returns multiple routes)
+      // Check if alternatives exist
       const hasAlternatives = response.data.routes.length > 1;
       const alternativeRoutesCount = Math.max(
         0,
         response.data.routes.length - 1,
       );
 
-      // Determine route confidence based on traffic delay ratio
-      // High confidence: minimal traffic delay, Medium: moderate delay, Low: significant delay
+      // Determine confidence based on traffic
       const delayRatio = trafficDelay / totalDuration;
       let confidence: "high" | "medium" | "low" = "high";
-      if (delayRatio > 0.3)
-        confidence = "low"; // >30% delay
-      else if (delayRatio > 0.15) confidence = "medium"; // >15% delay
+      if (delayRatio > 0.3) confidence = "low";
+      else if (delayRatio > 0.15) confidence = "medium";
 
-      // Flatten all coordinates from all legs
+      // Build coordinates and legs
       const coordinates: [number, number][] = [];
       const legs = [];
 
-      for (const leg of route.legs) {
+      // Cumulative distance per leg (for mapping guidance instructions to legs)
+      const legCumulativeDistances: number[] = [];
+      let cumulativeDistance = 0;
+
+      for (let legIdx = 0; legIdx < route.legs.length; legIdx++) {
+        const leg = route.legs[legIdx];
+
+        cumulativeDistance += leg.summary.lengthInMeters;
+        legCumulativeDistances.push(cumulativeDistance);
+
+        // Build per-leg coordinates
+        const legCoordinates: [number, number][] = [];
+
+        const startWaypoint = allPoints[legIdx];
+        legCoordinates.push([startWaypoint.latitude, startWaypoint.longitude]);
+
+        if (leg.points && leg.points.length > 0) {
+          for (const point of leg.points) {
+            const coord: [number, number] = [point.latitude, point.longitude];
+            if (
+              coord[0] !== startWaypoint.latitude ||
+              coord[1] !== startWaypoint.longitude
+            ) {
+              legCoordinates.push(coord);
+            }
+          }
+        }
+
+        // Ensure connectivity to end waypoint
+        const endWaypoint = allPoints[legIdx + 1];
+        if (endWaypoint) {
+          const lastCoord = legCoordinates[legCoordinates.length - 1];
+          if (
+            endWaypoint.latitude !== lastCoord[0] ||
+            endWaypoint.longitude !== lastCoord[1]
+          ) {
+            legCoordinates.push([endWaypoint.latitude, endWaypoint.longitude]);
+          }
+        }
+
         legs.push({
           distance: leg.summary.lengthInMeters,
           duration: leg.summary.travelTimeInSeconds,
+          coordinates: legCoordinates,
         });
 
-        for (const point of leg.points) {
-          coordinates.push([point.latitude, point.longitude]);
-        }
+        // Add to full route coordinates
+        coordinates.push(...legCoordinates);
       }
 
-      logger.info("TomTom route computed", {
-        routeType: "primary",
-        hasAlternatives,
-        alternativeRoutesCount,
-        confidence,
-        totalDistance,
-        totalDuration,
-      });
+      // Parse real turn-by-turn instructions from TomTom guidance
+      const navigationInstructions = this.buildNavigationInstructions(
+        route,
+        legCumulativeDistances,
+      );
 
       return {
-        totalDistance,
-        totalDuration,
-        coordinates,
-        legs,
-        routeType: "primary",
-        hasAlternatives,
-        alternativeRoutesCount,
-        trafficDelay,
-        confidence,
+        routeGeometry: {
+          totalDistance,
+          totalDuration,
+          coordinates,
+          legs,
+          routeType: "primary",
+          hasAlternatives,
+          alternativeRoutesCount,
+          trafficDelay,
+          confidence,
+        },
+        navigationInstructions,
       };
     } catch (error) {
-      logger.error("Error getting route geometry from TomTom:", { error });
+      logger.error("Error getting route geometry with instructions:", {
+        error,
+      });
       throw error;
     }
   }
 
   /**
-   * Extract turn-by-turn navigation instructions from TomTom response
+   * Build navigation instructions from TomTom guidance data
+   * Maps guidance instructions to route legs using routeOffsetInMeters
+   * Falls back to generic per-leg instructions if guidance is not available
    */
-  async extractNavigationInstructions(
-    startPoint: Coordinate,
-    waypoints: Coordinate[],
-  ): Promise<
-    Array<{
+  private buildNavigationInstructions(
+    route: TomTomRouteResponse["routes"][0],
+    legCumulativeDistances: number[],
+  ): Array<{
+    route_index: number;
+    instruction: string;
+    distance: number;
+    duration: number;
+    coordinates: [number, number][];
+  }> {
+    const instructions: Array<{
       route_index: number;
       instruction: string;
-      distance: number; // in km
-      duration: number; // in seconds
+      distance: number;
+      duration: number;
       coordinates: [number, number][];
-    }>
-  > {
-    try {
-      const allPoints = [startPoint, ...waypoints];
-      const pointsString = allPoints
-        .map((p) => `${p.latitude},${p.longitude}`)
-        .join(":");
+    }> = [];
 
-      const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
-
-      const response = await axios.get<TomTomRouteResponse>(url, {
-        params: {
-          key: this.apiKey,
-          instructionsType: "text",
-          language: "en",
-        },
-      });
-
-      if (!response.data.routes || response.data.routes.length === 0) {
-        return [];
-      }
-
-      const route = response.data.routes[0];
-      const instructions: any[] = [];
-      let instructionIndex = 0;
-
-      // TomTom response has legs which represent segments between waypoints
-      // Each leg is one navigation step
-      for (let legIdx = 0; legIdx < route.legs.length; legIdx++) {
-        const leg = route.legs[legIdx];
-
-        // Get coordinates for this leg
-        const segmentCoordinates = leg.points
-          ? leg.points.map((p) => [p.latitude, p.longitude] as [number, number])
-          : [];
+    if (route.guidance && route.guidance.instructions.length > 0) {
+      // Map each TomTom guidance instruction to the correct leg
+      for (const gi of route.guidance.instructions) {
+        // Determine which leg this instruction belongs to
+        let legIndex = 0;
+        for (let i = 0; i < legCumulativeDistances.length; i++) {
+          if (gi.routeOffsetInMeters <= legCumulativeDistances[i]) {
+            legIndex = i;
+            break;
+          }
+        }
 
         instructions.push({
-          route_index: instructionIndex++,
-          instruction: `Navigate to waypoint ${legIdx + 1}`,
-          distance: leg.summary.lengthInMeters / 1000, // meters → km
-          duration: leg.summary.travelTimeInSeconds,
-          coordinates: segmentCoordinates,
+          route_index: legIndex,
+          instruction: gi.message,
+          distance: gi.routeOffsetInMeters / 1000,
+          duration: gi.travelTimeInSeconds,
+          coordinates: [[gi.point.latitude, gi.point.longitude]],
         });
       }
-
-      return instructions;
-    } catch (error) {
-      logger.error("Error extracting navigation instructions:", { error });
-      return [];
+    } else {
+      // Fallback: generate per-leg instructions when guidance is unavailable
+      for (let legIdx = 0; legIdx < route.legs.length; legIdx++) {
+        const leg = route.legs[legIdx];
+        instructions.push({
+          route_index: legIdx,
+          instruction: `Navigate to waypoint ${legIdx + 1}`,
+          distance: leg.summary.lengthInMeters / 1000,
+          duration: leg.summary.travelTimeInSeconds,
+          coordinates: leg.points.map(
+            (p) => [p.latitude, p.longitude] as [number, number],
+          ),
+        });
+      }
     }
+
+    return instructions;
   }
 
   /**

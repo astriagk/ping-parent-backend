@@ -176,6 +176,9 @@ export const bulkSchoolActionSchema = Joi.object({
     .messages({
       "array.base": VALIDATION_MESSAGES.TRIP_STUDENT.SKIPPED_STUDENT_IDS_ARRAY,
     }),
+  school_id: Joi.string().optional().messages({
+    "string.base": "School ID must be a string",
+  }),
   latitude: Joi.number().min(-90).max(90).optional().messages({
     "number.base": VALIDATION_MESSAGES.TRACKING.LATITUDE_NUMBER,
     "number.min": VALIDATION_MESSAGES.TRACKING.LATITUDE_RANGE,

@@ -186,8 +186,6 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
           _id: existingTrip._id?.toString(),
           trip_id: existingTrip._id?.toString(),
           route_geometry: existingTrip.optimized_route_data,
-          total_distance: existingTrip.optimized_route_data.total_distance,
-          total_duration: existingTrip.optimized_route_data.total_duration,
         },
         message: SUCCESS_MESSAGES.ROUTE.DETAILS_FETCHED_SUCCESSFULLY,
       });
