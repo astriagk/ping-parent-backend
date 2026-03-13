@@ -195,7 +195,7 @@ router.post(
   trackingHandlers.driver.calculateOptimal,
 );
 router.post(
-  "/tracking/:tripId/recalculate",
+  "/tracking/recalculate",
   trackingHandlers.driver.validateOptimal,
   trackingHandlers.driver.recalculate,
 );
@@ -212,7 +212,7 @@ router.post(
   googlemapsHandlers.driver.calculate,
 );
 router.post(
-  "/googlemaps/:tripId/recalculate",
+  "/googlemaps/recalculate",
   googlemapsHandlers.driver.validateRecalculate,
   googlemapsHandlers.driver.recalculate,
 );

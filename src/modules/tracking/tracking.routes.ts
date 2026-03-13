@@ -12,6 +12,7 @@ import {
 } from "./tracking.controller";
 import {
   calculateOptimalRouteWithTomTomSchema,
+  getAlternativeRoutesSchema,
   updatePositionSchema,
 } from "./tracking.validation";
 
@@ -38,6 +39,7 @@ export const trackingHandlers = {
     getTracking: getTrackingHandler,
     getCurrentPosition: getCurrentPositionHandler,
     getRouteDetails: getRouteDetailsHandler,
+    validateGetAlternativeRoutes: validate(getAlternativeRoutesSchema),
     getAlternativeRoutes: getAlternativeRoutesHandler,
   },
 

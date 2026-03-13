@@ -79,8 +79,10 @@ export type RouteWaypoint = StudentWaypoint | GroupedWaypoint;
 export interface NavigationInstruction {
   route_index: number;
   instruction: string;
-  distance: number; // in kilometers
-  duration: number; // in seconds
+  distance_delta: number; // Distance from previous instruction (in kilometers)
+  duration_delta: number; // Duration from previous instruction (in seconds)
+  distance_from_start: number; // Cumulative distance from route start (in kilometers)
+  duration_from_start: number; // Cumulative time from route start (in seconds)
   coordinates: [number, number][]; // turn-by-turn waypoints
 }
 

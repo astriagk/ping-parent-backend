@@ -77,3 +77,18 @@ export const calculateOptimalRouteWithTomTomSchema = Joi.object({
     address: Joi.string().optional(),
   }).optional(),
 });
+
+export const getAlternativeRoutesSchema = Joi.object({
+  current_latitude: Joi.number().required().min(-90).max(90).messages({
+    "any.required": VALIDATION_MESSAGES.TRACKING.CURRENT_LATITUDE_REQUIRED,
+    "number.base": VALIDATION_MESSAGES.TRACKING.CURRENT_LATITUDE_NUMBER,
+    "number.min": VALIDATION_MESSAGES.TRACKING.CURRENT_LATITUDE_RANGE,
+    "number.max": VALIDATION_MESSAGES.TRACKING.CURRENT_LATITUDE_RANGE,
+  }),
+  current_longitude: Joi.number().required().min(-180).max(180).messages({
+    "any.required": VALIDATION_MESSAGES.TRACKING.CURRENT_LONGITUDE_REQUIRED,
+    "number.base": VALIDATION_MESSAGES.TRACKING.CURRENT_LONGITUDE_NUMBER,
+    "number.min": VALIDATION_MESSAGES.TRACKING.CURRENT_LONGITUDE_RANGE,
+    "number.max": VALIDATION_MESSAGES.TRACKING.CURRENT_LONGITUDE_RANGE,
+  }),
+});

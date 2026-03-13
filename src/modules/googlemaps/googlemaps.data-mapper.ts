@@ -24,6 +24,7 @@ export interface ParsedRouteResult {
 /**
  * Parse raw Google Directions API response into our domain format.
  * Extracts: waypoint sequence, per-leg distance/duration, encoded polyline, totals.
+ * Uses overview_polyline for the complete route (don't concatenate step polylines—it breaks encoding).
  */
 export const parseDirectionsResponse = (
   response: DirectionsResponse,
@@ -36,22 +37,18 @@ export const parseDirectionsResponse = (
   const sequence =
     waypointCount === 1 ? [0] : [...waypointOrder, waypointCount - 1];
 
-  // Extract per-leg metrics and polyline from Google's response
+  // Extract per-leg metrics from Google's response
   const legs: Array<{ distance: number; duration: number }> = [];
-  let polyline_encoded = "";
 
   for (const leg of route.legs) {
     legs.push({
       distance: leg.distance?.value || 0,
       duration: (leg.duration_in_traffic?.value ?? leg.duration?.value) || 0,
     });
-
-    for (const step of leg.steps) {
-      if (step.polyline?.points) {
-        polyline_encoded += step.polyline.points;
-      }
-    }
   }
+
+  // Use overview_polyline for the complete route (preferred over concatenating steps)
+  const polyline_encoded = route.overview_polyline?.points || "";
 
   const totalDistance = legs.reduce((sum, l) => sum + l.distance, 0);
   const totalDuration = legs.reduce((sum, l) => sum + l.duration, 0);
@@ -114,8 +111,10 @@ export const groupStudentsByParent = (
   const grouped = new Map<string, GoogleMapsRouteWaypoint[]>();
 
   for (const student of students) {
-    const parentId =
-      student.student_parent_id || `default-${student.student_id[0]}`;
+    const studentIdValue = Array.isArray(student.student_id)
+      ? student.student_id[0]
+      : student.student_id;
+    const parentId = student.student_parent_id || `default-${studentIdValue}`;
     if (!grouped.has(parentId)) {
       grouped.set(parentId, []);
     }
@@ -231,8 +230,18 @@ export const buildStudentUpdates = (
   sequence_order: number;
   estimated_arrival_time: Date;
 }> => {
+  const isSchoolWaypoint = (
+    studentId: string | string[] | undefined,
+  ): boolean => {
+    if (!studentId) return false;
+    if (Array.isArray(studentId)) {
+      return studentId[0] === "SCHOOL";
+    }
+    return studentId === "SCHOOL";
+  };
+
   const studentWaypoints = waypointsWithMetrics.filter(
-    (wp) => wp.student_id && wp.student_id[0] !== "SCHOOL",
+    (wp) => !isSchoolWaypoint(wp.student_id),
   );
 
   return studentWaypoints.flatMap((wp, idx) => {

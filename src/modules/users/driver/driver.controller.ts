@@ -313,8 +313,14 @@ export const upsertAddress = asyncHandler(
       is_primary,
     } = req.body;
 
-    // Validate required fields
-    if (!address_line1 || !city || !state || !latitude || !longitude) {
+    // Validate required fields (use == null to allow 0 as a valid coordinate)
+    if (
+      !address_line1 ||
+      !city ||
+      !state ||
+      latitude == null ||
+      longitude == null
+    ) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,

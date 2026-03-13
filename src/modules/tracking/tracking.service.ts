@@ -331,12 +331,25 @@ const commitTripRoute = async (
     routeData.total_distance,
   );
 
+  const isSchoolWaypoint = (
+    studentId: string | string[] | undefined,
+  ): boolean => {
+    if (!studentId) return false;
+    if (Array.isArray(studentId)) {
+      return studentId[0] === "SCHOOL";
+    }
+    return studentId === "SCHOOL";
+  };
+
   const studentWaypoints = waypointsWithMetrics.filter(
-    (wp) => wp.student_id && wp.student_id[0] !== "SCHOOL",
+    (wp) => !isSchoolWaypoint(wp.student_id),
   );
 
   const studentUpdates = studentWaypoints.flatMap((wp, idx) => {
-    return wp.student_id
+    const studentIds = Array.isArray(wp.student_id)
+      ? wp.student_id
+      : [wp.student_id];
+    return studentIds
       .filter((id: string) => id)
       .map((id: string) => ({
         student_id: id,

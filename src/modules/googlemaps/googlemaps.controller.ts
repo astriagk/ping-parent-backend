@@ -4,6 +4,7 @@ import { tripRepository } from "@modules/trips/trip/trip.repository";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
+  RouteProvider,
   SUCCESS_MESSAGES,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -37,10 +38,15 @@ export const calculateGoogleRouteHandler = asyncHandler(
       );
     }
 
-    // Check if trip already has a cached route
+    // Check if trip already has a cached route from Google Maps
     const existingTrip = await tripRepository.findById(trip_id);
 
-    if (existingTrip && existingTrip.optimized_route_data) {
+    if (
+      existingTrip &&
+      existingTrip.optimized_route_data &&
+      existingTrip.route_provider === RouteProvider.GOOGLE_MAPS &&
+      existingTrip.optimized_route_data.polyline_encoded
+    ) {
       return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: {
@@ -125,7 +131,8 @@ export const updateGooglePositionHandler = asyncHandler(
 
 export const getGoogleTrackingHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId, limit } = req.params as Record<string, string>;
+    const { tripId } = req.params as Record<string, string>;
+    const limitQuery = req.query.limit as string | undefined;
 
     if (!tripId) {
       throw new ApiError(
@@ -134,7 +141,11 @@ export const getGoogleTrackingHandler = asyncHandler(
       );
     }
 
-    const tracking = await getGoogleRouteTracking(tripId, Number(limit));
+    // Parse limit from query string with default fallback
+    const limit = limitQuery
+      ? Math.max(1, Math.min(Number(limitQuery), 1000))
+      : 100;
+    const tracking = await getGoogleRouteTracking(tripId, limit);
 
     return res.json({
       success: true,

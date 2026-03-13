@@ -163,6 +163,11 @@ export enum PaymentStatus {
   REFUNDED = "refunded",
 }
 
+export enum RouteProvider {
+  GOOGLE_MAPS = "google_maps",
+  TOMTOM = "tomtom",
+}
+
 export enum ApprovalStatus {
   PENDING = "pending",
   APPROVED = "approved",

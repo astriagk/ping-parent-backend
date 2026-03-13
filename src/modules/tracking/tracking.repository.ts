@@ -5,6 +5,7 @@ import {
   LOCATION_TRACKING_COLLECTION,
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
+  RouteProvider,
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
@@ -112,6 +113,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     tripId: string,
     routeData: any,
     totalDistance: number,
+    routeProvider: string = RouteProvider.TOMTOM,
   ): Promise<void> {
     const db = await getDB();
     await db.collection(TRIPS_COLLECTION).updateOne(
@@ -120,6 +122,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         $set: {
           optimized_route_data: routeData,
           total_distance: totalDistance,
+          route_provider: routeProvider,
           updated_at: new Date(),
         },
       },

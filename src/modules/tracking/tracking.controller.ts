@@ -4,6 +4,7 @@ import { tripRepository } from "@modules/trips/trip/trip.repository";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
+  RouteProvider,
   SUCCESS_MESSAGES,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -59,7 +60,8 @@ export const updatePositionHandler = asyncHandler(
 
 export const getTrackingHandler = asyncHandler(
   async (req: Request, res: Response) => {
-    const { tripId, limit } = req.params as Record<string, string>;
+    const { tripId } = req.params as Record<string, string>;
+    const limitQuery = req.query.limit as string | undefined;
 
     if (!tripId) {
       throw new ApiError(
@@ -68,7 +70,11 @@ export const getTrackingHandler = asyncHandler(
       );
     }
 
-    const tracking = await getRouteTracking(tripId, Number(limit));
+    // Parse limit from query string with default fallback
+    const limit = limitQuery
+      ? Math.max(1, Math.min(Number(limitQuery), 1000))
+      : 100;
+    const tracking = await getRouteTracking(tripId, limit);
 
     return res.json({
       success: true,
@@ -175,11 +181,16 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
       );
     }
 
-    // Check if trip exists
+    // Check if trip exists and has cached TomTom route data
     const existingTrip = await tripRepository.findById(trip_id);
 
-    if (existingTrip && existingTrip.optimized_route_data) {
-      // Trip exists and has optimized route data, return it
+    if (
+      existingTrip &&
+      existingTrip.optimized_route_data &&
+      existingTrip.route_provider === RouteProvider.TOMTOM &&
+      existingTrip.optimized_route_data.total_distance
+    ) {
+      // Trip exists and has optimized TomTom route data, return it
       return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: {
@@ -234,12 +245,7 @@ export const getAlternativeRoutesHandler = asyncHandler(
       );
     }
 
-    if (!current_latitude || !current_longitude) {
-      throw new ApiError(
-        HTTP_STATUS.BAD_REQUEST,
-        ERROR_MESSAGES.TRACKING.INVALID_COORDINATES,
-      );
-    }
+    // Validation middleware ensures current_latitude and current_longitude are valid numbers
 
     const alternatives = await getAlternativeRoutesForTrip(
       tripId,

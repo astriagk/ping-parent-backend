@@ -218,8 +218,10 @@ class TomTomService {
     navigationInstructions: Array<{
       route_index: number;
       instruction: string;
-      distance: number;
-      duration: number;
+      distance_delta: number; // Distance from previous instruction (in km)
+      duration_delta: number; // Duration from previous instruction (in seconds)
+      distance_from_start: number; // Cumulative distance from route start (in km)
+      duration_from_start: number; // Cumulative time from route start (in seconds)
       coordinates: [number, number][];
     }>;
   }> {
@@ -345,6 +347,7 @@ class TomTomService {
   /**
    * Build navigation instructions from TomTom guidance data
    * Maps guidance instructions to route legs using routeOffsetInMeters
+   * Emits deltas between consecutive instructions for client consumption
    * Falls back to generic per-leg instructions if guidance is not available
    */
   private buildNavigationInstructions(
@@ -353,35 +356,59 @@ class TomTomService {
   ): Array<{
     route_index: number;
     instruction: string;
-    distance: number;
-    duration: number;
+    distance_delta: number;
+    duration_delta: number;
+    distance_from_start: number;
+    duration_from_start: number;
     coordinates: [number, number][];
   }> {
     const instructions: Array<{
       route_index: number;
       instruction: string;
-      distance: number;
-      duration: number;
+      distance_delta: number;
+      duration_delta: number;
+      distance_from_start: number;
+      duration_from_start: number;
       coordinates: [number, number][];
     }> = [];
 
     if (route.guidance && route.guidance.instructions.length > 0) {
       // Map each TomTom guidance instruction to the correct leg
-      for (const gi of route.guidance.instructions) {
+      for (let i = 0; i < route.guidance.instructions.length; i++) {
+        const gi = route.guidance.instructions[i];
+        const prevGi = i > 0 ? route.guidance.instructions[i - 1] : null;
+
         // Determine which leg this instruction belongs to
         let legIndex = 0;
-        for (let i = 0; i < legCumulativeDistances.length; i++) {
-          if (gi.routeOffsetInMeters <= legCumulativeDistances[i]) {
-            legIndex = i;
+        for (let j = 0; j < legCumulativeDistances.length; j++) {
+          if (gi.routeOffsetInMeters <= legCumulativeDistances[j]) {
+            legIndex = j;
             break;
           }
         }
+        // If offset exceeds all legs, use last leg
+        if (
+          gi.routeOffsetInMeters >
+          legCumulativeDistances[legCumulativeDistances.length - 1]
+        ) {
+          legIndex = legCumulativeDistances.length - 1;
+        }
+
+        // Calculate delta from previous instruction (or 0 for first)
+        const distanceDelta = prevGi
+          ? (gi.routeOffsetInMeters - prevGi.routeOffsetInMeters) / 1000
+          : gi.routeOffsetInMeters / 1000;
+        const durationDelta = prevGi
+          ? gi.travelTimeInSeconds - prevGi.travelTimeInSeconds
+          : gi.travelTimeInSeconds;
 
         instructions.push({
           route_index: legIndex,
           instruction: gi.message,
-          distance: gi.routeOffsetInMeters / 1000,
-          duration: gi.travelTimeInSeconds,
+          distance_delta: distanceDelta,
+          duration_delta: durationDelta,
+          distance_from_start: gi.routeOffsetInMeters / 1000,
+          duration_from_start: gi.travelTimeInSeconds,
           coordinates: [[gi.point.latitude, gi.point.longitude]],
         });
       }
@@ -389,11 +416,25 @@ class TomTomService {
       // Fallback: generate per-leg instructions when guidance is unavailable
       for (let legIdx = 0; legIdx < route.legs.length; legIdx++) {
         const leg = route.legs[legIdx];
+
+        // Calculate cumulative distance and duration up to this leg
+        let cumulativeDistance = 0;
+        let cumulativeDuration = 0;
+        for (let j = 0; j <= legIdx; j++) {
+          cumulativeDistance += route.legs[j].summary.lengthInMeters;
+          cumulativeDuration += route.legs[j].summary.travelTimeInSeconds;
+        }
+
+        const distanceDelta = leg.summary.lengthInMeters / 1000;
+        const durationDelta = leg.summary.travelTimeInSeconds;
+
         instructions.push({
           route_index: legIdx,
           instruction: `Navigate to waypoint ${legIdx + 1}`,
-          distance: leg.summary.lengthInMeters / 1000,
-          duration: leg.summary.travelTimeInSeconds,
+          distance_delta: distanceDelta,
+          duration_delta: durationDelta,
+          distance_from_start: cumulativeDistance / 1000,
+          duration_from_start: cumulativeDuration,
           coordinates: leg.points.map(
             (p) => [p.latitude, p.longitude] as [number, number],
           ),
