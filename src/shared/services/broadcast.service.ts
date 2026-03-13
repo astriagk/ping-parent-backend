@@ -5,7 +5,7 @@ import {
 import { socketService } from "@shared/services/socket.service";
 import { logger } from "@shared/utils";
 
-export class TrackingSocketService {
+export class BroadcastService {
   static broadcastPositionUpdate(tripId: string, positionData: any) {
     socketService.broadcastToTrip(
       tripId,
@@ -87,14 +87,8 @@ export class TrackingSocketService {
 
   // ============================================
   // Parent-Specific Notifications
-  // These send events only to the specific parent of a student
-  // Used for home pickup/drop events where only that parent should be notified
   // ============================================
 
-  /**
-   * Notify specific parent that their student was picked up
-   * Use this for pickup from home (morning trip) - only parent of this student gets notified
-   */
   static notifyParentStudentPicked(
     parentId: string,
     tripId: string,
@@ -119,10 +113,6 @@ export class TrackingSocketService {
     );
   }
 
-  /**
-   * Notify specific parent that their student was dropped off
-   * Use this for drop at home (afternoon trip) - only parent of this student gets notified
-   */
   static notifyParentStudentDropped(
     parentId: string,
     tripId: string,
@@ -147,10 +137,6 @@ export class TrackingSocketService {
     );
   }
 
-  /**
-   * Notify specific parent that driver is approaching their student's location
-   * Use this for approach to home - only parent of this student gets notified
-   */
   static notifyParentApproaching(
     parentId: string,
     tripId: string,
@@ -179,13 +165,8 @@ export class TrackingSocketService {
 
   // ============================================
   // Bulk Parent Notifications
-  // Send one notification per parent with all their students
   // ============================================
 
-  /**
-   * Notify parent that multiple students were picked up
-   * Sends a single notification with all student names
-   */
   static notifyParentStudentsPicked(
     parentId: string,
     tripId: string,
@@ -217,10 +198,6 @@ export class TrackingSocketService {
     );
   }
 
-  /**
-   * Notify parent that multiple students were dropped off
-   * Sends a single notification with all student names
-   */
   static notifyParentStudentsDropped(
     parentId: string,
     tripId: string,
@@ -251,10 +228,6 @@ export class TrackingSocketService {
     );
   }
 
-  /**
-   * Notify parent that their students were marked absent
-   * Sends a single notification with all absent student names
-   */
   static notifyParentStudentsAbsent(
     parentId: string,
     tripId: string,

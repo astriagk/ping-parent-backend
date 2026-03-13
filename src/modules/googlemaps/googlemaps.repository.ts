@@ -13,68 +13,57 @@ import {
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { LocationTracking, StudentWaypoint } from "./tracking.type";
+import {
+  GoogleMapsLocationTracking,
+  GoogleMapsRouteWaypoint,
+} from "./googlemaps.type";
 
-class TrackingRepository extends BaseRepository<LocationTracking> {
+class GoogleMapsRepository extends BaseRepository<GoogleMapsLocationTracking> {
   constructor() {
     super(LOCATION_TRACKING_COLLECTION);
   }
 
   async getTrackingByTripId(
     tripId: string,
-  ): Promise<WithId<LocationTracking>[]> {
+  ): Promise<WithId<GoogleMapsLocationTracking>[]> {
     const db = await getDB();
     return db
       .collection(LOCATION_TRACKING_COLLECTION)
       .find({ trip_id: tripId })
       .sort({ timestamp: -1 })
       .limit(100)
-      .toArray() as Promise<WithId<LocationTracking>[]>;
+      .toArray() as Promise<WithId<GoogleMapsLocationTracking>[]>;
   }
 
   async getLatestTrackingByTripId(
     tripId: string,
-  ): Promise<WithId<LocationTracking> | null> {
+  ): Promise<WithId<GoogleMapsLocationTracking> | null> {
     const db = await getDB();
     return db
       .collection(LOCATION_TRACKING_COLLECTION)
       .findOne(
         { trip_id: tripId },
         { sort: { timestamp: -1 } },
-      ) as Promise<WithId<LocationTracking> | null>;
+      ) as Promise<WithId<GoogleMapsLocationTracking> | null>;
   }
 
   async getTrackingByDriverId(
     driverId: string,
     limit: number = 50,
-  ): Promise<WithId<LocationTracking>[]> {
+  ): Promise<WithId<GoogleMapsLocationTracking>[]> {
     const db = await getDB();
     return db
       .collection(LOCATION_TRACKING_COLLECTION)
       .find({ driver_id: driverId })
       .sort({ timestamp: -1 })
       .limit(limit)
-      .toArray() as Promise<WithId<LocationTracking>[]>;
-  }
-
-  async insertTracking(
-    tracking: Omit<LocationTracking, "_id">,
-  ): Promise<WithId<LocationTracking>> {
-    const db = await getDB();
-    const result = await db
-      .collection(LOCATION_TRACKING_COLLECTION)
-      .insertOne(tracking as any);
-
-    return {
-      _id: result.insertedId,
-      ...tracking,
-    } as WithId<LocationTracking>;
+      .toArray() as Promise<WithId<GoogleMapsLocationTracking>[]>;
   }
 
   async upsertTracking(
     tripId: string,
-    tracking: Omit<LocationTracking, "_id">,
-  ): Promise<WithId<LocationTracking>> {
+    tracking: Omit<GoogleMapsLocationTracking, "_id">,
+  ): Promise<WithId<GoogleMapsLocationTracking>> {
     const db = await getDB();
     const result = await db
       .collection(LOCATION_TRACKING_COLLECTION)
@@ -92,9 +81,8 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         },
       );
 
-    // If result.value is null, fetch the document directly
     if (result?.value) {
-      return result.value as WithId<LocationTracking>;
+      return result.value as WithId<GoogleMapsLocationTracking>;
     }
 
     const doc = await db
@@ -105,7 +93,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
       throw new Error(`Failed to upsert tracking for trip: ${tripId}`);
     }
 
-    return doc as WithId<LocationTracking>;
+    return doc as WithId<GoogleMapsLocationTracking>;
   }
 
   async updateTripRouteData(
@@ -160,17 +148,11 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     return updatedCount;
   }
 
-  /**
-   * Get trip students with details for route calculation
-   * @param tripId - Trip ID
-   * @param pickupStatusFilter - Optional filter for pickup_status (used for DROP trips to get only picked students)
-   */
   async getTripStudentsWithDetails(
     tripId: string,
     pickupStatusFilter?: string,
-  ): Promise<StudentWaypoint[]> {
+  ): Promise<GoogleMapsRouteWaypoint[]> {
     const db = await getDB();
-    // Build match condition - always filter by trip_id, optionally by pickup_status
     const matchCondition: Record<string, any> = { trip_id: tripId };
     if (pickupStatusFilter) {
       matchCondition.pickup_status = pickupStatusFilter;
@@ -178,12 +160,8 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
 
     return db
       .collection(TRIP_STUDENTS_COLLECTION)
-      .aggregate<StudentWaypoint>([
-        // Stage 1: Match students for this trip (with optional pickup_status filter)
-        {
-          $match: matchCondition,
-        },
-        // Stage 2: Lookup student details (student_id stored as string, students._id is ObjectId)
+      .aggregate<GoogleMapsRouteWaypoint>([
+        { $match: matchCondition },
         {
           $lookup: {
             from: STUDENTS_COLLECTION,
@@ -192,14 +170,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             as: "studentDetails",
           },
         },
-        // Stage 3: Unwind student details
         {
           $unwind: {
             path: "$studentDetails",
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 4: Lookup parent addresses (pickup_address_id stored as string, parent_addresses._id is ObjectId)
         {
           $lookup: {
             from: PARENT_ADDRESSES_COLLECTION,
@@ -210,14 +186,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             as: "addressDetails",
           },
         },
-        // Stage 5: Unwind address details
         {
           $unwind: {
             path: "$addressDetails",
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 6: Lookup parent details
         {
           $lookup: {
             from: PARENTS_COLLECTION,
@@ -226,14 +200,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             as: "parentDetails",
           },
         },
-        // Stage 7: Unwind parent details (preserve if no match found)
         {
           $unwind: {
             path: "$parentDetails",
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 8: Lookup user details
         {
           $lookup: {
             from: USERS_COLLECTION,
@@ -242,14 +214,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             as: "userDetails",
           },
         },
-        // Stage 9: Unwind user details (preserve if no match found)
         {
           $unwind: {
             path: "$userDetails",
             preserveNullAndEmptyArrays: false,
           },
         },
-        // Stage 10: Lookup school details (school_id stored as string, schools._id is ObjectId)
         {
           $lookup: {
             from: SCHOOLS_COLLECTION,
@@ -258,14 +228,12 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
             as: "schoolDetails",
           },
         },
-        // Stage 11: Unwind school details
         {
           $unwind: {
             path: "$schoolDetails",
             preserveNullAndEmptyArrays: true,
           },
         },
-        // Stage 12: Project and transform to waypoint format
         {
           $project: {
             student_id: "$student_id",
@@ -327,4 +295,4 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
   }
 }
 
-export const trackingRepository = new TrackingRepository();
+export const googlemapsRepository = new GoogleMapsRepository();

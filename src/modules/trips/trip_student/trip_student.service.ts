@@ -570,7 +570,7 @@ export const recordPickup = async (
     }
   } catch (error) {
     // Don't fail the pickup if notification fails
-    console.error("Failed to send parent pickup notification:", error);
+    logger.error("Failed to send parent pickup notification", { error });
   }
 
   return result;
@@ -679,7 +679,7 @@ export const recordDrop = async (
     }
   } catch (error) {
     // Don't fail the drop-off if notification fails
-    console.error("Failed to send parent drop notification:", error);
+    logger.error("Failed to send parent drop notification", { error });
   }
 
   return result;
@@ -1110,7 +1110,7 @@ export const bulkStopAction = async (
     }
   } catch (notifyError) {
     // Don't fail the action if notification fails
-    console.error("Failed to send parent notifications:", notifyError);
+    logger.error("Failed to send parent notifications", { error: notifyError });
   }
 
   return result;
@@ -1133,12 +1133,14 @@ export interface BulkSchoolActionResult {
  * - DROP trip: marks PENDING students as PICKED from school
  *   - skipped_student_ids: students not boarding (marked as NO_SHOW)
  * No OTP required since this is at school location
+ * - school_id: identifies which school this action is for (validates students belong to this school)
  */
 export const bulkSchoolAction = async (
   tripId: string,
   data: {
     student_ids: string[];
     skipped_student_ids?: string[];
+    school_id?: string; // Identifies which school this action is for
     latitude?: number;
     longitude?: number;
   },
@@ -1189,9 +1191,27 @@ export const bulkSchoolAction = async (
   const studentMap = new Map(
     allStudents.map((s) => [
       String(s._id),
-      { parent_id: s.parent_id, student_name: s.student_name || "Your child" },
+      {
+        parent_id: s.parent_id,
+        student_name: s.student_name || "Your child",
+        school_id: s.school_id, // Track which school this student belongs to
+      },
     ]),
   );
+
+  // NEW: If school_id provided, validate all students belong to this school
+  if (data.school_id) {
+    const schoolId = data.school_id;
+    for (const studentId of allStudentIds) {
+      const studentInfo = studentMap.get(studentId);
+      if (studentInfo && String(studentInfo.school_id) !== schoolId) {
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          ERROR_MESSAGES.TRIP_STUDENT.STUDENT_NOT_IN_SCHOOL,
+        );
+      }
+    }
+  }
 
   for (const studentId of data.student_ids) {
     try {
@@ -1358,6 +1378,11 @@ export const bulkSchoolAction = async (
       // Send one notification per parent
       for (const [pId, pStudents] of studentsByParent) {
         const pUserId = parentUserIdMap.get(pId) || pId;
+
+        logger.info(
+          `[Bulk School Action] Processed Students | Trip: ${tripId} | School: ${data.school_id} | Parent: ${pId} | Students: ${pStudents.map((s) => s.studentId).join(", ")}`,
+        );
+
         if (tripType === TripType.PICKUP) {
           // PICKUP trip at school = dropped at school
           NotificationDispatcher.notifyParentStudentsDropped(
@@ -1380,7 +1405,9 @@ export const bulkSchoolAction = async (
       }
     } catch (notifyError) {
       // Don't fail the action if notification fails
-      console.error("Failed to send parent notifications:", notifyError);
+      logger.error("Failed to send parent notifications", {
+        error: notifyError,
+      });
     }
   }
 

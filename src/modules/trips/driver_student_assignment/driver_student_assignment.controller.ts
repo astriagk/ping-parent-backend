@@ -155,7 +155,6 @@ export const getDriverParentRequestedAssignments = asyncHandler(
 export const getAssignment = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params as Record<string, string>;
-    console.log("get assignement !");
     const assignment = await getAssignmentById(id);
 
     if (!assignment) {
@@ -407,11 +406,8 @@ export const deleteDriverStudentAssignment = asyncHandler(
  */
 export const getAllDrivers = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("Get all drivers !");
     const driverRepo = new DriverRepository();
     const drivers = await driverRepo.findMany();
-
-    console.log(" Retrieved drivers:", drivers);
 
     return res.json({
       success: true,

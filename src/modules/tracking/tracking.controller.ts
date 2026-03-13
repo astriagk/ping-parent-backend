@@ -10,35 +10,14 @@ import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
   calculateOptimalRouteWithTomTom,
-  calculateRoute,
   cleanOldTrackingData,
+  getAlternativeRoutesForTrip,
   getLatestDriverPosition,
   getRouteDetails,
   getRouteTracking,
   recalculateRoute,
-  updateDriverPosition,
+  recordLiveLocation,
 } from "./tracking.service";
-
-export const calculateRouteHandler = asyncHandler(
-  async (req: Request, res: Response) => {
-    const userId = req.user?.userId;
-
-    if (!userId) {
-      throw new ApiError(
-        HTTP_STATUS.UNAUTHORIZED,
-        ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
-      );
-    }
-
-    const result = await calculateRoute(userId, req.body);
-
-    return res.status(HTTP_STATUS.CREATED).json({
-      success: true,
-      data: result,
-      message: result.message,
-    });
-  },
-);
 
 export const updatePositionHandler = asyncHandler(
   async (req: Request, res: Response) => {
@@ -60,7 +39,7 @@ export const updatePositionHandler = asyncHandler(
       );
     }
 
-    const tracking = await updateDriverPosition(
+    const tracking = await recordLiveLocation(
       userId,
       tripId,
       latitude,
@@ -207,8 +186,6 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
           _id: existingTrip._id?.toString(),
           trip_id: existingTrip._id?.toString(),
           route_geometry: existingTrip.optimized_route_data,
-          total_distance: existingTrip.optimized_route_data.total_distance,
-          total_duration: existingTrip.optimized_route_data.total_duration,
         },
         message: SUCCESS_MESSAGES.ROUTE.DETAILS_FETCHED_SUCCESSFULLY,
       });
@@ -241,6 +218,43 @@ export const recalculateRouteHandler = asyncHandler(
       success: true,
       data: result,
       message: SUCCESS_MESSAGES.ROUTE.RECALCULATED_SUCCESSFULLY,
+    });
+  },
+);
+
+export const getAlternativeRoutesHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { tripId } = req.params as Record<string, string>;
+    const { current_latitude, current_longitude } = req.body;
+
+    if (!tripId) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+      );
+    }
+
+    if (!current_latitude || !current_longitude) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.TRACKING.INVALID_COORDINATES,
+      );
+    }
+
+    const alternatives = await getAlternativeRoutesForTrip(
+      tripId,
+      current_latitude,
+      current_longitude,
+    );
+
+    return res.json({
+      success: true,
+      data: alternatives,
+      count: alternatives.length,
+      message:
+        alternatives.length > 1
+          ? SUCCESS_MESSAGES.ROUTE.ALTERNATIVE_ROUTES_FOUND
+          : SUCCESS_MESSAGES.ROUTE.NO_ALTERNATIVE_ROUTES_AVAILABLE,
     });
   },
 );

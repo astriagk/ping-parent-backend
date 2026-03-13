@@ -136,7 +136,6 @@ export const createDriverStudentAssignment = async (
 export const getAssignmentById = async (
   id: string,
 ): Promise<WithId<DriverStudentAssignment> | null> => {
-  console.log(id);
   return await driverStudentAssignmentRepository.findById(id);
 };
 
