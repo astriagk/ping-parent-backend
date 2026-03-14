@@ -255,13 +255,17 @@ export class NotificationDispatcher {
     newEtas: { studentId: string; eta: Date }[],
     driverId?: string,
   ): Promise<void> {
-    BroadcastService.broadcastRouteCalculated(tripId, {
-      recalculated: true,
+    // Emit only to the specific parent to avoid leaking parent-specific ETA/student data
+    BroadcastService.notifyParentRouteRecalculated(
       parentId,
-      students,
+      tripId,
+      students.map((s) => ({
+        studentId: s.studentId,
+        studentName: s.studentName,
+      })),
       newEtas,
       driverId,
-    });
+    );
 
     const studentNames = students.map((s) => s.studentName).join(", ");
     await this.dispatch(

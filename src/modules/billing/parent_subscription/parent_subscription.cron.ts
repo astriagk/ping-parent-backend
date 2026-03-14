@@ -39,9 +39,7 @@ export const startSubscriptionExpiryCron = (): void => {
 
         if (remaining.length === 0) {
           // No active subscriptions left — clear parent flags
-          const parent = await parentRepository.findOne({
-            _id: parentId,
-          } as any);
+          const parent = await parentRepository.findById(parentId);
           if (parent) {
             await parentRepository.updateRawByUserId(parent.user_id, {
               $set: {
@@ -54,9 +52,7 @@ export const startSubscriptionExpiryCron = (): void => {
         } else {
           // Update subscription_ids to only include remaining active ones
           const activeIds = remaining.map((s) => String(s._id));
-          const parent = await parentRepository.findOne({
-            _id: parentId,
-          } as any);
+          const parent = await parentRepository.findById(parentId);
           if (parent) {
             await parentRepository.updateRawByUserId(parent.user_id, {
               $set: {

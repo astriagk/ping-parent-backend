@@ -213,6 +213,7 @@ export enum ParentNotificationEvent {
   MY_STUDENT_DROPPED = "parent:my_student_dropped",
   MY_STUDENT_APPROACHING = "parent:my_student_approaching",
   MY_STUDENT_ABSENT = "parent:my_student_absent",
+  ROUTE_RECALCULATED = "parent:route_recalculated",
 }
 
 export enum BroadcastSocketEvent {

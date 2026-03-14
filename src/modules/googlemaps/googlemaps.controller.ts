@@ -143,7 +143,7 @@ export const getGoogleTrackingHandler = asyncHandler(
 
     // Parse limit from query string with default fallback
     const limit = limitQuery
-      ? Math.max(1, Math.min(Number(limitQuery), 1000))
+      ? Math.max(1, Math.min(Number(limitQuery), 100))
       : 100;
     const tracking = await getGoogleRouteTracking(tripId, limit);
 

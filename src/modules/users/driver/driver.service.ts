@@ -35,7 +35,7 @@ export const getDriverProfile = async (
 
   // Query users collection
   const userQuery: any = {
-    _id: ObjectId.isValid(userId) ? new ObjectId(userId) : userId,
+    _id: new ObjectId(userId),
   };
 
   const user = await db.collection(USERS_COLLECTION).findOne(userQuery);
