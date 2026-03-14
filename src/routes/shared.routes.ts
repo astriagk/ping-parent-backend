@@ -9,6 +9,7 @@ import { schoolHandlers } from "@modules/school/school.routes";
 import { supportTicketHandlers } from "@modules/support_tickets/support_tickets.routes";
 import { trackingHandlers } from "@modules/tracking/tracking.routes";
 import { verifyToken_Middleware } from "@shared/middlewares";
+import { verifyParentTripAccess } from "@shared/middlewares/trip-ownership.middleware";
 
 const router = Router();
 
@@ -51,14 +52,20 @@ router.post(
   deviceTokenHandlers.shared.remove,
 );
 
-// --- Tracking (read-only for any authenticated user) ---
-router.get("/tracking/:tripId/tracking", trackingHandlers.shared.getTracking);
+// --- Tracking (read-only, parents can only access trips with their students) ---
+router.get(
+  "/tracking/:tripId/tracking",
+  verifyParentTripAccess,
+  trackingHandlers.shared.getTracking,
+);
 router.get(
   "/tracking/:tripId/current-position",
+  verifyParentTripAccess,
   trackingHandlers.shared.getCurrentPosition,
 );
 router.get(
   "/tracking/:tripId/details",
+  verifyParentTripAccess,
   trackingHandlers.shared.getRouteDetails,
 );
 
@@ -88,17 +95,20 @@ router.put(
   fileUploadHandlers.shared.update,
 );
 
-// --- Google Maps (read-only for any authenticated user) ---
+// --- Google Maps (read-only, parents can only access trips with their students) ---
 router.get(
   "/googlemaps/:tripId/tracking",
+  verifyParentTripAccess,
   googlemapsHandlers.shared.getTracking,
 );
 router.get(
   "/googlemaps/:tripId/current-position",
+  verifyParentTripAccess,
   googlemapsHandlers.shared.getCurrentPosition,
 );
 router.get(
   "/googlemaps/:tripId/details",
+  verifyParentTripAccess,
   googlemapsHandlers.shared.getRouteDetails,
 );
 
