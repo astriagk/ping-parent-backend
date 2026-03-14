@@ -156,11 +156,10 @@ export const redeemSchoolSubscriptionCode = async (
     subscription = await parentSubscriptionRepository.create(newSubData);
 
     // Update parent document
-    await parentRepository.updateByUserId(userId, {
-      has_active_subscription: true,
-      subscription_id: String(subscription._id),
-      updated_at: new Date(),
-    } as any);
+    await parentRepository.updateRawByUserId(userId, {
+      $set: { has_active_subscription: true, updated_at: new Date() },
+      $addToSet: { subscription_ids: String(subscription._id) },
+    });
   }
 
   // Mark code as redeemed

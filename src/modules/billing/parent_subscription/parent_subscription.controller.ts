@@ -135,18 +135,11 @@ export const getMyActiveSubscription = asyncHandler(
       );
     }
 
-    const subscription = await getActiveParentSubscriptionByUserId(userId);
-
-    if (!subscription) {
-      throw new ApiError(
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.PARENT_SUBSCRIPTION.NOT_FOUND,
-      );
-    }
+    const subscriptions = await getActiveParentSubscriptionByUserId(userId);
 
     return res.json({
       success: true,
-      data: subscription,
+      data: subscriptions,
       message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
     });
   },

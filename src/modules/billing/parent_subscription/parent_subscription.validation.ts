@@ -4,12 +4,15 @@ import { SubscriptionStatus, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const createParentSubscriptionSchema = Joi.object({
   // parent_id is NOT included - derived from authenticated user
-  // student_ids, start_date, end_date are auto-calculated in service
+  // start_date, end_date are auto-calculated in service
   plan_id: Joi.string().required().messages({
     "any.required": VALIDATION_MESSAGES.PARENT_SUBSCRIPTION.PLAN_ID_REQUIRED,
   }),
   auto_renew: Joi.boolean().optional().messages({
     "boolean.base": VALIDATION_MESSAGES.PARENT_SUBSCRIPTION.AUTO_RENEW_INVALID,
+  }),
+  student_ids: Joi.array().items(Joi.string()).optional().messages({
+    "array.base": "student_ids must be an array of student ID strings",
   }),
 });
 
