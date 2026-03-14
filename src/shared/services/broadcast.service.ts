@@ -257,4 +257,35 @@ export class BroadcastService {
       },
     );
   }
+
+  static notifyParentRouteRecalculated(
+    parentId: string,
+    tripId: string,
+    students: { studentId: string; studentName: string }[],
+    newEtas: { studentId: string; eta: Date }[],
+    driverId?: string,
+  ) {
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    const studentIds = students.map((s) => s.studentId);
+    const message =
+      students.length === 1
+        ? `Updated ETA for ${studentNames}`
+        : `Updated ETAs for ${studentNames}`;
+
+    logger.info(
+      `[Notify Parent] Route Recalculated | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
+    );
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.ROUTE_RECALCULATED,
+      {
+        tripId,
+        students,
+        newEtas,
+        driverId,
+        message,
+        timestamp: new Date(),
+      },
+    );
+  }
 }

@@ -353,6 +353,7 @@ export const ERROR_MESSAGES = {
   },
   TRACKING: {
     TRIP_NOT_FOUND: "Trip not found",
+    TRIP_ID_REQUIRED: "Trip ID is required",
     PERMISSION_DENIED:
       "You do not have permission to calculate route for this trip",
     NO_STUDENTS_ASSIGNED: "No students assigned to this trip",
@@ -368,6 +369,8 @@ export const ERROR_MESSAGES = {
     TRACKING_DATA_NOT_FOUND: "No tracking data found",
     INVALID_COORDINATES:
       "Invalid coordinates - latitude and longitude required",
+    SCHOOL_COORDINATES_MISSING:
+      "School location coordinates are missing or invalid. Please ensure all schools have valid latitude/longitude coordinates configured.",
   },
   SCHOOL_SUBSCRIPTION: {
     NOT_FOUND: "School subscription not found",

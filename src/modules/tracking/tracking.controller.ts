@@ -36,7 +36,7 @@ export const updatePositionHandler = asyncHandler(
     if (!tripId) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+        ERROR_MESSAGES.TRACKING.TRIP_ID_REQUIRED,
       );
     }
 
@@ -66,7 +66,7 @@ export const getTrackingHandler = asyncHandler(
     if (!tripId) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+        ERROR_MESSAGES.TRACKING.TRIP_ID_REQUIRED,
       );
     }
 
@@ -92,7 +92,7 @@ export const getCurrentPositionHandler = asyncHandler(
     if (!tripId) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+        ERROR_MESSAGES.TRACKING.TRIP_ID_REQUIRED,
       );
     }
 
@@ -121,7 +121,7 @@ export const getRouteDetailsHandler = asyncHandler(
     if (!tripId) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+        ERROR_MESSAGES.TRACKING.TRIP_ID_REQUIRED,
       );
     }
 
@@ -177,7 +177,7 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
     if (!trip_id) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+        ERROR_MESSAGES.TRACKING.TRIP_ID_REQUIRED,
       );
     }
 
@@ -241,7 +241,7 @@ export const getAlternativeRoutesHandler = asyncHandler(
     if (!tripId) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        SUCCESS_MESSAGES.ROUTE.TRIP_ID_REQUIRED,
+        ERROR_MESSAGES.TRACKING.TRIP_ID_REQUIRED,
       );
     }
 

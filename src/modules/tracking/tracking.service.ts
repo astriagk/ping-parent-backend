@@ -127,6 +127,9 @@ const groupStudentsByParent = (
  * Extract all unique schools from students and create school waypoints
  * Handles cases where students belong to different schools
  * Uses school_id_map from grouped waypoints to correctly identify student->school relationships
+ *
+ * IMPORTANT: Validates that school coordinates are present and valid.
+ * Throws error if any school is missing coordinates to prevent routing to (0,0).
  */
 const extractUniqueSchoolWaypoints = (
   students: StudentWaypoint[],
@@ -136,8 +139,8 @@ const extractUniqueSchoolWaypoints = (
     {
       id: string;
       name: string;
-      latitude: number;
-      longitude: number;
+      latitude: number | null;
+      longitude: number | null;
       address: string;
       studentIds: string[];
     }
@@ -153,8 +156,8 @@ const extractUniqueSchoolWaypoints = (
         schoolMap.set(schoolId, {
           id: schoolId,
           name: student.school.school_name || "School",
-          latitude: student.school.school_latitude || 0,
-          longitude: student.school.school_longitude || 0,
+          latitude: student.school.school_latitude || null,
+          longitude: student.school.school_longitude || null,
           address:
             student.school.school_address ||
             student.school.school_name ||
@@ -171,12 +174,34 @@ const extractUniqueSchoolWaypoints = (
     }
   }
 
+  // Validate all schools have valid coordinates before creating waypoints
+  const schoolsWithMissingCoords: string[] = [];
+  for (const [schoolId, schoolData] of schoolMap.entries()) {
+    const hasValidLatitude =
+      typeof schoolData.latitude === "number" && schoolData.latitude !== 0;
+    const hasValidLongitude =
+      typeof schoolData.longitude === "number" && schoolData.longitude !== 0;
+
+    if (!hasValidLatitude || !hasValidLongitude) {
+      schoolsWithMissingCoords.push(
+        `${schoolData.name} (ID: ${schoolId}, Lat: ${schoolData.latitude}, Lon: ${schoolData.longitude})`,
+      );
+    }
+  }
+
+  // Throw error if any schools are missing valid coordinates
+  if (schoolsWithMissingCoords.length > 0) {
+    const schoolDetails = schoolsWithMissingCoords.join("; ");
+    const errorMessage = `${ERROR_MESSAGES.TRACKING.SCHOOL_COORDINATES_MISSING} Schools affected: ${schoolDetails}`;
+    throw new ApiError(HTTP_STATUS.BAD_REQUEST, errorMessage);
+  }
+
   // Create a waypoint for each unique school
   const schoolWaypoints: GroupedWaypoint[] = [];
   for (const [schoolId, schoolData] of schoolMap.entries()) {
     schoolWaypoints.push({
-      latitude: schoolData.latitude,
-      longitude: schoolData.longitude,
+      latitude: schoolData.latitude as number,
+      longitude: schoolData.longitude as number,
       address: schoolData.address,
       student_id: ["SCHOOL"],
       student_parent_id: "SCHOOL_LOCATION",

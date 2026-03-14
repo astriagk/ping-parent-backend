@@ -1,0 +1,105 @@
+{
+    "success": true,
+    "data": [
+        {
+            "_id": "69b4fbdb9eb30b2d260df791",
+            "parent_id": "69b27364b9a308f07f2b7727",
+            "plan_id": "69a5bbc0c529b2673b9d514b",
+            "student_ids": [
+                "69b4f9f79eb30b2d260df78e",
+                "69b4fc2d9eb30b2d260df792"
+            ],
+            "number_of_kids": 2,
+            "original_price": 0,
+            "calculated_price": 0,
+            "currency": "INR",
+            "start_date": "2026-03-14T06:10:35.327Z",
+            "end_date": "2027-03-14T00:00:00.000Z",
+            "subscription_status": "active",
+            "auto_renew": false,
+            "created_at": "2026-03-14T06:10:35.328Z",
+            "updated_at": "2026-03-14T06:12:39.292Z",
+            "plan": {
+                "_id": "69a5bbc0c529b2673b9d514b",
+                "plan_name": "Monthly Basic ( Savings )",
+                "plan_type": "monthly",
+                "pricing_model": "flat",
+                "price": 299,
+                "features": [
+                    {
+                        "key": "live_tracking",
+                        "label": "Live Tracking",
+                        "enabled": true
+                    }
+                ]
+            },
+            "students": [
+                {
+                    "_id": "69b4f9f79eb30b2d260df78e",
+                    "student_name": "Priya",
+                    "class": "6",
+                    "section": "B"
+                },
+                {
+                    "_id": "69b4fc2d9eb30b2d260df792",
+                    "student_name": "Mangala",
+                    "class": "4"
+                }
+            ]
+        },
+        {
+            "_id": "69b50e5fd9699fe2750c1c6b",
+            "parent_id": "69b27364b9a308f07f2b7727",
+            "plan_id": "699976e4d3c65e748839e86e",
+            "student_ids": [
+                "69b27389b9a308f07f2b7729",
+                "69b4f9f79eb30b2d260df78e",
+                "69b4fc2d9eb30b2d260df792"
+            ],
+            "number_of_kids": 3,
+            "original_price": 6999,
+            "calculated_price": 6999,
+            "discount_applied": null,
+            "currency": "INR",
+            "start_date": "2026-03-14T07:29:35.358Z",
+            "end_date": "2027-03-14T07:29:35.358Z",
+            "subscription_status": "active",
+            "auto_renew": false,
+            "created_at": "2026-03-14T07:29:35.358Z",
+            "updated_at": "2026-03-14T07:29:35.358Z",
+            "plan": {
+                "_id": "699976e4d3c65e748839e86e",
+                "plan_name": "Max yearly",
+                "plan_type": "yearly",
+                "pricing_model": "flat",
+                "price": 6999,
+                "features": [
+                    {
+                        "key": "live_tracking",
+                        "label": "Live Tracking",
+                        "enabled": true
+                    }
+                ]
+            },
+            "students": [
+                {
+                    "_id": "69b27389b9a308f07f2b7729",
+                    "student_name": "Palavi",
+                    "class": "6"
+                },
+                {
+                    "_id": "69b4f9f79eb30b2d260df78e",
+                    "student_name": "Priya",
+                    "class": "6",
+                    "section": "B"
+                },
+                {
+                    "_id": "69b4fc2d9eb30b2d260df792",
+                    "student_name": "Mangala",
+                    "class": "4"
+                }
+            ]
+        }
+    ],
+    "message": "Subscription fetched successfully"
+}
