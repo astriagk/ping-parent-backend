@@ -47,7 +47,7 @@ export const createAdminSchema = Joi.object({
       "string.pattern.base": VALIDATION_MESSAGES.ADMIN.PHONE_PATTERN,
     }),
   admin_role: Joi.string()
-    .valid(UserRole.ADMIN, UserRole.SCHOOL_ADMIN)
+    .valid(UserRole.SUPERADMIN, UserRole.ADMIN, UserRole.SCHOOL_ADMIN)
     .required()
     .messages({
       "any.only": VALIDATION_MESSAGES.ADMIN.ADMIN_ROLE_INVALID,

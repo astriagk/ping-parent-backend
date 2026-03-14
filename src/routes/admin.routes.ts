@@ -7,6 +7,7 @@ import { subscriptionHandlers } from "@modules/billing/parent_subscription/paren
 import { paymentHandlers } from "@modules/billing/payment/payment.routes";
 import { schoolSubscriptionHandlers } from "@modules/billing/school_subscription/school_subscription.routes";
 import { subscriptionPlanHandlers } from "@modules/billing/subscription_plan/subscription_plan.routes";
+import { googlemapsHandlers } from "@modules/googlemaps/googlemaps.routes";
 import { schoolHandlers } from "@modules/school/school.routes";
 import { supportTicketHandlers } from "@modules/support_tickets/support_tickets.routes";
 import { trackingHandlers } from "@modules/tracking/tracking.routes";
@@ -229,6 +230,9 @@ router.get(
 
 // --- Tracking ---
 router.post("/tracking/cleanup", trackingHandlers.admin.cleanup);
+
+// --- Google Maps ---
+router.post("/googlemaps/cleanup", googlemapsHandlers.admin.cleanup);
 
 // --- Audit Logs ---
 router.get("/audit-logs", auditLogHandlers.getAll);

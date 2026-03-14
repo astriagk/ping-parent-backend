@@ -1,4 +1,4 @@
-import { TripStatus, TripType } from "@shared/constants";
+import { RouteProvider, TripStatus, TripType } from "@shared/constants";
 
 export interface Trip {
   _id?: any;
@@ -11,6 +11,7 @@ export interface Trip {
   end_time?: Date;
   total_distance?: number;
   optimized_route_data?: any;
+  route_provider?: RouteProvider; // Tracks which engine calculated the route
   created_at: Date;
   updated_at?: Date;
 }

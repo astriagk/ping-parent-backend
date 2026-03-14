@@ -190,6 +190,7 @@ export const ERROR_MESSAGES = {
     PICKUP_STATUS_REQUIRED: "Pickup status is required",
     MUST_BE_PICKED_BEFORE_DROP: "Student must be picked up before dropping off",
     NO_STUDENTS_PROVIDED: "At least one student must be provided",
+    STUDENT_NOT_IN_SCHOOL: "Student does not belong to the specified school",
   },
   DAILY_QR_OTP: {
     NOT_FOUND: "QR code/OTP not found",
@@ -352,6 +353,7 @@ export const ERROR_MESSAGES = {
   },
   TRACKING: {
     TRIP_NOT_FOUND: "Trip not found",
+    TRIP_ID_REQUIRED: "Trip ID is required",
     PERMISSION_DENIED:
       "You do not have permission to calculate route for this trip",
     NO_STUDENTS_ASSIGNED: "No students assigned to this trip",
@@ -365,6 +367,10 @@ export const ERROR_MESSAGES = {
     DAYS_OLD_INVALID: "daysOld must be at least 1",
     RECALCULATION_FAILED: "Failed to recalculate route",
     TRACKING_DATA_NOT_FOUND: "No tracking data found",
+    INVALID_COORDINATES:
+      "Invalid coordinates - latitude and longitude required",
+    SCHOOL_COORDINATES_MISSING:
+      "School location coordinates are missing or invalid. Please ensure all schools have valid latitude/longitude coordinates configured.",
   },
   SCHOOL_SUBSCRIPTION: {
     NOT_FOUND: "School subscription not found",
@@ -385,6 +391,25 @@ export const ERROR_MESSAGES = {
     ADMIN_ID_REQUIRED: "Admin ID is required",
     ALREADY_EXISTS: "School admin with this email already exists",
     INACTIVE: "School admin account is inactive",
+  },
+  GOOGLEMAPS: {
+    API_ERROR: "Failed to calculate route via Google Maps API",
+    WAYPOINT_LIMIT_EXCEEDED:
+      "Route optimization supports a maximum of 25 waypoints",
+    API_KEY_NOT_CONFIGURED: "Google Maps API key is not configured",
+    TRIP_NOT_FOUND: "Trip not found",
+    PERMISSION_DENIED:
+      "You do not have permission to calculate route for this trip",
+    DRIVER_NOT_FOUND: "Driver profile not found",
+    NO_STUDENTS_ASSIGNED: "No students assigned to this trip",
+    NO_STUDENTS_PICKED_FOR_DROP:
+      "No students have been picked from school yet. Use school-point endpoint to mark students as picked first.",
+    POSITION_UPDATE_ERROR: "Failed to update driver position",
+    DRIVER_OUTSIDE_CORRIDOR:
+      "Driver position is outside optimized route corridor",
+    TRIP_ID_REQUIRED: "Trip ID is required",
+    DAYS_OLD_INVALID: "daysOld must be at least 1",
+    AUTO_RECALCULATE_FAILED: "Failed to auto-recalculate route",
   },
   SOCKET: {
     MISSING_AUTH_CREDENTIALS: "Missing authentication credentials",
@@ -625,6 +650,23 @@ export const SUCCESS_MESSAGES = {
     CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
     RECALCULATED_SUCCESSFULLY: "Route recalculated successfully",
     TOMTOM_ROUTE_CALCULATED: "Optimal route calculated using TomTom Matrix API",
+    ALTERNATIVE_ROUTES_FOUND:
+      "Alternative routes found - primary and alternatives available",
+    NO_ALTERNATIVE_ROUTES_AVAILABLE:
+      "Primary route shown - no alternatives available",
+  },
+  GOOGLEMAPS: {
+    ROUTE_CALCULATED: "Optimal route calculated using Google Maps",
+    ROUTE_RECALCULATED: "Route recalculated using Google Maps",
+    POSITION_UPDATED: "Position updated successfully",
+    TRACKING_FETCHED: "Tracking data fetched successfully",
+    CURRENT_POSITION_RETRIEVED: "Current position retrieved successfully",
+    ROUTE_DETAILS_FETCHED: "Route details fetched successfully",
+    CLEANUP_COMPLETED: "Google Maps tracking cleanup completed",
+    NO_POSITION_DATA: "No position data available",
+    CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
+    ROUTE_AUTO_RECALCULATED:
+      "Route automatically recalculated due to deviation",
   },
 };
 

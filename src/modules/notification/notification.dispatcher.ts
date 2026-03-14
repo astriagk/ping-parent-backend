@@ -1,7 +1,7 @@
 import { deviceTokenRepository } from "@modules/device_token/device-token.repository";
 import { isPushEnabled } from "@modules/notification_preferences/notification-preferences.service";
-import { TrackingSocketService } from "@modules/tracking/tracking.socket.service";
 import { NotificationType } from "@shared/constants";
+import { BroadcastService } from "@shared/services/broadcast.service";
 import { FCMService } from "@shared/services/fcm.service";
 import { logger } from "@shared/utils";
 
@@ -110,7 +110,7 @@ export class NotificationDispatcher {
     driverId?: string,
   ): Promise<void> {
     // Socket event (existing behavior)
-    TrackingSocketService.notifyParentStudentPicked(
+    BroadcastService.notifyParentStudentPicked(
       parentId,
       tripId,
       studentId,
@@ -136,7 +136,7 @@ export class NotificationDispatcher {
     studentName: string,
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentDropped(
+    BroadcastService.notifyParentStudentDropped(
       parentId,
       tripId,
       studentId,
@@ -162,7 +162,7 @@ export class NotificationDispatcher {
     eta: number,
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentApproaching(
+    BroadcastService.notifyParentApproaching(
       parentId,
       tripId,
       studentId,
@@ -192,7 +192,7 @@ export class NotificationDispatcher {
     students: StudentInfo[],
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentsPicked(
+    BroadcastService.notifyParentStudentsPicked(
       parentId,
       tripId,
       students,
@@ -225,7 +225,7 @@ export class NotificationDispatcher {
     students: StudentInfo[],
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentsDropped(
+    BroadcastService.notifyParentStudentsDropped(
       parentId,
       tripId,
       students,
@@ -247,6 +247,36 @@ export class NotificationDispatcher {
     );
   }
 
+  static async notifyParentRouteRecalculated(
+    parentId: string,
+    userId: string,
+    tripId: string,
+    students: StudentInfo[],
+    newEtas: { studentId: string; eta: Date }[],
+    driverId?: string,
+  ): Promise<void> {
+    // Emit only to the specific parent to avoid leaking parent-specific ETA/student data
+    BroadcastService.notifyParentRouteRecalculated(
+      parentId,
+      tripId,
+      students.map((s) => ({
+        studentId: s.studentId,
+        studentName: s.studentName,
+      })),
+      newEtas,
+      driverId,
+    );
+
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    await this.dispatch(
+      userId,
+      NotificationType.ROUTE_RECALCULATED,
+      "Route Updated",
+      `Route has been recalculated. Updated ETAs for ${studentNames}`,
+      { tripId, students, newEtas, driverId },
+    );
+  }
+
   static async notifyParentStudentsAbsent(
     parentId: string,
     userId: string,
@@ -254,7 +284,7 @@ export class NotificationDispatcher {
     students: StudentInfo[],
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentsAbsent(
+    BroadcastService.notifyParentStudentsAbsent(
       parentId,
       tripId,
       students,

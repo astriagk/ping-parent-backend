@@ -27,6 +27,13 @@ export class ParentRepository extends BaseRepository<Parent> {
   ): Promise<WithId<Parent> | null> {
     return await this.updateOne({ user_id: userId }, { $set: data });
   }
+
+  async updateRawByUserId(
+    userId: string,
+    update: Record<string, any>,
+  ): Promise<WithId<Parent> | null> {
+    return await this.updateOne({ user_id: userId }, update as any);
+  }
 }
 
 export class ParentAddressRepository extends BaseRepository<ParentAddress> {

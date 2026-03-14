@@ -113,6 +113,7 @@ export enum NotificationType {
   TRIP_COMPLETED = "trip_completed",
   PAYMENT_DUE = "payment_due",
   GENERAL = "general",
+  ROUTE_RECALCULATED = "route_recalculated",
 }
 
 export enum PlanType {
@@ -162,6 +163,11 @@ export enum PaymentStatus {
   REFUNDED = "refunded",
 }
 
+export enum RouteProvider {
+  GOOGLE_MAPS = "google_maps",
+  TOMTOM = "tomtom",
+}
+
 export enum ApprovalStatus {
   PENDING = "pending",
   APPROVED = "approved",
@@ -207,6 +213,7 @@ export enum ParentNotificationEvent {
   MY_STUDENT_DROPPED = "parent:my_student_dropped",
   MY_STUDENT_APPROACHING = "parent:my_student_approaching",
   MY_STUDENT_ABSENT = "parent:my_student_absent",
+  ROUTE_RECALCULATED = "parent:route_recalculated",
 }
 
 export enum BroadcastSocketEvent {

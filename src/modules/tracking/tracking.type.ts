@@ -1,14 +1,41 @@
 import { PickupStatus } from "@shared/constants";
 
-export interface RouteWaypoint {
+/**
+ * School details embedded in a waypoint
+ */
+export interface WaypointSchool {
+  school_id?: any;
+  school_name?: string;
+  school_address?: string;
+  school_city?: string;
+  school_state?: string;
+  school_latitude?: number;
+  school_longitude?: number;
+  school_contact?: string;
+  school_email?: string;
+}
+
+/**
+ * Base waypoint fields shared by all waypoint types
+ */
+interface BaseWaypoint {
   latitude: number;
   longitude: number;
   address?: string;
-  student_id: string | string[]; // can be string from repository or array after grouping
-  student_parent_id?: string; // parent id to group students from same parent
-  student_name?: string; // single student name from repository (before grouping)
-  student_names?: string[]; // array of student names (after grouping)
-  pickup_status?: PickupStatus; // PickupStatus enum: pending, picked, dropped, no_show
+  duration_from_previous?: number; // in seconds
+  distance_from_previous?: number; // in kilometers
+  estimated_arrival_time?: Date;
+}
+
+/**
+ * Raw student waypoint as returned from the repository (before grouping)
+ * Each record represents one student
+ */
+export interface StudentWaypoint extends BaseWaypoint {
+  student_id: string;
+  student_parent_id?: string;
+  student_name?: string;
+  pickup_status?: PickupStatus;
   student_roll_number?: string;
   student_grade?: string;
   student_section?: string;
@@ -19,16 +46,43 @@ export interface RouteWaypoint {
   parent_email?: string;
   parent_phone_number?: string;
   parent_user_id?: string;
-  duration_from_previous?: number; // in seconds
-  distance_from_previous?: number; // in kilometers
-  estimated_arrival_time?: Date;
+  school?: WaypointSchool;
 }
+
+/**
+ * Grouped waypoint after parent grouping — multiple siblings at the same location
+ * Used in route calculation and stored in optimized_route_data
+ */
+export interface GroupedWaypoint extends BaseWaypoint {
+  student_id: string[]; // all student IDs at this stop
+  student_parent_id: string; // parent ID or "SCHOOL_LOCATION" for schools
+  student_names?: string[]; // all student names at this stop
+  student_photo_url?: string;
+  student_gender?: string;
+  student_section?: string;
+  student_class?: string;
+  parent_name?: string;
+  parent_email?: string;
+  parent_phone_number?: string;
+  parent_user_id?: string;
+  school?: WaypointSchool;
+  school_id?: string; // for school waypoints — identifies which school
+  school_ids?: string[]; // all schools this pickup location serves
+  school_id_map?: Record<string, string>; // maps student_id → school_id
+}
+
+/**
+ * Union type for backward compatibility in RouteGeometry and other shared contexts
+ */
+export type RouteWaypoint = StudentWaypoint | GroupedWaypoint;
 
 export interface NavigationInstruction {
   route_index: number;
   instruction: string;
-  distance: number; // in kilometers
-  duration: number; // in seconds
+  distance_delta: number; // Distance from previous instruction (in kilometers)
+  duration_delta: number; // Duration from previous instruction (in seconds)
+  distance_from_start: number; // Cumulative distance from route start (in kilometers)
+  duration_from_start: number; // Cumulative time from route start (in seconds)
   coordinates: [number, number][]; // turn-by-turn waypoints
 }
 
@@ -58,11 +112,24 @@ export interface RecalculateRouteRequest {
   force_recalculate?: boolean;
 }
 
+export interface RouteLeg {
+  distance: number; // in kilometers
+  duration: number; // in seconds
+  coordinates: [number, number][]; // waypoint-to-waypoint coordinates
+}
+
 export interface RouteGeometry {
   waypoints: RouteWaypoint[];
   total_distance: number; // in kilometers
   total_duration: number; // in seconds
-  coordinates: [number, number][]; // array of [lat, lng]
+  coordinates: [number, number][]; // Full route polyline (all legs combined)
+  legs: RouteLeg[]; // Per-segment coordinates (waypoint N → waypoint N+1)
+  navigation_instructions?: NavigationInstruction[]; // Turn-by-turn from TomTom guides
+  route_type?: "primary" | "alternative"; // indicates if this is primary or alternative route
+  has_alternatives?: boolean; // whether alternative routes exist
+  alternative_routes_count?: number; // count of available alternatives
+  traffic_delay?: number; // traffic delay in seconds
+  route_confidence?: "high" | "medium" | "low"; // accuracy/reliability of route
 }
 
 export interface LocationTracking {
@@ -81,19 +148,27 @@ export interface RouteCalculationRequest {
   trip_id: string;
   current_latitude: number;
   current_longitude: number;
-  pickup_points?: RouteWaypoint[]; // for pickup trip
-  drop_location?: RouteWaypoint; // school location for drop trips
+  pickup_points?: GroupedWaypoint[]; // for pickup trip
+  drop_location?: GroupedWaypoint; // school location for drop trips
 }
 
 export interface RouteCalculationResponse {
-  success: boolean;
   _id?: string;
   trip_id: string;
   route_geometry: RouteGeometry;
-  total_distance: number;
-  total_duration: number;
-  trip_students_updated: number; // count of updated trip_students
+  trip_students_updated: number;
   message: string;
+}
+
+export interface RouteDetailsResponse {
+  trip_id: string;
+  trip_type: string;
+  trip_status: string;
+  trip_date: Date;
+  total_distance: number;
+  optimized_route_data: RouteGeometry | null;
+  current_position: LocationTracking | null;
+  trip_students: any[];
 }
 
 export interface TrackingSubscription {

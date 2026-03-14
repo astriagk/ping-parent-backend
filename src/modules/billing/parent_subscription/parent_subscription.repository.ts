@@ -91,6 +91,38 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
     } as any);
   }
 
+  async findAllActiveSchoolRedemptionsByParentId(
+    parentId: string,
+  ): Promise<WithId<ParentSubscription>[]> {
+    return await this.findMany({
+      parent_id: parentId,
+      subscription_source: SubscriptionSource.SCHOOL_REDEMPTION,
+      subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
+    } as any);
+  }
+
+  async findActiveSelfPayByParentId(
+    parentId: string,
+  ): Promise<WithId<ParentSubscription> | null> {
+    return await this.findOne({
+      parent_id: parentId,
+      subscription_source: SubscriptionSource.SELF_PAY,
+      subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
+    } as any);
+  }
+
+  async findAllActiveByParentId(
+    parentId: string,
+  ): Promise<WithId<ParentSubscription>[]> {
+    return await this.findMany({
+      parent_id: parentId,
+      subscription_status: SubscriptionStatus.ACTIVE,
+      end_date: { $gt: new Date() },
+    });
+  }
+
   /**
    * Check if any of the given students are already covered by an active subscription
    */
@@ -202,9 +234,9 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
   }
 
   /**
-   * Light aggregation for active subscription only
+   * Light aggregation for all active subscriptions (returns array)
    */
-  async findActiveWithPlanAndStudents(parentId: string): Promise<any | null> {
+  async findActiveWithPlanAndStudents(parentId: string): Promise<any[]> {
     const collection = this.getCollection();
     const results = await collection
       .aggregate([
@@ -281,16 +313,14 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
       ])
       .toArray();
 
-    return results.length > 0 ? results[0] : null;
+    return results;
   }
 
   /**
    * Full aggregation: subscription → plan → students → schools → driver assignments → drivers → payments
    * Used for the detailed subscription view
    */
-  async findActiveSubscriptionWithDetails(
-    parentId: string,
-  ): Promise<any | null> {
+  async findActiveSubscriptionWithDetails(parentId: string): Promise<any[]> {
     const collection = this.getCollection();
     const results = await collection
       .aggregate([
@@ -477,7 +507,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
       ])
       .toArray();
 
-    return results.length > 0 ? results[0] : null;
+    return results;
   }
 }
 

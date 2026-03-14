@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import { createServer } from "http";
 import path from "path";
 
+import { startSubscriptionExpiryCron } from "@modules/billing/parent_subscription/parent_subscription.cron";
 import { connectDB } from "@shared/config";
 import { initializeFirebase } from "@shared/services/fcm.service";
 import { initializeSocket } from "@shared/services/socket.service";
@@ -32,6 +33,9 @@ async function startServer() {
 
     // Initialize Socket.IO for real-time tracking
     initializeSocket(httpServer);
+
+    // Start subscription expiry cron job
+    // startSubscriptionExpiryCron();
 
     httpServer.listen(PORT, HOST, () => {
       console.log(`🚀 Server running on http://${HOST}:${PORT}`);

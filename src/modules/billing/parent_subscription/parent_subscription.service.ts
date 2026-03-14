@@ -258,25 +258,91 @@ export const getSubscriptionRecommendations = async (userId: string) => {
   // Detect same-trip groups
   const sameTripGroups = await detectSameTripGroups(studentIds);
 
+  // Check all active subscriptions and determine covered/uncovered students
+  const allActiveSubscriptions =
+    await parentSubscriptionRepository.findAllActiveByParentId(parentId);
+
+  const coveredStudentIds = new Set<string>();
+  for (const subscription of allActiveSubscriptions) {
+    for (const sid of subscription.student_ids) {
+      coveredStudentIds.add(sid);
+    }
+  }
+
+  const coveredStudents = kidsWithDetails.filter((k) =>
+    coveredStudentIds.has(k.student_id),
+  );
+  const uncoveredStudents = kidsWithDetails.filter(
+    (k) => !coveredStudentIds.has(k.student_id),
+  );
+
+  const totalKids = activeStudents.length;
+
+  // Build current_subscriptions array from all active subscriptions
+  const currentSubscriptions: any[] = [];
+  for (const sub of allActiveSubscriptions) {
+    const proration = calculateProration(sub);
+    currentSubscriptions.push({
+      subscription_id: String(sub._id),
+      plan_id: sub.plan_id,
+      subscription_source: sub.subscription_source,
+      calculated_price: sub.calculated_price,
+      start_date: sub.start_date,
+      end_date: sub.end_date,
+      remaining_days: proration.remaining_days,
+      remaining_value: proration.remaining_value,
+      student_ids: sub.student_ids,
+    });
+  }
+
+  // If ALL students are covered, no paid recommendations needed
+  if (uncoveredStudents.length === 0 && allActiveSubscriptions.length > 0) {
+    return {
+      parent_summary: {
+        total_kids: totalKids,
+        kids: kidsWithDetails,
+        covered_students: coveredStudents,
+        uncovered_students: [],
+        same_trip_groups: sameTripGroups.map((g) => ({
+          driver_id: g.driver_id,
+          school_id: g.school_id,
+          kids: g.student_ids,
+          count: g.count,
+        })),
+      },
+      covered_by_school: true,
+      current_subscriptions: currentSubscriptions,
+      recommended_plans: [],
+      excluded_plans: [],
+    };
+  }
+
+  // Calculate recommendations based on uncovered students count
+  const uncoveredCount =
+    uncoveredStudents.length > 0 ? uncoveredStudents.length : totalKids;
+  const uncoveredStudentIds = uncoveredStudents.map((s) => s.student_id);
+  const uncoveredSameTripGroups =
+    uncoveredStudents.length > 0
+      ? await detectSameTripGroups(uncoveredStudentIds)
+      : sameTripGroups;
+
   // Fetch all active plans
   const plans = await subscriptionPlanRepository.findActivePlans();
-  const totalKids = activeStudents.length;
 
   const recommendedPlans: any[] = [];
   const excludedPlans: any[] = [];
 
   for (const plan of plans) {
-    // Check if plan can cover all kids
-    if (totalKids > plan.kids.max) {
+    if (uncoveredCount > plan.kids.max) {
       excludedPlans.push({
         plan_id: String(plan._id),
         plan_name: plan.plan_name,
-        reason: `Supports max ${plan.kids.max} kid${plan.kids.max > 1 ? "s" : ""} (you have ${totalKids})`,
+        reason: `Supports max ${plan.kids.max} kid${plan.kids.max > 1 ? "s" : ""} (you have ${uncoveredCount} uncovered)`,
       });
       continue;
     }
 
-    if (totalKids < plan.kids.min) {
+    if (uncoveredCount < plan.kids.min) {
       excludedPlans.push({
         plan_id: String(plan._id),
         plan_name: plan.plan_name,
@@ -285,16 +351,20 @@ export const getSubscriptionRecommendations = async (userId: string) => {
       continue;
     }
 
-    const pricing = calculatePrice(plan, totalKids, sameTripGroups);
+    const pricing = calculatePrice(
+      plan,
+      uncoveredCount,
+      uncoveredSameTripGroups,
+    );
 
     // Build reason string
     let reason = "";
     if (plan.pricing_model === PricingModel.FLAT) {
       reason = `Flat ₹${plan.price}/${plan.plan_type}`;
     } else if (plan.pricing_model === PricingModel.PER_KID) {
-      reason = `₹${plan.per_kid_price} × ${totalKids} kids = ₹${pricing.original_price}/${plan.plan_type}`;
+      reason = `₹${plan.per_kid_price} × ${uncoveredCount} kid${uncoveredCount > 1 ? "s" : ""} = ₹${pricing.original_price}/${plan.plan_type}`;
     } else {
-      reason = `₹${plan.price} + ₹${plan.per_kid_price} × ${totalKids} kids = ₹${pricing.original_price}/${plan.plan_type}`;
+      reason = `₹${plan.price} + ₹${plan.per_kid_price} × ${uncoveredCount} kid${uncoveredCount > 1 ? "s" : ""} = ₹${pricing.original_price}/${plan.plan_type}`;
     }
 
     if (pricing.discount_applied) {
@@ -311,8 +381,8 @@ export const getSubscriptionRecommendations = async (userId: string) => {
       original_price: pricing.original_price,
       calculated_price: pricing.calculated_price,
       discount: pricing.discount_applied ?? null,
-      covers_all_kids: true,
-      kids_covered: plan.kids.max,
+      covers_all_kids: uncoveredCount === totalKids,
+      kids_covered: uncoveredCount,
       features: plan.features,
       badge: plan.badge,
       is_recommended: false,
@@ -320,49 +390,15 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     });
   }
 
-  // If covered by school redemption, no paid recommendations apply
-  const schoolRedemption =
-    await parentSubscriptionRepository.findActiveSchoolRedemptionByParentId(
-      parentId,
-    );
+  // Find active SELF_PAY subscription from already-fetched subscriptions for upgrade info
+  const activeSelfPay = allActiveSubscriptions.find(
+    (sub) => sub.subscription_source === SubscriptionSource.SELF_PAY,
+  );
 
-  if (schoolRedemption) {
-    return {
-      parent_summary: {
-        total_kids: totalKids,
-        kids: kidsWithDetails,
-        same_trip_groups: sameTripGroups.map((g) => ({
-          driver_id: g.driver_id,
-          school_id: g.school_id,
-          kids: g.student_ids,
-          count: g.count,
-        })),
-      },
-      covered_by_school: true,
-      current_subscription: {
-        subscription_id: String(schoolRedemption._id),
-        plan_id: schoolRedemption.plan_id,
-        subscription_source: schoolRedemption.subscription_source,
-        calculated_price: schoolRedemption.calculated_price,
-        start_date: schoolRedemption.start_date,
-        end_date: schoolRedemption.end_date,
-        remaining_days: calculateProration(schoolRedemption).remaining_days,
-        remaining_value: calculateProration(schoolRedemption).remaining_value,
-      },
-      recommended_plans: [],
-      excluded_plans: [],
-    };
-  }
-
-  // Check for active subscription to enrich with upgrade info
-  const activeSubscription =
-    await parentSubscriptionRepository.findActiveByParentId(parentId);
-
-  if (activeSubscription) {
-    const proration = calculateProration(activeSubscription);
-
+  if (activeSelfPay) {
+    const proration = calculateProration(activeSelfPay);
     for (const plan of recommendedPlans) {
-      const isSamePlan = activeSubscription.plan_id === String(plan._id);
+      const isSamePlan = activeSelfPay.plan_id === String(plan._id);
       plan.is_current_plan = isSamePlan;
 
       if (isSamePlan) {
@@ -375,7 +411,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
           plan.calculated_price - proration.remaining_value,
         );
         plan.is_upgrade =
-          plan.calculated_price > activeSubscription.calculated_price;
+          plan.calculated_price > activeSelfPay.calculated_price;
         plan.proration = {
           current_plan_total_days: proration.total_days,
           current_plan_remaining_days: proration.remaining_days,
@@ -393,7 +429,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
   recommendedPlans.sort((a, b) => a.calculated_price - b.calculated_price);
 
   // Mark best recommendation: skip current plan and downgrades
-  if (activeSubscription) {
+  if (activeSelfPay) {
     const bestUpgrade = recommendedPlans.find(
       (p) => !p.is_current_plan && p.is_upgrade,
     );
@@ -408,6 +444,8 @@ export const getSubscriptionRecommendations = async (userId: string) => {
     parent_summary: {
       total_kids: totalKids,
       kids: kidsWithDetails,
+      covered_students: coveredStudents,
+      uncovered_students: uncoveredStudents,
       same_trip_groups: sameTripGroups.map((g) => ({
         driver_id: g.driver_id,
         school_id: g.school_id,
@@ -415,18 +453,9 @@ export const getSubscriptionRecommendations = async (userId: string) => {
         count: g.count,
       })),
     },
-    current_subscription: activeSubscription
-      ? {
-          subscription_id: String(activeSubscription._id),
-          plan_id: activeSubscription.plan_id,
-          calculated_price: activeSubscription.calculated_price,
-          start_date: activeSubscription.start_date,
-          end_date: activeSubscription.end_date,
-          remaining_days: calculateProration(activeSubscription).remaining_days,
-          remaining_value:
-            calculateProration(activeSubscription).remaining_value,
-        }
-      : null,
+    covered_by_school:
+      allActiveSubscriptions.length > 0 && uncoveredStudents.length === 0,
+    current_subscriptions: currentSubscriptions,
     recommended_plans: recommendedPlans,
     excluded_plans: excludedPlans,
   };
@@ -439,6 +468,7 @@ export const getSubscriptionRecommendations = async (userId: string) => {
 interface CreateSubscriptionInput {
   plan_id: string;
   auto_renew?: boolean;
+  student_ids?: string[];
 }
 
 interface CreateSubscriptionResult {
@@ -482,7 +512,7 @@ export const createParentSubscription = async (
     );
   }
 
-  // 4. Auto-fetch parent's active students
+  // 4. Fetch parent's active students
   const students = await studentRepository.findByParentId(parentId);
   const activeStudents = students.filter((s) => s.is_active);
 
@@ -493,7 +523,43 @@ export const createParentSubscription = async (
     );
   }
 
-  const studentIds = activeStudents.map((s) => String(s._id));
+  // Use specific student_ids if provided, otherwise use all active students
+  let studentIds: string[];
+  if (data.student_ids && data.student_ids.length > 0) {
+    // Validate that all provided student_ids belong to this parent's active students
+    const activeStudentIds = new Set(activeStudents.map((s) => String(s._id)));
+    for (const sid of data.student_ids) {
+      if (!activeStudentIds.has(sid)) {
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          `Student ${sid} is not an active student of this parent`,
+        );
+      }
+    }
+    studentIds = data.student_ids;
+  } else {
+    // Auto-select all active students, excluding those already covered by an active subscription
+    const allStudentIds = activeStudents.map((s) => String(s._id));
+    const coveredSubs =
+      await parentSubscriptionRepository.findActiveSubscriptionsByStudentIds(
+        allStudentIds,
+      );
+    const alreadyCoveredIds = new Set<string>();
+    for (const sub of coveredSubs) {
+      for (const sid of sub.student_ids) {
+        alreadyCoveredIds.add(sid);
+      }
+    }
+    studentIds = allStudentIds.filter((id) => !alreadyCoveredIds.has(id));
+
+    if (studentIds.length === 0) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.PARENT_SUBSCRIPTION.STUDENT_ALREADY_SUBSCRIBED,
+      );
+    }
+  }
+
   const studentCount = studentIds.length;
 
   // 5. Validate student count against plan limits
@@ -566,11 +632,10 @@ export const createParentSubscription = async (
     await parentSubscriptionRepository.create(subscriptionData);
 
   // 11. Update parent document
-  await parentRepository.updateByUserId(userId, {
-    has_active_subscription: true,
-    subscription_id: String(subscription._id),
-    updated_at: new Date(),
-  } as any);
+  await parentRepository.updateRawByUserId(userId, {
+    $set: { has_active_subscription: true, updated_at: new Date() },
+    $addToSet: { subscription_ids: String(subscription._id) },
+  });
 
   return { subscription, warnings };
 };
@@ -601,9 +666,9 @@ export const upgradeParentSubscription = async (
     );
   }
 
-  // 2. Get active subscription (must exist for upgrade)
+  // 2. Get active SELF_PAY subscription (must exist for upgrade — school redemptions can't be upgraded)
   const activeSubscription =
-    await parentSubscriptionRepository.findActiveByParentId(parentId);
+    await parentSubscriptionRepository.findActiveSelfPayByParentId(parentId);
   if (!activeSubscription) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
@@ -713,12 +778,14 @@ export const upgradeParentSubscription = async (
   const newSubscription =
     await parentSubscriptionRepository.create(subscriptionData);
 
-  // 12. Update parent document to point to new subscription
-  await parentRepository.updateByUserId(userId, {
-    has_active_subscription: true,
-    subscription_id: String(newSubscription._id),
-    updated_at: new Date(),
-  } as any);
+  // 12. Update parent document: remove old subscription_id, add new one
+  await parentRepository.updateRawByUserId(userId, {
+    $set: { has_active_subscription: true, updated_at: new Date() },
+    $pull: { subscription_ids: String(activeSubscription._id) },
+  });
+  await parentRepository.updateRawByUserId(userId, {
+    $addToSet: { subscription_ids: String(newSubscription._id) },
+  });
 
   // 13. Warn about students without driver assignments
   for (const student of activeStudents) {
@@ -851,7 +918,7 @@ export const getParentSubscriptionsByUserId = async (
 
 export const getActiveParentSubscriptionByUserId = async (
   userId: string,
-): Promise<any | null> => {
+): Promise<any[]> => {
   const parentId = await getParentIdByUserId(userId);
   if (!parentId) {
     throw new ApiError(
@@ -867,7 +934,7 @@ export const getActiveParentSubscriptionByUserId = async (
 
 export const getMySubscriptionDetails = async (
   userId: string,
-): Promise<any> => {
+): Promise<any[]> => {
   const parentId = await getParentIdByUserId(userId);
   if (!parentId) {
     throw new ApiError(
@@ -876,19 +943,9 @@ export const getMySubscriptionDetails = async (
     );
   }
 
-  const details =
-    await parentSubscriptionRepository.findActiveSubscriptionWithDetails(
-      parentId,
-    );
-
-  if (!details) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.PARENT_SUBSCRIPTION.NOT_FOUND,
-    );
-  }
-
-  return details;
+  return await parentSubscriptionRepository.findActiveSubscriptionWithDetails(
+    parentId,
+  );
 };
 
 // ============================================================
@@ -965,13 +1022,25 @@ export const cancelParentSubscription = async (
     },
   });
 
-  // Reset parent flags
+  // Reset parent flags — remove this subscription and check if any remain
   if (userId) {
-    await parentRepository.updateByUserId(userId, {
-      has_active_subscription: false,
-      subscription_id: undefined,
-      updated_at: new Date(),
-    } as any);
+    await parentRepository.updateRawByUserId(userId, {
+      $pull: { subscription_ids: id },
+      $set: { updated_at: new Date() },
+    });
+
+    // Check if parent has any remaining active subscriptions
+    const parentId = await getParentIdByUserId(userId);
+    if (parentId) {
+      const remaining =
+        await parentSubscriptionRepository.findAllActiveByParentId(parentId);
+      if (remaining.length === 0) {
+        await parentRepository.updateByUserId(userId, {
+          has_active_subscription: false,
+          updated_at: new Date(),
+        } as any);
+      }
+    }
   }
 
   return result;
