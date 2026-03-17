@@ -6,10 +6,13 @@ import {
   getSchoolAssignments,
   getSchoolDriverAssignments,
   getSchoolPendingAssignments,
+  reassignSchoolAssignment,
   rejectSchoolAssignment,
+  removeSchoolAssignment,
 } from "./school_assignment.controller";
 import {
   createSchoolAssignmentSchema,
+  reassignSchoolAssignmentSchema,
   rejectSchoolAssignmentSchema,
 } from "./school_assignment.validation";
 
@@ -27,5 +30,8 @@ export const schoolAssignmentHandlers = {
     approve: approveSchoolAssignment,
     validateReject: validate(rejectSchoolAssignmentSchema),
     reject: rejectSchoolAssignment,
+    remove: removeSchoolAssignment,
+    validateReassign: validate(reassignSchoolAssignmentSchema),
+    reassign: reassignSchoolAssignment,
   },
 };
