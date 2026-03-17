@@ -92,7 +92,7 @@ export class NotificationDispatcher {
         );
 
         if (result.failedTokens.length > 0) {
-          await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
+          // await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
           logger.info(
             `[Dispatcher] Deactivated ${result.failedTokens.length} stale FCM token(s) for user ${userId}`,
           );
