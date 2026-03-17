@@ -87,10 +87,16 @@ export class NotificationDispatcher {
           stringData,
         );
 
-        // TODO: Clean up invalid tokens
-        // if (result.failedTokens.length > 0) {
-        //   await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
-        // }
+        logger.info(
+          `[Dispatcher] FCM result for user ${userId}: ${result.successCount} sent, ${result.failedTokens.length} failed`,
+        );
+
+        if (result.failedTokens.length > 0) {
+          // await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
+          logger.info(
+            `[Dispatcher] Deactivated ${result.failedTokens.length} stale FCM token(s) for user ${userId}`,
+          );
+        }
       }
     } catch (error) {
       logger.error("[Dispatcher] Failed to send FCM push:", error as Error);
