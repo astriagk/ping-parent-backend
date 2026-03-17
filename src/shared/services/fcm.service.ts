@@ -1,5 +1,4 @@
 import admin from "firebase-admin";
-import path from "path";
 
 import { logger } from "@shared/utils";
 
@@ -8,14 +7,20 @@ let firebaseInitialized = false;
 export function initializeFirebase(): void {
   if (firebaseInitialized) return;
 
-  const serviceAccountPath =
-    process.env.FIREBASE_SERVICE_ACCOUNT_PATH ||
-    "./environment/firebase-service-account.json";
+  const projectId = process.env.FIREBASE_PROJECT_ID;
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL;
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, "\n");
+
+  if (!projectId || !clientEmail || !privateKey) {
+    logger.error(
+      "[FCM] Missing Firebase credentials. Set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, FIREBASE_PRIVATE_KEY.",
+    );
+    return;
+  }
+
   try {
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const serviceAccount = require(path.resolve(serviceAccountPath));
     admin.initializeApp({
-      credential: admin.credential.cert(serviceAccount),
+      credential: admin.credential.cert({ projectId, clientEmail, privateKey }),
     });
     firebaseInitialized = true;
     logger.info("[FCM] Firebase Admin SDK initialized successfully");
@@ -39,7 +44,7 @@ export class FCMService {
     data?: Record<string, string>,
   ): Promise<boolean> {
     if (!firebaseInitialized) {
-      logger.warn("[FCM] Firebase not initialized, skipping push notification");
+      logger.warn("[FCM] Firebase not initialized — push skipped.");
       return false;
     }
 
@@ -92,7 +97,11 @@ export class FCMService {
     body: string,
     data?: Record<string, string>,
   ): Promise<{ successCount: number; failedTokens: string[] }> {
-    if (!firebaseInitialized || tokens.length === 0) {
+    if (!firebaseInitialized) {
+      logger.warn("[FCM] Firebase not initialized — push skipped.");
+      return { successCount: 0, failedTokens: [] };
+    }
+    if (tokens.length === 0) {
       return { successCount: 0, failedTokens: [] };
     }
 
