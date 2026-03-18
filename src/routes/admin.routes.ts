@@ -140,6 +140,15 @@ router.post(
   schoolAssignmentHandlers.admin.validateReject,
   schoolAssignmentHandlers.admin.reject,
 );
+router.post(
+  "/school-assignments/:assignmentId/remove",
+  schoolAssignmentHandlers.admin.remove,
+);
+router.post(
+  "/school-assignments/:assignmentId/reassign",
+  schoolAssignmentHandlers.admin.validateReassign,
+  schoolAssignmentHandlers.admin.reassign,
+);
 
 // --- Students ---
 router.get("/students/school/:schoolId", studentHandlers.getBySchool);

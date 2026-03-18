@@ -13,7 +13,9 @@ import {
   getAssignmentsBySchool,
   getDriverAssignmentsBySchool,
   getPendingAssignmentsBySchool,
+  reassignSchoolAssignment as reassignService,
   rejectSchoolAssignment as rejectService,
+  removeSchoolAssignment as removeService,
 } from "./school_assignment.service";
 
 /**
@@ -154,6 +156,59 @@ export const createSchoolAssignment = asyncHandler(
       success: true,
       data: assignments,
       message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CREATED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Remove school assignment (soft-delete)
+ * @route POST /api/v1/admin/school-assignments/:assignmentId/remove
+ */
+export const removeSchoolAssignment = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { assignmentId } = req.params as Record<string, string>;
+
+    const assignment = await removeService(assignmentId);
+
+    if (!assignment) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.NOT_FOUND,
+      );
+    }
+
+    return res.json({
+      success: true,
+      data: assignment,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DEACTIVATED_SUCCESSFULLY,
+    });
+  },
+);
+
+/**
+ * Reassign driver for school assignment
+ * @route POST /api/v1/admin/school-assignments/:assignmentId/reassign
+ */
+export const reassignSchoolAssignment = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { assignmentId } = req.params as Record<string, string>;
+    const adminId = req.admin?.adminId;
+
+    if (!adminId) {
+      throw new ApiError(
+        HTTP_STATUS.UNAUTHORIZED,
+        ERROR_MESSAGES.AUTH.MISSING_AUTH_HEADER,
+      );
+    }
+
+    const result = await reassignService(assignmentId, adminId, req.body);
+
+    return res.json({
+      success: true,
+      data: result,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.REASSIGNED_SUCCESSFULLY,
     });
   },
 );
