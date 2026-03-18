@@ -16,7 +16,6 @@ import {
 import { ApiError } from "@shared/middlewares";
 
 import { driverStudentAssignmentRepository } from "../../trips/driver_student_assignment/driver_student_assignment.repository";
-import { parentRepository } from "../../users/parent/parent.repository";
 import { studentRepository } from "../../users/student/student.repository";
 import { subscriptionPlanRepository } from "../subscription_plan/subscription_plan.repository";
 import { SubscriptionPlan } from "../subscription_plan/subscription_plan.type";
@@ -631,12 +630,6 @@ export const createParentSubscription = async (
   const subscription =
     await parentSubscriptionRepository.create(subscriptionData);
 
-  // 11. Update parent document
-  await parentRepository.updateRawByUserId(userId, {
-    $set: { has_active_subscription: true, updated_at: new Date() },
-    $addToSet: { subscription_ids: String(subscription._id) },
-  });
-
   return { subscription, warnings };
 };
 
@@ -778,16 +771,7 @@ export const upgradeParentSubscription = async (
   const newSubscription =
     await parentSubscriptionRepository.create(subscriptionData);
 
-  // 12. Update parent document: remove old subscription_id, add new one
-  await parentRepository.updateRawByUserId(userId, {
-    $set: { has_active_subscription: true, updated_at: new Date() },
-    $pull: { subscription_ids: String(activeSubscription._id) },
-  });
-  await parentRepository.updateRawByUserId(userId, {
-    $addToSet: { subscription_ids: String(newSubscription._id) },
-  });
-
-  // 13. Warn about students without driver assignments
+  // 12. Warn about students without driver assignments
   for (const student of activeStudents) {
     const assignments =
       await driverStudentAssignmentRepository.findActiveAssignmentsByStudentId(
@@ -988,7 +972,6 @@ export const updateParentSubscription = async (
 
 export const cancelParentSubscription = async (
   id: string,
-  userId?: string,
 ): Promise<WithId<ParentSubscription> | null> => {
   const currentSubscription = await parentSubscriptionRepository.findById(id);
 
@@ -1021,27 +1004,6 @@ export const cancelParentSubscription = async (
       updated_at: new Date(),
     },
   });
-
-  // Reset parent flags — remove this subscription and check if any remain
-  if (userId) {
-    await parentRepository.updateRawByUserId(userId, {
-      $pull: { subscription_ids: id },
-      $set: { updated_at: new Date() },
-    });
-
-    // Check if parent has any remaining active subscriptions
-    const parentId = await getParentIdByUserId(userId);
-    if (parentId) {
-      const remaining =
-        await parentSubscriptionRepository.findAllActiveByParentId(parentId);
-      if (remaining.length === 0) {
-        await parentRepository.updateByUserId(userId, {
-          has_active_subscription: false,
-          updated_at: new Date(),
-        } as any);
-      }
-    }
-  }
 
   return result;
 };

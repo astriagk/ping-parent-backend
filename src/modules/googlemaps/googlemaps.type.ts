@@ -11,7 +11,8 @@ export interface GoogleMapsRouteWaypoint {
   student_grade?: string;
   student_section?: string;
   student_class?: string;
-  student_photo_url?: string;
+  student_photo_url?: string; // per-student (pre-grouping)
+  student_photo_urls?: string[]; // all photos at this stop (post-grouping)
   student_gender?: string;
   parent_name?: string;
   parent_email?: string;

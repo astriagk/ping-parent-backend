@@ -2,7 +2,6 @@ import cron from "node-cron";
 
 import { SubscriptionStatus } from "@shared/constants";
 
-import { parentRepository } from "../../users/parent/parent.repository";
 import { parentSubscriptionRepository } from "./parent_subscription.repository";
 
 /**
@@ -30,38 +29,6 @@ export const startSubscriptionExpiryCron = (): void => {
           SubscriptionStatus.EXPIRED,
         );
         affectedParentIds.add(subscription.parent_id);
-      }
-
-      // For each affected parent, check if they have remaining active subscriptions
-      for (const parentId of affectedParentIds) {
-        const remaining =
-          await parentSubscriptionRepository.findAllActiveByParentId(parentId);
-
-        if (remaining.length === 0) {
-          // No active subscriptions left — clear parent flags
-          const parent = await parentRepository.findById(parentId);
-          if (parent) {
-            await parentRepository.updateRawByUserId(parent.user_id, {
-              $set: {
-                has_active_subscription: false,
-                subscription_ids: [],
-                updated_at: new Date(),
-              },
-            });
-          }
-        } else {
-          // Update subscription_ids to only include remaining active ones
-          const activeIds = remaining.map((s) => String(s._id));
-          const parent = await parentRepository.findById(parentId);
-          if (parent) {
-            await parentRepository.updateRawByUserId(parent.user_id, {
-              $set: {
-                subscription_ids: activeIds,
-                updated_at: new Date(),
-              },
-            });
-          }
-        }
       }
 
       console.log(
