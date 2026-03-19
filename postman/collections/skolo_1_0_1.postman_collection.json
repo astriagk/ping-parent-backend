@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "Ping Parent API v4.0.0",
-    "description": "# Ping Parent API v4.0.0\n\nGenerated: 2026-03-10T09:56:44.012Z\n\n## Summary\n- **Total Endpoints:** 231\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 61 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 55 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 23 endpoints\n- **Superadmin**: 17 endpoints\n",
+    "name": "Ping Parent API v1.0.1",
+    "description": "# Ping Parent API v1.0.1\n\nGenerated: 2026-03-19T16:21:45.070Z\n\n## Summary\n- **Total Endpoints:** 232\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 63 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 54 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 23 endpoints\n- **Superadmin**: 17 endpoints\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "4.0.0"
+    "version": "1.0.1"
   },
   "auth": {
     "type": "bearer",
@@ -228,7 +228,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"password\": \"sample_string\",\n  \"phone_number\": \"+919876543210\",\n  \"admin_role\": \"admin\",\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"then\": \"sample_string\",\n  \"otherwise\": \"sample_string\"\n}",
+                  "raw": "{\n  \"username\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"password\": \"sample_string\",\n  \"phone_number\": \"+919876543210\",\n  \"admin_role\": \"superadmin\",\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"then\": \"sample_string\",\n  \"otherwise\": \"sample_string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2464,6 +2464,170 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Create Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Remove",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/school-assignments/{{assignmentId}}/remove",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "school-assignments",
+                    "{{ASSIGNMENTID}}",
+                    "remove"
+                  ],
+                  "variable": [
+                    {
+                      "key": "assignmentId",
+                      "value": "{{ASSIGNMENTID}}",
+                      "description": "AssignmentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Remove successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Reassign",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/school-assignments/{{assignmentId}}/reassign",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "school-assignments",
+                    "{{ASSIGNMENTID}}",
+                    "reassign"
+                  ],
+                  "variable": [
+                    {
+                      "key": "assignmentId",
+                      "value": "{{ASSIGNMENTID}}",
+                      "description": "AssignmentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• monthly_fee: number (optional)",
+                "auth": {
+                  "type": "bearer",
+                  "bearer": [
+                    {
+                      "key": "token",
+                      "value": "{{ADMIN_TOKEN}}",
+                      "type": "string"
+                    }
+                  ]
+                },
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"driver_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Reassign successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -7264,7 +7428,7 @@
                     }
                   ]
                 },
-                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_ids: array (required)\n• skipped_student_ids: array (optional)\n• latitude: number (optional)\n• longitude: number (optional)",
+                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_ids: array (required)\n• skipped_student_ids: array (optional)\n• school_id: string (optional)\n• latitude: number (optional)\n• longitude: number (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -7277,7 +7441,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"student_ids\": \"[]\",\n  \"skipped_student_ids\": \"[]\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777\n}",
+                  "raw": "{\n  \"student_ids\": \"[]\",\n  \"skipped_student_ids\": \"[]\",\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9093,87 +9257,6 @@
               ]
             },
             {
-              "name": "Create Tomtom",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/driver/tracking/tomtom",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "driver",
-                    "tracking",
-                    "tomtom"
-                  ]
-                },
-                "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• pickup_points: array (required)\n• longitude: number (required)\n• address: string (optional)\n• student_id: string (optional)\n• drop_location: object (required)",
-                "auth": {
-                  "type": "bearer",
-                  "bearer": [
-                    {
-                      "key": "token",
-                      "value": "{{DRIVER_TOKEN}}",
-                      "type": "string"
-                    }
-                  ]
-                },
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"pickup_points\": [],\n  \"longitude\": 72.8777,\n  \"address\": \"123 Main Street, Mumbai\",\n  \"student_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"drop_location\": {}\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Tomtom successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            },
-            {
               "name": "Create Recalculate",
               "request": {
                 "method": "POST",
@@ -9184,22 +9267,14 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{BASE_URL}}/driver/tracking/{{tripId}}/recalculate",
+                  "raw": "{{BASE_URL}}/driver/tracking/recalculate",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "driver",
                     "tracking",
-                    "{{TRIPID}}",
                     "recalculate"
-                  ],
-                  "variable": [
-                    {
-                      "key": "tripId",
-                      "value": "{{TRIPID}}",
-                      "description": "TripId ID"
-                    }
                   ]
                 },
                 "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• pickup_points: array (required)\n• longitude: number (required)\n• address: string (optional)\n• student_id: string (optional)\n• drop_location: object (required)",
@@ -9449,22 +9524,14 @@
                   }
                 ],
                 "url": {
-                  "raw": "{{BASE_URL}}/driver/googlemaps/{{tripId}}/recalculate",
+                  "raw": "{{BASE_URL}}/driver/googlemaps/recalculate",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "driver",
                     "googlemaps",
-                    "{{TRIPID}}",
                     "recalculate"
-                  ],
-                  "variable": [
-                    {
-                      "key": "tripId",
-                      "value": "{{TRIPID}}",
-                      "description": "TripId ID"
-                    }
                   ]
                 },
                 "description": "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)\n• force_recalculate: boolean (optional)",
@@ -10386,7 +10453,7 @@
                     }
                   ]
                 },
-                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)",
+                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• school_id: string (optional)\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -10399,7 +10466,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"student_name\": \"Rahul Sharma\",\n  \"class\": \"10th\",\n  \"section\": \"A\",\n  \"roll_number\": \"R001\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"date_of_birth\": \"sample_string\",\n  \"gender\": \"male\",\n  \"pickup_address_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"emergency_contact\": \"+919876543210\",\n  \"medical_info\": \"Additional notes or description\"\n}",
+                  "raw": "{\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"student_name\": \"Rahul Sharma\",\n  \"class\": \"10th\",\n  \"section\": \"A\",\n  \"roll_number\": \"R001\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"date_of_birth\": \"sample_string\",\n  \"gender\": \"male\",\n  \"pickup_address_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"emergency_contact\": \"+919876543210\",\n  \"medical_info\": \"Additional notes or description\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -10624,7 +10691,7 @@
                     }
                   ]
                 },
-                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)",
+                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• school_id: string (optional)\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -10637,7 +10704,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"student_name\": \"Rahul Sharma\",\n  \"class\": \"10th\",\n  \"section\": \"A\",\n  \"roll_number\": \"R001\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"date_of_birth\": \"sample_string\",\n  \"gender\": \"male\",\n  \"pickup_address_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"emergency_contact\": \"+919876543210\",\n  \"medical_info\": \"Additional notes or description\"\n}",
+                  "raw": "{\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"student_name\": \"Rahul Sharma\",\n  \"class\": \"10th\",\n  \"section\": \"A\",\n  \"roll_number\": \"R001\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"date_of_birth\": \"sample_string\",\n  \"gender\": \"male\",\n  \"pickup_address_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"emergency_contact\": \"+919876543210\",\n  \"medical_info\": \"Additional notes or description\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -12166,7 +12233,7 @@
                     "subscriptions"
                   ]
                 },
-                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• plan_id: string (required)\n• auto_renew: boolean (optional)",
+                "description": "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• plan_id: string (required)\n• auto_renew: boolean (optional)\n• student_ids: array (optional)",
                 "auth": {
                   "type": "bearer",
                   "bearer": [
@@ -12179,7 +12246,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"auto_renew\": false\n}",
+                  "raw": "{\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"auto_renew\": false,\n  \"student_ids\": []\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -16503,7 +16570,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"username\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"password\": \"sample_string\",\n  \"phone_number\": \"+919876543210\",\n  \"admin_role\": \"admin\",\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"then\": \"sample_string\",\n  \"otherwise\": \"sample_string\"\n}",
+                  "raw": "{\n  \"username\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"password\": \"sample_string\",\n  \"phone_number\": \"+919876543210\",\n  \"admin_role\": \"superadmin\",\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"then\": \"sample_string\",\n  \"otherwise\": \"sample_string\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"

@@ -12,7 +12,7 @@
  * - ✅ Response examples based on common patterns
  * - ✅ Grouped by module/feature for easy navigation
  *
- * Run: npm run docs:generate:v2 [-- --version=1.0.0] [-- --bump=patch|minor|major]
+ * Run: npm run docs:generate [-- --version=1.0.0] [-- --bump=patch|minor|major]
  */
 
 const fs = require("fs");
@@ -29,12 +29,12 @@ const gatewayCategories = new Set();
 const CONFIG = {
   MODULES_DIR: path.join(__dirname, "../src/modules"),
   ROUTES_LAYER_DIR: path.join(__dirname, "../src/routes"), // role-scoped gateway files
-  OUTPUT_DIR: path.join(__dirname, "../docs"),
-  POSTMAN_DIR: path.join(__dirname, "../docs/postman/collections"),
-  ENV_DIR: path.join(__dirname, "../docs/postman/environments"),
-  OPENAPI_DIR: path.join(__dirname, "../docs/openapi"),
-  VERSION_FILE: path.join(__dirname, "../docs/openapi/.version-v2.json"),
-  BASE_NAME: "PP_API_V2",
+  OUTPUT_DIR: path.join(__dirname, ""),
+  POSTMAN_DIR: path.join(__dirname, "collections"),
+  ENV_DIR: path.join(__dirname, "environments"),
+  OPENAPI_DIR: path.join(__dirname, "openapi"),
+  VERSION_FILE: path.join(__dirname, "version.json"),
+  BASE_NAME: "skolo",
 };
 
 // Ensure directories exist
@@ -1645,10 +1645,10 @@ function main() {
      4. Start making requests!
   
   🔧 Usage:
-     npm run docs:generate:v2                    # Patch bump
-     npm run docs:generate:v2 -- --bump=minor   # Minor bump
-     npm run docs:generate:v2 -- --bump=major   # Major bump
-     npm run docs:generate:v2 -- --version=2.0.0 # Manual version
+     npm run docs:generate                    # Patch bump
+     npm run docs:generate -- --bump=minor   # Minor bump
+     npm run docs:generate -- --bump=major   # Major bump
+     npm run docs:generate -- --version=2.0.0 # Manual version
   `);
 }
 

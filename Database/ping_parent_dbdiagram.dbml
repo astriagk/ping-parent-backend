@@ -167,11 +167,10 @@ Table students {
 
 Table driver_student_assignments {
   _id ObjectId [pk, note: 'MongoDB auto-generated']
-  driver_id ObjectId [not null, ref: > drivers._id]
+  driver_id ObjectId [not null, ref: > drivers._id, note: 'References drivers._id — used for all lookups and joins']
   student_id ObjectId [not null, ref: > students._id]
-  driver_unique_id varchar(20) [not null, note: 'Unique ID parents use to find driver']
   monthly_fee decimal(10,2)
-  assignment_status enum [default: 'pending', note: 'active, inactive, pending, parent_requested']
+  assignment_status enum [default: 'pending', note: 'active, inactive, pending, parent_requested, rejected']
   assignment_source enum [default: 'parent', note: 'parent or school - indicates assignment source']
   assigned_by ObjectId [note: 'References parents._id or admin_portal._id depending on assignment_source']
   assigned_date date [not null]
@@ -185,7 +184,6 @@ Table driver_student_assignments {
     student_id
     assignment_status
     (driver_id, assignment_status)
-    driver_unique_id
   }
 
   Note: 'Parents or schools assign drivers to students. assignment_source tracks who assigned (parent or school).'
@@ -317,7 +315,7 @@ Table daily_qr_otp {
 Table notifications {
   _id ObjectId [pk, note: 'MongoDB auto-generated']
   user_id ObjectId [not null, ref: > users._id]
-  notification_type enum [not null, note: 'pickup_started, approaching, picked_up, dropped, payment_due, general']
+  notification_type enum [not null, note: 'pickup_started, approaching, picked_up, dropped, absent, trip_started, trip_completed, payment_due, general']
   title varchar(200) [not null]
   message text [not null]
   data json [note: 'Additional data']
@@ -329,6 +327,48 @@ Table notifications {
     (user_id, is_read)
     created_at
   }
+}
+
+Table device_tokens {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [not null, ref: > users._id]
+  role varchar(20) [not null, note: 'parent, driver, school_admin, admin, superadmin']
+  fcm_token varchar(500) [not null, note: 'Firebase Cloud Messaging registration token']
+  device_type enum [not null, note: 'android, ios, web']
+  device_id varchar(255) [not null, note: 'Stable device identifier (Android ID, iOS identifierForVendor)']
+  is_active boolean [default: true]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    (user_id, is_active)
+    fcm_token [unique]
+    (user_id, device_id)
+  }
+
+  Note: '''Multi-device support: one record per (user, device). A user can have multiple active tokens (e.g., mom phone + dad phone).
+
+  Upsert logic:
+  1. Same user + same device_id → update fcm_token (handles token refresh)
+  2. Same fcm_token, different user → update user/device info (device changed hands)
+  3. New device + new token → create new record
+
+  Deactivated (is_active=false) on logout or when FCM reports token invalid.'''
+}
+
+Table notification_preferences {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  user_id ObjectId [unique, not null, ref: > users._id]
+  push_enabled boolean [default: true, note: 'Global on/off toggle for FCM push notifications']
+  updated_at timestamp
+
+  indexes {
+    user_id [unique]
+  }
+
+  Note: '''One record per user. Controls whether FCM push notifications are sent.
+  When push_enabled=false, FCM is skipped but Socket.IO events and DB notification records are still created.
+  If no record exists for a user, push is enabled by default.'''
 }
 
 Table subscription_plans {
@@ -512,6 +552,218 @@ Table admin_portal {
   }
 
   Note: 'Single admin collection for all admin roles. superadmin/admin managed via /admin/setup and /admin endpoints. school_admin requires school_id and can only be created by superadmin or admin. Creation hierarchy: superadmin → admin, school_admin | admin → school_admin only.'
+}
+
+Table ads {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  title varchar(200) [not null]
+  description text
+  media_url varchar(500) [not null, note: 'Image or video URL from storage']
+  media_type enum [not null, note: 'image, video']
+  ad_type enum [not null, note: 'banner, interstitial, native_card']
+  target_audience enum [not null, default: 'all', note: 'all, parents, drivers, school_admin']
+  target_school_ids json [note: 'Array of school ObjectIds; null = show to all schools']
+  click_action_type enum [note: 'url, in_app_screen, none']
+  click_url varchar(500) [note: 'External URL or in-app deep-link on tap']
+  advertiser_name varchar(200)
+  start_date date [not null]
+  end_date date [not null]
+  is_active boolean [default: true]
+  display_frequency int [default: 1, note: 'Max times shown per user per day']
+  priority int [default: 0, note: 'Higher value = shown first when multiple ads qualify']
+  impression_count int [default: 0, note: 'Denormalized total impressions']
+  click_count int [default: 0, note: 'Denormalized total clicks']
+  created_by ObjectId [not null, ref: > admin_portal._id]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    is_active
+    target_audience
+    (start_date, end_date)
+    priority
+  }
+
+  Note: 'Ads created by superadmin/admin. target_school_ids=null means all schools. Frequency and priority control delivery logic.'
+}
+
+Table ad_interactions {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  ad_id ObjectId [not null, ref: > ads._id]
+  user_id ObjectId [not null, ref: > users._id]
+  interaction_type enum [not null, note: 'impression, click, dismiss']
+  screen_context varchar(100) [note: 'Screen where ad appeared, e.g. home, trip_active']
+  timestamp timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    ad_id
+    user_id
+    (ad_id, user_id, timestamp)
+    interaction_type
+  }
+
+  Note: 'One row per interaction event. Used to enforce display_frequency cap and for ad analytics.'
+}
+
+Table school_events {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  school_id ObjectId [not null, ref: > schools._id]
+  created_by ObjectId [not null, ref: > admin_portal._id, note: 'school_admin who created the event']
+  event_title varchar(200) [not null]
+  event_description text
+  event_type enum [not null, note: 'sports, parent_meeting, cultural, holiday, festival, exam, excursion, general']
+  event_date date [not null]
+  end_date date [note: 'For multi-day events (exam week, holiday block); null = single day']
+  start_time varchar(10) [note: 'HH:MM; null for all-day events like holidays']
+  end_time varchar(10) [note: 'HH:MM format']
+  venue varchar(255)
+  audience_scope enum [not null, default: 'all', note: 'all, class_specific']
+  target_classes json [note: 'Array of class strings e.g. ["10A","10B"] when audience_scope=class_specific']
+  is_mandatory boolean [default: false]
+  requires_rsvp boolean [default: false]
+  rsvp_deadline date [note: 'Required when requires_rsvp=true']
+  attachment_urls json [note: 'Array of circular/PDF/image URLs']
+  is_cancelled boolean [default: false]
+  cancellation_reason text
+  notification_sent boolean [default: false, note: 'True after push notification dispatched to affected parents']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    school_id
+    event_type
+    event_date
+    (school_id, event_date)
+    audience_scope
+    is_cancelled
+  }
+
+  Note: 'School admins create events visible to parents of that school. audience_scope controls which parents see it. Notifications auto-dispatched on publish.'
+}
+
+Table event_rsvp {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  event_id ObjectId [not null, ref: > school_events._id]
+  parent_id ObjectId [not null, ref: > parents._id]
+  student_id ObjectId [not null, ref: > students._id, note: 'Child this RSVP is for (matters for class-specific events)']
+  rsvp_status enum [not null, note: 'attending, not_attending, maybe']
+  notes text [note: 'Optional parent message']
+  responded_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    event_id
+    parent_id
+    (event_id, parent_id, student_id)
+    rsvp_status
+  }
+
+  Note: 'One RSVP per (event, parent, student). Only relevant when school_events.requires_rsvp=true.'
+}
+
+Table school_parent_community {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  school_id ObjectId [not null, ref: > schools._id]
+  parent_id ObjectId [not null, ref: > parents._id]
+  is_active boolean [default: true, note: 'Set false when parent has no active student in this school']
+  notification_preferences json [note: '{ posts: bool, events: bool, announcements: bool }']
+  joined_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    school_id
+    parent_id
+    (school_id, parent_id)
+    is_active
+  }
+
+  Note: 'Auto-created when parent adds a student to a school. One membership per (school, parent). Gates access to community board and event notifications for that school.'
+}
+
+Table parent_connections {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  requester_id ObjectId [not null, ref: > parents._id]
+  recipient_id ObjectId [not null, ref: > parents._id]
+  school_id ObjectId [not null, ref: > schools._id, note: 'Shared school through which connection was initiated']
+  connection_status enum [not null, default: 'pending', note: 'pending, accepted, rejected, blocked']
+  connected_at timestamp [note: 'Populated when status changes to accepted']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    requester_id
+    recipient_id
+    (requester_id, recipient_id)
+    school_id
+    connection_status
+  }
+
+  Note: 'Opt-in connection between two parents sharing a school. Unique pair (requester, recipient). A blocked record prevents future requests from that pair.'
+}
+
+Table community_posts {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  school_id ObjectId [not null, ref: > schools._id]
+  author_parent_id ObjectId [not null, ref: > parents._id]
+  post_content text [not null]
+  media_urls json [note: 'Array of image/video URLs']
+  post_type enum [not null, default: 'general', note: 'general, question, alert, recommendation']
+  is_anonymous boolean [default: false, note: 'Hides author from other parents; admin can still see']
+  is_pinned boolean [default: false]
+  pinned_by ObjectId [ref: > admin_portal._id]
+  is_visible boolean [default: true, note: 'Set false by admin to moderate/remove post']
+  moderated_by ObjectId [ref: > admin_portal._id]
+  moderation_reason text
+  reaction_count int [default: 0, note: 'Denormalized total reactions']
+  comment_count int [default: 0, note: 'Denormalized total comments']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    school_id
+    author_parent_id
+    post_type
+    (school_id, is_visible, created_at)
+    is_pinned
+  }
+
+  Note: 'Community board posts visible to all parents with active membership in school_parent_community. School admins can moderate and pin posts.'
+}
+
+Table community_post_reactions {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  post_id ObjectId [not null, ref: > community_posts._id]
+  parent_id ObjectId [not null, ref: > parents._id]
+  reaction_type enum [not null, note: 'like, helpful, heart, support']
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+
+  indexes {
+    post_id
+    parent_id
+    (post_id, parent_id)
+  }
+
+  Note: 'One reaction per (post, parent). Upsert on type change; delete to remove. Increments/decrements community_posts.reaction_count.'
+}
+
+Table community_post_comments {
+  _id ObjectId [pk, note: 'MongoDB auto-generated']
+  post_id ObjectId [not null, ref: > community_posts._id]
+  parent_id ObjectId [not null, ref: > parents._id]
+  comment_text text [not null]
+  is_anonymous boolean [default: false]
+  is_visible boolean [default: true]
+  moderated_by ObjectId [ref: > admin_portal._id]
+  created_at timestamp [default: `CURRENT_TIMESTAMP`]
+  updated_at timestamp
+
+  indexes {
+    post_id
+    parent_id
+    (post_id, is_visible, created_at)
+  }
+
+  Note: 'Flat (non-nested) comments. Increments/decrements community_posts.comment_count on create/delete.'
 }
 
 Table roles {

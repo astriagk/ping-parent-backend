@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Ping Parent API
-  version: 4.0.0
+  version: 1.0.1
   description: School transport tracking and management API
   contact:
     name: Ping Parent Team
@@ -172,6 +172,7 @@ paths:
                 admin_role:
                   type: string
                   enum:
+                    - superadmin
                     - admin
                     - school_admin
                 school_id:
@@ -193,7 +194,7 @@ paths:
               email: user@example.com
               password: sample_string
               phone_number: +919876543210
-              admin_role: admin
+              admin_role: superadmin
               school_id: 550e8400-e29b-41d4-a716-446655440000
               then: sample_string
               otherwise: sample_string
@@ -1238,6 +1239,89 @@ paths:
                   maximum: 500
             example:
               rejection_reason: sample_string
+  /admin/school-assignments/{assignmentId}/remove:
+    post:
+      tags:
+        - Admin
+      summary: Create Remove
+      description: "\n\n🔐 Requires Admin authentication"
+      operationId: post_admin_school-assignments__assignmentId_remove
+      parameters:
+        -
+          name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: AssignmentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+  /admin/school-assignments/{assignmentId}/reassign:
+    post:
+      tags:
+        - Admin
+      summary: Create Reassign
+      description: "\n\n🔐 Requires Admin authentication\n\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• monthly_fee: number (optional)"
+      operationId: post_admin_school-assignments__assignmentId_reassign
+      parameters:
+        -
+          name: assignmentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: AssignmentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      security:
+        -
+          AdminAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                monthly_fee:
+                  type: number
+                  minimum: 0
+              required:
+                - driver_id
+            example:
+              driver_id: 550e8400-e29b-41d4-a716-446655440000
+              monthly_fee: 0
   /admin/students/school/{schoolId}:
     get:
       tags:
@@ -3663,7 +3747,7 @@ paths:
       tags:
         - Driver
       summary: Create School Point
-      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_ids: array (required)\n• skipped_student_ids: array (optional)\n• latitude: number (optional)\n• longitude: number (optional)"
+      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• student_ids: array (required)\n• skipped_student_ids: array (optional)\n• school_id: string (optional)\n• latitude: number (optional)\n• longitude: number (optional)"
       operationId: post_driver_trip-students_trip__tripId_school-point
       parameters:
         -
@@ -3702,6 +3786,8 @@ paths:
                   type: array
                 skipped_student_ids:
                   type: array
+                school_id:
+                  type: string
                 latitude:
                   type: number
                   minimum: -90
@@ -3715,6 +3801,7 @@ paths:
             example:
               student_ids: []
               skipped_student_ids: []
+              school_id: 550e8400-e29b-41d4-a716-446655440000
               latitude: 19.076
               longitude: 72.8777
   /driver/trip-students/trip/{tripId}:
@@ -4599,95 +4686,13 @@ paths:
               address: 123 Main Street, Mumbai
               student_id: 550e8400-e29b-41d4-a716-446655440000
               drop_location:
-  /driver/tracking/tomtom:
-    post:
-      tags:
-        - Driver
-      summary: Create Tomtom
-      description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• pickup_points: array (required)\n• longitude: number (required)\n• address: string (optional)\n• student_id: string (optional)\n• drop_location: object (required)"
-      operationId: post_driver_tracking_tomtom
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-      security:
-        -
-          DriverAuth: []
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                trip_id:
-                  type: string
-                current_latitude:
-                  type: number
-                  minimum: -90
-                  maximum: 90
-                current_longitude:
-                  type: number
-                  minimum: -180
-                  maximum: 180
-                pickup_points:
-                  type: array
-                  minimum: -90
-                  maximum: 90
-                longitude:
-                  type: number
-                  minimum: -180
-                  maximum: 180
-                address:
-                  type: string
-                student_id:
-                  type: string
-                drop_location:
-                  type: object
-                  minimum: -90
-                  maximum: 90
-              required:
-                - trip_id
-                - current_latitude
-                - current_longitude
-                - pickup_points
-                - longitude
-                - drop_location
-            example:
-              trip_id: 550e8400-e29b-41d4-a716-446655440000
-              current_latitude: 19.076
-              current_longitude: 72.8777
-              pickup_points: []
-              longitude: 72.8777
-              address: 123 Main Street, Mumbai
-              student_id: 550e8400-e29b-41d4-a716-446655440000
-              drop_location:
-  /driver/tracking/{tripId}/recalculate:
+  /driver/tracking/recalculate:
     post:
       tags:
         - Driver
       summary: Create Recalculate
       description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• pickup_points: array (required)\n• longitude: number (required)\n• address: string (optional)\n• student_id: string (optional)\n• drop_location: object (required)"
-      operationId: post_driver_tracking__tripId_recalculate
-      parameters:
-        -
-          name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TripId identifier
+      operationId: post_driver_tracking_recalculate
       responses:
         200:
           description: Successful operation
@@ -4886,21 +4891,13 @@ paths:
               current_longitude: 72.8777
               traffic_model: best_guess
               avoid: tolls
-  /driver/googlemaps/{tripId}/recalculate:
+  /driver/googlemaps/recalculate:
     post:
       tags:
         - Driver
       summary: Create Recalculate
       description: "\n\n🔐 Requires Driver authentication\n\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)\n• force_recalculate: boolean (optional)"
-      operationId: post_driver_googlemaps__tripId_recalculate
-      parameters:
-        -
-          name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TripId identifier
+      operationId: post_driver_googlemaps_recalculate
       responses:
         200:
           description: Successful operation
@@ -5415,7 +5412,7 @@ paths:
       tags:
         - Parent
       summary: Update Students
-      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)"
+      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• school_id: string (optional)\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)"
       operationId: put_parent_students__id
       parameters:
         -
@@ -5450,6 +5447,8 @@ paths:
             schema:
               type: object
               properties:
+                school_id:
+                  type: string
                 student_name:
                   type: string
                   minimum: 2
@@ -5483,6 +5482,7 @@ paths:
                   type: string
                   maximum: 500
             example:
+              school_id: 550e8400-e29b-41d4-a716-446655440000
               student_name: Rahul Sharma
               class: 10th
               section: A
@@ -5562,7 +5562,7 @@ paths:
       tags:
         - Parent
       summary: Update By Student Id
-      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)"
+      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• school_id: string (optional)\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)"
       operationId: put_parent_students_by-student-id__student_id
       parameters:
         -
@@ -5597,6 +5597,8 @@ paths:
             schema:
               type: object
               properties:
+                school_id:
+                  type: string
                 student_name:
                   type: string
                   minimum: 2
@@ -5630,6 +5632,7 @@ paths:
                   type: string
                   maximum: 500
             example:
+              school_id: 550e8400-e29b-41d4-a716-446655440000
               student_name: Rahul Sharma
               class: 10th
               section: A
@@ -6360,7 +6363,7 @@ paths:
       tags:
         - Parent
       summary: Create Subscriptions
-      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• plan_id: string (required)\n• auto_renew: boolean (optional)"
+      description: "\n\n🔐 Requires Parent authentication\n\n\n📋 Request Body Fields:\n• plan_id: string (required)\n• auto_renew: boolean (optional)\n• student_ids: array (optional)"
       operationId: post_parent_subscriptions
       responses:
         200:
@@ -6391,11 +6394,14 @@ paths:
                   type: string
                 auto_renew:
                   type: boolean
+                student_ids:
+                  type: array
               required:
                 - plan_id
             example:
               plan_id: 550e8400-e29b-41d4-a716-446655440000
               auto_renew: false
+              student_ids: []
     get:
       tags:
         - Parent
@@ -8288,6 +8294,7 @@ paths:
                 admin_role:
                   type: string
                   enum:
+                    - superadmin
                     - admin
                     - school_admin
                 school_id:
@@ -8309,7 +8316,7 @@ paths:
               email: user@example.com
               password: sample_string
               phone_number: +919876543210
-              admin_role: admin
+              admin_role: superadmin
               school_id: 550e8400-e29b-41d4-a716-446655440000
               then: sample_string
               otherwise: sample_string
