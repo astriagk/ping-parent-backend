@@ -1,20 +1,23 @@
 import Joi from "joi";
 
-import { SchoolSubscriptionStatus } from "@shared/constants";
+import {
+  SchoolSubscriptionStatus,
+  VALIDATION_MESSAGES,
+} from "@shared/constants";
 
 export const createSchoolSubscriptionValidation = Joi.object({
   school_id: Joi.string().required().messages({
-    "string.empty": "school_id is required",
+    "string.empty": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.SCHOOL_ID_EMPTY,
   }),
   plan_id: Joi.string().required().messages({
-    "string.empty": "plan_id is required",
+    "string.empty": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.PLAN_ID_EMPTY,
   }),
   start_date: Joi.date().required().messages({
-    "date.base": "start_date must be a valid date",
+    "date.base": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.START_DATE_BASE,
   }),
   end_date: Joi.date().greater(Joi.ref("start_date")).required().messages({
-    "date.base": "end_date must be a valid date",
-    "date.greater": "end_date must be greater than start_date",
+    "date.base": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.END_DATE_BASE,
+    "date.greater": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.END_DATE_GREATER,
   }),
   auto_renew: Joi.boolean().optional(),
   max_drivers: Joi.number().integer().min(1).optional(),
@@ -36,20 +39,23 @@ export const updateSchoolSubscriptionValidation = Joi.object({
 
 export const renewSchoolSubscriptionValidation = Joi.object({
   newEndDate: Joi.date().greater(new Date()).required().messages({
-    "date.base": "newEndDate must be a valid date",
-    "date.greater": "newEndDate must be in the future",
+    "date.base": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.NEW_END_DATE_BASE,
+    "date.greater":
+      VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.NEW_END_DATE_GREATER,
   }),
 });
 
 export const cancelSchoolSubscriptionValidation = Joi.object({
   subscription_id: Joi.string().required().messages({
-    "string.empty": "subscription_id is required",
+    "string.empty":
+      VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.SUBSCRIPTION_ID_EMPTY,
   }),
 });
 
 export const generateStudentCodesSchema = Joi.object({
   student_ids: Joi.array().items(Joi.string()).min(1).required().messages({
-    "array.min": "At least one student_id is required",
-    "any.required": "student_ids is required",
+    "array.min": VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.STUDENT_IDS_MIN,
+    "any.required":
+      VALIDATION_MESSAGES.SCHOOL_SUBSCRIPTION.STUDENT_IDS_REQUIRED,
   }),
 });

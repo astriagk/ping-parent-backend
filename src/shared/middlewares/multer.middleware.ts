@@ -1,5 +1,7 @@
 import multer from "multer";
 
+import { MESSAGE_TEMPLATES } from "@shared/constants";
+
 const storage = multer.memoryStorage();
 
 export const uploadMiddleware = multer({
@@ -15,9 +17,7 @@ export const uploadMiddleware = multer({
       cb(null, true);
     } else {
       cb(
-        new Error(
-          `Invalid file type. Received: ${file.mimetype}. Only image files are allowed.`,
-        ),
+        new Error(MESSAGE_TEMPLATES.FILE_UPLOAD.invalidFileType(file.mimetype)),
       );
     }
   },

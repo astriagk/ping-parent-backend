@@ -150,7 +150,7 @@ export const createProfile = asyncHandler(
     if (!created) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_CREATE_DRIVER_PROFILE,
+        ERROR_MESSAGES.COMMON.CREATE_FAILED,
       );
     }
 
@@ -241,7 +241,7 @@ export const updateProfile = asyncHandler(
 
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DRIVER_PROFILE,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -353,7 +353,7 @@ export const upsertAddress = asyncHandler(
     if (!success) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_ADDRESS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -459,7 +459,7 @@ export const createDocuments = asyncHandler(
     if (!success) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -545,7 +545,7 @@ export const updateDocuments = asyncHandler(
     if (!updated) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 

@@ -4,7 +4,7 @@ import {
   AuditAction,
   ERROR_MESSAGES,
   HTTP_STATUS,
-  SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { asyncHandler } from "@shared/middlewares";
 
@@ -55,7 +55,7 @@ export const getAuditLogs = asyncHandler(
         limit: filters.limit,
         offset: filters.offset,
       },
-      message: SUCCESS_MESSAGES.AUDIT_LOG.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -80,7 +80,7 @@ export const getAuditLogById = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: log,
-      message: SUCCESS_MESSAGES.AUDIT_LOG.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

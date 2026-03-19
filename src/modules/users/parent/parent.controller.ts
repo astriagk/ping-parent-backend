@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -102,7 +103,7 @@ export const updateProfileParent = asyncHandler(
       if (!created) {
         throw new ApiError(
           HTTP_STATUS.INTERNAL_SERVER_ERROR,
-          ERROR_MESSAGES.PARENT.FAILED_TO_UPDATE_PARENT_PROFILE,
+          ERROR_MESSAGES.COMMON.UPDATE_FAILED,
         );
       }
     }
@@ -181,7 +182,7 @@ export const updateAddress = asyncHandler(
     if (!updated) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.ADDRESS.FAILED_TO_UPDATE_ADDRESS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -242,7 +243,7 @@ export const getMyActiveTripsParent = asyncHandler(
       success: true,
       data: trips,
       count: trips.length,
-      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -268,7 +269,7 @@ export const getMyAllTrips = asyncHandler(
       success: true,
       data: trips,
       count: trips.length,
-      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );

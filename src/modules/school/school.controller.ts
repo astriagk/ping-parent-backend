@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
-  SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -27,7 +27,7 @@ export const createSchool = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: school,
-      message: SUCCESS_MESSAGES.SCHOOL.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -44,7 +44,7 @@ export const getSchool = asyncHandler(async (req: Request, res: Response) => {
   return res.json({
     success: true,
     data: school,
-    message: SUCCESS_MESSAGES.SCHOOL.FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -67,7 +67,7 @@ export const getAllSchools = asyncHandler(
     return res.json({
       success: true,
       data: schools,
-      message: SUCCESS_MESSAGES.SCHOOL.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -89,7 +89,7 @@ export const updateSchool = asyncHandler(
     return res.json({
       success: true,
       data: school,
-      message: SUCCESS_MESSAGES.SCHOOL.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -109,7 +109,7 @@ export const deleteSchool = asyncHandler(
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.SCHOOL.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );

@@ -19,6 +19,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -85,7 +86,7 @@ export const createInitialSuperAdmin = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: newSuperAdmin,
-      message: SUCCESS_MESSAGES.ADMIN.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -108,7 +109,7 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.CREATED).json({
     success: true,
     data: newAdmin,
-    message: SUCCESS_MESSAGES.ADMIN.CREATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
   });
 });
 
@@ -119,7 +120,7 @@ export const getAll = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: admins,
-    message: SUCCESS_MESSAGES.ADMIN.LIST_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
   });
 });
 
@@ -136,7 +137,7 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: admin,
-    message: SUCCESS_MESSAGES.ADMIN.FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -163,7 +164,7 @@ export const updateAdmin = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: updatedAdmin,
-    message: SUCCESS_MESSAGES.ADMIN.UPDATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
   });
 });
 
@@ -450,7 +451,7 @@ export const getByAdminId = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: admin,
-      message: SUCCESS_MESSAGES.ADMIN.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -483,7 +484,7 @@ export const updateAdminByAdminId = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAdmin,
-      message: SUCCESS_MESSAGES.ADMIN.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -602,7 +603,7 @@ export const getAdminsBySchool = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: admins,
-      message: SUCCESS_MESSAGES.ADMIN.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );

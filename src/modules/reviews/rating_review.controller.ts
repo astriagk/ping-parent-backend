@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -60,7 +61,7 @@ export const getRatingReview = asyncHandler(
     return res.json({
       success: true,
       data: ratingReview,
-      message: SUCCESS_MESSAGES.RATING_REVIEW.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -81,7 +82,7 @@ export const getMyRatingReviews = asyncHandler(
     return res.json({
       success: true,
       data: ratingReviews,
-      message: SUCCESS_MESSAGES.RATING_REVIEW.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -95,7 +96,7 @@ export const getDriverRatingReviews = asyncHandler(
     return res.json({
       success: true,
       data: ratingReviews,
-      message: SUCCESS_MESSAGES.RATING_REVIEW.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -125,7 +126,7 @@ export const updateRatingReviewById = asyncHandler(
     return res.json({
       success: true,
       data: ratingReview,
-      message: SUCCESS_MESSAGES.RATING_REVIEW.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -153,7 +154,7 @@ export const deleteRatingReviewById = asyncHandler(
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.RATING_REVIEW.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );
@@ -167,7 +168,7 @@ export const getDriverRating = asyncHandler(
     return res.json({
       success: true,
       data: { driver_id: driverId, average_rating: averageRating },
-      message: SUCCESS_MESSAGES.RATING_REVIEW.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

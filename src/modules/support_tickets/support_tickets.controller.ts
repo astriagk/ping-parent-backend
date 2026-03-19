@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   TicketPriority,
   TicketStatus,
   UserRole,
@@ -37,7 +38,7 @@ export const createSupportTicket = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: ticket,
-      message: SUCCESS_MESSAGES.SUPPORT_TICKET.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -58,7 +59,7 @@ export const getMySupportTickets = asyncHandler(
     return res.json({
       success: true,
       data: tickets,
-      message: SUCCESS_MESSAGES.SUPPORT_TICKET.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -98,7 +99,7 @@ export const getSupportTicketById = asyncHandler(
     return res.json({
       success: true,
       data: ticket,
-      message: SUCCESS_MESSAGES.SUPPORT_TICKET.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -153,7 +154,7 @@ export const getAllSupportTickets = asyncHandler(
     return res.json({
       success: true,
       data: tickets,
-      message: SUCCESS_MESSAGES.SUPPORT_TICKET.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );

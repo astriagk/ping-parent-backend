@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
-  SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -24,7 +24,7 @@ export const createRole = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.CREATED).json({
     success: true,
     data: newRole,
-    message: SUCCESS_MESSAGES.ROLE.CREATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
   });
 });
 
@@ -35,7 +35,7 @@ export const getAllRoles = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: roles,
-    message: SUCCESS_MESSAGES.ROLE.LIST_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
   });
 });
 
@@ -52,7 +52,7 @@ export const getRoleById = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: role,
-    message: SUCCESS_MESSAGES.ROLE.FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -70,7 +70,7 @@ export const updateRole = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: updatedRole,
-    message: SUCCESS_MESSAGES.ROLE.UPDATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
   });
 });
 
@@ -87,6 +87,6 @@ export const deleteRole = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: null,
-    message: SUCCESS_MESSAGES.ROLE.DELETED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
   });
 });

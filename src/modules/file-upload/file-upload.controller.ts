@@ -1,6 +1,11 @@
 import { Request, Response } from "express";
 
-import { HTTP_STATUS } from "@shared/constants";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  MESSAGE_TEMPLATES,
+  SUCCESS_MESSAGES_COMMON,
+} from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 import { deleteFile, uploadFile } from "@shared/services/storage.factory";
 
@@ -17,7 +22,7 @@ export const uploadFileHandler = asyncHandler(
     if (!folder_path || !folder_path.trim()) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        "Folder path is required as query parameter",
+        ERROR_MESSAGES.FILE_UPLOAD.FOLDER_PATH_REQUIRED,
       );
     }
 
@@ -26,13 +31,16 @@ export const uploadFileHandler = asyncHandler(
     if (!file) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        "No file uploaded. Please provide a file in the 'file' field",
+        ERROR_MESSAGES.FILE_UPLOAD.NO_FILE_UPLOADED,
       );
     }
 
     // Validate file size
     if (file.size === 0) {
-      throw new ApiError(HTTP_STATUS.BAD_REQUEST, "File is empty");
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.FILE_UPLOAD.FILE_EMPTY,
+      );
     }
 
     try {
@@ -47,12 +55,14 @@ export const uploadFileHandler = asyncHandler(
           file_size: file.size,
           mime_type: file.mimetype,
         },
-        message: "File uploaded successfully",
+        message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
       });
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        `Failed to upload file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        MESSAGE_TEMPLATES.FILE_UPLOAD.uploadFailed(errorMessage),
       );
     }
   },
@@ -74,7 +84,7 @@ export const updateFileHandler = asyncHandler(
     if (!folder_path || !folder_path.trim()) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        "Folder path is required as query parameter",
+        ERROR_MESSAGES.FILE_UPLOAD.FOLDER_PATH_REQUIRED,
       );
     }
 
@@ -82,7 +92,7 @@ export const updateFileHandler = asyncHandler(
     if (!old_file_url || !old_file_url.trim()) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        "Old file URL is required in request body",
+        ERROR_MESSAGES.FILE_UPLOAD.OLD_FILE_URL_REQUIRED,
       );
     }
 
@@ -91,7 +101,7 @@ export const updateFileHandler = asyncHandler(
     if (!file) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
-        "No file uploaded. Please provide a file in the 'file' field",
+        ERROR_MESSAGES.FILE_UPLOAD.NO_FILE_UPLOADED,
       );
     }
 
@@ -110,12 +120,14 @@ export const updateFileHandler = asyncHandler(
           file_size: file.size,
           mime_type: file.mimetype,
         },
-        message: "File updated successfully",
+        message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
       });
     } catch (error) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Unknown error";
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        `Failed to update file: ${error instanceof Error ? error.message : "Unknown error"}`,
+        MESSAGE_TEMPLATES.FILE_UPLOAD.updateFailed(errorMessage),
       );
     }
   },

@@ -6,6 +6,7 @@ import {
   HTTP_STATUS,
   PickupStatus,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -46,7 +47,7 @@ export const getTripStudent = asyncHandler(
     return res.json({
       success: true,
       data: tripStudent,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -69,7 +70,7 @@ export const getTripStudentsByTrip = asyncHandler(
     return res.json({
       success: true,
       data: tripStudents,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -87,7 +88,7 @@ export const getTripStudentsWithDetailsHandler = asyncHandler(
     return res.json({
       success: true,
       data: tripStudents,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -106,7 +107,7 @@ export const getTripStudentsGroupedByParentHandler = asyncHandler(
     return res.json({
       success: true,
       data: groupedStudents,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -123,7 +124,7 @@ export const getTripStudentsByStudent = asyncHandler(
     return res.json({
       success: true,
       data: tripStudents,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -147,7 +148,7 @@ export const getTripStudentByTripStudent = asyncHandler(
     return res.json({
       success: true,
       data: tripStudent,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -234,7 +235,7 @@ export const updateTripStudentRecord = asyncHandler(
     return res.json({
       success: true,
       data: tripStudent,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -262,7 +263,7 @@ export const getTripStudentsByAttendance = asyncHandler(
     return res.json({
       success: true,
       data: tripStudents,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -290,7 +291,7 @@ export const getTripStudentsByPickup = asyncHandler(
     return res.json({
       success: true,
       data: tripStudents,
-      message: SUCCESS_MESSAGES.TRIP_STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );

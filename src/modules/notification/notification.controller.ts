@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -32,7 +33,7 @@ export const getNotifications = asyncHandler(
     return res.json({
       success: true,
       data: notifications,
-      message: SUCCESS_MESSAGES.NOTIFICATION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -54,7 +55,7 @@ export const getUnreadNotifications = asyncHandler(
     return res.json({
       success: true,
       data: notifications,
-      message: SUCCESS_MESSAGES.NOTIFICATION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

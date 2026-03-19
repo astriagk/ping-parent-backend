@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -55,7 +56,7 @@ export const getAllParentSubscriptionsController = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -77,7 +78,7 @@ export const createSubscription = asyncHandler(
       success: true,
       data: result.subscription,
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -98,7 +99,7 @@ export const getSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -119,7 +120,7 @@ export const getMySubscriptions = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -140,7 +141,7 @@ export const getMyActiveSubscription = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -183,7 +184,7 @@ export const updateSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -250,7 +251,7 @@ export const deleteSubscriptionById = asyncHandler(
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );

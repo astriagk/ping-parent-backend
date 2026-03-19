@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -34,7 +35,7 @@ export const createSchoolSubscription = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -117,7 +118,7 @@ export const getSchoolSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -152,7 +153,7 @@ export const updateSchoolSubscription = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

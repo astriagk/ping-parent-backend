@@ -1,4 +1,4 @@
-# How To Use Skills
+﻿# How To Use Skills
 
 This file is the shared guide for all skills inside `.agents/skills`.
 
@@ -196,4 +196,31 @@ Default behavior for this skill:
 - `.agents/skills/extract-enums/SKILL.md`
 - `.agents/skills/extract-enums/references/enum-rules.md`
 - `src/shared/constants/enums.ts`
+- `src/shared/constants/index.ts`
+---
+
+## Skill: Centralize Messages
+
+Folder: `.agents/skills/centralize-messages`
+
+### Purpose
+
+Auto-scan the codebase for hard-coded or duplicated user-facing messages and centralize them into shared constants/templates while keeping public exports stable.
+
+### When To Use
+
+Use this skill whenever you touch modules that add or change API/notification/middleware messages, or when you want a repo-wide sweep for message dedupe.
+
+### How To Use
+
+Simply invoke the skill; it defaults to a full `src` scan, previews findings, then applies the refactor in the same session -- no helper script required.
+
+Optional scope hint (narrow to a feature): `--scope src/modules/users`.
+
+### Important Files
+
+- `.agents/skills/centralize-messages/SKILL.md`
+- `src/shared/constants/messages.ts`
+- `src/shared/constants/validationMessages.ts`
+- `src/shared/constants/messageTemplates.ts`
 - `src/shared/constants/index.ts`
