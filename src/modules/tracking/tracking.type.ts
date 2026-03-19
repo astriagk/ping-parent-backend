@@ -57,7 +57,7 @@ export interface GroupedWaypoint extends BaseWaypoint {
   student_id: string[]; // all student IDs at this stop
   student_parent_id: string; // parent ID or "SCHOOL_LOCATION" for schools
   student_names?: string[]; // all student names at this stop
-  student_photo_url?: string;
+  student_photo_urls?: string[]; // all student photo URLs at this stop
   student_gender?: string;
   student_section?: string;
   student_class?: string;

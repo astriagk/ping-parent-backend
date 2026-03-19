@@ -33,3 +33,15 @@ export const rejectSchoolAssignmentSchema = Joi.object({
     "string.max": "Rejection reason cannot exceed 500 characters",
   }),
 });
+
+export const reassignSchoolAssignmentSchema = Joi.object({
+  driver_id: Joi.string().required().messages({
+    "any.required":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_ID_REQUIRED,
+  }),
+  monthly_fee: Joi.number().min(0).optional().messages({
+    "number.base":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.MONTHLY_FEE_INVALID,
+    "number.min": VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.MONTHLY_FEE_MIN,
+  }),
+});

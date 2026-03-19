@@ -692,9 +692,68 @@ export const getParentRequestedAssignmentsByDriver = async (
         },
       },
       {
+        $addFields: {
+          parent_object_id: {
+            $cond: [
+              { $ne: ["$student.parent_id", null] },
+              { $toObjectId: "$student.parent_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: PARENTS_COLLECTION,
+          localField: "parent_object_id",
+          foreignField: "_id",
+          as: "parent",
+        },
+      },
+      {
+        $unwind: {
+          path: "$parent",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          parent_user_object_id: {
+            $cond: [
+              { $ne: ["$parent.user_id", null] },
+              { $toObjectId: "$parent.user_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          localField: "parent_user_object_id",
+          foreignField: "_id",
+          as: "parent_user",
+        },
+      },
+      {
+        $unwind: {
+          path: "$parent_user",
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+      {
+        $addFields: {
+          "parent.phone_number": "$parent_user.phone_number",
+        },
+      },
+      {
         $project: {
           school_object_id: 0,
           pickup_address_object_id: 0,
+          parent_object_id: 0,
+          parent_user_object_id: 0,
+          parent_user: 0,
+          "parent.user_id": 0,
         },
       },
     ])
@@ -743,7 +802,9 @@ export const reassignDriver = async (
   // 2. Validate status
   if (
     existingAssignment.assignment_status !== AssignmentStatus.ACTIVE &&
-    existingAssignment.assignment_status !== AssignmentStatus.PARENT_REQUESTED
+    existingAssignment.assignment_status !==
+      AssignmentStatus.PARENT_REQUESTED &&
+    existingAssignment.assignment_status !== AssignmentStatus.REJECTED
   ) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,

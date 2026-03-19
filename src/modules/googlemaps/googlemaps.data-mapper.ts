@@ -159,8 +159,7 @@ export const groupStudentsByParent = (
       student_id: studentIds,
       student_parent_id: parentId,
       student_names: studentNames,
-      student_photo_url:
-        studentPhotos.length > 0 ? studentPhotos[0] : undefined,
+      student_photo_urls: studentPhotos.length > 0 ? studentPhotos : undefined,
       student_gender: studentGenders.length > 0 ? studentGenders[0] : undefined,
       student_section:
         studentSections.length > 0 ? studentSections[0] : undefined,

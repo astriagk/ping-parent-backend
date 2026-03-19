@@ -117,10 +117,7 @@ export const cancelSubscription = asyncHandler(
       );
     }
 
-    const subscription = await cancelParentSubscriptionService(
-      userId,
-      subscription_id,
-    );
+    const subscription = await cancelParentSubscriptionService(subscription_id);
 
     if (!subscription) {
       throw new ApiError(

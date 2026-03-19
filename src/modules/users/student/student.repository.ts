@@ -70,7 +70,12 @@ export class StudentRepository extends BaseRepository<Student> {
             from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
             let: { studentId: { $toString: "$_id" } },
             pipeline: [
-              { $match: { $expr: { $eq: ["$student_id", "$$studentId"] } } },
+              {
+                $match: {
+                  $expr: { $eq: ["$student_id", "$$studentId"] },
+                  assignment_status: { $ne: "inactive" },
+                },
+              },
             ],
             as: "driver_assignment",
           },
@@ -166,7 +171,12 @@ export class StudentRepository extends BaseRepository<Student> {
             from: DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
             let: { studentId: { $toString: "$_id" } },
             pipeline: [
-              { $match: { $expr: { $eq: ["$student_id", "$$studentId"] } } },
+              {
+                $match: {
+                  $expr: { $eq: ["$student_id", "$$studentId"] },
+                  assignment_status: { $ne: "inactive" },
+                },
+              },
             ],
             as: "driver_assignment",
           },
