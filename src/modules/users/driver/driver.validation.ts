@@ -1,8 +1,10 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES, VehicleType } from "@shared/constants";
-
-import { DriverOnboardingScreenArray } from "./driver.type";
+import {
+  DriverOnboardingScreen,
+  VALIDATION_MESSAGES,
+  VehicleType,
+} from "@shared/constants";
 
 export const createDriverProfileSchema = Joi.object({
   name: Joi.string().min(2).max(100).required().messages({
@@ -149,6 +151,6 @@ export const updateDriverDocumentsSchema = Joi.object({
 
 export const updateDriverOnboardingScreenSchema = Joi.object({
   screen_name: Joi.string()
-    .valid(...DriverOnboardingScreenArray)
+    .valid(...Object.values(DriverOnboardingScreen))
     .required(),
 });

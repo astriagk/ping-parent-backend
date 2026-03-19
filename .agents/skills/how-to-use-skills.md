@@ -24,6 +24,7 @@ Examples:
 Current skills:
 
 - `commit-message`
+- `extract-enums`
 - `sync-collections`
 
 Each skill folder can contain:
@@ -145,3 +146,54 @@ Default behavior for this skill:
 - `.agents/skills/sync-collections/scripts/sync-collections.js`
 - `database/skolo.dbml`
 - `src/shared/constants/collections.ts`
+
+---
+
+## Skill: Extract Enums
+
+Folder: `.agents/skills/extract-enums`
+
+### Purpose
+
+Replace enum-like hard-coded values with shared enums from `src/shared/constants/enums.ts`.
+
+### When To Use
+
+Use this skill when:
+
+- you see hard-coded roles, statuses, types, priorities, modes, events, or workflow strings
+- you need to reuse an existing enum like `UserRole`
+- you need to add a new enum member to an existing shared enum
+- a touched feature still has module-local enums that should be moved into shared enums
+
+### How To Use
+
+Start with a preview:
+
+```text
+Use extract-enums to review this feature and show which values should reuse, extend, create, or migrate shared enums.
+```
+
+Then apply the refactor after review.
+
+The skill will:
+
+- inspect `src/shared/constants/enums.ts` first
+- reuse existing shared enums when possible
+- extend existing shared enums when the concept matches
+- create a new shared enum only when needed
+- migrate nearby local enums into shared enums
+- keep shared enum declarations sorted alphabetically by enum name
+
+Default behavior for this skill:
+
+- preview first before editing
+- do not create new module-local enums
+- update related types, validation, services, controllers, and imports in the touched feature
+
+### Important Files
+
+- `.agents/skills/extract-enums/SKILL.md`
+- `.agents/skills/extract-enums/references/enum-rules.md`
+- `src/shared/constants/enums.ts`
+- `src/shared/constants/index.ts`

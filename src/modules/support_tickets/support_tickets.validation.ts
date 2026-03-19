@@ -1,8 +1,10 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@shared/constants";
-
-import { TicketPriority } from "./support_tickets.type";
+import {
+  TicketPriority,
+  TicketStatus,
+  VALIDATION_MESSAGES,
+} from "@shared/constants";
 
 export const createSupportTicketSchema = Joi.object({
   subject: Joi.string().max(200).required().messages({
@@ -22,7 +24,7 @@ export const createSupportTicketSchema = Joi.object({
 
 export const updateTicketStatusSchema = Joi.object({
   ticket_status: Joi.string()
-    .valid("in_progress", "resolved", "closed")
+    .valid(TicketStatus.IN_PROGRESS, TicketStatus.RESOLVED, TicketStatus.CLOSED)
     .required()
     .messages({
       "any.required": VALIDATION_MESSAGES.SUPPORT_TICKET.STATUS_REQUIRED,

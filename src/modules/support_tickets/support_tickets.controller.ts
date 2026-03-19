@@ -4,11 +4,13 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  TicketPriority,
+  TicketStatus,
+  UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import { supportTicketRepository } from "./support_tickets.repository";
-import { TicketPriority, TicketStatus } from "./support_tickets.type";
 
 export const createSupportTicket = asyncHandler(
   async (req: Request, res: Response) => {
@@ -65,6 +67,7 @@ export const getSupportTicketById = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params as Record<string, string>;
     const userId = req.user?.userId;
+    const userRole = req.user?.role;
 
     if (!userId) {
       throw new ApiError(
@@ -82,10 +85,10 @@ export const getSupportTicketById = asyncHandler(
       );
     }
 
-    if (
-      ticket.user_id !== userId &&
-      !["admin", "superadmin"].includes(req.user?.role ?? "")
-    ) {
+    const canViewAnyTicket =
+      userRole === UserRole.ADMIN || userRole === UserRole.SUPERADMIN;
+
+    if (ticket.user_id !== userId && !canViewAnyTicket) {
       throw new ApiError(
         HTTP_STATUS.FORBIDDEN,
         ERROR_MESSAGES.COMMON.FORBIDDEN,

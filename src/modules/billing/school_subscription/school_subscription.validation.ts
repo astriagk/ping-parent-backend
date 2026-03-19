@@ -1,5 +1,7 @@
 import Joi from "joi";
 
+import { SchoolSubscriptionStatus } from "@shared/constants";
+
 export const createSchoolSubscriptionValidation = Joi.object({
   school_id: Joi.string().required().messages({
     "string.empty": "school_id is required",
@@ -28,7 +30,7 @@ export const updateSchoolSubscriptionValidation = Joi.object({
   max_students: Joi.number().integer().min(1).optional(),
   billing_contact: Joi.string().optional(),
   subscription_status: Joi.string()
-    .valid("active", "expired", "cancelled", "pending")
+    .valid(...Object.values(SchoolSubscriptionStatus))
     .optional(),
 });
 
