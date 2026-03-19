@@ -191,9 +191,8 @@ export const updateSubscriptionById = asyncHandler(
 export const cancelSubscriptionById = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params as Record<string, string>;
-    const userId = req.user?.userId;
 
-    const subscription = await cancelParentSubscription(id, userId);
+    const subscription = await cancelParentSubscription(id);
 
     if (!subscription) {
       throw new ApiError(
