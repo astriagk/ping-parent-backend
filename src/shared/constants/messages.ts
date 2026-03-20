@@ -52,6 +52,8 @@ export const ERROR_MESSAGES = {
     SCHOOL_ADMIN_ROLE_REQUIRED: "Access denied. School admin role required.",
     FAILED_TO_FETCH_ROLES: "Failed to fetch roles",
     UNABLE_TO_VALIDATE_ROLE: "Unable to validate role",
+    USER_DEACTIVATED:
+      "Your account has been deactivated. Please contact support.",
     INVALID_ROLE: "Invalid role",
     MISSING_REQUIRED_FIELDS: "Missing required fields",
     INVALID_EMAIL: "Invalid email",

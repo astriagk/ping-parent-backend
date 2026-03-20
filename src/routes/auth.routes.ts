@@ -31,7 +31,7 @@ router.post(
 // 04. Login - Send OTP
 router.post(
   "/login/send-otp",
-  authHandlers.public.validateSendOtp,
+  authHandlers.public.validateSendLoginOtp,
   authHandlers.public.loginRateLimiter,
   authHandlers.public.sendLoginOtp,
 );
@@ -39,7 +39,7 @@ router.post(
 // 05. Login - Verify OTP
 router.post(
   "/login/verify-otp",
-  authHandlers.public.validateVerifyOtp,
+  authHandlers.public.validateVerifyLoginOtp,
   authHandlers.public.loginRateLimiter,
   authHandlers.public.verifyLoginOtp,
 );

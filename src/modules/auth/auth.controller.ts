@@ -1,5 +1,4 @@
 import { Request, Response } from "express";
-import jwt from "jsonwebtoken";
 
 import { getAllRoles } from "@modules/admin/role/role.service";
 import { createParentProfile } from "@modules/users/parent/parent.service";
@@ -10,13 +9,14 @@ import {
   SUCCESS_MESSAGES_COMMON,
   UserRole,
 } from "@shared/constants";
-import { ApiError, asyncHandler } from "@shared/middlewares";
+import { asyncHandler } from "@shared/middlewares";
 import {
   generateAccessToken,
   verifyAccessToken,
+  verifyRefreshToken,
 } from "@shared/services/token.service";
 import { sendOtp, verifyOtp } from "@shared/services/twilio-otp.service";
-import { normalizePhone } from "@shared/utils";
+import { ApiError, normalizePhone } from "@shared/utils";
 
 import {
   activateUser,
@@ -25,6 +25,7 @@ import {
   getAllUsers,
   getUserById,
   getUserByPhone,
+  updateLastLogin,
 } from "./auth.service";
 
 // Default country code for phone numbers
@@ -70,32 +71,25 @@ export const verifyAuthToken = asyncHandler(
       });
     } catch (err: any) {
       // handle expired token and optional refresh
-      if (err instanceof jwt.TokenExpiredError) {
+      if (err.name === "TokenExpiredError") {
         const refresh = req.headers["x-refresh-token"] as string | undefined;
         if (refresh) {
           try {
-            const refreshPayload = jwt.verify(
-              refresh,
-              process.env.JWT_SECRET || "dev-secret",
-            ) as any;
-            if (refreshPayload?.userId) {
-              // issue new access token
-              const newToken = generateAccessToken({
-                userId: refreshPayload.userId,
-                role: refreshPayload.role,
-              });
+            const refreshPayload = verifyRefreshToken(refresh);
+            const newToken = generateAccessToken({
+              userId: refreshPayload.userId,
+              role: refreshPayload.role,
+            });
 
-              return res.json({
-                success: true,
-                data: {
-                  userId: refreshPayload.userId,
-                  email: refreshPayload.email,
-                  role: refreshPayload.role || "",
-                  tokenValid: true,
-                  newToken,
-                },
-              });
-            }
+            return res.json({
+              success: true,
+              data: {
+                userId: refreshPayload.userId,
+                role: refreshPayload.role || "",
+                tokenValid: true,
+                newToken,
+              },
+            });
           } catch {
             throw new ApiError(
               HTTP_STATUS.UNAUTHORIZED,
@@ -222,8 +216,18 @@ export const verifyLoginOtp = asyncHandler(
       );
     }
 
+    if (!user.is_active) {
+      throw new ApiError(
+        HTTP_STATUS.FORBIDDEN,
+        ERROR_MESSAGES.AUTH.USER_DEACTIVATED,
+      );
+    }
+
+    const userId = String(user._id);
+    await updateLastLogin(userId);
+
     const token = generateAccessToken({
-      userId: user._id ? String(user._id) : "",
+      userId,
       role: user.user_type || "parent",
     });
 
@@ -232,7 +236,7 @@ export const verifyLoginOtp = asyncHandler(
       data: {
         token,
         user: {
-          id: user._id ? String(user._id) : undefined,
+          id: userId,
           role: user.user_type || "parent",
           phone: user.phone_number,
         },
@@ -338,15 +342,16 @@ export const verifyPhoneOtp = asyncHandler(
     if (!user) {
       // Create new user with phone number
       isNewUser = true;
-      const newUserData = {
+      const userType =
+        role === UserRole.DRIVER ? UserRole.DRIVER : UserRole.PARENT;
+
+      await createUser({
         phone_number: normalizedPhone,
-        user_type: role === UserRole.DRIVER ? UserRole.DRIVER : UserRole.PARENT,
+        user_type: userType,
         is_active: true,
         created_at: new Date(),
         updated_at: new Date(),
-      };
-
-      await createUser(newUserData);
+      });
 
       // Fetch the newly created user
       user = await getUserByPhone(normalizedPhone);
@@ -357,20 +362,30 @@ export const verifyPhoneOtp = asyncHandler(
           ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
         );
       }
-    }
 
-    let createProfile = await createParentProfile(String(user._id), {});
-
-    if (!createProfile) {
+      // Only create parent profile for parent role
+      if (user.user_type === UserRole.PARENT) {
+        const profile = await createParentProfile(String(user._id), {});
+        if (!profile) {
+          throw new ApiError(
+            HTTP_STATUS.NOT_FOUND,
+            ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
+          );
+        }
+      }
+    } else if (!user.is_active) {
       throw new ApiError(
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.AUTH.INVALID_CREDENTIALS,
+        HTTP_STATUS.FORBIDDEN,
+        ERROR_MESSAGES.AUTH.USER_DEACTIVATED,
       );
     }
 
+    const userId = String(user._id);
+    await updateLastLogin(userId);
+
     // Generate token
     const token = generateAccessToken({
-      userId: user._id ? String(user._id) : normalizedPhone,
+      userId,
       role: user.user_type || "parent",
     });
 
@@ -383,10 +398,10 @@ export const verifyPhoneOtp = asyncHandler(
       data: {
         token,
         user: {
-          id: user._id ? String(user._id) : undefined,
+          id: userId,
           phone: user.phone_number,
           userType: user.user_type || "parent",
-          isActive: user.is_active !== undefined ? user.is_active : true,
+          isActive: user.is_active,
         },
       },
     });
@@ -410,7 +425,8 @@ export const getAllUsersController = asyncHandler(
     return res.json({
       success: true,
       data: users,
-      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
+      count: users.length,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
