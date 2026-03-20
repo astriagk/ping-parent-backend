@@ -1,16 +1,16 @@
 openapi: 3.0.3
 info:
-  title: Ping Parent API
+  title: Skolo API
   version: 1.0.1
   description: School transport tracking and management API
   contact:
-    name: Ping Parent Team
+    name: Skolo Team
 servers:
   -
     url: "http://localhost:3000/api"
     description: Development
   -
-    url: "https://api.pingparent.com/api"
+    url: "https://api.skolo.com/api"
     description: Production
 tags:
   -
@@ -1974,10 +1974,7 @@ paths:
                 subscription_status:
                   type: string
                   enum:
-                    - active
-                    - expired
-                    - cancelled
-                    - pending
+                    - values(schoolsubscriptionstatus
             example:
               plan_id: 550e8400-e29b-41d4-a716-446655440000
               end_date: sample_string
@@ -1985,7 +1982,7 @@ paths:
               max_drivers: 1
               max_students: 1
               billing_contact: +919876543210
-              subscription_status: active
+              subscription_status: values(schoolsubscriptionstatus
   /admin/school-subscriptions/{subscriptionId}/renew:
     post:
       tags:
@@ -3119,11 +3116,11 @@ paths:
                 screen_name:
                   type: string
                   enum:
-                    - driveronboardingscreenarray
+                    - values(driveronboardingscreen
               required:
                 - screen_name
             example:
-              screen_name: driveronboardingscreenarray
+              screen_name: values(driveronboardingscreen
   /driver/trips:
     post:
       tags:
@@ -4872,15 +4869,11 @@ paths:
                 traffic_model:
                   type: string
                   enum:
-                    - best_guess
-                    - pessimistic
-                    - optimistic
+                    - values(googlemapstrafficmodel
                 avoid:
                   type: array
                   enum:
-                    - tolls
-                    - highways
-                    - ferries
+                    - values(googlemapsavoidoption
               required:
                 - trip_id
                 - current_latitude
@@ -4889,8 +4882,8 @@ paths:
               trip_id: 550e8400-e29b-41d4-a716-446655440000
               current_latitude: 19.076
               current_longitude: 72.8777
-              traffic_model: best_guess
-              avoid: tolls
+              traffic_model: values(googlemapstrafficmodel
+              avoid: values(googlemapsavoidoption
   /driver/googlemaps/recalculate:
     post:
       tags:
@@ -4936,15 +4929,11 @@ paths:
                 traffic_model:
                   type: string
                   enum:
-                    - best_guess
-                    - pessimistic
-                    - optimistic
+                    - values(googlemapstrafficmodel
                 avoid:
                   type: array
                   enum:
-                    - tolls
-                    - highways
-                    - ferries
+                    - values(googlemapsavoidoption
                 force_recalculate:
                   type: boolean
               required:
@@ -4955,8 +4944,8 @@ paths:
               trip_id: 550e8400-e29b-41d4-a716-446655440000
               current_latitude: 19.076
               current_longitude: 72.8777
-              traffic_model: best_guess
-              avoid: tolls
+              traffic_model: values(googlemapstrafficmodel
+              avoid: values(googlemapsavoidoption
               force_recalculate: false
   /driver/googlemaps/{tripId}/position:
     patch:

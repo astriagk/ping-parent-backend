@@ -71,7 +71,7 @@ export const getSubscriptionPlan = asyncHandler(
     return res.json({
       success: true,
       data: plan,
-      message: SUCCESS_MESSAGES.SUBSCRIPTION_PLAN.PLAN_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

@@ -36,7 +36,7 @@
 
 ## Overview
 
-This guide provides **endpoint, payload, response, and error** documentation to test the complete Ping Parent API flow from scratch. Follow each phase in order for successful testing.
+This guide provides **endpoint, payload, response, and error** documentation to test the complete Skolo API flow from scratch. Follow each phase in order for successful testing.
 
 ### Prerequisites
 
@@ -719,37 +719,37 @@ POST /school-admin/login
 
 #### 👤 Profile
 
-| Screen               | Action          | API Endpoint                            | Method |
-| -------------------- | --------------- | --------------------------------------- | ------ |
-| **My Profile**       | Get Profile     | `/school-admin/me`                      | GET    |
-| **Edit Profile**     | Update          | `/school-admin/update`                  | PATCH  |
-| **Change Password**  | Update Password | `/school-admin/change-password`         | POST   |
-| **School Admins**    | List All        | `/school-admin/:schoolId`               | GET    |
-| **Deactivate Admin** | Disable         | `/school-admin/:adminId/deactivate`     | POST   |
+| Screen               | Action          | API Endpoint                        | Method |
+| -------------------- | --------------- | ----------------------------------- | ------ |
+| **My Profile**       | Get Profile     | `/school-admin/me`                  | GET    |
+| **Edit Profile**     | Update          | `/school-admin/update`              | PATCH  |
+| **Change Password**  | Update Password | `/school-admin/change-password`     | POST   |
+| **School Admins**    | List All        | `/school-admin/:schoolId`           | GET    |
+| **Deactivate Admin** | Disable         | `/school-admin/:adminId/deactivate` | POST   |
 
 ---
 
 #### 🚗 School Drivers
 
-| Screen            | Action           | API Endpoint                     | Method |
-| ----------------- | ---------------- | -------------------------------- | ------ |
-| **All Drivers**   | List Drivers     | `/school-driver/:schoolId`       | GET    |
+| Screen            | Action           | API Endpoint                       | Method |
+| ----------------- | ---------------- | ---------------------------------- | ------ |
+| **All Drivers**   | List Drivers     | `/school-driver/:schoolId`         | GET    |
 | **Driver Detail** | View Driver      | `/school-driver/:driverId/details` | GET    |
-| **Add Driver**    | Assign to School | `/school-driver/assign`          | POST   |
-| **Remove Driver** | Unassign         | `/school-driver/:driverId/remove` | POST   |
+| **Add Driver**    | Assign to School | `/school-driver/assign`            | POST   |
+| **Remove Driver** | Unassign         | `/school-driver/:driverId/remove`  | POST   |
 
 ---
 
 #### 📋 Student Assignments
 
-| Screen              | Action         | API Endpoint                                | Method |
-| ------------------- | -------------- | ------------------------------------------- | ------ |
-| **All Assignments** | List           | `/school-assignments/:schoolId`             | GET    |
-| **Pending**         | Pending List   | `/school-assignments/:schoolId/pending`     | GET    |
+| Screen              | Action         | API Endpoint                                     | Method |
+| ------------------- | -------------- | ------------------------------------------------ | ------ |
+| **All Assignments** | List           | `/school-assignments/:schoolId`                  | GET    |
+| **Pending**         | Pending List   | `/school-assignments/:schoolId/pending`          | GET    |
 | **By Driver**       | Driver List    | `/school-assignments/:schoolId/driver/:driverId` | GET    |
-| **Create**          | New Assignment | `/school-assignments/:schoolId/create`      | POST   |
-| **Approve**         | Accept         | `/school-assignments/:id/approve`           | POST   |
-| **Reject**          | Decline        | `/school-assignments/:id/reject`            | POST   |
+| **Create**          | New Assignment | `/school-assignments/:schoolId/create`           | POST   |
+| **Approve**         | Accept         | `/school-assignments/:id/approve`                | POST   |
+| **Reject**          | Decline        | `/school-assignments/:id/reject`                 | POST   |
 
 ---
 
@@ -962,35 +962,35 @@ When making API calls, use the appropriate token based on which user is logged i
 
 #### 🟠 SCHOOL_ADMIN APIs (Use `SCHOOL_ADMIN_TOKEN`)
 
-| Category          | Endpoint                                        | Method | Description                     |
-| ----------------- | ----------------------------------------------- | ------ | ------------------------------- |
-| **Auth**          | `/school-admin/register`                        | POST   | Register school admin (no auth) |
-| **Auth**          | `/school-admin/login`                           | POST   | School admin login              |
-| **Profile**       | `/school-admin/me`                              | GET    | Get current admin profile       |
-| **Profile**       | `/school-admin/update`                          | PATCH  | Update admin profile            |
-| **Profile**       | `/school-admin/change-password`                 | POST   | Change password                 |
-| **Admins**        | `/school-admin/:schoolId`                       | GET    | Get all admins for school       |
-| **Admins**        | `/school-admin/:adminId/deactivate`             | POST   | Deactivate admin                |
-| **Drivers**       | `/school-driver/:schoolId`                      | GET    | Get school's drivers            |
-| **Drivers**       | `/school-driver/:driverId/details`              | GET    | Get school driver details       |
-| **Drivers**       | `/school-driver/assign`                         | POST   | Add driver to school            |
-| **Drivers**       | `/school-driver/:driverId/remove`               | POST   | Remove driver from school       |
-| **Assignments**   | `/school-assignments/:schoolId`                 | GET    | Get all school assignments      |
-| **Assignments**   | `/school-assignments/:schoolId/pending`         | GET    | Get pending assignments         |
-| **Assignments**   | `/school-assignments/:schoolId/driver/:driverId`| GET    | Get assignments by driver       |
-| **Assignments**   | `/school-assignments/:schoolId/create`          | POST   | Create assignment               |
-| **Assignments**   | `/school-assignments/:id/approve`               | POST   | Approve assignment              |
-| **Assignments**   | `/school-assignments/:id/reject`                | POST   | Reject assignment               |
-| **Subscriptions** | `/school-subscriptions`                         | POST   | Create school subscription      |
-| **Subscriptions** | `/school-subscriptions/school/:schoolId`        | GET    | Get school subscriptions        |
-| **Subscriptions** | `/school-subscriptions/school/:schoolId/active` | GET    | Get active subscription         |
-| **Subscriptions** | `/school-subscriptions/:id`                     | GET    | Get subscription by ID          |
-| **Subscriptions** | `/school-subscriptions/:id`                     | PATCH  | Update subscription             |
-| **Subscriptions** | `/school-subscriptions/:id/renew`               | POST   | Renew subscription              |
-| **Subscriptions** | `/school-subscriptions/:id/cancel`              | POST   | Cancel subscription             |
-| **Subscriptions** | `/school-subscriptions/expired/list`            | GET    | Get expired subscriptions       |
-| **Subscriptions** | `/school-subscriptions/:id/generate-codes`      | POST   | Generate per-student codes      |
-| **Subscriptions** | `/school-subscriptions/:id/codes`               | GET    | Get student codes               |
+| Category          | Endpoint                                         | Method | Description                     |
+| ----------------- | ------------------------------------------------ | ------ | ------------------------------- |
+| **Auth**          | `/school-admin/register`                         | POST   | Register school admin (no auth) |
+| **Auth**          | `/school-admin/login`                            | POST   | School admin login              |
+| **Profile**       | `/school-admin/me`                               | GET    | Get current admin profile       |
+| **Profile**       | `/school-admin/update`                           | PATCH  | Update admin profile            |
+| **Profile**       | `/school-admin/change-password`                  | POST   | Change password                 |
+| **Admins**        | `/school-admin/:schoolId`                        | GET    | Get all admins for school       |
+| **Admins**        | `/school-admin/:adminId/deactivate`              | POST   | Deactivate admin                |
+| **Drivers**       | `/school-driver/:schoolId`                       | GET    | Get school's drivers            |
+| **Drivers**       | `/school-driver/:driverId/details`               | GET    | Get school driver details       |
+| **Drivers**       | `/school-driver/assign`                          | POST   | Add driver to school            |
+| **Drivers**       | `/school-driver/:driverId/remove`                | POST   | Remove driver from school       |
+| **Assignments**   | `/school-assignments/:schoolId`                  | GET    | Get all school assignments      |
+| **Assignments**   | `/school-assignments/:schoolId/pending`          | GET    | Get pending assignments         |
+| **Assignments**   | `/school-assignments/:schoolId/driver/:driverId` | GET    | Get assignments by driver       |
+| **Assignments**   | `/school-assignments/:schoolId/create`           | POST   | Create assignment               |
+| **Assignments**   | `/school-assignments/:id/approve`                | POST   | Approve assignment              |
+| **Assignments**   | `/school-assignments/:id/reject`                 | POST   | Reject assignment               |
+| **Subscriptions** | `/school-subscriptions`                          | POST   | Create school subscription      |
+| **Subscriptions** | `/school-subscriptions/school/:schoolId`         | GET    | Get school subscriptions        |
+| **Subscriptions** | `/school-subscriptions/school/:schoolId/active`  | GET    | Get active subscription         |
+| **Subscriptions** | `/school-subscriptions/:id`                      | GET    | Get subscription by ID          |
+| **Subscriptions** | `/school-subscriptions/:id`                      | PATCH  | Update subscription             |
+| **Subscriptions** | `/school-subscriptions/:id/renew`                | POST   | Renew subscription              |
+| **Subscriptions** | `/school-subscriptions/:id/cancel`               | POST   | Cancel subscription             |
+| **Subscriptions** | `/school-subscriptions/expired/list`             | GET    | Get expired subscriptions       |
+| **Subscriptions** | `/school-subscriptions/:id/generate-codes`       | POST   | Generate per-student codes      |
+| **Subscriptions** | `/school-subscriptions/:id/codes`                | GET    | Get student codes               |
 
 ---
 

@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   VehicleType,
   VehicleTypesArray,
 } from "@shared/constants";
@@ -165,7 +166,7 @@ export const createProfile = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: formatDriverProfileResponse(createdProfile),
-      message: SUCCESS_MESSAGES.DRIVER.PROFILE_CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -256,7 +257,7 @@ export const updateProfile = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: formatDriverProfileResponse(updatedProfile),
-      message: SUCCESS_MESSAGES.DRIVER.PROFILE_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -362,7 +363,7 @@ export const upsertAddress = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAddress,
-      message: SUCCESS_MESSAGES.DRIVER.ADDRESS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -468,7 +469,7 @@ export const createDocuments = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedDocuments,
-      message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -554,7 +555,7 @@ export const updateDocuments = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedDocuments,
-      message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -596,7 +597,7 @@ export const setAvailability = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedProfile ? formatDriverProfileResponse(updatedProfile) : null,
-      message: "Driver availability updated successfully",
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -642,7 +643,7 @@ export const updateDriverOnboardingScreen = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "Screen updated successfully",
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

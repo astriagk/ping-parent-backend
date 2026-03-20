@@ -235,7 +235,7 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: users,
-    message: SUCCESS_MESSAGES.AUTH.USERS_LIST_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
   });
 });
 
@@ -255,7 +255,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: user,
-    message: SUCCESS_MESSAGES.AUTH.USER_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -276,7 +276,7 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: updatedUser,
-    message: SUCCESS_MESSAGES.AUTH.USER_UPDATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
   });
 });
 
@@ -340,7 +340,7 @@ export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: null,
-    message: SUCCESS_MESSAGES.AUTH.USER_DELETED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
   });
 });
 
@@ -566,7 +566,7 @@ export const getDriverCompleteDetails = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: driverDetails,
-      message: SUCCESS_MESSAGES.DRIVER.DETAILS_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -588,7 +588,7 @@ export const getParentCompleteDetails = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: parentDetails,
-      message: SUCCESS_MESSAGES.PARENT.DETAILS_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

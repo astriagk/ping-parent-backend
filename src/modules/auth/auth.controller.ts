@@ -7,6 +7,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -409,7 +410,7 @@ export const getAllUsersController = asyncHandler(
     return res.json({
       success: true,
       data: users,
-      message: SUCCESS_MESSAGES.AUTH.USER_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -433,7 +434,7 @@ export const activateUserController = asyncHandler(
     return res.json({
       success: true,
       data: user,
-      message: SUCCESS_MESSAGES.AUTH.USER_ACTIVATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

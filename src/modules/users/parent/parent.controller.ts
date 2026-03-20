@@ -119,7 +119,7 @@ export const updateProfileParent = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: formatParentProfileResponse(updatedProfile),
-      message: SUCCESS_MESSAGES.PARENT.PROFILE_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -191,7 +191,7 @@ export const updateAddress = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAddress,
-      message: SUCCESS_MESSAGES.ADDRESS.ADDRESS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

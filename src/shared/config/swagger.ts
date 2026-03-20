@@ -42,7 +42,7 @@ export const swaggerOptions = {
       margin-top: 10px;
     }
   `,
-  customSiteTitle: "Ping Parent API Documentation",
+  customSiteTitle: "Skolo API Documentation",
   customfavIcon: "/assets/favicon.ico",
 };
 

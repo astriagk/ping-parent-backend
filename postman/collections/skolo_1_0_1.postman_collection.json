@@ -1,7 +1,7 @@
 {
   "info": {
-    "name": "Ping Parent API v1.0.1",
-    "description": "# Ping Parent API v1.0.1\n\nGenerated: 2026-03-19T16:21:45.070Z\n\n## Summary\n- **Total Endpoints:** 232\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 63 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 54 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 23 endpoints\n- **Superadmin**: 17 endpoints\n",
+    "name": "skolo API v1.0.1",
+    "description": "# Skolo API v1.0.1\n\nGenerated: 2026-03-20T05:21:53.739Z\n\n## Summary\n- **Total Endpoints:** 232\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 63 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 54 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 23 endpoints\n- **Superadmin**: 17 endpoints\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     "version": "1.0.1"
   },
@@ -3909,7 +3909,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"end_date\": \"sample_string\",\n  \"auto_renew\": false,\n  \"max_drivers\": 1,\n  \"max_students\": 1,\n  \"billing_contact\": \"+919876543210\",\n  \"subscription_status\": \"active\"\n}",
+                  "raw": "{\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"end_date\": \"sample_string\",\n  \"auto_renew\": false,\n  \"max_drivers\": 1,\n  \"max_students\": 1,\n  \"billing_contact\": \"+919876543210\",\n  \"subscription_status\": \"values(schoolsubscriptionstatus\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -6203,7 +6203,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"screen_name\": \"driveronboardingscreenarray\"\n}",
+                  "raw": "{\n  \"screen_name\": \"values(driveronboardingscreen\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9466,7 +9466,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"best_guess\",\n  \"avoid\": \"tolls\"\n}",
+                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"values(googlemapstrafficmodel\",\n  \"avoid\": \"values(googlemapsavoidoption\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -9547,7 +9547,7 @@
                 },
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"best_guess\",\n  \"avoid\": \"tolls\",\n  \"force_recalculate\": false\n}",
+                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"values(googlemapstrafficmodel\",\n  \"avoid\": \"values(googlemapsavoidoption\",\n  \"force_recalculate\": false\n}",
                   "options": {
                     "raw": {
                       "language": "json"

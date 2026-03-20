@@ -205,7 +205,7 @@ export const cancelSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.CANCELLED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

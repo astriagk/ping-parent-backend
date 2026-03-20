@@ -1094,7 +1094,7 @@ function groupEndpointsBySubfolder(endpoints, categoryName) {
 function generatePostmanCollection(categories, version) {
   return {
     info: {
-      name: `Ping Parent API v${version}`,
+      name: `skolo API v${version}`,
       description: generateCollectionDescription(categories, version),
       schema:
         "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
@@ -1139,7 +1139,7 @@ function generateCollectionDescription(categories, version) {
   const totalEndpoints = Object.values(categories).flat().length;
   const categoryCount = Object.keys(categories).length;
 
-  let desc = `# Ping Parent API v${version}\n\n`;
+  let desc = `# Skolo API v${version}\n\n`;
   desc += `Generated: ${new Date().toISOString()}\n\n`;
   desc += `## Summary\n`;
   desc += `- **Total Endpoints:** ${totalEndpoints}\n`;
@@ -1300,8 +1300,8 @@ function createExampleResponse(endpoint, status, statusText) {
  */
 function generatePostmanEnvironment(version) {
   return {
-    id: `ping-parent-env-v2-${version.replace(/\./g, "-")}`,
-    name: `Ping Parent Environment v${version}`,
+    id: `skolo-env-v2-${version.replace(/\./g, "-")}`,
+    name: `Skolo Environment v${version}`,
     values: [
       {
         key: "BASE_URL",
@@ -1341,14 +1341,14 @@ function generateOpenAPISpec(categories, version) {
   const spec = {
     openapi: "3.0.3",
     info: {
-      title: "Ping Parent API",
+      title: "Skolo API",
       version: version,
       description: "School transport tracking and management API",
-      contact: { name: "Ping Parent Team" },
+      contact: { name: "Skolo Team" },
     },
     servers: [
       { url: "http://localhost:3000/api", description: "Development" },
-      { url: "https://api.pingparent.com/api", description: "Production" },
+      { url: "https://api.skolo.com/api", description: "Production" },
     ],
     tags: Object.keys(categories).map((cat) => ({
       name: cat,
@@ -1497,7 +1497,7 @@ function generateJsonSchema(schemaFields) {
 
 function main() {
   console.log("\n" + "═".repeat(70));
-  console.log("  🚀 Ping Parent API Documentation Generator v3.0");
+  console.log("  🚀 Skolo API Documentation Generator v3.0");
   console.log("═".repeat(70) + "\n");
 
   // Parse CLI arguments

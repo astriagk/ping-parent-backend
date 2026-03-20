@@ -405,9 +405,7 @@ export const getAllDrivers = asyncHandler(
 
     return res.json({
       success: true,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT
-          .DRIVERS_RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
       data: drivers,
     });
   },
