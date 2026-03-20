@@ -26,6 +26,7 @@ Current skills:
 - `commit-message`
 - `extract-enums`
 - `sync-collections`
+- `gen-feature-spec`
 
 Each skill folder can contain:
 
@@ -224,3 +225,38 @@ Optional scope hint (narrow to a feature): `--scope src/modules/users`.
 - `src/shared/constants/validationMessages.ts`
 - `src/shared/constants/messageTemplates.ts`
 - `src/shared/constants/index.ts`
+
+---
+
+## Skill: Gen Feature Spec
+
+Folder: `.agents/skills/gen-feature-spec`
+
+### Purpose
+
+Generate a `spec/features/<feature>.md` file for any module by reading its source files and extracting endpoints, flows, external services, and key business rules.
+
+### When To Use
+
+- When a new module is created and needs a spec doc
+- When you want to understand or document an existing module's logic and flow
+- When a service needs to be swapped (update the spec first, then ask the agent to update the code)
+
+### How To Use
+
+Tell the AI the feature name:
+
+```
+gen-feature-spec auth
+gen-feature-spec billing/razorpay
+gen-feature-spec users/parent
+gen-feature-spec trips/trip-student
+```
+
+Supports both standalone modules and submodules.
+
+### Important Files
+
+- `.agents/skills/gen-feature-spec/SKILL.md`
+- `spec/features/auth.md` (reference example)
+- `spec/features/` (output directory)

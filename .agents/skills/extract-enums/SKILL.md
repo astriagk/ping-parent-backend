@@ -1,6 +1,7 @@
 ---
 name: extract-enums
 description: "Replace enum-like hard-coded values with shared enums from src/shared/constants/enums.ts. Use when reviewing or refactoring code that may contain hard-coded statuses, roles, types, modes, priorities, events, or workflow states. Infer scope from the current task, git diff, and nearby touched files when the user does not name files; then reuse shared enums first, extend matching enums when needed, create new shared enums only when no semantic match exists, migrate nearby module-local enums into shared enums, keep runtime string values unchanged, and keep shared enum declarations alphabetized."
+user-invocable: true
 ---
 
 # Extract Enums Skill
