@@ -9,7 +9,7 @@ import {
   VehicleTypesArray,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { deleteFile, uploadFile } from "@shared/services/storage.factory";
+import { deleteFile, uploadFile } from "@shared/services/file-storage.service";
 import { assignTrimmedFields } from "@shared/utils";
 
 import { driverOnboardingRepository } from "./driver.repository";

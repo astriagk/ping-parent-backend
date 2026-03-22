@@ -82,3 +82,22 @@ export const updateAdminSchema = Joi.object({
     "boolean.base": VALIDATION_MESSAGES.ADMIN.IS_ACTIVE_INVALID,
   }),
 });
+
+export const updateUserSchema = Joi.object({
+  username: Joi.string().min(3).max(100).optional().messages({
+    "string.min": VALIDATION_MESSAGES.ADMIN.USERNAME_MIN,
+    "string.max": VALIDATION_MESSAGES.ADMIN.USERNAME_MAX,
+  }),
+  email: Joi.string().email().optional().messages({
+    "string.email": VALIDATION_MESSAGES.ADMIN.EMAIL_INVALID,
+  }),
+  phone_number: Joi.string()
+    .pattern(/^[+]?[0-9]{10,15}$/)
+    .optional()
+    .messages({
+      "string.pattern.base": VALIDATION_MESSAGES.ADMIN.PHONE_PATTERN,
+    }),
+  is_active: Joi.boolean().optional().messages({
+    "boolean.base": VALIDATION_MESSAGES.ADMIN.IS_ACTIVE_INVALID,
+  }),
+});

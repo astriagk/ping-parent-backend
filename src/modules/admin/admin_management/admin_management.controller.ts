@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 import {
   activateUser as activateUserService,
   deactivateUser as deactivateUserService,
-  deleteUser as deleteUserService,
+  // deleteUser as deleteUserService,
   getAllUsers as getAllUsersService,
   getUserById as getUserByIdService,
-  updateUser as updateUserService,
+  // updateUser as updateUserService,
 } from "@modules/auth/auth.service";
 import {
   getCompleteDriverDetailsById,
@@ -264,14 +264,15 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as Record<string, string>;
   const updates = req.body;
 
-  const updatedUser = await updateUserService(id, updates);
+  const updatedUser = {};
+  // const updatedUser = await updateUserService(id, updates);
 
-  if (!updatedUser) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
-    );
-  }
+  // if (!updatedUser) {
+  //   throw new ApiError(
+  //     HTTP_STATUS.NOT_FOUND,
+  //     ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+  //   );
+  // }
 
   return res.status(HTTP_STATUS.OK).json({
     success: true,
@@ -328,14 +329,14 @@ export const deactivateUser = asyncHandler(
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as Record<string, string>;
 
-  const deleted = await deleteUserService(id);
+  // const deleted = await deleteUserService(id);
 
-  if (!deleted) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
-    );
-  }
+  // if (!deleted) {
+  //   throw new ApiError(
+  //     HTTP_STATUS.NOT_FOUND,
+  //     ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+  //   );
+  // }
 
   return res.status(HTTP_STATUS.OK).json({
     success: true,

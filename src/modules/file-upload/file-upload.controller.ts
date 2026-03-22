@@ -7,7 +7,7 @@ import {
   SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { deleteFile, uploadFile } from "@shared/services/storage.factory";
+import { deleteFile, uploadFile } from "@shared/services/file-storage.service";
 
 /**
  * POST /shared/upload

@@ -25,8 +25,9 @@ Current skills:
 
 - `commit-message`
 - `extract-enums`
-- `sync-collections`
 - `gen-feature-spec`
+- `gen-product-spec`
+- `sync-collections`
 
 Each skill folder can contain:
 
@@ -260,3 +261,51 @@ Supports both standalone modules and submodules.
 - `.agents/skills/gen-feature-spec/SKILL.md`
 - `spec/features/auth.md` (reference example)
 - `spec/features/` (output directory)
+
+---
+
+## Skill: Gen Product Spec
+
+Folder: `.agents/skills/gen-product-spec`
+
+### Purpose
+
+Generate a `spec/product-logic/<feature>.md` from a natural language description.
+This is the starting point of the feature workflow — write the spec first, then implement it.
+
+### When To Use
+
+Use this skill when:
+
+- you want to build a new feature and don't want to write the spec manually
+- you want to add endpoints or update logic in an existing feature
+- you want `impl-feature` to implement something but need to produce the input spec first
+
+### How To Use
+
+Describe the feature in plain English:
+
+```
+gen-product-spec "login, register, OTP for users"
+gen-product-spec "school event notifications"
+gen-product-spec "driver reviews" spec/product-logic/reviews.md
+```
+
+The skill will:
+
+1. Read `spec/database/skolo.dbml` and `src/modules/` to understand context
+2. Ask only the questions it cannot answer from the DBML or description
+3. Write `spec/product-logic/<feature>.md` in the exact format `impl-feature` expects
+
+Then run:
+
+```
+impl-feature spec/product-logic/<feature>.md
+```
+
+### Important Files
+
+- `.agents/skills/gen-product-spec/SKILL.md`
+- `.agents/skills/gen-product-spec/references/product-logic-format.md`
+- `.agents/skills/gen-product-spec/references/clarifying-questions.md`
+- `spec/product-logic/` (output directory)

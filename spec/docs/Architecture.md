@@ -57,7 +57,21 @@ src/
 │   └── utils/                       ← apiError · apiResponse · logger · helpers
 │
 ├── routes/
-│   └── index.ts                     ← aggregates all module routes
+│   ├── index.ts                     ← aggregates all gateway routes
+│   ├── admin/                       ← auth, users, schools, school-drivers, school-assignments,
+│   │                                   students, assignments, trips, payments, subscriptions,
+│   │                                   subscription-plans, school-subscriptions, tracking,
+│   │                                   googlemaps, audit-logs, support-tickets
+│   ├── driver/                      ← profile, availability, address, documents, onboarding,
+│   │                                   trips, trip-students, assignments, qr-otp, tracking, googlemaps
+│   ├── parent/                      ← profile, trips, students, assignments, qr-otp,
+│   │                                   payments, subscriptions, redemptions, reviews
+│   ├── shared/                      ← notifications, device-tokens, tracking, googlemaps,
+│   │                                   schools, support-tickets, upload
+│   ├── auth/                        ← register, login
+│   ├── public/                      ← subscription-plans, razorpay, reviews, redemptions
+│   ├── superadmin/                  ← admins, roles, audit-logs
+│   └── school-admin/                ← school, drivers
 ├── app.ts
 └── server.ts
 ```

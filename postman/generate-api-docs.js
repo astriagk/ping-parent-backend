@@ -648,10 +648,22 @@ function buildHandlerRegistry(moduleRouteFiles) {
  */
 function findAllRouteFiles() {
   if (!fs.existsSync(CONFIG.ROUTES_LAYER_DIR)) return [];
-  return fs
-    .readdirSync(CONFIG.ROUTES_LAYER_DIR)
-    .filter((item) => item.endsWith(".routes.ts"))
-    .map((item) => path.join(CONFIG.ROUTES_LAYER_DIR, item));
+  const files = [];
+  for (const roleDir of fs.readdirSync(CONFIG.ROUTES_LAYER_DIR)) {
+    const rolePath = path.join(CONFIG.ROUTES_LAYER_DIR, roleDir);
+    if (fs.statSync(rolePath).isDirectory()) {
+      // Subdirectory layout: src/routes/admin/assignments.routes.ts
+      for (const item of fs.readdirSync(rolePath)) {
+        if (item.endsWith(".routes.ts")) {
+          files.push(path.join(rolePath, item));
+        }
+      }
+    } else if (roleDir.endsWith(".routes.ts")) {
+      // Flat file (legacy): src/routes/parent.routes.ts
+      files.push(rolePath);
+    }
+  }
+  return files;
 }
 
 /**
@@ -1074,12 +1086,15 @@ function getSubfolderName(route, categoryName) {
 }
 
 /**
- * Group endpoints into sub-folders keyed by their resource segment.
+ * Group endpoints into sub-folders keyed by their source route filename.
+ * e.g. login.routes.ts → "Login", assignments.routes.ts → "Assignments"
  */
 function groupEndpointsBySubfolder(endpoints, categoryName) {
   const groups = {};
   for (const ep of endpoints) {
-    const folder = getSubfolderName(ep.route, categoryName);
+    const folder = ep.fileName
+      ? titleCase(ep.fileName.replace(/-/g, " "))
+      : getSubfolderName(ep.route, categoryName);
     if (!groups[folder]) groups[folder] = [];
     groups[folder].push(ep);
   }
@@ -1530,10 +1545,11 @@ function main() {
   let totalEndpoints = 0;
 
   for (const file of routeFiles) {
-    // Gateway file: derive category and base path from file name
-    // e.g. parent.routes.ts → category "Parent", base path "/parent"
+    // Gateway file: derive category and base path from the role subdirectory name
+    // e.g. src/routes/admin/assignments.routes.ts → category "Admin", base path "/admin"
     const relativePath = path.relative(CONFIG.ROUTES_LAYER_DIR, file);
-    const gatewayName = path.basename(file, ".routes.ts"); // e.g. "parent", "school-admin"
+    const roleFolder = path.dirname(relativePath); // "admin", "driver", "parent", etc.
+    const gatewayName = roleFolder !== "." ? roleFolder : path.basename(file, ".routes.ts");
     const categoryName = titleCase(gatewayName);
     const basePath = "/" + gatewayName;
     gatewayCategories.add(categoryName);
