@@ -112,7 +112,7 @@ export const createDriverProfile = async (
       vehicle_number: driverData.vehicle_number,
       vehicle_capacity: driverData.vehicle_capacity,
       current_student_count: 0,
-      approval_status: "pending" as "pending" | "approved" | "rejected",
+      approval_status: ApprovalStatus.PENDING,
       is_available:
         driverData.is_available !== undefined ? driverData.is_available : true,
       rating: 0.0,

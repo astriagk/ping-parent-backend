@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
-  SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -26,7 +26,7 @@ export const getNotificationPreferences = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: preferences,
-      message: SUCCESS_MESSAGES.NOTIFICATION.PREFERENCES_FETCHED,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -52,7 +52,7 @@ export const updateNotificationPreferences = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: preferences,
-      message: SUCCESS_MESSAGES.NOTIFICATION.PREFERENCES_UPDATED,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

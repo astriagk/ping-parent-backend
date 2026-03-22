@@ -1,4 +1,10 @@
-import { RouteProvider, TripStatus, TripType } from "@shared/constants";
+import {
+  AttendanceStatus,
+  PickupStatus,
+  RouteProvider,
+  TripStatus,
+  TripType,
+} from "@shared/constants";
 
 export interface Trip {
   _id?: any;
@@ -57,8 +63,8 @@ export interface CompletedTripStudent {
   student_roll_number?: string;
   student_photo_url?: string;
   student_gender?: string;
-  attendance_status: string;
-  pickup_status: string;
+  attendance_status: AttendanceStatus;
+  pickup_status: PickupStatus;
   pickup_time?: Date;
   drop_time?: Date;
   parent: CompletedTripParent;

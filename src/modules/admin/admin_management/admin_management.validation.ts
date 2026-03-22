@@ -4,10 +4,10 @@ import { UserRole, VALIDATION_MESSAGES } from "@shared/constants";
 
 export const verifyPasswordHashSchema = Joi.object({
   password: Joi.string().required().messages({
-    "any.required": "Password is required",
+    "any.required": VALIDATION_MESSAGES.ADMIN.PASSWORD_REQUIRED,
   }),
   password_hash: Joi.string().required().messages({
-    "any.required": "Password hash is required",
+    "any.required": VALIDATION_MESSAGES.ADMIN.PASSWORD_HASH_REQUIRED,
   }),
 });
 
@@ -56,15 +56,34 @@ export const createAdminSchema = Joi.object({
   school_id: Joi.string().when("admin_role", {
     is: UserRole.SCHOOL_ADMIN,
     then: Joi.required().messages({
-      "any.required": "school_id is required when creating a school admin",
+      "any.required": VALIDATION_MESSAGES.ADMIN.SCHOOL_ID_REQUIRED,
     }),
     otherwise: Joi.forbidden().messages({
-      "any.unknown": "school_id is only applicable for school_admin role",
+      "any.unknown": VALIDATION_MESSAGES.ADMIN.SCHOOL_ID_UNKNOWN,
     }),
   }),
 });
 
 export const updateAdminSchema = Joi.object({
+  username: Joi.string().min(3).max(100).optional().messages({
+    "string.min": VALIDATION_MESSAGES.ADMIN.USERNAME_MIN,
+    "string.max": VALIDATION_MESSAGES.ADMIN.USERNAME_MAX,
+  }),
+  email: Joi.string().email().optional().messages({
+    "string.email": VALIDATION_MESSAGES.ADMIN.EMAIL_INVALID,
+  }),
+  phone_number: Joi.string()
+    .pattern(/^[+]?[0-9]{10,15}$/)
+    .optional()
+    .messages({
+      "string.pattern.base": VALIDATION_MESSAGES.ADMIN.PHONE_PATTERN,
+    }),
+  is_active: Joi.boolean().optional().messages({
+    "boolean.base": VALIDATION_MESSAGES.ADMIN.IS_ACTIVE_INVALID,
+  }),
+});
+
+export const updateUserSchema = Joi.object({
   username: Joi.string().min(3).max(100).optional().messages({
     "string.min": VALIDATION_MESSAGES.ADMIN.USERNAME_MIN,
     "string.max": VALIDATION_MESSAGES.ADMIN.USERNAME_MAX,

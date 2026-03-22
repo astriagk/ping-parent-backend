@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -55,7 +56,7 @@ export const getQrOtp = asyncHandler(async (req: Request, res: Response) => {
   return res.json({
     success: true,
     data: qrOtp,
-    message: SUCCESS_MESSAGES.DAILY_QR_OTP.FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -87,7 +88,7 @@ export const getQrOtpForParent = asyncHandler(
     return res.json({
       success: true,
       data: qrOtp,
-      message: SUCCESS_MESSAGES.DAILY_QR_OTP.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -120,7 +121,7 @@ export const getParentOtpForTrip = asyncHandler(
     return res.json({
       success: true,
       data: qrOtp,
-      message: SUCCESS_MESSAGES.DAILY_QR_OTP.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

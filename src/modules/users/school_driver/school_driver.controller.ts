@@ -6,6 +6,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -33,7 +34,7 @@ export const getSchoolDrivers = asyncHandler(
     return res.json({
       success: true,
       data: drivers,
-      message: SUCCESS_MESSAGES.SCHOOL_DRIVER.RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -102,7 +103,7 @@ export const assignDriverToSchool = asyncHandler(
     return res.json({
       success: true,
       data: updatedDriver,
-      message: SUCCESS_MESSAGES.SCHOOL_DRIVER.ASSIGNED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -154,7 +155,7 @@ export const removeDriverFromSchool = asyncHandler(
     return res.json({
       success: true,
       data: updatedDriver,
-      message: SUCCESS_MESSAGES.SCHOOL_DRIVER.REMOVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -186,7 +187,7 @@ export const getSchoolDriverDetails = asyncHandler(
     return res.json({
       success: true,
       data: driver,
-      message: SUCCESS_MESSAGES.SCHOOL_DRIVER.DETAILS_RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

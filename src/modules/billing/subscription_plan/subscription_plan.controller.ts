@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -29,7 +30,7 @@ export const createSubscriptionPlan = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: plan,
-      message: SUCCESS_MESSAGES.SUBSCRIPTION_PLAN.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -45,7 +46,7 @@ export const getAllSubscriptionPlans = asyncHandler(
     return res.json({
       success: true,
       data: plans,
-      message: SUCCESS_MESSAGES.SUBSCRIPTION_PLAN.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -70,7 +71,7 @@ export const getSubscriptionPlan = asyncHandler(
     return res.json({
       success: true,
       data: plan,
-      message: SUCCESS_MESSAGES.SUBSCRIPTION_PLAN.PLAN_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -96,7 +97,7 @@ export const updateSubscriptionPlan = asyncHandler(
     return res.json({
       success: true,
       data: plan,
-      message: SUCCESS_MESSAGES.SUBSCRIPTION_PLAN.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

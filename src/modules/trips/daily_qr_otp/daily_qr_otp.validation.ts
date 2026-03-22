@@ -23,7 +23,7 @@ export const generateQrOtpSchema = Joi.object({
 // Either qr_code OR otp_code must be provided, parent_id required for optimized lookup
 export const verifyQrOtpSchema = Joi.object({
   parent_id: Joi.string().required().messages({
-    "any.required": "parent_id is required for OTP verification",
+    "any.required": VALIDATION_MESSAGES.DAILY_QR_OTP.PARENT_ID_REQUIRED,
   }),
   trip_id: Joi.string().required().messages({
     "any.required": VALIDATION_MESSAGES.DAILY_QR_OTP.TRIP_ID_REQUIRED,
@@ -46,7 +46,7 @@ export const verifyQrOtpSchema = Joi.object({
 // Schema for verifying and recording attendance (marks which students are present/absent)
 export const verifyAndRecordAttendanceSchema = Joi.object({
   parent_id: Joi.string().required().messages({
-    "any.required": "parent_id is required for OTP verification",
+    "any.required": VALIDATION_MESSAGES.DAILY_QR_OTP.PARENT_ID_REQUIRED,
   }),
   trip_id: Joi.string().required().messages({
     "any.required": VALIDATION_MESSAGES.DAILY_QR_OTP.TRIP_ID_REQUIRED,

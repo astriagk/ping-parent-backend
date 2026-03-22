@@ -1,6 +1,6 @@
 import { deviceTokenRepository } from "@modules/device_token/device-token.repository";
 import { isPushEnabled } from "@modules/notification_preferences/notification-preferences.service";
-import { NotificationType } from "@shared/constants";
+import { MESSAGE_TEMPLATES, NotificationType } from "@shared/constants";
 import { BroadcastService } from "@shared/services/broadcast.service";
 import { FCMService } from "@shared/services/fcm.service";
 import { logger } from "@shared/utils";
@@ -129,7 +129,7 @@ export class NotificationDispatcher {
       userId,
       NotificationType.PICKED_UP,
       "Student Picked Up",
-      `Your child ${studentName} has been picked up`,
+      MESSAGE_TEMPLATES.NOTIFICATION.childPicked(studentName),
       { tripId, studentId, studentName, driverId },
     );
   }
@@ -154,7 +154,7 @@ export class NotificationDispatcher {
       userId,
       NotificationType.DROPPED,
       "Student Dropped Off",
-      `Your child ${studentName} has been dropped off`,
+      MESSAGE_TEMPLATES.NOTIFICATION.childDropped(studentName),
       { tripId, studentId, studentName, driverId },
     );
   }
@@ -182,7 +182,10 @@ export class NotificationDispatcher {
       userId,
       NotificationType.APPROACHING,
       "Driver Approaching",
-      `Driver is approaching for ${studentName} - ETA ${etaMinutes} minutes`,
+      MESSAGE_TEMPLATES.NOTIFICATION.driverApproachingForStudent(
+        studentName,
+        etaMinutes,
+      ),
       { tripId, studentId, studentName, eta: String(eta), driverId },
     );
   }
@@ -208,8 +211,8 @@ export class NotificationDispatcher {
     const studentNames = students.map((s) => s.studentName).join(", ");
     const message =
       students.length === 1
-        ? `Your child ${studentNames} has been picked up`
-        : `Your children ${studentNames} have been picked up`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childPicked(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenPicked(studentNames);
 
     await this.dispatch(
       userId,
@@ -241,8 +244,8 @@ export class NotificationDispatcher {
     const studentNames = students.map((s) => s.studentName).join(", ");
     const message =
       students.length === 1
-        ? `Your child ${studentNames} has been dropped off`
-        : `Your children ${studentNames} have been dropped off`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childDropped(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenDropped(studentNames);
 
     await this.dispatch(
       userId,
@@ -278,7 +281,7 @@ export class NotificationDispatcher {
       userId,
       NotificationType.ROUTE_RECALCULATED,
       "Route Updated",
-      `Route has been recalculated. Updated ETAs for ${studentNames}`,
+      MESSAGE_TEMPLATES.NOTIFICATION.routeRecalculated(studentNames),
       { tripId, students, newEtas, driverId },
     );
   }
@@ -300,8 +303,8 @@ export class NotificationDispatcher {
     const studentNames = students.map((s) => s.studentName).join(", ");
     const message =
       students.length === 1
-        ? `Your child ${studentNames} was marked absent`
-        : `Your children ${studentNames} were marked absent`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childAbsent(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenAbsent(studentNames);
 
     await this.dispatch(
       userId,

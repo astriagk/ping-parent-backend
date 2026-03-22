@@ -1,6 +1,7 @@
 import { ObjectId, UpdateResult, WithId } from "mongodb";
 
 import {
+  AssignmentStatus,
   DRIVERS_COLLECTION,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   PARENT_SUBSCRIPTIONS_COLLECTION,
@@ -398,7 +399,7 @@ export class ParentSubscriptionRepository extends BaseRepository<ParentSubscript
               {
                 $match: {
                   $expr: { $eq: ["$student_id", "$$sid"] },
-                  assignment_status: "active",
+                  assignment_status: AssignmentStatus.ACTIVE,
                 },
               },
               { $limit: 1 },

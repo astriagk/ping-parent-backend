@@ -15,13 +15,6 @@ export interface UserWithProfile extends User {
   name?: string;
   email?: string;
   photo_url?: string;
-}
-
-export interface OtpVerification {
-  _id?: any;
-  phone_number: string;
-  otp_code: string;
-  is_verified: boolean;
-  expires_at: Date;
-  created_at: Date;
+  approval_status?: string;
+  school_id?: any;
 }

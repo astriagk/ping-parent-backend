@@ -1,4 +1,4 @@
-import { PickupStatus } from "@shared/constants";
+import { PickupStatus, TripStatus, TripType } from "@shared/constants";
 
 /**
  * School details embedded in a waypoint
@@ -162,8 +162,8 @@ export interface RouteCalculationResponse {
 
 export interface RouteDetailsResponse {
   trip_id: string;
-  trip_type: string;
-  trip_status: string;
+  trip_type: TripType;
+  trip_status: TripStatus;
   trip_date: Date;
   total_distance: number;
   optimized_route_data: RouteGeometry | null;

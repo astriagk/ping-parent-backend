@@ -1,6 +1,10 @@
 import { NextFunction, Request, Response } from "express";
 
-import { ERROR_MESSAGES, HTTP_STATUS } from "@shared/constants";
+import {
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  MESSAGE_TEMPLATES,
+} from "@shared/constants";
 import { logger } from "@shared/utils";
 
 export class ApiError extends Error {
@@ -49,6 +53,6 @@ export const errorHandler = (
 export const notFound = (req: Request, res: Response) => {
   res.status(HTTP_STATUS.NOT_FOUND).json({
     success: false,
-    error: `Route ${req.originalUrl} not found`,
+    error: MESSAGE_TEMPLATES.ROUTE.notFound(req.originalUrl),
   });
 };

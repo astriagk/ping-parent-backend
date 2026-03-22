@@ -1,3 +1,9 @@
+import {
+  GoogleMapsAvoidOption,
+  GoogleMapsTrafficModel,
+  PickupStatus,
+} from "@shared/constants";
+
 export interface GoogleMapsRouteWaypoint {
   latitude: number;
   longitude: number;
@@ -6,7 +12,7 @@ export interface GoogleMapsRouteWaypoint {
   student_parent_id?: string;
   student_name?: string;
   student_names?: string[];
-  pickup_status?: string;
+  pickup_status?: PickupStatus;
   student_roll_number?: string;
   student_grade?: string;
   student_section?: string;
@@ -48,8 +54,8 @@ export interface GoogleMapsRouteCalculationRequest {
   trip_id: string;
   current_latitude: number;
   current_longitude: number;
-  traffic_model?: "best_guess" | "pessimistic" | "optimistic";
-  avoid?: ("tolls" | "highways" | "ferries")[];
+  traffic_model?: GoogleMapsTrafficModel;
+  avoid?: GoogleMapsAvoidOption[];
 }
 
 export interface GoogleMapsRouteCalculationResponse {
@@ -67,7 +73,7 @@ export interface GoogleMapsRecalculateRequest {
   trip_id: string;
   current_latitude: number;
   current_longitude: number;
-  traffic_model?: "best_guess" | "pessimistic" | "optimistic";
-  avoid?: ("tolls" | "highways" | "ferries")[];
+  traffic_model?: GoogleMapsTrafficModel;
+  avoid?: GoogleMapsAvoidOption[];
   force_recalculate?: boolean;
 }

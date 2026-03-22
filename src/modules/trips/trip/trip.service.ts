@@ -2,6 +2,7 @@ import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
+  AssignmentStatus,
   AttendanceStatus,
   BroadcastSocketEvent,
   DRIVERS_COLLECTION,
@@ -59,7 +60,7 @@ const createTripStudentsForTrip = async (
     .collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION)
     .find({
       driver_id: driverId,
-      assignment_status: "active",
+      assignment_status: AssignmentStatus.ACTIVE,
     })
     .toArray();
 
@@ -72,8 +73,8 @@ const createTripStudentsForTrip = async (
     trip_id: tripId,
     student_id: assignment.student_id,
     sequence_order: index + 1,
-    attendance_status: "pending",
-    pickup_status: "pending",
+    attendance_status: AttendanceStatus.PENDING,
+    pickup_status: PickupStatus.PENDING,
     pickup_time: null,
     pickup_latitude: null,
     pickup_longitude: null,

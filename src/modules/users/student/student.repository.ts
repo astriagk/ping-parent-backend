@@ -1,6 +1,7 @@
 import { ObjectId, WithId } from "mongodb";
 
 import {
+  AssignmentStatus,
   DRIVERS_COLLECTION,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
@@ -73,7 +74,7 @@ export class StudentRepository extends BaseRepository<Student> {
               {
                 $match: {
                   $expr: { $eq: ["$student_id", "$$studentId"] },
-                  assignment_status: { $ne: "inactive" },
+                  assignment_status: { $ne: AssignmentStatus.INACTIVE },
                 },
               },
             ],
@@ -174,7 +175,7 @@ export class StudentRepository extends BaseRepository<Student> {
               {
                 $match: {
                   $expr: { $eq: ["$student_id", "$$studentId"] },
-                  assignment_status: { $ne: "inactive" },
+                  assignment_status: { $ne: AssignmentStatus.INACTIVE },
                 },
               },
             ],
