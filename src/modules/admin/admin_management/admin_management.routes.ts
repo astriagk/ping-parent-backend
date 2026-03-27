@@ -1,4 +1,3 @@
-import { updateUserSchema } from "@modules/auth/auth.validation";
 import { validate } from "@shared/middlewares";
 
 import {
@@ -31,6 +30,7 @@ import {
   adminLoginSchema,
   createAdminSchema,
   updateAdminSchema,
+  updateUserSchema,
   verifyPasswordHashSchema,
 } from "./admin_management.validation";
 

@@ -1,8 +1,12 @@
 import Joi from "joi";
 
+import { VALIDATION_MESSAGES } from "@shared/constants";
+
 export const updatePreferencesSchema = Joi.object({
   push_enabled: Joi.boolean().required().messages({
-    "any.required": "Push enabled preference is required",
-    "boolean.base": "Push enabled must be a boolean",
+    "any.required":
+      VALIDATION_MESSAGES.NOTIFICATION_PREFERENCES.PUSH_ENABLED_REQUIRED,
+    "boolean.base":
+      VALIDATION_MESSAGES.NOTIFICATION_PREFERENCES.PUSH_ENABLED_BASE,
   }),
 });

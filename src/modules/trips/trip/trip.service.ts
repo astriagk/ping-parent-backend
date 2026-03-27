@@ -2,21 +2,18 @@ import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
+  AssignmentStatus,
   AttendanceStatus,
   BroadcastSocketEvent,
   DRIVERS_COLLECTION,
   DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
-  PARENTS_COLLECTION,
   PickupStatus,
-  SCHOOLS_COLLECTION,
-  STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
   TRIP_STUDENTS_COLLECTION,
   TripStatus,
   TripType,
-  USERS_COLLECTION,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { socketService } from "@shared/services/socket.service";
@@ -59,7 +56,7 @@ const createTripStudentsForTrip = async (
     .collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION)
     .find({
       driver_id: driverId,
-      assignment_status: "active",
+      assignment_status: AssignmentStatus.ACTIVE,
     })
     .toArray();
 
@@ -72,8 +69,8 @@ const createTripStudentsForTrip = async (
     trip_id: tripId,
     student_id: assignment.student_id,
     sequence_order: index + 1,
-    attendance_status: "pending",
-    pickup_status: "pending",
+    attendance_status: AttendanceStatus.PENDING,
+    pickup_status: PickupStatus.PENDING,
     pickup_time: null,
     pickup_latitude: null,
     pickup_longitude: null,
@@ -154,123 +151,22 @@ export const createTrip = async (
   return createdTrip;
 };
 
-export const getTripById = async (id: string): Promise<WithId<Trip> | null> => {
-  return await tripRepository.findById(id);
+export const getTripById = async (
+  id: string,
+): Promise<Record<string, unknown> | null> => {
+  return await tripRepository.findByIdWithDetails(id);
 };
 
 /**
  * Get all trips across the system (admin only) — with driver, school and student count joined
  */
 export const getAllTrips = async (): Promise<Record<string, unknown>[]> => {
-  const db = await getDB();
-  return await db
-    .collection(TRIPS_COLLECTION)
-    .aggregate([
-      {
-        $addFields: {
-          driver_obj_id: { $toObjectId: "$driver_id" },
-          school_obj_id: { $toObjectId: "$school_id" },
-        },
-      },
-      {
-        $lookup: {
-          from: DRIVERS_COLLECTION,
-          localField: "driver_obj_id",
-          foreignField: "_id",
-          as: "driver",
-        },
-      },
-      { $unwind: { path: "$driver", preserveNullAndEmptyArrays: true } },
-      {
-        $addFields: {
-          driver_user_obj_id: {
-            $cond: [
-              { $ne: ["$driver.user_id", null] },
-              { $toObjectId: "$driver.user_id" },
-              null,
-            ],
-          },
-        },
-      },
-      {
-        $lookup: {
-          from: USERS_COLLECTION,
-          localField: "driver_user_obj_id",
-          foreignField: "_id",
-          as: "driver_user",
-        },
-      },
-      { $unwind: { path: "$driver_user", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: SCHOOLS_COLLECTION,
-          localField: "school_obj_id",
-          foreignField: "_id",
-          as: "school",
-        },
-      },
-      { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
-      {
-        $lookup: {
-          from: TRIP_STUDENTS_COLLECTION,
-          let: { tripIdStr: { $toString: "$_id" } },
-          pipeline: [
-            { $match: { $expr: { $eq: ["$trip_id", "$$tripIdStr"] } } },
-            { $count: "count" },
-          ],
-          as: "student_count_arr",
-        },
-      },
-      {
-        $project: {
-          _id: 1,
-          driver_id: 1,
-          school_id: 1,
-          trip_type: 1,
-          trip_date: 1,
-          trip_status: 1,
-          start_time: 1,
-          end_time: 1,
-          total_distance: 1,
-          created_at: 1,
-          updated_at: 1,
-          student_count: {
-            $ifNull: [{ $arrayElemAt: ["$student_count_arr.count", 0] }, 0],
-          },
-          driver: {
-            $cond: {
-              if: { $ne: ["$driver", null] },
-              then: {
-                driver_id: { $toString: "$driver._id" },
-                name: "$driver.name",
-                driver_unique_id: "$driver.driver_unique_id",
-                vehicle_type: "$driver.vehicle_type",
-                vehicle_number: "$driver.vehicle_number",
-                phone_number: "$driver_user.phone_number",
-              },
-              else: null,
-            },
-          },
-          school: {
-            $cond: {
-              if: { $ne: ["$school", null] },
-              then: {
-                school_id: { $toString: "$school._id" },
-                school_name: "$school.school_name",
-                city: "$school.city",
-              },
-              else: null,
-            },
-          },
-        },
-      },
-    ])
-    .toArray();
+  return await tripRepository.findAllWithDetails();
 };
 
 export const getTripsByUserId = async (
   userId: string,
-): Promise<WithId<Trip>[]> => {
+): Promise<Record<string, unknown>[]> => {
   const driverId = await getDriverIdByUserId(userId);
 
   if (!driverId) {
@@ -280,7 +176,7 @@ export const getTripsByUserId = async (
     );
   }
 
-  return await tripRepository.findByDriverId(driverId);
+  return await tripRepository.findByDriverIdWithDetails(driverId);
 };
 
 export const getTripsByDriverIdAndDate = async (
@@ -620,146 +516,5 @@ export const getTripProgress = async (
 export const getCompletedTripDetails = async (
   tripId: string,
 ): Promise<CompletedTripDetails | null> => {
-  const db = await getDB();
-
-  const result = await db
-    .collection(TRIPS_COLLECTION)
-    .aggregate<CompletedTripDetails>([
-      // Stage 1: Match the trip by _id
-      {
-        $match: { _id: new ObjectId(tripId) },
-      },
-      // Stage 2: Lookup trip_students for this trip (trip_id stored as string in trip_students)
-      {
-        $lookup: {
-          from: TRIP_STUDENTS_COLLECTION,
-          let: { tripId: { $toString: "$_id" } },
-          pipeline: [{ $match: { $expr: { $eq: ["$trip_id", "$$tripId"] } } }],
-          as: "tripStudents",
-        },
-      },
-      // Stage 3: Unwind trip_students to join with students
-      {
-        $unwind: {
-          path: "$tripStudents",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      // Stage 4: Lookup student details (student_id stored as string, students._id is ObjectId)
-      {
-        $lookup: {
-          from: STUDENTS_COLLECTION,
-          let: { studentId: { $toObjectId: "$tripStudents.student_id" } },
-          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$studentId"] } } }],
-          as: "studentDetails",
-        },
-      },
-      // Stage 5: Unwind student details
-      {
-        $unwind: {
-          path: "$studentDetails",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      // Stage 6: Lookup parent details using parent_id from students
-      {
-        $lookup: {
-          from: PARENTS_COLLECTION,
-          let: { parentId: { $toObjectId: "$studentDetails.parent_id" } },
-          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$parentId"] } } }],
-          as: "parentDetails",
-        },
-      },
-      // Stage 7: Unwind parent details
-      {
-        $unwind: {
-          path: "$parentDetails",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      // Stage 8: Lookup user details for parent phone number
-      {
-        $lookup: {
-          from: USERS_COLLECTION,
-          let: { userId: { $toObjectId: "$parentDetails.user_id" } },
-          pipeline: [{ $match: { $expr: { $eq: ["$_id", "$$userId"] } } }],
-          as: "userDetails",
-        },
-      },
-      // Stage 9: Unwind user details
-      {
-        $unwind: {
-          path: "$userDetails",
-          preserveNullAndEmptyArrays: true,
-        },
-      },
-      // Stage 10: Group back to trip level with students array
-      {
-        $group: {
-          _id: "$_id",
-          trip_id: { $first: { $toString: "$_id" } },
-          driver_id: { $first: "$driver_id" },
-          school_id: { $first: "$school_id" },
-          trip_type: { $first: "$trip_type" },
-          trip_date: { $first: "$trip_date" },
-          trip_status: { $first: "$trip_status" },
-          start_time: { $first: "$start_time" },
-          end_time: { $first: "$end_time" },
-          total_distance: { $first: "$total_distance" },
-          created_at: { $first: "$created_at" },
-          students: {
-            $push: {
-              $cond: {
-                if: { $ne: ["$tripStudents", null] },
-                then: {
-                  trip_student_id: { $toString: "$tripStudents._id" },
-                  student_id: "$tripStudents.student_id",
-                  student_name: "$studentDetails.student_name",
-                  student_class: "$studentDetails.class",
-                  student_section: "$studentDetails.section",
-                  student_roll_number: "$studentDetails.roll_number",
-                  student_photo_url: "$studentDetails.photo_url",
-                  student_gender: "$studentDetails.gender",
-                  attendance_status: "$tripStudents.attendance_status",
-                  pickup_status: "$tripStudents.pickup_status",
-                  pickup_time: "$tripStudents.pickup_time",
-                  drop_time: "$tripStudents.drop_time",
-                  parent: {
-                    parent_id: { $toString: "$parentDetails._id" },
-                    name: "$parentDetails.name",
-                    email: "$parentDetails.email",
-                    photo_url: "$parentDetails.photo_url",
-                    phone_number: "$userDetails.phone_number",
-                  },
-                },
-                else: "$$REMOVE",
-              },
-            },
-          },
-        },
-      },
-      // Stage 11: Project final output
-      {
-        $project: {
-          trip_id: 1,
-          driver_id: 1,
-          school_id: 1,
-          trip_type: 1,
-          trip_date: 1,
-          trip_status: 1,
-          start_time: 1,
-          end_time: 1,
-          total_distance: 1,
-          created_at: 1,
-          students: 1,
-        },
-      },
-    ])
-    .toArray();
-
-  if (result.length === 0) {
-    return null;
-  }
-
-  return result[0];
+  return await tripRepository.findCompletedTripWithDetails(tripId);
 };

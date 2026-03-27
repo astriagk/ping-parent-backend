@@ -1,5 +1,6 @@
 import {
   BroadcastSocketEvent,
+  MESSAGE_TEMPLATES,
   ParentNotificationEvent,
 } from "@shared/constants";
 import { socketService } from "@shared/services/socket.service";
@@ -107,7 +108,7 @@ export class BroadcastService {
         studentId,
         studentName,
         driverId,
-        message: `Your child ${studentName} has been picked up`,
+        message: MESSAGE_TEMPLATES.NOTIFICATION.childPicked(studentName),
         timestamp: new Date(),
       },
     );
@@ -131,7 +132,7 @@ export class BroadcastService {
         studentId,
         studentName,
         driverId,
-        message: `Your child ${studentName} has been dropped off`,
+        message: MESSAGE_TEMPLATES.NOTIFICATION.childDropped(studentName),
         timestamp: new Date(),
       },
     );
@@ -157,7 +158,9 @@ export class BroadcastService {
         studentName,
         eta,
         driverId,
-        message: `Driver is approaching - ETA ${Math.ceil(eta / 60)} minutes`,
+        message: MESSAGE_TEMPLATES.NOTIFICATION.driverApproaching(
+          Math.ceil(eta / 60),
+        ),
         timestamp: new Date(),
       },
     );
@@ -177,8 +180,8 @@ export class BroadcastService {
     const studentIds = students.map((s) => s.studentId);
     const message =
       students.length === 1
-        ? `Your child ${studentNames} has been picked up`
-        : `Your children ${studentNames} have been picked up`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childPicked(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenPicked(studentNames);
 
     logger.info(
       `[Notify Parent] Students Picked | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
@@ -208,8 +211,8 @@ export class BroadcastService {
     const studentIds = students.map((s) => s.studentId);
     const message =
       students.length === 1
-        ? `Your child ${studentNames} has been dropped off`
-        : `Your children ${studentNames} have been dropped off`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childDropped(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenDropped(studentNames);
 
     logger.info(
       `[Notify Parent] Students Dropped | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
@@ -238,8 +241,8 @@ export class BroadcastService {
     const studentIds = students.map((s) => s.studentId);
     const message =
       students.length === 1
-        ? `Your child ${studentNames} was marked absent`
-        : `Your children ${studentNames} were marked absent`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childAbsent(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenAbsent(studentNames);
 
     logger.info(
       `[Notify Parent] Students Absent | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,
@@ -269,8 +272,8 @@ export class BroadcastService {
     const studentIds = students.map((s) => s.studentId);
     const message =
       students.length === 1
-        ? `Updated ETA for ${studentNames}`
-        : `Updated ETAs for ${studentNames}`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.updatedEta(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.updatedEtas(studentNames);
 
     logger.info(
       `[Notify Parent] Route Recalculated | Parent: ${parentId} | Trip: ${tripId} | Students: ${studentIds.join(", ")} | Driver: ${driverId}`,

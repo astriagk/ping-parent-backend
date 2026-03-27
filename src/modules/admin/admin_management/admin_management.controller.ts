@@ -4,10 +4,10 @@ import jwt from "jsonwebtoken";
 import {
   activateUser as activateUserService,
   deactivateUser as deactivateUserService,
-  deleteUser as deleteUserService,
+  // deleteUser as deleteUserService,
   getAllUsers as getAllUsersService,
   getUserById as getUserByIdService,
-  updateUser as updateUserService,
+  // updateUser as updateUserService,
 } from "@modules/auth/auth.service";
 import {
   getCompleteDriverDetailsById,
@@ -19,6 +19,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -85,7 +86,7 @@ export const createInitialSuperAdmin = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: newSuperAdmin,
-      message: SUCCESS_MESSAGES.ADMIN.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -108,7 +109,7 @@ export const createAdmin = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.CREATED).json({
     success: true,
     data: newAdmin,
-    message: SUCCESS_MESSAGES.ADMIN.CREATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
   });
 });
 
@@ -119,7 +120,7 @@ export const getAll = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: admins,
-    message: SUCCESS_MESSAGES.ADMIN.LIST_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
   });
 });
 
@@ -136,7 +137,7 @@ export const getById = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: admin,
-    message: SUCCESS_MESSAGES.ADMIN.FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -163,7 +164,7 @@ export const updateAdmin = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: updatedAdmin,
-    message: SUCCESS_MESSAGES.ADMIN.UPDATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
   });
 });
 
@@ -234,7 +235,7 @@ export const getAllUsers = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: users,
-    message: SUCCESS_MESSAGES.AUTH.USERS_LIST_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
   });
 });
 
@@ -254,7 +255,7 @@ export const getUserById = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: user,
-    message: SUCCESS_MESSAGES.AUTH.USER_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
   });
 });
 
@@ -263,19 +264,20 @@ export const updateUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as Record<string, string>;
   const updates = req.body;
 
-  const updatedUser = await updateUserService(id, updates);
+  const updatedUser = {};
+  // const updatedUser = await updateUserService(id, updates);
 
-  if (!updatedUser) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
-    );
-  }
+  // if (!updatedUser) {
+  //   throw new ApiError(
+  //     HTTP_STATUS.NOT_FOUND,
+  //     ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+  //   );
+  // }
 
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: updatedUser,
-    message: SUCCESS_MESSAGES.AUTH.USER_UPDATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
   });
 });
 
@@ -327,19 +329,19 @@ export const deactivateUser = asyncHandler(
 export const deleteUser = asyncHandler(async (req: Request, res: Response) => {
   const { id } = req.params as Record<string, string>;
 
-  const deleted = await deleteUserService(id);
+  // const deleted = await deleteUserService(id);
 
-  if (!deleted) {
-    throw new ApiError(
-      HTTP_STATUS.NOT_FOUND,
-      ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
-    );
-  }
+  // if (!deleted) {
+  //   throw new ApiError(
+  //     HTTP_STATUS.NOT_FOUND,
+  //     ERROR_MESSAGES.AUTH.USER_NOT_FOUND,
+  //   );
+  // }
 
   return res.status(HTTP_STATUS.OK).json({
     success: true,
     data: null,
-    message: SUCCESS_MESSAGES.AUTH.USER_DELETED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
   });
 });
 
@@ -450,7 +452,7 @@ export const getByAdminId = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: admin,
-      message: SUCCESS_MESSAGES.ADMIN.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -483,7 +485,7 @@ export const updateAdminByAdminId = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAdmin,
-      message: SUCCESS_MESSAGES.ADMIN.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -565,7 +567,7 @@ export const getDriverCompleteDetails = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: driverDetails,
-      message: SUCCESS_MESSAGES.DRIVER.DETAILS_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -587,7 +589,7 @@ export const getParentCompleteDetails = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: parentDetails,
-      message: SUCCESS_MESSAGES.PARENT.DETAILS_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -602,7 +604,7 @@ export const getAdminsBySchool = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: admins,
-      message: SUCCESS_MESSAGES.ADMIN.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );

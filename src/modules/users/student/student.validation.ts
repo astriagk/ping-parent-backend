@@ -49,6 +49,7 @@ export const createStudentSchema = Joi.object({
 });
 
 export const updateStudentSchema = Joi.object({
+  school_id: Joi.string().optional(),
   student_name: Joi.string().min(2).max(100).optional().messages({
     "string.min": VALIDATION_MESSAGES.STUDENT.NAME_MIN,
     "string.max": VALIDATION_MESSAGES.STUDENT.NAME_MAX,

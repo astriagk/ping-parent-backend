@@ -10,7 +10,12 @@ import {
   TravelMode,
   UnitSystem,
 } from "@googlemaps/google-maps-services-js";
-import { ERROR_MESSAGES, HTTP_STATUS } from "@shared/constants";
+import {
+  ERROR_MESSAGES,
+  GoogleMapsAvoidOption,
+  GoogleMapsTrafficModel,
+  HTTP_STATUS,
+} from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 import { logger } from "@shared/utils";
 
@@ -20,15 +25,15 @@ export interface Coordinate {
 }
 
 export interface RouteOptions {
-  trafficModel?: "best_guess" | "pessimistic" | "optimistic";
-  avoid?: ("tolls" | "highways" | "ferries")[];
+  trafficModel?: GoogleMapsTrafficModel;
+  avoid?: GoogleMapsAvoidOption[];
   departureTime?: Date;
 }
 
-const TRAFFIC_MODEL_MAP: Record<string, TrafficModel> = {
-  best_guess: TrafficModel.best_guess,
-  pessimistic: TrafficModel.pessimistic,
-  optimistic: TrafficModel.optimistic,
+const TRAFFIC_MODEL_MAP: Record<GoogleMapsTrafficModel, TrafficModel> = {
+  [GoogleMapsTrafficModel.BEST_GUESS]: TrafficModel.best_guess,
+  [GoogleMapsTrafficModel.PESSIMISTIC]: TrafficModel.pessimistic,
+  [GoogleMapsTrafficModel.OPTIMISTIC]: TrafficModel.optimistic,
 };
 
 class GoogleMapsApiService {
@@ -71,7 +76,10 @@ class GoogleMapsApiService {
         mode: TravelMode.driving,
         units: UnitSystem.metric,
         departure_time: options?.departureTime || new Date(),
-        traffic_model: TRAFFIC_MODEL_MAP[options?.trafficModel || "best_guess"],
+        traffic_model:
+          TRAFFIC_MODEL_MAP[
+            options?.trafficModel || GoogleMapsTrafficModel.BEST_GUESS
+          ],
         key: this.apiKey,
       };
 

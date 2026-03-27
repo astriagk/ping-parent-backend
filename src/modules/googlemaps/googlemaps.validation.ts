@@ -1,6 +1,10 @@
 import Joi from "joi";
 
-import { VALIDATION_MESSAGES } from "@shared/constants";
+import {
+  GoogleMapsAvoidOption,
+  GoogleMapsTrafficModel,
+  VALIDATION_MESSAGES,
+} from "@shared/constants";
 
 export const calculateGoogleRouteSchema = Joi.object({
   trip_id: Joi.string().required().messages({
@@ -20,14 +24,14 @@ export const calculateGoogleRouteSchema = Joi.object({
     "number.max": VALIDATION_MESSAGES.TRACKING.CURRENT_LONGITUDE_RANGE,
   }),
   traffic_model: Joi.string()
-    .valid("best_guess", "pessimistic", "optimistic")
+    .valid(...Object.values(GoogleMapsTrafficModel))
     .optional()
     .messages({
       "any.only":
         "Traffic model must be one of: best_guess, pessimistic, optimistic",
     }),
   avoid: Joi.array()
-    .items(Joi.string().valid("tolls", "highways", "ferries"))
+    .items(Joi.string().valid(...Object.values(GoogleMapsAvoidOption)))
     .optional()
     .messages({
       "array.base": "Avoid must be an array",
@@ -52,14 +56,14 @@ export const recalculateGoogleRouteSchema = Joi.object({
     "number.max": VALIDATION_MESSAGES.TRACKING.CURRENT_LONGITUDE_RANGE,
   }),
   traffic_model: Joi.string()
-    .valid("best_guess", "pessimistic", "optimistic")
+    .valid(...Object.values(GoogleMapsTrafficModel))
     .optional()
     .messages({
       "any.only":
         "Traffic model must be one of: best_guess, pessimistic, optimistic",
     }),
   avoid: Joi.array()
-    .items(Joi.string().valid("tolls", "highways", "ferries"))
+    .items(Joi.string().valid(...Object.values(GoogleMapsAvoidOption)))
     .optional(),
   force_recalculate: Joi.boolean().optional(),
 });
