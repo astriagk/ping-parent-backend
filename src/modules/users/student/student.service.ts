@@ -78,10 +78,8 @@ export const getStudentsBySchoolId = async (
   return await studentRepository.findBySchoolId(schoolId);
 };
 
-export const getStudentById = async (
-  id: string,
-): Promise<WithId<Student> | null> => {
-  return await studentRepository.findById(id);
+export const getStudentById = async (id: string): Promise<any | null> => {
+  return await studentRepository.findByIdWithPopulate(id);
 };
 
 export const getStudentByStudentId = async (
