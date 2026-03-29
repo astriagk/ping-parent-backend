@@ -5,6 +5,7 @@ import {
   createSchoolSubscription,
   generateStudentCodes,
   getActiveSchoolSubscription,
+  getAllSchoolSubscriptions,
   getCodesBySchoolSubscription,
   getExpiredSubscriptions,
   getSchoolSubscriptionById,
@@ -29,6 +30,7 @@ export const schoolSubscriptionHandlers = {
   admin: {
     validateCreate: validate(createSchoolSubscriptionValidation),
     create: createSchoolSubscription,
+    getAll: getAllSchoolSubscriptions,
     getBySchool: getSchoolSubscriptions,
     getActiveBySchool: getActiveSchoolSubscription,
     getById: getSchoolSubscriptionById,
