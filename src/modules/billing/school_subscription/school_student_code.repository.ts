@@ -5,6 +5,7 @@ import {
   PARENTS_COLLECTION,
   SCHOOL_STUDENT_CODES_COLLECTION,
   STUDENTS_COLLECTION,
+  USERS_COLLECTION,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
@@ -36,12 +37,80 @@ export class SchoolStudentCodeRepository extends BaseRepository<SchoolStudentCod
             let: { studentId: { $toObjectId: "$student_id" } },
             pipeline: [
               { $match: { $expr: { $eq: ["$_id", "$$studentId"] } } },
-              { $project: { student_name: 1, class: 1, section: 1 } },
+              {
+                $project: {
+                  student_name: 1,
+                  class: 1,
+                  section: 1,
+                  parent_id: 1,
+                },
+              },
             ],
             as: "student",
           },
         },
         { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+        // Join student's parent
+        {
+          $lookup: {
+            from: PARENTS_COLLECTION,
+            let: {
+              parentId: {
+                $cond: {
+                  if: "$student.parent_id",
+                  then: { $toObjectId: "$student.parent_id" },
+                  else: null,
+                },
+              },
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $ne: ["$$parentId", null] },
+                      { $eq: ["$_id", "$$parentId"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { name: 1, email: 1, user_id: 1 } },
+            ],
+            as: "parent",
+          },
+        },
+        { $unwind: { path: "$parent", preserveNullAndEmptyArrays: true } },
+        // Join parent user for phone number
+        {
+          $lookup: {
+            from: USERS_COLLECTION,
+            let: {
+              userId: {
+                $cond: {
+                  if: "$parent.user_id",
+                  then: { $toObjectId: "$parent.user_id" },
+                  else: null,
+                },
+              },
+            },
+            pipeline: [
+              {
+                $match: {
+                  $expr: {
+                    $and: [
+                      { $ne: ["$$userId", null] },
+                      { $eq: ["$_id", "$$userId"] },
+                    ],
+                  },
+                },
+              },
+              { $project: { phone_number: 1 } },
+            ],
+            as: "parent_user",
+          },
+        },
+        { $unwind: { path: "$parent_user", preserveNullAndEmptyArrays: true } },
+        // Join parent who redeemed the code
         {
           $lookup: {
             from: PARENTS_COLLECTION,
@@ -88,6 +157,9 @@ export class SchoolStudentCodeRepository extends BaseRepository<SchoolStudentCod
             student_class: "$student.class",
             student_section: "$student.section",
             redeemed_by_name: "$redeemed_by.name",
+            parent_name: "$parent.name",
+            parent_email: "$parent.email",
+            parent_phone: "$parent_user.phone_number",
           },
         },
       ])

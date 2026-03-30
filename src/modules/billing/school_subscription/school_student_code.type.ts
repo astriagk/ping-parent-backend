@@ -32,4 +32,7 @@ export interface SchoolStudentCodeListItem {
   student_class?: string;
   student_section?: string;
   redeemed_by_name?: string;
+  parent_name?: string;
+  parent_phone?: string;
+  parent_email?: string;
 }
