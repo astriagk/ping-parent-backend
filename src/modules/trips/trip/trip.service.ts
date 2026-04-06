@@ -160,8 +160,10 @@ export const getTripById = async (
 /**
  * Get all trips across the system (admin only) — with driver, school and student count joined
  */
-export const getAllTrips = async (): Promise<Record<string, unknown>[]> => {
-  return await tripRepository.findAllWithDetails();
+export const getAllTrips = async (
+  statuses?: string[],
+): Promise<Record<string, unknown>[]> => {
+  return await tripRepository.findAllWithDetails(statuses);
 };
 
 export const getTripsByUserId = async (

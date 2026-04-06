@@ -2,6 +2,7 @@ import { ObjectId, WithId } from "mongodb";
 
 import {
   DRIVERS_COLLECTION,
+  LOCATION_TRACKING_COLLECTION,
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
   SCHOOLS_COLLECTION,
@@ -250,110 +251,275 @@ export class TripRepository extends BaseRepository<Trip> {
     return results[0] ?? null;
   }
 
-  async findAllWithDetails(): Promise<Record<string, unknown>[]> {
+  async findAllWithDetails(
+    statuses?: string[],
+  ): Promise<Record<string, unknown>[]> {
     const collection = this.getCollection();
-    return await collection
-      .aggregate([
-        {
-          $addFields: {
-            driver_obj_id: { $toObjectId: "$driver_id" },
-            school_obj_id: { $toObjectId: "$school_id" },
-          },
+
+    const pipeline: object[] = [];
+
+    if (statuses && statuses.length > 0) {
+      pipeline.push({ $match: { trip_status: { $in: statuses } } });
+    }
+
+    pipeline.push(
+      {
+        $addFields: {
+          driver_obj_id: { $toObjectId: "$driver_id" },
         },
-        {
-          $lookup: {
-            from: DRIVERS_COLLECTION,
-            localField: "driver_obj_id",
-            foreignField: "_id",
-            as: "driver",
-          },
+      },
+      {
+        $lookup: {
+          from: DRIVERS_COLLECTION,
+          localField: "driver_obj_id",
+          foreignField: "_id",
+          as: "driver",
         },
-        { $unwind: { path: "$driver", preserveNullAndEmptyArrays: true } },
-        {
-          $addFields: {
-            driver_user_obj_id: {
-              $cond: [
-                { $ne: ["$driver.user_id", null] },
-                { $toObjectId: "$driver.user_id" },
-                null,
-              ],
-            },
-          },
-        },
-        {
-          $lookup: {
-            from: USERS_COLLECTION,
-            localField: "driver_user_obj_id",
-            foreignField: "_id",
-            as: "driver_user",
-          },
-        },
-        { $unwind: { path: "$driver_user", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: SCHOOLS_COLLECTION,
-            localField: "school_obj_id",
-            foreignField: "_id",
-            as: "school",
-          },
-        },
-        { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: TRIP_STUDENTS_COLLECTION,
-            let: { tripIdStr: { $toString: "$_id" } },
-            pipeline: [
-              { $match: { $expr: { $eq: ["$trip_id", "$$tripIdStr"] } } },
-              { $count: "count" },
+      },
+      { $unwind: { path: "$driver", preserveNullAndEmptyArrays: true } },
+      {
+        $addFields: {
+          school_obj_id: {
+            $cond: [
+              {
+                $ne: [{ $ifNull: ["$school_id", "$driver.school_id"] }, null],
+              },
+              {
+                $toObjectId: {
+                  $ifNull: ["$school_id", "$driver.school_id"],
+                },
+              },
+              null,
             ],
-            as: "student_count_arr",
           },
         },
-        {
-          $project: {
-            _id: 1,
-            driver_id: 1,
-            school_id: 1,
-            trip_type: 1,
-            trip_date: 1,
-            trip_status: 1,
-            start_time: 1,
-            end_time: 1,
-            total_distance: 1,
-            created_at: 1,
-            updated_at: 1,
-            student_count: {
-              $ifNull: [{ $arrayElemAt: ["$student_count_arr.count", 0] }, 0],
-            },
-            driver: {
-              $cond: {
-                if: { $ne: ["$driver", null] },
-                then: {
-                  driver_id: { $toString: "$driver._id" },
-                  name: "$driver.name",
-                  driver_unique_id: "$driver.driver_unique_id",
-                  vehicle_type: "$driver.vehicle_type",
-                  vehicle_number: "$driver.vehicle_number",
-                  phone_number: "$driver_user.phone_number",
-                },
-                else: null,
+      },
+      {
+        $addFields: {
+          driver_user_obj_id: {
+            $cond: [
+              { $ne: ["$driver.user_id", null] },
+              { $toObjectId: "$driver.user_id" },
+              null,
+            ],
+          },
+        },
+      },
+      {
+        $lookup: {
+          from: USERS_COLLECTION,
+          localField: "driver_user_obj_id",
+          foreignField: "_id",
+          as: "driver_user",
+        },
+      },
+      { $unwind: { path: "$driver_user", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: SCHOOLS_COLLECTION,
+          localField: "school_obj_id",
+          foreignField: "_id",
+          as: "school",
+        },
+      },
+      { $unwind: { path: "$school", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
+          from: TRIP_STUDENTS_COLLECTION,
+          let: { tripIdStr: { $toString: "$_id" } },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$trip_id", "$$tripIdStr"] } } },
+            {
+              $addFields: {
+                student_obj_id: { $toObjectId: "$student_id" },
               },
             },
-            school: {
-              $cond: {
-                if: { $ne: ["$school", null] },
-                then: {
-                  school_id: { $toString: "$school._id" },
-                  school_name: "$school.school_name",
-                  city: "$school.city",
-                },
-                else: null,
+            {
+              $lookup: {
+                from: STUDENTS_COLLECTION,
+                localField: "student_obj_id",
+                foreignField: "_id",
+                as: "student",
               },
+            },
+            { $unwind: { path: "$student", preserveNullAndEmptyArrays: true } },
+            {
+              $addFields: {
+                parent_obj_id: {
+                  $cond: [
+                    { $ne: ["$student.parent_id", null] },
+                    { $toObjectId: "$student.parent_id" },
+                    null,
+                  ],
+                },
+                pickup_address_obj_id: {
+                  $cond: [
+                    { $ne: ["$student.pickup_address_id", null] },
+                    { $toObjectId: "$student.pickup_address_id" },
+                    null,
+                  ],
+                },
+              },
+            },
+            {
+              $lookup: {
+                from: PARENTS_COLLECTION,
+                localField: "parent_obj_id",
+                foreignField: "_id",
+                as: "parent",
+              },
+            },
+            { $unwind: { path: "$parent", preserveNullAndEmptyArrays: true } },
+            {
+              $addFields: {
+                parent_user_obj_id: {
+                  $cond: [
+                    { $ne: ["$parent.user_id", null] },
+                    { $toObjectId: "$parent.user_id" },
+                    null,
+                  ],
+                },
+              },
+            },
+            {
+              $lookup: {
+                from: USERS_COLLECTION,
+                localField: "parent_user_obj_id",
+                foreignField: "_id",
+                as: "parent_user",
+              },
+            },
+            {
+              $unwind: {
+                path: "$parent_user",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $lookup: {
+                from: PARENT_ADDRESSES_COLLECTION,
+                localField: "pickup_address_obj_id",
+                foreignField: "_id",
+                as: "pickup_address",
+              },
+            },
+            {
+              $unwind: {
+                path: "$pickup_address",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            { $sort: { sequence_order: 1 } },
+            {
+              $group: {
+                _id: "$student.parent_id",
+                parent_id: { $first: { $toString: "$parent._id" } },
+                parent_name: { $first: "$parent.name" },
+                parent_phone: { $first: "$parent_user.phone_number" },
+                pickup_address: { $first: "$pickup_address.full_address" },
+                students: {
+                  $push: {
+                    trip_student_id: { $toString: "$_id" },
+                    student_id: "$student_id",
+                    student_name: "$student.student_name",
+                    attendance_status: "$attendance_status",
+                    pickup_status: "$pickup_status",
+                    sequence_order: "$sequence_order",
+                  },
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                parent_id: 1,
+                parent_name: 1,
+                parent_phone: 1,
+                pickup_address: 1,
+                students: 1,
+              },
+            },
+          ],
+          as: "students_by_parent",
+        },
+      },
+      {
+        $lookup: {
+          from: LOCATION_TRACKING_COLLECTION,
+          let: { tripIdStr: { $toString: "$_id" } },
+          pipeline: [
+            { $match: { $expr: { $eq: ["$trip_id", "$$tripIdStr"] } } },
+            { $sort: { timestamp: -1 } },
+            { $limit: 1 },
+            {
+              $project: {
+                _id: 0,
+                latitude: 1,
+                longitude: 1,
+                speed: 1,
+                heading: 1,
+                accuracy: 1,
+                timestamp: 1,
+              },
+            },
+          ],
+          as: "current_position_arr",
+        },
+      },
+      {
+        $project: {
+          _id: 1,
+          driver_id: 1,
+          school_id: 1,
+          trip_type: 1,
+          trip_date: 1,
+          trip_status: 1,
+          start_time: 1,
+          end_time: 1,
+          total_distance: 1,
+          created_at: 1,
+          updated_at: 1,
+          student_count: {
+            $reduce: {
+              input: "$students_by_parent",
+              initialValue: 0,
+              in: { $add: ["$$value", { $size: "$$this.students" }] },
+            },
+          },
+          students_by_parent: 1,
+          current_position: {
+            $ifNull: [{ $arrayElemAt: ["$current_position_arr", 0] }, null],
+          },
+          driver: {
+            $cond: {
+              if: { $ne: ["$driver", null] },
+              then: {
+                driver_id: { $toString: "$driver._id" },
+                name: "$driver.name",
+                driver_unique_id: "$driver.driver_unique_id",
+                vehicle_type: "$driver.vehicle_type",
+                vehicle_number: "$driver.vehicle_number",
+                phone_number: "$driver_user.phone_number",
+              },
+              else: null,
+            },
+          },
+          school: {
+            $cond: {
+              if: { $ne: ["$school", null] },
+              then: {
+                school_id: { $toString: "$school._id" },
+                school_name: "$school.school_name",
+                city: "$school.city",
+              },
+              else: { school_id: null },
             },
           },
         },
-      ])
-      .toArray();
+      },
+    );
+
+    return await collection.aggregate(pipeline).toArray();
   }
 
   async findByDriverIdWithDetails(

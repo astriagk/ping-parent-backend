@@ -29,7 +29,16 @@ import {
  */
 export const getAllTripsController = asyncHandler(
   async (req: Request, res: Response) => {
-    const trips = await getAllTrips();
+    const { status } = req.query as { status?: string };
+
+    const statuses = status
+      ? status
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    const trips = await getAllTrips(statuses);
 
     return res.json({
       success: true,
