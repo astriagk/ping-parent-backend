@@ -5,6 +5,7 @@ import { schoolSubscriptionHandlers } from "@modules/billing/school_subscription
 const router = Router();
 
 // --- School Subscriptions ---
+router.get("/school-subscriptions", schoolSubscriptionHandlers.admin.getAll);
 router.post(
   "/school-subscriptions",
   schoolSubscriptionHandlers.admin.validateCreate,

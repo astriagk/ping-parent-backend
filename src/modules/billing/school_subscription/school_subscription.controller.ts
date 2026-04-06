@@ -13,6 +13,7 @@ import {
   createSchoolSubscription as createSchoolSubscriptionService,
   generateStudentCodes as generateStudentCodesService,
   getActiveSchoolSubscription as getActiveSchoolSubscriptionService,
+  getAllSchoolSubscriptions as getAllSchoolSubscriptionsService,
   getCodesBySchoolSubscription as getCodesBySchoolSubscriptionService,
   getExpiredSchoolSubscriptions as getExpiredSchoolSubscriptionsService,
   getSchoolSubscriptionById as getSchoolSubscriptionByIdService,
@@ -36,6 +37,22 @@ export const createSchoolSubscription = asyncHandler(
       success: true,
       data: subscription,
       message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+/**
+ * Get all school subscriptions (admin)
+ * @route GET /api/v1/billing/school-subscriptions
+ */
+export const getAllSchoolSubscriptions = asyncHandler(
+  async (req: Request, res: Response) => {
+    const subscriptions = await getAllSchoolSubscriptionsService();
+
+    return res.json({
+      success: true,
+      data: subscriptions,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

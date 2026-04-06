@@ -216,6 +216,7 @@ export const VALIDATION_MESSAGES = {
     NAME_REQUIRED: "School name is required",
     STATE_MAX: "State cannot exceed 100 characters",
     STATE_REQUIRED: "State is required",
+    PRINCIPAL_NAME_MAX: "Principal name cannot exceed 100 characters",
   },
   SCHOOL_SUBSCRIPTION: {
     END_DATE_BASE: "end_date must be a valid date",

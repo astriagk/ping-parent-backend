@@ -354,7 +354,8 @@ export const reassignSchoolAssignment = async (
   // 2. Validate status
   if (
     existingAssignment.assignment_status !== AssignmentStatus.ACTIVE &&
-    existingAssignment.assignment_status !== AssignmentStatus.REJECTED
+    existingAssignment.assignment_status !== AssignmentStatus.REJECTED &&
+    existingAssignment.assignment_status !== AssignmentStatus.INACTIVE
   ) {
     throw new ApiError(
       HTTP_STATUS.BAD_REQUEST,
