@@ -157,6 +157,15 @@ export const generateUniqueCode = (
   return `${prefix}${separator}${generateId()}`;
 };
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000; // UTC+5:30
+
+/**
+ * Shift a UTC Date by the IST offset (+05:30) so the stored/serialized value
+ * reflects IST clock time. Use this when computing ETAs to be stored and sent.
+ */
+export const toIST = (date: Date): Date =>
+  new Date(date.getTime() + IST_OFFSET_MS);
+
 /**
  * Hash a password using bcrypt
  * @param password - Plain text password to hash
