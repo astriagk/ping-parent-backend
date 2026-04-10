@@ -27,6 +27,7 @@ export const createSchoolSubscriptionValidation = Joi.object({
 
 export const updateSchoolSubscriptionValidation = Joi.object({
   plan_id: Joi.string().optional(),
+  start_date: Joi.date().optional(),
   end_date: Joi.date().optional(),
   auto_renew: Joi.boolean().optional(),
   max_drivers: Joi.number().integer().min(1).optional(),

@@ -39,6 +39,9 @@ export const createSchoolSchema = Joi.object({
   email: Joi.string().email().lowercase().optional().messages({
     "string.email": VALIDATION_MESSAGES.SCHOOL.EMAIL_INVALID,
   }),
+  principal_name: Joi.string().max(100).optional().messages({
+    "string.max": VALIDATION_MESSAGES.SCHOOL.PRINCIPAL_NAME_MAX,
+  }),
 });
 
 export const updateSchoolSchema = Joi.object({
@@ -71,5 +74,8 @@ export const updateSchoolSchema = Joi.object({
     }),
   email: Joi.string().email().lowercase().optional().messages({
     "string.email": VALIDATION_MESSAGES.SCHOOL.EMAIL_INVALID,
+  }),
+  principal_name: Joi.string().max(100).optional().messages({
+    "string.max": VALIDATION_MESSAGES.SCHOOL.PRINCIPAL_NAME_MAX,
   }),
 });
