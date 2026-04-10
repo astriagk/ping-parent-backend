@@ -12,7 +12,7 @@ import { ApiError } from "@shared/middlewares";
 import { BroadcastService } from "@shared/services/broadcast.service";
 import { calculateHaversineDistance } from "@shared/services/geo-util.service";
 import { tomTomService } from "@shared/services/tomtom.service";
-import { logger } from "@shared/utils";
+import { logger, toIST } from "@shared/utils";
 
 import { trackingRepository } from "./tracking.repository";
 import {
@@ -312,7 +312,9 @@ const calculateRouteWithTomTom = async (
       ...waypoint,
       distance_from_previous: leg.distance / 1000, // TomTom meters → km
       duration_from_previous: leg.duration, // TomTom seconds (with traffic)
-      estimated_arrival_time: new Date(Date.now() + cumulativeDuration * 1000),
+      estimated_arrival_time: toIST(
+        new Date(Date.now() + cumulativeDuration * 1000),
+      ),
     };
   });
 
