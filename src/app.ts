@@ -17,6 +17,7 @@ if (process.env.NODE_ENV !== "production") {
       origin: [
         "http://localhost:4200", // React default
         "http://127.0.0.1:4200",
+        "https://admin.skolo.astriagk.com", // Production admin panel
       ],
       credentials: true,
     }),
