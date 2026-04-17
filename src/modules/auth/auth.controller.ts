@@ -12,6 +12,8 @@ import {
 import { asyncHandler } from "@shared/middlewares";
 import {
   generateAccessToken,
+  generateRefreshToken,
+  generateTokenPair,
   verifyAccessToken,
   verifyRefreshToken,
 } from "@shared/services/token.service";
@@ -226,7 +228,7 @@ export const verifyLoginOtp = asyncHandler(
     const userId = String(user._id);
     await updateLastLogin(userId);
 
-    const token = generateAccessToken({
+    const { accessToken, refreshToken } = generateTokenPair({
       userId,
       role: user.user_type || "parent",
     });
@@ -234,7 +236,8 @@ export const verifyLoginOtp = asyncHandler(
     return res.json({
       success: true,
       data: {
-        token,
+        accessToken,
+        refreshToken,
         user: {
           id: userId,
           role: user.user_type || "parent",
@@ -383,8 +386,8 @@ export const verifyPhoneOtp = asyncHandler(
     const userId = String(user._id);
     await updateLastLogin(userId);
 
-    // Generate token
-    const token = generateAccessToken({
+    // Generate token pair
+    const { accessToken, refreshToken } = generateTokenPair({
       userId,
       role: user.user_type || "parent",
     });
@@ -396,7 +399,8 @@ export const verifyPhoneOtp = asyncHandler(
         : SUCCESS_MESSAGES.AUTH.LOGIN_SUCCESSFUL,
       isNewUser,
       data: {
-        token,
+        accessToken,
+        refreshToken,
         user: {
           id: userId,
           phone: user.phone_number,
