@@ -77,18 +77,6 @@ export enum Gender {
   OTHER = "other",
 }
 
-export enum GoogleMapsAvoidOption {
-  TOLLS = "tolls",
-  HIGHWAYS = "highways",
-  FERRIES = "ferries",
-}
-
-export enum GoogleMapsTrafficModel {
-  BEST_GUESS = "best_guess",
-  PESSIMISTIC = "pessimistic",
-  OPTIMISTIC = "optimistic",
-}
-
 export enum NotificationType {
   PICKUP_STARTED = "pickup_started",
   APPROACHING = "approaching",
@@ -169,7 +157,6 @@ export enum PricingModel {
 }
 
 export enum RouteProvider {
-  GOOGLE_MAPS = "google_maps",
   TOMTOM = "tomtom",
 }
 
