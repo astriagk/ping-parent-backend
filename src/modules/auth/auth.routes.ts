@@ -12,7 +12,12 @@ import {
   verifyLoginOtp,
   verifyPhoneOtp,
 } from "./auth.controller";
-import { sendOTPSchema, verifyOTPSchema } from "./auth.validation";
+import {
+  sendLoginOtpSchema,
+  sendOTPSchema,
+  verifyLoginOtpSchema,
+  verifyOTPSchema,
+} from "./auth.validation";
 
 /**
  * Handler group for auth module.
@@ -26,7 +31,9 @@ export const authHandlers = {
     sendPhoneOtp: sendPhoneOtp,
     validateVerifyOtp: validate(verifyOTPSchema),
     verifyPhoneOtp: verifyPhoneOtp,
+    validateSendLoginOtp: validate(sendLoginOtpSchema),
     sendLoginOtp: sendLoginOtp,
+    validateVerifyLoginOtp: validate(verifyLoginOtpSchema),
     verifyLoginOtp: verifyLoginOtp,
     verifyToken: verifyAuthToken,
     logout: logout,

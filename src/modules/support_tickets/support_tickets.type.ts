@@ -1,16 +1,4 @@
-export enum TicketStatus {
-  OPEN = "open",
-  IN_PROGRESS = "in_progress",
-  RESOLVED = "resolved",
-  CLOSED = "closed",
-}
-
-export enum TicketPriority {
-  LOW = "low",
-  MEDIUM = "medium",
-  HIGH = "high",
-  URGENT = "urgent",
-}
+import { TicketPriority, TicketStatus } from "@shared/constants";
 
 export interface SupportTicket {
   _id?: any;

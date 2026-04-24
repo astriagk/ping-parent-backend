@@ -35,7 +35,7 @@ export const getDriverProfile = async (
 
   // Query users collection
   const userQuery: any = {
-    _id: ObjectId.isValid(userId) ? new ObjectId(userId) : userId,
+    _id: new ObjectId(userId),
   };
 
   const user = await db.collection(USERS_COLLECTION).findOne(userQuery);
@@ -112,7 +112,7 @@ export const createDriverProfile = async (
       vehicle_number: driverData.vehicle_number,
       vehicle_capacity: driverData.vehicle_capacity,
       current_student_count: 0,
-      approval_status: "pending" as "pending" | "approved" | "rejected",
+      approval_status: ApprovalStatus.PENDING,
       is_available:
         driverData.is_available !== undefined ? driverData.is_available : true,
       rating: 0.0,

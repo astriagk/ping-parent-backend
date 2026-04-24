@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -55,7 +56,7 @@ export const getAllParentSubscriptionsController = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -77,7 +78,7 @@ export const createSubscription = asyncHandler(
       success: true,
       data: result.subscription,
       warnings: result.warnings.length > 0 ? result.warnings : undefined,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -98,7 +99,7 @@ export const getSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -119,7 +120,7 @@ export const getMySubscriptions = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -135,19 +136,12 @@ export const getMyActiveSubscription = asyncHandler(
       );
     }
 
-    const subscription = await getActiveParentSubscriptionByUserId(userId);
-
-    if (!subscription) {
-      throw new ApiError(
-        HTTP_STATUS.NOT_FOUND,
-        ERROR_MESSAGES.PARENT_SUBSCRIPTION.NOT_FOUND,
-      );
-    }
+    const subscriptions = await getActiveParentSubscriptionByUserId(userId);
 
     return res.json({
       success: true,
-      data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
+      data: subscriptions,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -190,7 +184,7 @@ export const updateSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -198,9 +192,8 @@ export const updateSubscriptionById = asyncHandler(
 export const cancelSubscriptionById = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params as Record<string, string>;
-    const userId = req.user?.userId;
 
-    const subscription = await cancelParentSubscription(id, userId);
+    const subscription = await cancelParentSubscription(id);
 
     if (!subscription) {
       throw new ApiError(
@@ -212,7 +205,7 @@ export const cancelSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.CANCELLED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -258,7 +251,7 @@ export const deleteSubscriptionById = asyncHandler(
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.PARENT_SUBSCRIPTION.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );

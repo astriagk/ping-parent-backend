@@ -42,22 +42,30 @@ export const verifyOTPSchema = Joi.object({
     }),
 });
 
-// Admin user management validation
-export const updateUserSchema = Joi.object({
-  phone_number: Joi.string()
+export const sendLoginOtpSchema = Joi.object({
+  phone: Joi.string()
     .pattern(
       /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
     )
-    .optional()
+    .required()
     .messages({
       "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
+      "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
     }),
-  user_type: Joi.string()
-    .valid(UserRole.PARENT, UserRole.DRIVER)
-    .optional()
+});
+
+export const verifyLoginOtpSchema = Joi.object({
+  phone: Joi.string()
+    .pattern(
+      /^[+]?[(]?[0-9]{1,4}[)]?[-\s.]?[(]?[0-9]{1,4}[)]?[-\s.]?[0-9]{1,9}$/,
+    )
+    .required()
     .messages({
-      "any.only": VALIDATION_MESSAGES.ROLE.INVALID,
+      "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
+      "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
     }),
-  is_active: Joi.boolean().optional(),
-  fcm_token: Joi.string().optional(),
+  otp: Joi.string().length(6).required().messages({
+    "string.length": VALIDATION_MESSAGES.OTP.LENGTH,
+    "any.required": VALIDATION_MESSAGES.OTP.REQUIRED,
+  }),
 });

@@ -1,4 +1,10 @@
-import { TripStatus, TripType } from "@shared/constants";
+import {
+  AttendanceStatus,
+  PickupStatus,
+  RouteProvider,
+  TripStatus,
+  TripType,
+} from "@shared/constants";
 
 export interface Trip {
   _id?: any;
@@ -11,6 +17,7 @@ export interface Trip {
   end_time?: Date;
   total_distance?: number;
   optimized_route_data?: any;
+  route_provider?: RouteProvider; // Tracks which engine calculated the route
   created_at: Date;
   updated_at?: Date;
 }
@@ -56,8 +63,8 @@ export interface CompletedTripStudent {
   student_roll_number?: string;
   student_photo_url?: string;
   student_gender?: string;
-  attendance_status: string;
-  pickup_status: string;
+  attendance_status: AttendanceStatus;
+  pickup_status: PickupStatus;
   pickup_time?: Date;
   drop_time?: Date;
   parent: CompletedTripParent;

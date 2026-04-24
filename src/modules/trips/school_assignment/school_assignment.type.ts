@@ -8,3 +8,8 @@ export interface CreateSchoolAssignmentBody {
 export interface RejectSchoolAssignmentBody {
   rejection_reason?: string;
 }
+
+export interface ReassignSchoolAssignmentBody {
+  driver_id: string;
+  monthly_fee?: number;
+}

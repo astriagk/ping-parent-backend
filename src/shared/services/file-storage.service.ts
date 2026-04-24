@@ -6,10 +6,8 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 
-// S3-compatible client works with: AWS S3, DigitalOcean Spaces, Wasabi, MinIO
 const s3Client = new S3Client({
   region: process.env.STORAGE_REGION || "us-east-1",
-  endpoint: process.env.STORAGE_ENDPOINT, // Only needed for DO Spaces/Wasabi
   credentials: {
     accessKeyId: process.env.STORAGE_ACCESS_KEY || "",
     secretAccessKey: process.env.STORAGE_SECRET_KEY || "",
@@ -18,7 +16,7 @@ const s3Client = new S3Client({
 
 const BUCKET_NAME = process.env.STORAGE_BUCKET_NAME || "driver-documents";
 
-export const uploadFileToStorage = async (
+export const uploadFile = async (
   file: Express.Multer.File,
   folder: string,
 ): Promise<string> => {
@@ -33,38 +31,21 @@ export const uploadFileToStorage = async (
 
   await s3Client.send(command);
 
-  // Construct file URL based on storage provider
-  let fileUrl: string;
-  if (process.env.STORAGE_ENDPOINT) {
-    // DigitalOcean Spaces or Wasabi
-    fileUrl = `${process.env.STORAGE_ENDPOINT}/${BUCKET_NAME}/${fileName}`;
-  } else {
-    // AWS S3
-    fileUrl = `https://${BUCKET_NAME}.s3.${process.env.STORAGE_REGION}.amazonaws.com/${fileName}`;
-  }
+  const fileUrl = `https://${BUCKET_NAME}.s3.${process.env.STORAGE_REGION}.amazonaws.com/${fileName}`;
 
   return fileUrl;
 };
 
-export const deleteFileFromStorage = async (fileUrl: string): Promise<void> => {
+export const deleteFile = async (fileUrl: string): Promise<void> => {
   if (!fileUrl) {
     return;
   }
 
   try {
     // Extract the object key from the URL
-    let objectKey: string;
-
-    if (process.env.STORAGE_ENDPOINT) {
-      // DigitalOcean Spaces or Wasabi format: https://endpoint/bucket/folder/filename
-      const url = new URL(fileUrl);
-      // Remove leading slash and bucket name from path
-      objectKey = url.pathname.substring(`/${BUCKET_NAME}/`.length);
-    } else {
-      // AWS S3 format: https://bucket.s3.region.amazonaws.com/folder/filename
-      const url = new URL(fileUrl);
-      objectKey = url.pathname.substring(1); // Remove leading slash
-    }
+    // AWS S3 format: https://bucket.s3.region.amazonaws.com/folder/filename
+    const url = new URL(fileUrl);
+    const objectKey = url.pathname.substring(1); // Remove leading slash
 
     const command = new DeleteObjectCommand({
       Bucket: BUCKET_NAME,

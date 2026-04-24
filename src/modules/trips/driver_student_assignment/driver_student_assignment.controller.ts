@@ -6,6 +6,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   UserRole,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
@@ -55,7 +56,7 @@ export const createDriverStudentAssignment = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: assignment,
-      message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -70,8 +71,7 @@ export const getAllDriverStudentAssignments = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -101,8 +101,7 @@ export const getParentRequestedAssignmentsData = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -143,8 +142,7 @@ export const getDriverParentRequestedAssignments = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -155,7 +153,6 @@ export const getDriverParentRequestedAssignments = asyncHandler(
 export const getAssignment = asyncHandler(
   async (req: Request, res: Response) => {
     const { id } = req.params as Record<string, string>;
-    console.log("get assignement !");
     const assignment = await getAssignmentById(id);
 
     if (!assignment) {
@@ -168,7 +165,7 @@ export const getAssignment = asyncHandler(
     return res.json({
       success: true,
       data: assignment,
-      message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -192,8 +189,7 @@ export const getMyAssignments = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -217,8 +213,7 @@ export const getMyActiveAssignments = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -242,8 +237,7 @@ export const getMyPendingAssignments = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -260,8 +254,7 @@ export const getAssignmentsByStudent = asyncHandler(
     return res.json({
       success: true,
       data: assignments,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -286,7 +279,7 @@ export const updateDriverStudentAssignment = asyncHandler(
     return res.json({
       success: true,
       data: assignment,
-      message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -397,7 +390,7 @@ export const deleteDriverStudentAssignment = asyncHandler(
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );
@@ -407,17 +400,12 @@ export const deleteDriverStudentAssignment = asyncHandler(
  */
 export const getAllDrivers = asyncHandler(
   async (req: Request, res: Response) => {
-    console.log("Get all drivers !");
     const driverRepo = new DriverRepository();
     const drivers = await driverRepo.findMany();
 
-    console.log(" Retrieved drivers:", drivers);
-
     return res.json({
       success: true,
-      message:
-        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT
-          .DRIVERS_RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
       data: drivers,
     });
   },

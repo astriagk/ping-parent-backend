@@ -79,6 +79,15 @@ export const getSchoolSubscriptions = async (
 };
 
 /**
+ * Get all school subscriptions (admin)
+ */
+export const getAllSchoolSubscriptions = async (): Promise<
+  SchoolSubscriptionWithPlan[]
+> => {
+  return await schoolSubscriptionRepository.findAllBySchool();
+};
+
+/**
  * Get subscription by subscription ID
  */
 export const getSchoolSubscriptionBySubscriptionId = async (

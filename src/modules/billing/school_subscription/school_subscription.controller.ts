@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -12,6 +13,7 @@ import {
   createSchoolSubscription as createSchoolSubscriptionService,
   generateStudentCodes as generateStudentCodesService,
   getActiveSchoolSubscription as getActiveSchoolSubscriptionService,
+  getAllSchoolSubscriptions as getAllSchoolSubscriptionsService,
   getCodesBySchoolSubscription as getCodesBySchoolSubscriptionService,
   getExpiredSchoolSubscriptions as getExpiredSchoolSubscriptionsService,
   getSchoolSubscriptionById as getSchoolSubscriptionByIdService,
@@ -34,7 +36,23 @@ export const createSchoolSubscription = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+/**
+ * Get all school subscriptions (admin)
+ * @route GET /api/v1/billing/school-subscriptions
+ */
+export const getAllSchoolSubscriptions = asyncHandler(
+  async (req: Request, res: Response) => {
+    const subscriptions = await getAllSchoolSubscriptionsService();
+
+    return res.json({
+      success: true,
+      data: subscriptions,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -52,7 +70,7 @@ export const getSchoolSubscriptions = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -84,8 +102,7 @@ export const getActiveSchoolSubscription = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message:
-        SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.ACTIVE_RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -117,7 +134,7 @@ export const getSchoolSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -152,7 +169,7 @@ export const updateSchoolSubscription = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -220,7 +237,7 @@ export const cancelSchoolSubscription = asyncHandler(
     return res.json({
       success: true,
       data: subscription,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.CANCELLED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );
@@ -236,8 +253,7 @@ export const getExpiredSubscriptions = asyncHandler(
     return res.json({
       success: true,
       data: subscriptions,
-      message:
-        SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.EXPIRED_RETRIEVED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -292,7 +308,7 @@ export const getCodesBySchoolSubscription = asyncHandler(
     return res.json({
       success: true,
       data: codes,
-      message: SUCCESS_MESSAGES.SCHOOL_SUBSCRIPTION.CODES_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

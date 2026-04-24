@@ -5,6 +5,7 @@ import {
   LOCATION_TRACKING_COLLECTION,
   PARENTS_COLLECTION,
   PARENT_ADDRESSES_COLLECTION,
+  RouteProvider,
   SCHOOLS_COLLECTION,
   STUDENTS_COLLECTION,
   TRIPS_COLLECTION,
@@ -13,7 +14,7 @@ import {
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
-import { LocationTracking, RouteWaypoint } from "./tracking.type";
+import { LocationTracking, StudentWaypoint } from "./tracking.type";
 
 class TrackingRepository extends BaseRepository<LocationTracking> {
   constructor() {
@@ -112,6 +113,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
     tripId: string,
     routeData: any,
     totalDistance: number,
+    routeProvider: string = RouteProvider.TOMTOM,
   ): Promise<void> {
     const db = await getDB();
     await db.collection(TRIPS_COLLECTION).updateOne(
@@ -120,6 +122,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         $set: {
           optimized_route_data: routeData,
           total_distance: totalDistance,
+          route_provider: routeProvider,
           updated_at: new Date(),
         },
       },
@@ -168,7 +171,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
   async getTripStudentsWithDetails(
     tripId: string,
     pickupStatusFilter?: string,
-  ): Promise<RouteWaypoint[]> {
+  ): Promise<StudentWaypoint[]> {
     const db = await getDB();
     // Build match condition - always filter by trip_id, optionally by pickup_status
     const matchCondition: Record<string, any> = { trip_id: tripId };
@@ -178,7 +181,7 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
 
     return db
       .collection(TRIP_STUDENTS_COLLECTION)
-      .aggregate<RouteWaypoint>([
+      .aggregate<StudentWaypoint>([
         // Stage 1: Match students for this trip (with optional pickup_status filter)
         {
           $match: matchCondition,

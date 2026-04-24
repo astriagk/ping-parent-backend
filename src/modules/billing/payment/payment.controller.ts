@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -30,7 +31,7 @@ export const getAllPaymentsController = asyncHandler(
     return res.json({
       success: true,
       data: payments,
-      message: SUCCESS_MESSAGES.PAYMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -53,7 +54,7 @@ export const createPayment = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: payment,
-      message: SUCCESS_MESSAGES.PAYMENT.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -74,7 +75,7 @@ export const getPaymentByIdController = asyncHandler(
     return res.json({
       success: true,
       data: payment,
-      message: SUCCESS_MESSAGES.PAYMENT.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -95,7 +96,7 @@ export const getMyPayments = asyncHandler(
     return res.json({
       success: true,
       data: payments,
-      message: SUCCESS_MESSAGES.PAYMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -116,7 +117,7 @@ export const getMyPendingPayments = asyncHandler(
     return res.json({
       success: true,
       data: payments,
-      message: SUCCESS_MESSAGES.PAYMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -137,7 +138,7 @@ export const getMyCompletedPayments = asyncHandler(
     return res.json({
       success: true,
       data: payments,
-      message: SUCCESS_MESSAGES.PAYMENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -159,7 +160,7 @@ export const updatePaymentById = asyncHandler(
     return res.json({
       success: true,
       data: payment,
-      message: SUCCESS_MESSAGES.PAYMENT.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

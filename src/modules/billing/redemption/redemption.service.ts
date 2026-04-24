@@ -154,13 +154,6 @@ export const redeemSchoolSubscriptionCode = async (
     };
 
     subscription = await parentSubscriptionRepository.create(newSubData);
-
-    // Update parent document
-    await parentRepository.updateByUserId(userId, {
-      has_active_subscription: true,
-      subscription_id: String(subscription._id),
-      updated_at: new Date(),
-    } as any);
   }
 
   // Mark code as redeemed
@@ -196,7 +189,6 @@ export const getSubscriptionDetails = async (
  * Cancel a parent subscription (delegates to parent_subscription service — includes status validation)
  */
 export const cancelParentSubscription = async (
-  userId: string,
   subscriptionId: string,
 ): Promise<WithId<ParentSubscription> | null> => {
   const sub = await parentSubscriptionRepository.findById(subscriptionId);
@@ -208,7 +200,7 @@ export const cancelParentSubscription = async (
     );
   }
 
-  return await cancelParentSubscriptionService(subscriptionId, userId);
+  return await cancelParentSubscriptionService(subscriptionId);
 };
 
 /**

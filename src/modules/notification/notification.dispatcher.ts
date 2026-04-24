@@ -1,7 +1,7 @@
 import { deviceTokenRepository } from "@modules/device_token/device-token.repository";
 import { isPushEnabled } from "@modules/notification_preferences/notification-preferences.service";
-import { TrackingSocketService } from "@modules/tracking/tracking.socket.service";
-import { NotificationType } from "@shared/constants";
+import { MESSAGE_TEMPLATES, NotificationType } from "@shared/constants";
+import { BroadcastService } from "@shared/services/broadcast.service";
 import { FCMService } from "@shared/services/fcm.service";
 import { logger } from "@shared/utils";
 
@@ -87,10 +87,16 @@ export class NotificationDispatcher {
           stringData,
         );
 
-        // TODO: Clean up invalid tokens
-        // if (result.failedTokens.length > 0) {
-        //   await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
-        // }
+        logger.info(
+          `[Dispatcher] FCM result for user ${userId}: ${result.successCount} sent, ${result.failedTokens.length} failed`,
+        );
+
+        if (result.failedTokens.length > 0) {
+          // await deviceTokenRepository.removeInactiveTokens(result.failedTokens);
+          logger.info(
+            `[Dispatcher] Deactivated ${result.failedTokens.length} stale FCM token(s) for user ${userId}`,
+          );
+        }
       }
     } catch (error) {
       logger.error("[Dispatcher] Failed to send FCM push:", error as Error);
@@ -110,7 +116,7 @@ export class NotificationDispatcher {
     driverId?: string,
   ): Promise<void> {
     // Socket event (existing behavior)
-    TrackingSocketService.notifyParentStudentPicked(
+    BroadcastService.notifyParentStudentPicked(
       parentId,
       tripId,
       studentId,
@@ -123,7 +129,7 @@ export class NotificationDispatcher {
       userId,
       NotificationType.PICKED_UP,
       "Student Picked Up",
-      `Your child ${studentName} has been picked up`,
+      MESSAGE_TEMPLATES.NOTIFICATION.childPicked(studentName),
       { tripId, studentId, studentName, driverId },
     );
   }
@@ -136,7 +142,7 @@ export class NotificationDispatcher {
     studentName: string,
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentDropped(
+    BroadcastService.notifyParentStudentDropped(
       parentId,
       tripId,
       studentId,
@@ -148,7 +154,7 @@ export class NotificationDispatcher {
       userId,
       NotificationType.DROPPED,
       "Student Dropped Off",
-      `Your child ${studentName} has been dropped off`,
+      MESSAGE_TEMPLATES.NOTIFICATION.childDropped(studentName),
       { tripId, studentId, studentName, driverId },
     );
   }
@@ -162,7 +168,7 @@ export class NotificationDispatcher {
     eta: number,
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentApproaching(
+    BroadcastService.notifyParentApproaching(
       parentId,
       tripId,
       studentId,
@@ -176,7 +182,10 @@ export class NotificationDispatcher {
       userId,
       NotificationType.APPROACHING,
       "Driver Approaching",
-      `Driver is approaching for ${studentName} - ETA ${etaMinutes} minutes`,
+      MESSAGE_TEMPLATES.NOTIFICATION.driverApproachingForStudent(
+        studentName,
+        etaMinutes,
+      ),
       { tripId, studentId, studentName, eta: String(eta), driverId },
     );
   }
@@ -192,7 +201,7 @@ export class NotificationDispatcher {
     students: StudentInfo[],
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentsPicked(
+    BroadcastService.notifyParentStudentsPicked(
       parentId,
       tripId,
       students,
@@ -202,8 +211,8 @@ export class NotificationDispatcher {
     const studentNames = students.map((s) => s.studentName).join(", ");
     const message =
       students.length === 1
-        ? `Your child ${studentNames} has been picked up`
-        : `Your children ${studentNames} have been picked up`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childPicked(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenPicked(studentNames);
 
     await this.dispatch(
       userId,
@@ -225,7 +234,7 @@ export class NotificationDispatcher {
     students: StudentInfo[],
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentsDropped(
+    BroadcastService.notifyParentStudentsDropped(
       parentId,
       tripId,
       students,
@@ -235,8 +244,8 @@ export class NotificationDispatcher {
     const studentNames = students.map((s) => s.studentName).join(", ");
     const message =
       students.length === 1
-        ? `Your child ${studentNames} has been dropped off`
-        : `Your children ${studentNames} have been dropped off`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childDropped(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenDropped(studentNames);
 
     await this.dispatch(
       userId,
@@ -247,6 +256,36 @@ export class NotificationDispatcher {
     );
   }
 
+  static async notifyParentRouteRecalculated(
+    parentId: string,
+    userId: string,
+    tripId: string,
+    students: StudentInfo[],
+    newEtas: { studentId: string; eta: Date }[],
+    driverId?: string,
+  ): Promise<void> {
+    // Emit only to the specific parent to avoid leaking parent-specific ETA/student data
+    BroadcastService.notifyParentRouteRecalculated(
+      parentId,
+      tripId,
+      students.map((s) => ({
+        studentId: s.studentId,
+        studentName: s.studentName,
+      })),
+      newEtas,
+      driverId,
+    );
+
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    await this.dispatch(
+      userId,
+      NotificationType.ROUTE_RECALCULATED,
+      "Route Updated",
+      MESSAGE_TEMPLATES.NOTIFICATION.routeRecalculated(studentNames),
+      { tripId, students, newEtas, driverId },
+    );
+  }
+
   static async notifyParentStudentsAbsent(
     parentId: string,
     userId: string,
@@ -254,7 +293,7 @@ export class NotificationDispatcher {
     students: StudentInfo[],
     driverId?: string,
   ): Promise<void> {
-    TrackingSocketService.notifyParentStudentsAbsent(
+    BroadcastService.notifyParentStudentsAbsent(
       parentId,
       tripId,
       students,
@@ -264,8 +303,8 @@ export class NotificationDispatcher {
     const studentNames = students.map((s) => s.studentName).join(", ");
     const message =
       students.length === 1
-        ? `Your child ${studentNames} was marked absent`
-        : `Your children ${studentNames} were marked absent`;
+        ? MESSAGE_TEMPLATES.NOTIFICATION.childAbsent(studentNames)
+        : MESSAGE_TEMPLATES.NOTIFICATION.childrenAbsent(studentNames);
 
     await this.dispatch(
       userId,

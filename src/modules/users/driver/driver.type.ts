@@ -1,15 +1,8 @@
-import { ApprovalStatus, VehicleType } from "@shared/constants";
-
-// Onboarding Screen Enum
-export enum DriverOnboardingScreen {
-  SIGNUP = "signup",
-  PROFILE = "profile",
-  DOCUMENTS = "documents",
-}
-
-export const DriverOnboardingScreenArray = Object.values(
+import {
+  ApprovalStatus,
   DriverOnboardingScreen,
-);
+  VehicleType,
+} from "@shared/constants";
 
 // Onboarding Screen Interface
 export interface DriverOnboarding {

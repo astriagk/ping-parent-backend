@@ -5,6 +5,7 @@ import {
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
   DRIVER_ONBOARDING_COLLECTION,
+  DriverOnboardingScreen,
 } from "@shared/constants";
 import { BaseRepository } from "@shared/database";
 
@@ -13,7 +14,6 @@ import {
   DriverAddress,
   DriverDocument,
   DriverOnboarding,
-  DriverOnboardingScreen,
 } from "./driver.type";
 
 export class DriverRepository extends BaseRepository<Driver> {

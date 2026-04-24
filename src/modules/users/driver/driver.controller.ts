@@ -4,11 +4,12 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
   VehicleType,
   VehicleTypesArray,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
-import { deleteFile, uploadFile } from "@shared/services/storage.factory";
+import { deleteFile, uploadFile } from "@shared/services/file-storage.service";
 import { assignTrimmedFields } from "@shared/utils";
 
 import { driverOnboardingRepository } from "./driver.repository";
@@ -150,7 +151,7 @@ export const createProfile = asyncHandler(
     if (!created) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_CREATE_DRIVER_PROFILE,
+        ERROR_MESSAGES.COMMON.CREATE_FAILED,
       );
     }
 
@@ -165,7 +166,7 @@ export const createProfile = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: formatDriverProfileResponse(createdProfile),
-      message: SUCCESS_MESSAGES.DRIVER.PROFILE_CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -241,7 +242,7 @@ export const updateProfile = asyncHandler(
 
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DRIVER_PROFILE,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -256,7 +257,7 @@ export const updateProfile = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: formatDriverProfileResponse(updatedProfile),
-      message: SUCCESS_MESSAGES.DRIVER.PROFILE_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -313,8 +314,14 @@ export const upsertAddress = asyncHandler(
       is_primary,
     } = req.body;
 
-    // Validate required fields
-    if (!address_line1 || !city || !state || !latitude || !longitude) {
+    // Validate required fields (use == null to allow 0 as a valid coordinate)
+    if (
+      !address_line1 ||
+      !city ||
+      !state ||
+      latitude == null ||
+      longitude == null
+    ) {
       throw new ApiError(
         HTTP_STATUS.BAD_REQUEST,
         ERROR_MESSAGES.DRIVER.REQUIRED_FIELDS_MISSING,
@@ -347,7 +354,7 @@ export const upsertAddress = asyncHandler(
     if (!success) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_ADDRESS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -356,7 +363,7 @@ export const upsertAddress = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedAddress,
-      message: SUCCESS_MESSAGES.DRIVER.ADDRESS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -453,7 +460,7 @@ export const createDocuments = asyncHandler(
     if (!success) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -462,7 +469,7 @@ export const createDocuments = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedDocuments,
-      message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -539,7 +546,7 @@ export const updateDocuments = asyncHandler(
     if (!updated) {
       throw new ApiError(
         HTTP_STATUS.INTERNAL_SERVER_ERROR,
-        ERROR_MESSAGES.DRIVER.FAILED_TO_UPDATE_DOCUMENTS,
+        ERROR_MESSAGES.COMMON.UPDATE_FAILED,
       );
     }
 
@@ -548,7 +555,7 @@ export const updateDocuments = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedDocuments,
-      message: SUCCESS_MESSAGES.DRIVER.DOCUMENTS_UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -590,7 +597,7 @@ export const setAvailability = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: updatedProfile ? formatDriverProfileResponse(updatedProfile) : null,
-      message: "Driver availability updated successfully",
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -636,7 +643,7 @@ export const updateDriverOnboardingScreen = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: "Screen updated successfully",
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

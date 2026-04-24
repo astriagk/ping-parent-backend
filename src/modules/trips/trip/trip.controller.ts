@@ -4,6 +4,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -28,12 +29,21 @@ import {
  */
 export const getAllTripsController = asyncHandler(
   async (req: Request, res: Response) => {
-    const trips = await getAllTrips();
+    const { status } = req.query as { status?: string };
+
+    const statuses = status
+      ? status
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean)
+      : undefined;
+
+    const trips = await getAllTrips(statuses);
 
     return res.json({
       success: true,
       data: trips,
-      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -55,7 +65,7 @@ export const createTrip = asyncHandler(async (req: Request, res: Response) => {
   return res.status(HTTP_STATUS.CREATED).json({
     success: true,
     data: trip,
-    message: SUCCESS_MESSAGES.TRIP.CREATED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
   });
 });
 
@@ -91,7 +101,7 @@ export const getMyTrips = asyncHandler(async (req: Request, res: Response) => {
   return res.json({
     success: true,
     data: trips,
-    message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+    message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
   });
 });
 
@@ -113,7 +123,7 @@ export const getMyTripsByDate = asyncHandler(
     return res.json({
       success: true,
       data: trips,
-      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -134,7 +144,7 @@ export const getMyActiveTrips = asyncHandler(
     return res.json({
       success: true,
       data: trips,
-      message: SUCCESS_MESSAGES.TRIP.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -153,7 +163,7 @@ export const updateTripProfile = asyncHandler(
     return res.json({
       success: true,
       data: trip,
-      message: SUCCESS_MESSAGES.TRIP.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -189,7 +199,7 @@ export const deleteTripProfile = asyncHandler(
 
     return res.json({
       success: true,
-      message: SUCCESS_MESSAGES.TRIP.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );
@@ -230,7 +240,7 @@ export const getCompletedTripDetails = asyncHandler(
     return res.json({
       success: true,
       data: tripDetails,
-      message: SUCCESS_MESSAGES.TRIP.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );

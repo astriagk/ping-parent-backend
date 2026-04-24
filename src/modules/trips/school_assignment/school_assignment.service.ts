@@ -17,7 +17,10 @@ import { ApiError } from "@shared/middlewares";
 
 import { driverStudentAssignmentRepository } from "../driver_student_assignment/driver_student_assignment.repository";
 import { DriverStudentAssignment } from "../driver_student_assignment/driver_student_assignment.type";
-import { CreateSchoolAssignmentBody } from "./school_assignment.type";
+import {
+  CreateSchoolAssignmentBody,
+  ReassignSchoolAssignmentBody,
+} from "./school_assignment.type";
 
 /**
  * Internal helper: fetch assignments with driver/student/parent joins
@@ -291,4 +294,141 @@ export const createSchoolAssignment = async (
   }
 
   return assignments;
+};
+
+/**
+ * Remove a school assignment (soft-delete by setting to inactive)
+ */
+export const removeSchoolAssignment = async (
+  assignmentId: string,
+): Promise<WithId<DriverStudentAssignment> | null> => {
+  const assignment =
+    await driverStudentAssignmentRepository.findById(assignmentId);
+  if (!assignment) {
+    return null;
+  }
+
+  if (
+    assignment.assignment_status !== AssignmentStatus.ACTIVE &&
+    assignment.assignment_status !== AssignmentStatus.PENDING &&
+    assignment.assignment_status !== AssignmentStatus.PARENT_REQUESTED
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.INVALID_ASSIGNMENT_STATUS,
+    );
+  }
+
+  return await driverStudentAssignmentRepository.updateById(assignmentId, {
+    $set: {
+      assignment_status: AssignmentStatus.INACTIVE,
+      end_date: new Date(),
+      updated_at: new Date(),
+    },
+  });
+};
+
+/**
+ * Reassign driver for a school assignment
+ * Deactivates old assignment and creates a new ACTIVE assignment
+ */
+export const reassignSchoolAssignment = async (
+  assignmentId: string,
+  adminId: string,
+  data: ReassignSchoolAssignmentBody,
+): Promise<{
+  deactivated_assignment: WithId<DriverStudentAssignment>;
+  new_assignment: WithId<DriverStudentAssignment>;
+}> => {
+  // 1. Find existing assignment
+  const existingAssignment =
+    await driverStudentAssignmentRepository.findById(assignmentId);
+
+  if (!existingAssignment) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.NOT_FOUND,
+    );
+  }
+
+  // 2. Validate status
+  if (
+    existingAssignment.assignment_status !== AssignmentStatus.ACTIVE &&
+    existingAssignment.assignment_status !== AssignmentStatus.REJECTED &&
+    existingAssignment.assignment_status !== AssignmentStatus.INACTIVE
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CANNOT_REASSIGN,
+    );
+  }
+
+  // 3. Validate new driver exists
+  const db = await getDB();
+  const newDriver = await db
+    .collection(DRIVERS_COLLECTION)
+    .findOne({ _id: new ObjectId(data.driver_id) });
+
+  if (!newDriver) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+    );
+  }
+
+  const newDriverId = String(newDriver._id);
+
+  // 4. Check new driver is different from current
+  if (newDriverId === existingAssignment.driver_id) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.SAME_DRIVER,
+    );
+  }
+
+  // 5. Check for duplicate assignment with new driver
+  const duplicate =
+    await driverStudentAssignmentRepository.findDuplicateAssignment(
+      newDriverId,
+      existingAssignment.student_id,
+    );
+
+  if (duplicate) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.ALREADY_EXISTS,
+    );
+  }
+
+  // 6. Deactivate old assignment
+  const deactivated = await driverStudentAssignmentRepository.updateById(
+    assignmentId,
+    {
+      $set: {
+        assignment_status: AssignmentStatus.INACTIVE,
+        end_date: new Date(),
+        updated_at: new Date(),
+      },
+    },
+  );
+
+  // 7. Create new ACTIVE assignment (school admin has authority, no approval needed)
+  const newAssignment = await driverStudentAssignmentRepository.create({
+    driver_id: newDriverId,
+    student_id: existingAssignment.student_id,
+    school_id: existingAssignment.school_id,
+    monthly_fee: data.monthly_fee ?? existingAssignment.monthly_fee,
+    assignment_status: AssignmentStatus.ACTIVE,
+    assignment_source: AssignmentSource.SCHOOL_ADMIN,
+    assigned_date: new Date(),
+    start_date: new Date(),
+    assigned_by: adminId,
+    created_at: new Date(),
+    updated_at: new Date(),
+  });
+
+  return {
+    deactivated_assignment: deactivated!,
+    new_assignment: newAssignment,
+  };
 };

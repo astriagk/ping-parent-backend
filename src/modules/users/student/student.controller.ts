@@ -3,7 +3,7 @@ import { Request, Response } from "express";
 import {
   ERROR_MESSAGES,
   HTTP_STATUS,
-  SUCCESS_MESSAGES,
+  SUCCESS_MESSAGES_COMMON,
 } from "@shared/constants";
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
@@ -38,7 +38,7 @@ export const createStudent = asyncHandler(
     return res.status(HTTP_STATUS.CREATED).json({
       success: true,
       data: student,
-      message: SUCCESS_MESSAGES.STUDENT.CREATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );
@@ -59,7 +59,7 @@ export const getStudentProfile = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: student,
-      message: SUCCESS_MESSAGES.STUDENT.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -80,7 +80,7 @@ export const getStudentByStudentId = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: student,
-      message: SUCCESS_MESSAGES.STUDENT.FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
     });
   },
 );
@@ -101,7 +101,7 @@ export const getMyStudents = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: students,
-      message: SUCCESS_MESSAGES.STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -122,7 +122,7 @@ export const getMyActiveStudents = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: students,
-      message: SUCCESS_MESSAGES.STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -144,7 +144,7 @@ export const updateStudent = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: student,
-      message: SUCCESS_MESSAGES.STUDENT.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -166,7 +166,7 @@ export const updateStudentByStudentId = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: student,
-      message: SUCCESS_MESSAGES.STUDENT.UPDATED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );
@@ -186,7 +186,7 @@ export const deleteStudent = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: SUCCESS_MESSAGES.STUDENT.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );
@@ -200,7 +200,7 @@ export const getStudentsBySchool = asyncHandler(
     return res.status(HTTP_STATUS.OK).json({
       success: true,
       data: students,
-      message: SUCCESS_MESSAGES.STUDENT.LIST_FETCHED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
     });
   },
 );
@@ -220,7 +220,7 @@ export const deleteStudentByStudentId = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
-      message: SUCCESS_MESSAGES.STUDENT.DELETED_SUCCESSFULLY,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
     });
   },
 );

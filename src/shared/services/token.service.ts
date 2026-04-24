@@ -1,11 +1,12 @@
 import jwt from "jsonwebtoken";
 
 import { ENV } from "@shared/config";
+import { UserRole } from "@shared/constants/enums";
 import { AdminTokenPayload } from "@shared/types/global/global";
 
 export interface TokenPayload {
   userId: string;
-  role: string;
+  role: UserRole;
 }
 
 export const generateAccessToken = (payload: TokenPayload): string => {
