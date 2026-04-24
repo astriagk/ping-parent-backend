@@ -5,6 +5,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   PickupStatus,
+  TripStatus,
   TripType,
 } from "@shared/constants";
 import { SUCCESS_MESSAGES } from "@shared/constants/messages";
@@ -25,6 +26,12 @@ import {
   RouteGeometry,
   StudentWaypoint,
 } from "./tracking.type";
+
+// Per-trip deviation tracking — state-based, not time-based
+// isDeviating=true: recalculation already fired this episode; skip until driver returns to route
+const deviationState = new Map<string, boolean>();
+const DEVIATION_THRESHOLD_KM = 0.1; // 100 m — triggers recalculation
+const RETURN_THRESHOLD_KM = 0.05; // 50 m — clears state once back on route
 
 const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
   const db = await getDB();
@@ -221,6 +228,7 @@ const extractUniqueSchoolWaypoints = (
 const validateAndPrepareRoute = async (
   userId: string,
   tripId: string,
+  pendingOnly = false,
 ): Promise<{
   driverId: string;
   trip: any;
@@ -250,10 +258,19 @@ const validateAndPrepareRoute = async (
     );
   }
 
-  // For DROP trips: only include students who have been picked from school
-  // For PICKUP trips: include all assigned students
-  const pickupStatusFilter =
-    trip.trip_type === TripType.DROP ? PickupStatus.PICKED : undefined;
+  // pendingOnly=true: only include students still needing action (used during active-trip recalculation)
+  //   PICKUP trip → PENDING (not yet picked up)
+  //   DROP trip   → PICKED  (picked from school, not yet dropped home)
+  // pendingOnly=false (default): original behaviour
+  //   PICKUP trip → all assigned students
+  //   DROP trip   → PICKED students
+  const pickupStatusFilter = pendingOnly
+    ? trip.trip_type === TripType.PICKUP
+      ? PickupStatus.PENDING
+      : PickupStatus.PICKED
+    : trip.trip_type === TripType.DROP
+      ? PickupStatus.PICKED
+      : undefined;
 
   const waypointsToOptimize =
     await trackingRepository.getTripStudentsWithDetails(
@@ -408,6 +425,109 @@ const commitTripRoute = async (
 };
 
 /**
+ * Automatically recalculate route when the driver deviates from the planned path.
+ * Only recalculates for students not yet serviced (pending/in-progress).
+ * Broadcasts the new route to the trip room (driver + parents) and sends
+ * individual ETA updates to each affected parent via their personal room.
+ * Errors are caught by the caller — position recording must never fail.
+ */
+const autoRecalculateForDeviation = async (
+  userId: string,
+  driverId: string,
+  tripId: string,
+  latitude: number,
+  longitude: number,
+): Promise<void> => {
+  const trip = await tripRepository.findById(tripId);
+  if (!trip) return;
+
+  // Fetch pending-only waypoints; return silently if nothing left to route
+  let uniqueWaypoints: GroupedWaypoint[];
+  let schoolWaypoints: GroupedWaypoint[];
+  try {
+    const prepared = await validateAndPrepareRoute(userId, tripId, true);
+    uniqueWaypoints = prepared.uniqueWaypoints;
+    schoolWaypoints = prepared.schoolWaypoints;
+  } catch {
+    // No pending students or other validation issue — nothing to recalculate
+    return;
+  }
+
+  const startPoint = { latitude, longitude };
+
+  const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
+    startPoint,
+    uniqueWaypoints.map((wp) => ({
+      latitude: wp.latitude,
+      longitude: wp.longitude,
+    })),
+  );
+
+  const optimizedWaypoints = sequence
+    .filter((idx) => idx != null && uniqueWaypoints[idx] != null)
+    .map((idx) => uniqueWaypoints[idx]);
+
+  let finalWaypoints: GroupedWaypoint[] = optimizedWaypoints;
+  if (schoolWaypoints && schoolWaypoints.length > 0) {
+    finalWaypoints =
+      trip.trip_type === TripType.PICKUP
+        ? [...optimizedWaypoints, ...schoolWaypoints]
+        : [...schoolWaypoints, ...optimizedWaypoints];
+  }
+
+  const { waypointsWithMetrics, routeData } = await calculateRouteWithTomTom(
+    startPoint,
+    finalWaypoints,
+  );
+
+  await commitTripRoute(tripId, routeData, waypointsWithMetrics);
+
+  // Notify each parent individually with their students' updated ETAs
+  const parentMap = new Map<
+    string,
+    {
+      students: { studentId: string; studentName: string }[];
+      etas: { studentId: string; eta: Date }[];
+    }
+  >();
+
+  for (const wp of waypointsWithMetrics) {
+    const parentId = wp.student_parent_id;
+    if (!parentId || parentId === "SCHOOL_LOCATION") continue;
+
+    const studentIds = Array.isArray(wp.student_id)
+      ? wp.student_id
+      : [wp.student_id];
+    const studentNames = wp.student_names ?? [];
+    const eta = wp.estimated_arrival_time
+      ? new Date(wp.estimated_arrival_time)
+      : new Date();
+
+    if (!parentMap.has(parentId)) {
+      parentMap.set(parentId, { students: [], etas: [] });
+    }
+    const entry = parentMap.get(parentId)!;
+    studentIds.filter(Boolean).forEach((id, i) => {
+      entry.students.push({
+        studentId: id,
+        studentName: studentNames[i] ?? "",
+      });
+      entry.etas.push({ studentId: id, eta });
+    });
+  }
+
+  for (const [parentId, { students, etas }] of parentMap.entries()) {
+    BroadcastService.notifyParentRouteRecalculated(
+      parentId,
+      tripId,
+      students,
+      etas,
+      driverId,
+    );
+  }
+};
+
+/**
  * Calculate route with TomTom Matrix API optimization
  * Used for both initial TomTom-optimized calculation and recalculation from new position
  * Consolidates logic from calculateOptimalRouteWithTomTom and recalculateRoute
@@ -509,11 +629,10 @@ export const recordLiveLocation = async (
     trip.optimized_route_data?.coordinates &&
     trip.optimized_route_data.coordinates.length > 0
   ) {
-    // Check if driver position is within 200m of any route coordinate
     const routeCoordinates = trip.optimized_route_data.coordinates;
-    const bufferKm = 0.2; // 200 meters
 
-    let isWithinCorridor = false;
+    // Find closest distance to any point on the route polyline
+    let minDistanceKm = Infinity;
     for (const routePoint of routeCoordinates) {
       const distance = calculateHaversineDistance(
         latitude,
@@ -521,15 +640,42 @@ export const recordLiveLocation = async (
         routePoint[0],
         routePoint[1],
       );
-      if (distance <= bufferKm) {
-        isWithinCorridor = true;
-        break;
+      if (distance < minDistanceKm) {
+        minDistanceKm = distance;
       }
     }
 
-    if (!isWithinCorridor) {
+    if (minDistanceKm > 0.2) {
       logger.warn(ERROR_MESSAGES.TRACKING.DRIVER_POSITION_OUTSIDE_CORRIDOR);
     }
+
+    const isActive =
+      trip.trip_status === TripStatus.IN_PROGRESS ||
+      trip.trip_status === TripStatus.STARTED;
+    const currentlyDeviating = deviationState.get(tripId) ?? false;
+
+    logger.info(
+      `[Deviation] Trip: ${tripId} | Distance: ${(minDistanceKm * 1000).toFixed(0)}m | isActive: ${isActive} | isDeviating: ${currentlyDeviating}`,
+    );
+
+    if (isActive) {
+      if (!currentlyDeviating && minDistanceKm > DEVIATION_THRESHOLD_KM) {
+        deviationState.set(tripId, true);
+        autoRecalculateForDeviation(
+          userId,
+          driverId,
+          tripId,
+          latitude,
+          longitude,
+        ).catch((err) => logger.error("Auto-recalculation failed", err));
+      } else if (currentlyDeviating && minDistanceKm <= RETURN_THRESHOLD_KM) {
+        deviationState.delete(tripId);
+      }
+    }
+  } else {
+    logger.info(
+      `[Deviation] Trip: ${tripId} | Skipped — no optimized_route_data yet`,
+    );
   }
 
   const trackingData: Omit<LocationTracking, "_id"> = {
@@ -551,15 +697,6 @@ export const recordLiveLocation = async (
       ERROR_MESSAGES.TRACKING.POSITION_UPDATE_ERROR,
     );
   }
-
-  BroadcastService.broadcastPositionUpdate(tripId, {
-    driverId,
-    latitude,
-    longitude,
-    speed: speed || 0,
-    heading: heading || 0,
-    accuracy: accuracy || 0,
-  });
 
   return {
     trip_id: result.trip_id,

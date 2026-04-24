@@ -2,6 +2,7 @@ import { Server as HTTPServer } from "http";
 import { ObjectId } from "mongodb";
 import { Socket, Server as SocketIOServer } from "socket.io";
 
+import { recordLiveLocation } from "@modules/tracking";
 import { trackingRepository } from "@modules/tracking/tracking.repository";
 import { getDB } from "@shared/config";
 import {
@@ -295,32 +296,21 @@ export class SocketService {
             timestamp: new Date(),
           });
 
-          if (process.env.NODE_ENV === "dev") {
-            try {
-              const db = await getDB();
-              const driver = await db
-                .collection(DRIVERS_COLLECTION)
-                .findOne({ user_id: userId });
-
-              if (driver) {
-                await trackingRepository.upsertTracking(tripId, {
-                  trip_id: tripId,
-                  driver_id: String(driver._id),
-                  latitude,
-                  longitude,
-                  speed: speed || 0,
-                  heading: heading || 0,
-                  accuracy: accuracy || 0,
-                  timestamp: new Date(),
-                });
-              }
-            } catch (err) {
-              logger.error(
-                "[Socket][Dev] Failed to persist position:",
-                err as object,
-              );
-            }
-          }
+          // Lazy import breaks the socket → tracking → broadcast → socket circular dependency
+          recordLiveLocation(
+            userId,
+            tripId,
+            latitude,
+            longitude,
+            speed,
+            heading,
+            accuracy,
+          ).catch((err) =>
+            logger.error(
+              "[Socket] Failed to record live location:",
+              err as object,
+            ),
+          );
 
           if (callback) callback(true);
         },

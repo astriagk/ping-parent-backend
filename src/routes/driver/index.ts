@@ -6,7 +6,6 @@ import addressRouter from "./address.routes";
 import assignmentsRouter from "./assignments.routes";
 import availabilityRouter from "./availability.routes";
 import documentsRouter from "./documents.routes";
-import googlemapsRouter from "./googlemaps.routes";
 import onboardingRouter from "./onboarding.routes";
 import profileRouter from "./profile.routes";
 import qrOtpRouter from "./qr-otp.routes";
@@ -32,6 +31,5 @@ router.use("/", tripStudentsRouter);
 router.use("/", assignmentsRouter);
 router.use("/", qrOtpRouter);
 router.use("/", trackingRouter);
-router.use("/", googlemapsRouter);
 
 export default router;

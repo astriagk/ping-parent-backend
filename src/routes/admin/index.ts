@@ -5,7 +5,6 @@ import { verifyAdminOrAboveToken } from "@shared/middlewares";
 import assignmentsRouter from "./assignments.routes";
 import auditLogsRouter from "./audit-logs.routes";
 import authRouter from "./auth.routes";
-import googlemapsRouter from "./googlemaps.routes";
 import paymentsRouter from "./payments.routes";
 import schoolAssignmentsRouter from "./school-assignments.routes";
 import schoolDriversRouter from "./school-drivers.routes";
@@ -45,7 +44,6 @@ router.use("/", subscriptionsRouter);
 router.use("/", subscriptionPlansRouter);
 router.use("/", schoolSubscriptionsRouter);
 router.use("/", trackingRouter);
-router.use("/", googlemapsRouter);
 router.use("/", auditLogsRouter);
 router.use("/", supportTicketsRouter);
 
