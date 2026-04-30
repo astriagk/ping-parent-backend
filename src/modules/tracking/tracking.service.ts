@@ -432,57 +432,105 @@ const commitTripRoute = async (
  * Errors are caught by the caller — position recording must never fail.
  */
 const autoRecalculateForDeviation = async (
-  userId: string,
   driverId: string,
   tripId: string,
   latitude: number,
   longitude: number,
 ): Promise<void> => {
   const trip = await tripRepository.findById(tripId);
-  if (!trip) return;
+  if (!trip || trip.driver_id !== driverId) return;
 
-  // Fetch pending-only waypoints; return silently if nothing left to route
-  let uniqueWaypoints: GroupedWaypoint[];
-  let schoolWaypoints: GroupedWaypoint[];
-  try {
-    const prepared = await validateAndPrepareRoute(userId, tripId, true);
-    uniqueWaypoints = prepared.uniqueWaypoints;
-    schoolWaypoints = prepared.schoolWaypoints;
-  } catch {
-    // No pending students or other validation issue — nothing to recalculate
-    return;
+  // Fetch ALL students for this trip (with pickup_status, sequence_order, estimated_arrival_time)
+  const allStudents =
+    await trackingRepository.getTripStudentsWithDetails(tripId);
+  if (allStudents.length === 0) return;
+
+  // For DROP trips only students who boarded the van (picked or dropped) are in scope
+  const inScopeStudents =
+    trip.trip_type === TripType.DROP
+      ? allStudents.filter(
+          (s) =>
+            s.pickup_status === PickupStatus.PICKED ||
+            s.pickup_status === PickupStatus.DROPPED,
+        )
+      : allStudents;
+
+  if (inScopeStudents.length === 0) return;
+
+  const isServiced = (s: StudentWaypoint): boolean =>
+    trip.trip_type === TripType.PICKUP
+      ? s.pickup_status === PickupStatus.PICKED ||
+        s.pickup_status === PickupStatus.DROPPED ||
+        s.pickup_status === PickupStatus.NO_SHOW
+      : s.pickup_status === PickupStatus.DROPPED ||
+        s.pickup_status === PickupStatus.NO_SHOW;
+
+  const servicedStudents = inScopeStudents.filter(isServiced);
+  const pendingStudents = inScopeStudents.filter((s) => !isServiced(s));
+
+  if (pendingStudents.length === 0) return;
+
+  // Keep serviced students in their existing stop order
+  servicedStudents.sort(
+    (a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0),
+  );
+
+  const servicedGrouped = groupStudentsByParent(servicedStudents);
+  const pendingGrouped = groupStudentsByParent(pendingStudents);
+  const schoolWaypoints = extractUniqueSchoolWaypoints(inScopeStudents);
+
+  // Carry existing ETAs forward for serviced stops so history is preserved
+  const etaByParent = new Map<string, Date>();
+  for (const s of servicedStudents) {
+    if (s.student_parent_id && s.estimated_arrival_time) {
+      etaByParent.set(s.student_parent_id, s.estimated_arrival_time);
+    }
+  }
+  const servicedWithEta: GroupedWaypoint[] = servicedGrouped.map((wp) => ({
+    ...wp,
+    estimated_arrival_time:
+      etaByParent.get(wp.student_parent_id) ?? wp.estimated_arrival_time,
+    is_completed: true,
+  }));
+
+  // Build pending waypoints with school stops in the correct position
+  let pendingFinalWaypoints: GroupedWaypoint[] = pendingGrouped;
+  if (schoolWaypoints.length > 0) {
+    pendingFinalWaypoints =
+      trip.trip_type === TripType.PICKUP
+        ? [...pendingGrouped, ...schoolWaypoints]
+        : [...schoolWaypoints, ...pendingGrouped];
   }
 
   const startPoint = { latitude, longitude };
 
   const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
     startPoint,
-    uniqueWaypoints.map((wp) => ({
+    pendingFinalWaypoints.map((wp) => ({
       latitude: wp.latitude,
       longitude: wp.longitude,
     })),
   );
 
-  const optimizedWaypoints = sequence
-    .filter((idx) => idx != null && uniqueWaypoints[idx] != null)
-    .map((idx) => uniqueWaypoints[idx]);
+  const optimizedPending = sequence
+    .filter((idx) => idx != null && pendingFinalWaypoints[idx] != null)
+    .map((idx) => pendingFinalWaypoints[idx]);
 
-  let finalWaypoints: GroupedWaypoint[] = optimizedWaypoints;
-  if (schoolWaypoints && schoolWaypoints.length > 0) {
-    finalWaypoints =
-      trip.trip_type === TripType.PICKUP
-        ? [...optimizedWaypoints, ...schoolWaypoints]
-        : [...schoolWaypoints, ...optimizedWaypoints];
-  }
+  const { waypointsWithMetrics: pendingWithMetrics, routeData } =
+    await calculateRouteWithTomTom(startPoint, optimizedPending);
 
-  const { waypointsWithMetrics, routeData } = await calculateRouteWithTomTom(
-    startPoint,
-    finalWaypoints,
-  );
+  // Full waypoint list: serviced (fixed positions) + newly optimized pending
+  const allWaypointsWithMetrics: GroupedWaypoint[] = [
+    ...servicedWithEta,
+    ...pendingWithMetrics,
+  ];
 
-  await commitTripRoute(tripId, routeData, waypointsWithMetrics);
+  // Store full waypoints so history always reflects the complete trip
+  routeData.waypoints = allWaypointsWithMetrics;
 
-  // Notify each parent individually with their students' updated ETAs
+  await commitTripRoute(tripId, routeData, allWaypointsWithMetrics);
+
+  // Notify only pending students' parents — their ETAs actually changed
   const parentMap = new Map<
     string,
     {
@@ -491,7 +539,7 @@ const autoRecalculateForDeviation = async (
     }
   >();
 
-  for (const wp of waypointsWithMetrics) {
+  for (const wp of pendingWithMetrics) {
     const parentId = wp.student_parent_id;
     if (!parentId || parentId === "SCHOOL_LOCATION") continue;
 
@@ -662,7 +710,6 @@ export const recordLiveLocation = async (
       if (!currentlyDeviating && minDistanceKm > DEVIATION_THRESHOLD_KM) {
         deviationState.set(tripId, true);
         autoRecalculateForDeviation(
-          userId,
           driverId,
           tripId,
           latitude,

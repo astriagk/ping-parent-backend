@@ -36,6 +36,7 @@ export interface StudentWaypoint extends BaseWaypoint {
   student_parent_id?: string;
   student_name?: string;
   pickup_status?: PickupStatus;
+  sequence_order?: number;
   student_roll_number?: string;
   student_grade?: string;
   student_section?: string;
@@ -56,6 +57,7 @@ export interface StudentWaypoint extends BaseWaypoint {
 export interface GroupedWaypoint extends BaseWaypoint {
   student_id: string[]; // all student IDs at this stop
   student_parent_id: string; // parent ID or "SCHOOL_LOCATION" for schools
+  is_completed?: boolean; // true if all students at this stop are already serviced
   student_names?: string[]; // all student names at this stop
   student_photo_urls?: string[]; // all student photo URLs at this stop
   student_gender?: string;

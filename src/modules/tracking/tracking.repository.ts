@@ -272,6 +272,9 @@ class TrackingRepository extends BaseRepository<LocationTracking> {
         {
           $project: {
             student_id: "$student_id",
+            pickup_status: "$pickup_status",
+            sequence_order: "$sequence_order",
+            estimated_arrival_time: "$estimated_arrival_time",
             student_name: "$studentDetails.student_name",
             student_roll_number: "$studentDetails.roll_number",
             student_section: "$studentDetails.section",

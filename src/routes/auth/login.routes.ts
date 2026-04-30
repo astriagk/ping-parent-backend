@@ -20,6 +20,12 @@ router.post(
   authHandlers.public.loginRateLimiter,
   authHandlers.public.verifyLoginOtp,
 );
+router.post(
+  "/login/resend-otp",
+  authHandlers.public.validateSendLoginOtp,
+  authHandlers.public.loginRateLimiter,
+  authHandlers.public.resendLoginOtp,
+);
 
 // --- Session ---
 router.get("/verify-token", authHandlers.public.verifyToken);
