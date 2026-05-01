@@ -190,6 +190,44 @@ export class NotificationDispatcher {
     );
   }
 
+  static async notifyParentStudentsApproaching(
+    parentId: string,
+    userId: string,
+    tripId: string,
+    students: StudentInfo[],
+    eta: number,
+    driverId?: string,
+  ): Promise<void> {
+    BroadcastService.notifyParentStudentsApproaching(
+      parentId,
+      tripId,
+      students,
+      eta,
+      driverId,
+    );
+
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    const etaMinutes = Math.ceil(eta / 60);
+    const message =
+      students.length === 1
+        ? MESSAGE_TEMPLATES.NOTIFICATION.driverApproachingForStudent(
+            studentNames,
+            etaMinutes,
+          )
+        : MESSAGE_TEMPLATES.NOTIFICATION.driverApproachingForStudents(
+            studentNames,
+            etaMinutes,
+          );
+
+    await this.dispatch(
+      userId,
+      NotificationType.APPROACHING,
+      "Driver Approaching",
+      message,
+      { tripId, students, eta: String(eta), driverId },
+    );
+  }
+
   // ============================================
   // Bulk Student Notifications
   // ============================================
