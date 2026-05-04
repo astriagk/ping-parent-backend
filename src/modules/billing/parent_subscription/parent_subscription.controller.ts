@@ -9,6 +9,8 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
+  adminCancelParentSubscription,
+  adminCreateParentSubscription,
   cancelParentSubscription,
   createParentSubscription as createParentSubscriptionService,
   deleteParentSubscription,
@@ -21,6 +23,7 @@ import {
   updateParentSubscription,
   upgradeParentSubscription as upgradeParentSubscriptionService,
 } from "./parent_subscription.service";
+import { AdminCreateParentSubscriptionInput } from "./parent_subscription.type";
 
 /**
  * Get subscription recommendations for the authenticated parent
@@ -252,6 +255,40 @@ export const deleteSubscriptionById = asyncHandler(
     return res.json({
       success: true,
       message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
+    });
+  },
+);
+
+export const adminCreateSubscriptionHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const subscription = await adminCreateParentSubscription(
+      req.body as AdminCreateParentSubscriptionInput,
+    );
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: subscription,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminCancelSubscriptionHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+    const updated = await adminCancelParentSubscription(id);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.PARENT_SUBSCRIPTION.NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },
 );

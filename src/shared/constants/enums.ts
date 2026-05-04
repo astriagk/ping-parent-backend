@@ -15,6 +15,7 @@ export enum AssignmentSource {
   PARENT = "parent",
   SCHOOL_ADMIN = "school_admin",
   SYSTEM = "system",
+  ADMIN = "admin",
 }
 
 export enum AssignmentStatus {

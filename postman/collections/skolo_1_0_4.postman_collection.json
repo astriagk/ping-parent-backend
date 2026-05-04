@@ -1,9 +1,9 @@
 {
   "info": {
-    "name": "skolo API v1.0.3",
-    "description": "# Skolo API v1.0.3\n\nGenerated: 2026-03-22T16:45:53.558Z\n\n## Summary\n- **Total Endpoints:** 232\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 63 endpoints\n- **Auth**: 7 endpoints\n- **Driver**: 54 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 23 endpoints\n- **Superadmin**: 17 endpoints\n",
+    "name": "skolo API v1.0.4",
+    "description": "# Skolo API v1.0.4\n\nGenerated: 2026-05-04T17:15:23.095Z\n\n## Summary\n- **Total Endpoints:** 254\n- **Categories:** 8\n\n## Authentication\nSet the appropriate token in the environment variables:\n- PARENT_TOKEN - For parent endpoints\n- DRIVER_TOKEN - For driver endpoints\n- ADMIN_TOKEN - For admin endpoints\n- TOKEN - For general authenticated endpoints\n\n## Categories\n- **Admin**: 89 endpoints\n- **Auth**: 9 endpoints\n- **Driver**: 51 endpoints\n- **Parent**: 53 endpoints\n- **Public**: 12 endpoints\n- **School Admin**: 3 endpoints\n- **Shared**: 20 endpoints\n- **Superadmin**: 17 endpoints\n",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "version": "1.0.3"
+    "version": "1.0.4"
   },
   "auth": {
     "type": "bearer",
@@ -117,6 +117,272 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Get All Parent Requested successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Assign Student",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/assignments/assign-student",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "assignments",
+                    "assign-student"
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• student_id: string (required)\n• monthly_fee: number (optional)\n• start_date: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"driver_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"student_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"monthly_fee\": 0,\n  \"start_date\": \"sample_string\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Assign Student successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Approve",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/assignments/{{id}}/approve",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "assignments",
+                    "{{ID}}",
+                    "approve"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "POST /assignments/:id/approve"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Approve successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Reject",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/assignments/{{id}}/reject",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "assignments",
+                    "{{ID}}",
+                    "reject"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "POST /assignments/:id/reject"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Reject successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Deactivate",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/assignments/{{id}}/deactivate",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "assignments",
+                    "{{ID}}",
+                    "deactivate"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "POST /assignments/:id/deactivate"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Deactivate successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -560,26 +826,40 @@
           ]
         },
         {
-          "name": "Googlemaps",
-          "description": "Googlemaps endpoints",
+          "name": "Bulk",
+          "description": "Bulk endpoints",
           "item": [
             {
-              "name": "Create Cleanup",
+              "name": "Create Parents",
               "request": {
                 "method": "POST",
-                "header": [],
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
                 "url": {
-                  "raw": "{{BASE_URL}}/admin/googlemaps/cleanup",
+                  "raw": "{{BASE_URL}}/admin/bulk/parents",
                   "host": [
                     "{{BASE_URL}}"
                   ],
                   "path": [
                     "admin",
-                    "googlemaps",
-                    "cleanup"
+                    "bulk",
+                    "parents"
                   ]
                 },
-                "description": "POST /googlemaps/cleanup"
+                "description": "\n\n📋 Request Body Fields:\n• parents: array (required)\n• name: string (required)\n• email: string (optional)\n• photo_url: string (optional)\n• address: object (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"parents\": [],\n  \"name\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"address\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
               },
               "response": [
                 {
@@ -592,7 +872,1334 @@
                       "value": "application/json"
                     }
                   ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Cleanup successful\",\n  \"data\": {}\n}"
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Parents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Parents With Students",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/bulk/parents-with-students",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "bulk",
+                    "parents-with-students"
+                  ]
+                },
+                "description": "POST /bulk/parents-with-students"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Parents With Students successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Drivers",
+          "description": "Drivers endpoints",
+          "item": [
+            {
+              "name": "Create Drivers",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers"
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• phone_number: string (required)\n• name: string (required)\n• email: string (optional)\n• photo_url: string (optional)\n• vehicle_type: string (required)\n• vehicle_number: string (required)\n• vehicle_capacity: number (required)\n• school_id: string (optional)\n• documents: object (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phone_number\": \"+919876543210\",\n  \"name\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"vehicle_type\": \"values(vehicletype\",\n  \"vehicle_number\": \"MH01AB1234\",\n  \"vehicle_capacity\": 1,\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"documents\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Drivers successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Drivers",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• name: string (optional)\n• email: string (optional)\n• photo_url: string (optional)\n• vehicle_type: string (optional)\n• vehicle_number: string (optional)\n• vehicle_capacity: number (optional)\n• is_available: boolean (optional)\n• school_id: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"vehicle_type\": \"values(vehicletype\",\n  \"vehicle_number\": \"MH01AB1234\",\n  \"vehicle_capacity\": 1,\n  \"is_available\": true,\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Drivers successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Drivers",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "DELETE /drivers/:driverId"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Delete Drivers successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Address",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}/address",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}",
+                    "address"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "GET /drivers/:driverId/address"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Address successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Address",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}/address",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}",
+                    "address"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "PUT /drivers/:driverId/address"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Address successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Documents",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}/documents",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}",
+                    "documents"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "GET /drivers/:driverId/documents"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Documents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Documents",
+              "request": {
+                "method": "POST",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}/documents",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}",
+                    "documents"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "POST /drivers/:driverId/documents"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Documents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Documents",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/drivers/{{driverId}}/documents",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "drivers",
+                    "{{DRIVERID}}",
+                    "documents"
+                  ],
+                  "variable": [
+                    {
+                      "key": "driverId",
+                      "value": "{{DRIVERID}}",
+                      "description": "DriverId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• driving_license_number: string (optional)\n• driving_license_photo_url: string (optional)\n• vehicle_license_number: string (optional)\n• vehicle_license_photo_url: string (optional)\n• insurance_number: string (optional)\n• insurance_photo_url: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"driving_license_number\": \"DL-1234567890123\",\n  \"driving_license_photo_url\": \"https://example.com/image.jpg\",\n  \"vehicle_license_number\": \"DL-1234567890123\",\n  \"vehicle_license_photo_url\": \"https://example.com/image.jpg\",\n  \"insurance_number\": \"sample_string\",\n  \"insurance_photo_url\": \"https://example.com/image.jpg\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Documents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Parent Subscriptions",
+          "description": "Parent Subscriptions endpoints",
+          "item": [
+            {
+              "name": "Create Parent Subscriptions",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parent-subscriptions",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parent-subscriptions"
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• parent_id: string (required)\n• plan_id: string (required)\n• start_date: string (optional)\n• end_date: string (optional)\n• auto_renew: boolean (optional)\n• student_ids: array (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"parent_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"start_date\": \"sample_string\",\n  \"end_date\": \"sample_string\",\n  \"auto_renew\": false,\n  \"student_ids\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Parent Subscriptions successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Cancel",
+              "request": {
+                "method": "PATCH",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parent-subscriptions/{{id}}/cancel",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parent-subscriptions",
+                    "{{ID}}",
+                    "cancel"
+                  ],
+                  "variable": [
+                    {
+                      "key": "id",
+                      "value": "{{ID}}",
+                      "description": "Id ID"
+                    }
+                  ]
+                },
+                "description": "PATCH /parent-subscriptions/:id/cancel"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Cancel successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "name": "Parents",
+          "description": "Parents endpoints",
+          "item": [
+            {
+              "name": "Create Parents",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents"
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• phone_number: string (required)\n• name: string (required)\n• email: string (optional)\n• photo_url: string (optional)\n• address: object (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phone_number\": \"+919876543210\",\n  \"name\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"address\": {}\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Parents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Parents",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• name: string (optional)\n• email: string (optional)\n• photo_url: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"name\": \"John Doe\",\n  \"email\": \"user@example.com\",\n  \"photo_url\": \"https://example.com/image.jpg\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Parents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Parents",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "DELETE /parents/:parentId"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Delete Parents successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Address",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}/address",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}",
+                    "address"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "GET /parents/:parentId/address"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Address successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Address",
+              "request": {
+                "method": "PUT",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}/address",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}",
+                    "address"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "PUT /parents/:parentId/address"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Address successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Get Students",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}/students",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}",
+                    "students"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "GET /parents/:parentId/students"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Students successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Students",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}/students",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}",
+                    "students"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• school_id: string (required)\n• student_name: string (required)\n• class: string (required)\n• pickup_address_id: string (required)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"student_name\": \"Rahul Sharma\",\n  \"class\": \"10th\",\n  \"pickup_address_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"section\": \"A\",\n  \"roll_number\": \"R001\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"date_of_birth\": \"sample_string\",\n  \"gender\": \"male\",\n  \"emergency_contact\": \"+919876543210\",\n  \"medical_info\": \"Additional notes or description\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Students successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Bulk",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/parents/{{parentId}}/students/bulk",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "parents",
+                    "{{PARENTID}}",
+                    "students",
+                    "bulk"
+                  ],
+                  "variable": [
+                    {
+                      "key": "parentId",
+                      "value": "{{PARENTID}}",
+                      "description": "ParentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• students: array (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"students\": []\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Bulk successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -1583,6 +3190,62 @@
           "description": "School Subscriptions endpoints",
           "item": [
             {
+              "name": "Get All School Subscriptions",
+              "request": {
+                "method": "GET",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/school-subscriptions",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "school-subscriptions"
+                  ]
+                },
+                "description": "GET /school-subscriptions"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Get All School Subscriptions successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
               "name": "Create School Subscriptions",
               "request": {
                 "method": "POST",
@@ -1933,10 +3596,10 @@
                     }
                   ]
                 },
-                "description": "\n\n📋 Request Body Fields:\n• plan_id: string (optional)\n• end_date: string (optional)\n• auto_renew: boolean (optional)\n• max_drivers: number (optional)\n• max_students: number (optional)\n• billing_contact: string (optional)\n• subscription_status: string (optional)",
+                "description": "\n\n📋 Request Body Fields:\n• plan_id: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)\n• auto_renew: boolean (optional)\n• max_drivers: number (optional)\n• max_students: number (optional)\n• billing_contact: string (optional)\n• subscription_status: string (optional)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"end_date\": \"sample_string\",\n  \"auto_renew\": false,\n  \"max_drivers\": 1,\n  \"max_students\": 1,\n  \"billing_contact\": \"+919876543210\",\n  \"subscription_status\": \"values(schoolsubscriptionstatus\"\n}",
+                  "raw": "{\n  \"plan_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"start_date\": \"sample_string\",\n  \"end_date\": \"sample_string\",\n  \"auto_renew\": false,\n  \"max_drivers\": 1,\n  \"max_students\": 1,\n  \"billing_contact\": \"+919876543210\",\n  \"subscription_status\": \"values(schoolsubscriptionstatus\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2431,10 +4094,10 @@
                     "schools"
                   ]
                 },
-                "description": "\n\n📋 Request Body Fields:\n• school_name: string (required)\n• address: string (required)\n• city: string (required)\n• state: string (required)\n• latitude: number (required)\n• longitude: number (required)\n• contact_number: string (optional)\n• email: string (optional)",
+                "description": "\n\n📋 Request Body Fields:\n• school_name: string (required)\n• address: string (required)\n• city: string (required)\n• state: string (required)\n• latitude: number (required)\n• longitude: number (required)\n• contact_number: string (optional)\n• email: string (optional)\n• principal_name: string (optional)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"school_name\": \"Delhi Public School\",\n  \"address\": \"123 Main Street, Mumbai\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"contact_number\": \"+919876543210\",\n  \"email\": \"user@example.com\"\n}",
+                  "raw": "{\n  \"school_name\": \"Delhi Public School\",\n  \"address\": \"123 Main Street, Mumbai\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"contact_number\": \"+919876543210\",\n  \"email\": \"user@example.com\",\n  \"principal_name\": \"John Doe\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2509,10 +4172,10 @@
                     }
                   ]
                 },
-                "description": "\n\n📋 Request Body Fields:\n• school_name: string (optional)\n• address: string (optional)\n• city: string (optional)\n• state: string (optional)\n• latitude: number (optional)\n• longitude: number (optional)\n• contact_number: string (optional)\n• email: string (optional)",
+                "description": "\n\n📋 Request Body Fields:\n• school_name: string (optional)\n• address: string (optional)\n• city: string (optional)\n• state: string (optional)\n• latitude: number (optional)\n• longitude: number (optional)\n• contact_number: string (optional)\n• email: string (optional)\n• principal_name: string (optional)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"school_name\": \"Delhi Public School\",\n  \"address\": \"123 Main Street, Mumbai\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"contact_number\": \"+919876543210\",\n  \"email\": \"user@example.com\"\n}",
+                  "raw": "{\n  \"school_name\": \"Delhi Public School\",\n  \"address\": \"123 Main Street, Mumbai\",\n  \"city\": \"Mumbai\",\n  \"state\": \"Maharashtra\",\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"contact_number\": \"+919876543210\",\n  \"email\": \"user@example.com\",\n  \"principal_name\": \"John Doe\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -2667,6 +4330,148 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Get School successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Update Students",
+              "request": {
+                "method": "PUT",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/students/{{studentId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "students",
+                    "{{STUDENTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "studentId",
+                      "value": "{{STUDENTID}}",
+                      "description": "StudentId ID"
+                    }
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• school_id: string (optional)\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"school_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"student_name\": \"Rahul Sharma\",\n  \"class\": \"10th\",\n  \"section\": \"A\",\n  \"roll_number\": \"R001\",\n  \"photo_url\": \"https://example.com/image.jpg\",\n  \"date_of_birth\": \"sample_string\",\n  \"gender\": \"male\",\n  \"pickup_address_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"emergency_contact\": \"+919876543210\",\n  \"medical_info\": \"Additional notes or description\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Students successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Delete Students",
+              "request": {
+                "method": "DELETE",
+                "header": [],
+                "url": {
+                  "raw": "{{BASE_URL}}/admin/students/{{studentId}}",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "admin",
+                    "students",
+                    "{{STUDENTID}}"
+                  ],
+                  "variable": [
+                    {
+                      "key": "studentId",
+                      "value": "{{STUDENTID}}",
+                      "description": "StudentId ID"
+                    }
+                  ]
+                },
+                "description": "DELETE /students/:studentId"
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Delete Students successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -4513,6 +6318,77 @@
               ]
             },
             {
+              "name": "Create Resend Otp",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/auth/login/resend-otp",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "login",
+                    "resend-otp"
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• phone: string (required)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phone\": \"+919876543210\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Resend Otp successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
               "name": "Get All Verify Token",
               "request": {
                 "method": "GET",
@@ -4745,6 +6621,77 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Create Verify Otp successful\",\n  \"data\": {}\n}"
+                },
+                {
+                  "name": "Bad Request",
+                  "status": "Bad Request",
+                  "code": 400,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
+                },
+                {
+                  "name": "Unauthorized",
+                  "status": "Unauthorized",
+                  "code": 401,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
+                }
+              ]
+            },
+            {
+              "name": "Create Resend Otp",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  }
+                ],
+                "url": {
+                  "raw": "{{BASE_URL}}/auth/register/resend-otp",
+                  "host": [
+                    "{{BASE_URL}}"
+                  ],
+                  "path": [
+                    "auth",
+                    "register",
+                    "resend-otp"
+                  ]
+                },
+                "description": "\n\n📋 Request Body Fields:\n• phone: string (required)\n• role: string (optional)",
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"phone\": \"+919876543210\",\n  \"role\": \"parent\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                }
+              },
+              "response": [
+                {
+                  "name": "Success",
+                  "status": "Success",
+                  "code": 200,
+                  "header": [
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json"
+                    }
+                  ],
+                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Resend Otp successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -5686,10 +7633,10 @@
                     "documents"
                   ]
                 },
-                "description": "\n\n📋 Request Body Fields:\n• driving_license_number: string (optional)\n• vehicle_license_number: string (optional)\n• insurance_number: string (optional)",
+                "description": "\n\n📋 Request Body Fields:\n• driving_license_number: string (optional)\n• driving_license_photo_url: string (optional)\n• vehicle_license_number: string (optional)\n• vehicle_license_photo_url: string (optional)\n• insurance_number: string (optional)\n• insurance_photo_url: string (optional)",
                 "body": {
                   "mode": "raw",
-                  "raw": "{\n  \"driving_license_number\": \"DL-1234567890123\",\n  \"vehicle_license_number\": \"DL-1234567890123\",\n  \"insurance_number\": \"sample_string\"\n}",
+                  "raw": "{\n  \"driving_license_number\": \"DL-1234567890123\",\n  \"driving_license_photo_url\": \"https://example.com/image.jpg\",\n  \"vehicle_license_number\": \"DL-1234567890123\",\n  \"vehicle_license_photo_url\": \"https://example.com/image.jpg\",\n  \"insurance_number\": \"sample_string\",\n  \"insurance_photo_url\": \"https://example.com/image.jpg\"\n}",
                   "options": {
                     "raw": {
                       "language": "json"
@@ -5709,233 +7656,6 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Update Documents successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Googlemaps",
-          "description": "Googlemaps endpoints",
-          "item": [
-            {
-              "name": "Create Calculate",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/driver/googlemaps/calculate",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "driver",
-                    "googlemaps",
-                    "calculate"
-                  ]
-                },
-                "description": "\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"values(googlemapstrafficmodel\",\n  \"avoid\": \"values(googlemapsavoidoption\"\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Calculate successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            },
-            {
-              "name": "Create Recalculate",
-              "request": {
-                "method": "POST",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/driver/googlemaps/recalculate",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "driver",
-                    "googlemaps",
-                    "recalculate"
-                  ]
-                },
-                "description": "\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)\n• force_recalculate: boolean (optional)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"trip_id\": \"550e8400-e29b-41d4-a716-446655440000\",\n  \"current_latitude\": 19.076,\n  \"current_longitude\": 72.8777,\n  \"traffic_model\": \"values(googlemapstrafficmodel\",\n  \"avoid\": \"values(googlemapsavoidoption\",\n  \"force_recalculate\": false\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Create Recalculate successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            },
-            {
-              "name": "Update Position",
-              "request": {
-                "method": "PATCH",
-                "header": [
-                  {
-                    "key": "Content-Type",
-                    "value": "application/json"
-                  }
-                ],
-                "url": {
-                  "raw": "{{BASE_URL}}/driver/googlemaps/{{tripId}}/position",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "driver",
-                    "googlemaps",
-                    "{{TRIPID}}",
-                    "position"
-                  ],
-                  "variable": [
-                    {
-                      "key": "tripId",
-                      "value": "{{TRIPID}}",
-                      "description": "TripId ID"
-                    }
-                  ]
-                },
-                "description": "\n\n📋 Request Body Fields:\n• latitude: number (required)\n• longitude: number (required)\n• speed: number (optional)\n• heading: number (optional)\n• accuracy: number (optional)",
-                "body": {
-                  "mode": "raw",
-                  "raw": "{\n  \"latitude\": 19.076,\n  \"longitude\": 72.8777,\n  \"speed\": 0,\n  \"heading\": 0,\n  \"accuracy\": 0\n}",
-                  "options": {
-                    "raw": {
-                      "language": "json"
-                    }
-                  }
-                }
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Update Position successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",
@@ -13133,207 +14853,6 @@
                     }
                   ],
                   "body": "{\n  \"success\": true,\n  \"message\": \"Create Remove successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "name": "Googlemaps",
-          "description": "Googlemaps endpoints",
-          "item": [
-            {
-              "name": "Get Tracking",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{BASE_URL}}/shared/googlemaps/{{tripId}}/tracking",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "shared",
-                    "googlemaps",
-                    "{{TRIPID}}",
-                    "tracking"
-                  ],
-                  "variable": [
-                    {
-                      "key": "tripId",
-                      "value": "{{TRIPID}}",
-                      "description": "TripId ID"
-                    }
-                  ]
-                },
-                "description": "GET /googlemaps/:tripId/tracking"
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Tracking successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            },
-            {
-              "name": "Get Current Position",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{BASE_URL}}/shared/googlemaps/{{tripId}}/current-position",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "shared",
-                    "googlemaps",
-                    "{{TRIPID}}",
-                    "current-position"
-                  ],
-                  "variable": [
-                    {
-                      "key": "tripId",
-                      "value": "{{TRIPID}}",
-                      "description": "TripId ID"
-                    }
-                  ]
-                },
-                "description": "GET /googlemaps/:tripId/current-position"
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Current Position successful\",\n  \"data\": {}\n}"
-                },
-                {
-                  "name": "Bad Request",
-                  "status": "Bad Request",
-                  "code": 400,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Validation error\",\n  \"errors\": []\n}"
-                },
-                {
-                  "name": "Unauthorized",
-                  "status": "Unauthorized",
-                  "code": 401,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": false,\n  \"message\": \"Authentication required\"\n}"
-                }
-              ]
-            },
-            {
-              "name": "Get Details",
-              "request": {
-                "method": "GET",
-                "header": [],
-                "url": {
-                  "raw": "{{BASE_URL}}/shared/googlemaps/{{tripId}}/details",
-                  "host": [
-                    "{{BASE_URL}}"
-                  ],
-                  "path": [
-                    "shared",
-                    "googlemaps",
-                    "{{TRIPID}}",
-                    "details"
-                  ],
-                  "variable": [
-                    {
-                      "key": "tripId",
-                      "value": "{{TRIPID}}",
-                      "description": "TripId ID"
-                    }
-                  ]
-                },
-                "description": "GET /googlemaps/:tripId/details"
-              },
-              "response": [
-                {
-                  "name": "Success",
-                  "status": "Success",
-                  "code": 200,
-                  "header": [
-                    {
-                      "key": "Content-Type",
-                      "value": "application/json"
-                    }
-                  ],
-                  "body": "{\n  \"success\": true,\n  \"message\": \"Get Details successful\",\n  \"data\": {}\n}"
                 },
                 {
                   "name": "Bad Request",

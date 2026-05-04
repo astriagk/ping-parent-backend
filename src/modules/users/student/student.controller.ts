@@ -8,6 +8,11 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
+  adminBulkCreateStudentsForParent,
+  adminCreateStudentForParent,
+  adminGetStudentsByParentId,
+  adminSoftDeleteStudent,
+  adminUpdateStudent,
   createStudent as createStudentService,
   deleteStudentByStudentId as deleteStudentByStudentIdService,
   deleteStudent as deleteStudentService,
@@ -19,6 +24,7 @@ import {
   updateStudentByStudentId as updateStudentByStudentIdService,
   updateStudent as updateStudentService,
 } from "./student.service";
+import { AdminStudentInput } from "./student.type";
 
 export const createStudent = asyncHandler(
   async (req: Request, res: Response) => {
@@ -212,6 +218,89 @@ export const deleteStudentByStudentId = asyncHandler(
     const deleted = await deleteStudentByStudentIdService(student_id);
 
     if (!deleted) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.STUDENT.NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
+    });
+  },
+);
+
+export const adminGetParentStudentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+    const students = await adminGetStudentsByParentId(parentId);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: students,
+      message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
+    });
+  },
+);
+
+export const adminCreateStudentForParentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+    const student = await adminCreateStudentForParent(
+      parentId,
+      req.body as AdminStudentInput,
+    );
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: student,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminBulkCreateStudentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+    const students = (req.body?.students || []) as AdminStudentInput[];
+
+    const result = await adminBulkCreateStudentsForParent(parentId, students);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminUpdateStudentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { studentId } = req.params as Record<string, string>;
+    const updated = await adminUpdateStudent(studentId, req.body);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.STUDENT.NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+export const adminDeleteStudentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { studentId } = req.params as Record<string, string>;
+    const ok = await adminSoftDeleteStudent(studentId);
+
+    if (!ok) {
       throw new ApiError(
         HTTP_STATUS.NOT_FOUND,
         ERROR_MESSAGES.STUDENT.NOT_FOUND,

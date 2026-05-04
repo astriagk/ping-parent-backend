@@ -18,3 +18,15 @@ export interface Student {
   created_at: Date;
   updated_at?: Date;
 }
+
+export type AdminStudentInput = Omit<
+  Student,
+  "_id" | "parent_id" | "is_active" | "created_at" | "updated_at"
+>;
+
+export interface AdminBulkStudentResult {
+  student_name: string;
+  status: "created" | "skipped";
+  student_id?: string;
+  reason?: string;
+}

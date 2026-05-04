@@ -1,6 +1,10 @@
 import { validate } from "@shared/middlewares";
 
 import {
+  adminApproveAssignmentHandler,
+  adminAssignStudentHandler,
+  adminDeactivateAssignmentHandler,
+  adminRejectAssignmentHandler,
   approveDriverStudentAssignment,
   createDriverStudentAssignment,
   deactivateDriverStudentAssignment,
@@ -19,6 +23,7 @@ import {
   updateDriverStudentAssignment,
 } from "./driver_student_assignment.controller";
 import {
+  adminAssignStudentSchema,
   createDriverStudentAssignmentSchema,
   reassignDriverSchema,
   updateDriverStudentAssignmentSchema,
@@ -61,5 +66,10 @@ export const assignmentHandlers = {
   admin: {
     getAll: getAllDriverStudentAssignments,
     getParentRequested: getParentRequestedAssignmentsData,
+    validateAssign: validate(adminAssignStudentSchema),
+    assignStudent: adminAssignStudentHandler,
+    approve: adminApproveAssignmentHandler,
+    reject: adminRejectAssignmentHandler,
+    deactivate: adminDeactivateAssignmentHandler,
   },
 };

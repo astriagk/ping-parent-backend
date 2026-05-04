@@ -116,3 +116,43 @@ export type DriverDocumentInput = Omit<
 export type DriverDocumentUpdate = Partial<
   Omit<DriverDocument, "_id" | "driver_id" | "created_at" | "updated_at">
 >;
+
+export interface AdminCreateDriverInput {
+  phone_number: string;
+  name: string;
+  email?: string;
+  photo_url?: string;
+  vehicle_type: VehicleType;
+  vehicle_number: string;
+  vehicle_capacity: number;
+  school_id?: string;
+  documents?: {
+    driving_license_number: string;
+    driving_license_photo_url?: string;
+    vehicle_license_number: string;
+    vehicle_license_photo_url?: string;
+    insurance_number?: string;
+    insurance_photo_url?: string;
+  };
+}
+
+export interface AdminCreateDriverResult {
+  user_id: string;
+  driver_id: string;
+  driver_unique_id: string;
+  documents_id?: string;
+}
+
+export type AdminUpdateDriverInput = Partial<
+  Pick<
+    Driver,
+    | "name"
+    | "email"
+    | "photo_url"
+    | "vehicle_type"
+    | "vehicle_number"
+    | "vehicle_capacity"
+    | "is_available"
+    | "school_id"
+  >
+>;
