@@ -5,6 +5,7 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   PickupStatus,
+  RouteProvider,
   TripStatus,
   TripType,
 } from "@shared/constants";
@@ -12,8 +13,8 @@ import { SUCCESS_MESSAGES } from "@shared/constants/messages";
 import { ApiError } from "@shared/middlewares";
 import { BroadcastService } from "@shared/services/broadcast.service";
 import { calculateHaversineDistance } from "@shared/services/geo-util.service";
-import { tomTomService } from "@shared/services/tomtom.service";
 import { logger, toIST } from "@shared/utils";
+import { routingProvider } from "@shared/utils/routing-provider";
 
 import { trackingRepository } from "./tracking.repository";
 import {
@@ -310,7 +311,7 @@ const calculateRouteWithTomTom = async (
 }> => {
   // Get route geometry AND navigation instructions in single API call
   const { routeGeometry, navigationInstructions } =
-    await tomTomService.getRouteGeometryWithInstructions(
+    await routingProvider.getRouteGeometryWithInstructions(
       startPoint,
       optimizedWaypoints.map((wp) => ({
         latitude: wp.latitude,
@@ -367,11 +368,21 @@ const commitTripRoute = async (
   routeData: RouteGeometry,
   waypointsWithMetrics: GroupedWaypoint[],
 ): Promise<number> => {
+  // Determine route provider based on environment
+  const envProvider = (
+    process.env.ROUTING_PROVIDER ?? RouteProvider.TOMTOM
+  ).toLowerCase();
+  const routeProvider =
+    envProvider === RouteProvider.HEREMAPS
+      ? RouteProvider.HEREMAPS
+      : RouteProvider.TOMTOM;
+
   // Update trip with route data (full route including school if present)
   await trackingRepository.updateTripRouteData(
     tripId,
     routeData,
     routeData.total_distance,
+    routeProvider,
   );
 
   const isSchoolWaypoint = (
@@ -504,7 +515,7 @@ const autoRecalculateForDeviation = async (
 
   const startPoint = { latitude, longitude };
 
-  const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
+  const { sequence } = await routingProvider.calculateOptimalSequence(
     startPoint,
     pendingFinalWaypoints.map((wp) => ({
       latitude: wp.latitude,
@@ -595,7 +606,7 @@ const calculateOptimalRoute = async (
   const waypointsToOptimize = uniqueWaypoints;
 
   // Use TomTom Matrix API for optimal sequencing
-  const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
+  const { sequence } = await routingProvider.calculateOptimalSequence(
     startPoint,
     waypointsToOptimize.map((wp) => ({
       latitude: wp.latitude,
@@ -882,7 +893,7 @@ export const getAlternativeRoutesForTrip = async (
   const primaryDuration = primaryRoute.total_duration;
 
   // Get alternative routes from TomTom (up to 2 alternatives)
-  const alternatives = await tomTomService.getAlternativeRoutes(
+  const alternatives = await routingProvider.getAlternativeRoutes(
     { latitude: currentLatitude, longitude: currentLongitude },
     {
       latitude:

@@ -159,6 +159,7 @@ export enum PricingModel {
 
 export enum RouteProvider {
   TOMTOM = "tomtom",
+  HEREMAPS = "heremaps",
 }
 
 export enum SchoolSubscriptionStatus {
