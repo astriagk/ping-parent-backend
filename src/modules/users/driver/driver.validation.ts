@@ -154,3 +154,74 @@ export const updateDriverOnboardingScreenSchema = Joi.object({
     .valid(...Object.values(DriverOnboardingScreen))
     .required(),
 });
+
+const adminDriverAddressShape = {
+  address_line1: Joi.string().min(1).max(200).required(),
+  address_line2: Joi.string().max(200).optional().allow(""),
+  city: Joi.string().min(2).max(100).required(),
+  state: Joi.string().min(2).max(100).required(),
+  pincode: Joi.string()
+    .pattern(/^[0-9]{5,10}$/)
+    .optional(),
+  latitude: Joi.number().min(-90).max(90).required(),
+  longitude: Joi.number().min(-180).max(180).required(),
+};
+
+const adminDriverDocumentsShape = {
+  driving_license_number: Joi.string().min(1).max(50).required(),
+  driving_license_photo_url: Joi.string().uri().optional(),
+  vehicle_license_number: Joi.string().min(1).max(50).required(),
+  vehicle_license_photo_url: Joi.string().uri().optional(),
+  insurance_number: Joi.string().min(1).max(50).optional(),
+  insurance_photo_url: Joi.string().uri().optional(),
+};
+
+export const adminCreateDriverSchema = Joi.object({
+  phone_number: Joi.string()
+    .pattern(/^\+?[0-9]{10,15}$/)
+    .required()
+    .messages({
+      "string.pattern.base": VALIDATION_MESSAGES.PHONE.INVALID,
+      "any.required": VALIDATION_MESSAGES.PHONE.REQUIRED,
+    }),
+  name: Joi.string().min(2).max(100).required(),
+  email: Joi.string().email().optional(),
+  photo_url: Joi.string().uri().optional(),
+  vehicle_type: Joi.string()
+    .valid(...Object.values(VehicleType))
+    .required(),
+  vehicle_number: Joi.string().min(1).max(20).required(),
+  vehicle_capacity: Joi.number().integer().min(1).max(100).required(),
+  school_id: Joi.string().optional(),
+  documents: Joi.object(adminDriverDocumentsShape).optional(),
+});
+
+export const adminUpdateDriverSchema = Joi.object({
+  name: Joi.string().min(2).max(100).optional(),
+  email: Joi.string().email().optional(),
+  photo_url: Joi.string().uri().optional().allow(""),
+  vehicle_type: Joi.string()
+    .valid(...Object.values(VehicleType))
+    .optional(),
+  vehicle_number: Joi.string().min(1).max(20).optional(),
+  vehicle_capacity: Joi.number().integer().min(1).max(100).optional(),
+  is_available: Joi.boolean().optional(),
+  school_id: Joi.string().optional().allow(null, ""),
+}).min(1);
+
+export const adminUpsertDriverAddressSchema = Joi.object(
+  adminDriverAddressShape,
+);
+
+export const adminUpsertDriverDocumentsSchema = Joi.object(
+  adminDriverDocumentsShape,
+);
+
+export const adminUpdateDriverDocumentsSchema = Joi.object({
+  driving_license_number: Joi.string().min(1).max(50).optional(),
+  driving_license_photo_url: Joi.string().uri().optional().allow(""),
+  vehicle_license_number: Joi.string().min(1).max(50).optional(),
+  vehicle_license_photo_url: Joi.string().uri().optional().allow(""),
+  insurance_number: Joi.string().min(1).max(50).optional().allow(""),
+  insurance_photo_url: Joi.string().uri().optional().allow(""),
+}).min(1);

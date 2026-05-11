@@ -3,7 +3,6 @@ import { Router } from "express";
 import { verifyToken_Middleware } from "@shared/middlewares";
 
 import deviceTokensRouter from "./device-tokens.routes";
-import googlemapsRouter from "./googlemaps.routes";
 import notificationsRouter from "./notifications.routes";
 import schoolsRouter from "./schools.routes";
 import supportTicketsRouter from "./support-tickets.routes";
@@ -21,7 +20,6 @@ router.use(verifyToken_Middleware);
 router.use("/", notificationsRouter);
 router.use("/", deviceTokensRouter);
 router.use("/", trackingRouter);
-router.use("/", googlemapsRouter);
 router.use("/", schoolsRouter);
 router.use("/", supportTicketsRouter);
 router.use("/", uploadRouter);

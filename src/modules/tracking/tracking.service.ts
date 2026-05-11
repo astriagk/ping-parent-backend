@@ -5,14 +5,16 @@ import {
   ERROR_MESSAGES,
   HTTP_STATUS,
   PickupStatus,
+  RouteProvider,
+  TripStatus,
   TripType,
 } from "@shared/constants";
 import { SUCCESS_MESSAGES } from "@shared/constants/messages";
 import { ApiError } from "@shared/middlewares";
 import { BroadcastService } from "@shared/services/broadcast.service";
 import { calculateHaversineDistance } from "@shared/services/geo-util.service";
-import { tomTomService } from "@shared/services/tomtom.service";
 import { logger, toIST } from "@shared/utils";
+import { routingProvider } from "@shared/utils/routing-provider";
 
 import { trackingRepository } from "./tracking.repository";
 import {
@@ -25,6 +27,12 @@ import {
   RouteGeometry,
   StudentWaypoint,
 } from "./tracking.type";
+
+// Per-trip deviation tracking — state-based, not time-based
+// isDeviating=true: recalculation already fired this episode; skip until driver returns to route
+const deviationState = new Map<string, boolean>();
+const DEVIATION_THRESHOLD_KM = 0.1; // 100 m — triggers recalculation
+const RETURN_THRESHOLD_KM = 0.05; // 50 m — clears state once back on route
 
 const getDriverIdByUserId = async (userId: string): Promise<string | null> => {
   const db = await getDB();
@@ -221,6 +229,7 @@ const extractUniqueSchoolWaypoints = (
 const validateAndPrepareRoute = async (
   userId: string,
   tripId: string,
+  pendingOnly = false,
 ): Promise<{
   driverId: string;
   trip: any;
@@ -250,10 +259,19 @@ const validateAndPrepareRoute = async (
     );
   }
 
-  // For DROP trips: only include students who have been picked from school
-  // For PICKUP trips: include all assigned students
-  const pickupStatusFilter =
-    trip.trip_type === TripType.DROP ? PickupStatus.PICKED : undefined;
+  // pendingOnly=true: only include students still needing action (used during active-trip recalculation)
+  //   PICKUP trip → PENDING (not yet picked up)
+  //   DROP trip   → PICKED  (picked from school, not yet dropped home)
+  // pendingOnly=false (default): original behaviour
+  //   PICKUP trip → all assigned students
+  //   DROP trip   → PICKED students
+  const pickupStatusFilter = pendingOnly
+    ? trip.trip_type === TripType.PICKUP
+      ? PickupStatus.PENDING
+      : PickupStatus.PICKED
+    : trip.trip_type === TripType.DROP
+      ? PickupStatus.PICKED
+      : undefined;
 
   const waypointsToOptimize =
     await trackingRepository.getTripStudentsWithDetails(
@@ -293,7 +311,7 @@ const calculateRouteWithTomTom = async (
 }> => {
   // Get route geometry AND navigation instructions in single API call
   const { routeGeometry, navigationInstructions } =
-    await tomTomService.getRouteGeometryWithInstructions(
+    await routingProvider.getRouteGeometryWithInstructions(
       startPoint,
       optimizedWaypoints.map((wp) => ({
         latitude: wp.latitude,
@@ -350,11 +368,21 @@ const commitTripRoute = async (
   routeData: RouteGeometry,
   waypointsWithMetrics: GroupedWaypoint[],
 ): Promise<number> => {
+  // Determine route provider based on environment
+  const envProvider = (
+    process.env.ROUTING_PROVIDER ?? RouteProvider.TOMTOM
+  ).toLowerCase();
+  const routeProvider =
+    envProvider === RouteProvider.HEREMAPS
+      ? RouteProvider.HEREMAPS
+      : RouteProvider.TOMTOM;
+
   // Update trip with route data (full route including school if present)
   await trackingRepository.updateTripRouteData(
     tripId,
     routeData,
     routeData.total_distance,
+    routeProvider,
   );
 
   const isSchoolWaypoint = (
@@ -408,6 +436,157 @@ const commitTripRoute = async (
 };
 
 /**
+ * Automatically recalculate route when the driver deviates from the planned path.
+ * Only recalculates for students not yet serviced (pending/in-progress).
+ * Broadcasts the new route to the trip room (driver + parents) and sends
+ * individual ETA updates to each affected parent via their personal room.
+ * Errors are caught by the caller — position recording must never fail.
+ */
+const autoRecalculateForDeviation = async (
+  driverId: string,
+  tripId: string,
+  latitude: number,
+  longitude: number,
+): Promise<void> => {
+  const trip = await tripRepository.findById(tripId);
+  if (!trip || trip.driver_id !== driverId) return;
+
+  // Fetch ALL students for this trip (with pickup_status, sequence_order, estimated_arrival_time)
+  const allStudents =
+    await trackingRepository.getTripStudentsWithDetails(tripId);
+  if (allStudents.length === 0) return;
+
+  // For DROP trips only students who boarded the van (picked or dropped) are in scope
+  const inScopeStudents =
+    trip.trip_type === TripType.DROP
+      ? allStudents.filter(
+          (s) =>
+            s.pickup_status === PickupStatus.PICKED ||
+            s.pickup_status === PickupStatus.DROPPED,
+        )
+      : allStudents;
+
+  if (inScopeStudents.length === 0) return;
+
+  const isServiced = (s: StudentWaypoint): boolean =>
+    trip.trip_type === TripType.PICKUP
+      ? s.pickup_status === PickupStatus.PICKED ||
+        s.pickup_status === PickupStatus.DROPPED ||
+        s.pickup_status === PickupStatus.NO_SHOW
+      : s.pickup_status === PickupStatus.DROPPED ||
+        s.pickup_status === PickupStatus.NO_SHOW;
+
+  const servicedStudents = inScopeStudents.filter(isServiced);
+  const pendingStudents = inScopeStudents.filter((s) => !isServiced(s));
+
+  if (pendingStudents.length === 0) return;
+
+  // Keep serviced students in their existing stop order
+  servicedStudents.sort(
+    (a, b) => (a.sequence_order ?? 0) - (b.sequence_order ?? 0),
+  );
+
+  const servicedGrouped = groupStudentsByParent(servicedStudents);
+  const pendingGrouped = groupStudentsByParent(pendingStudents);
+  const schoolWaypoints = extractUniqueSchoolWaypoints(inScopeStudents);
+
+  // Carry existing ETAs forward for serviced stops so history is preserved
+  const etaByParent = new Map<string, Date>();
+  for (const s of servicedStudents) {
+    if (s.student_parent_id && s.estimated_arrival_time) {
+      etaByParent.set(s.student_parent_id, s.estimated_arrival_time);
+    }
+  }
+  const servicedWithEta: GroupedWaypoint[] = servicedGrouped.map((wp) => ({
+    ...wp,
+    estimated_arrival_time:
+      etaByParent.get(wp.student_parent_id) ?? wp.estimated_arrival_time,
+    is_completed: true,
+  }));
+
+  // Build pending waypoints with school stops in the correct position
+  let pendingFinalWaypoints: GroupedWaypoint[] = pendingGrouped;
+  if (schoolWaypoints.length > 0) {
+    pendingFinalWaypoints =
+      trip.trip_type === TripType.PICKUP
+        ? [...pendingGrouped, ...schoolWaypoints]
+        : [...schoolWaypoints, ...pendingGrouped];
+  }
+
+  const startPoint = { latitude, longitude };
+
+  const { sequence } = await routingProvider.calculateOptimalSequence(
+    startPoint,
+    pendingFinalWaypoints.map((wp) => ({
+      latitude: wp.latitude,
+      longitude: wp.longitude,
+    })),
+  );
+
+  const optimizedPending = sequence
+    .filter((idx) => idx != null && pendingFinalWaypoints[idx] != null)
+    .map((idx) => pendingFinalWaypoints[idx]);
+
+  const { waypointsWithMetrics: pendingWithMetrics, routeData } =
+    await calculateRouteWithTomTom(startPoint, optimizedPending);
+
+  // Full waypoint list: serviced (fixed positions) + newly optimized pending
+  const allWaypointsWithMetrics: GroupedWaypoint[] = [
+    ...servicedWithEta,
+    ...pendingWithMetrics,
+  ];
+
+  // Store full waypoints so history always reflects the complete trip
+  routeData.waypoints = allWaypointsWithMetrics;
+
+  await commitTripRoute(tripId, routeData, allWaypointsWithMetrics);
+
+  // Notify only pending students' parents — their ETAs actually changed
+  const parentMap = new Map<
+    string,
+    {
+      students: { studentId: string; studentName: string }[];
+      etas: { studentId: string; eta: Date }[];
+    }
+  >();
+
+  for (const wp of pendingWithMetrics) {
+    const parentId = wp.student_parent_id;
+    if (!parentId || parentId === "SCHOOL_LOCATION") continue;
+
+    const studentIds = Array.isArray(wp.student_id)
+      ? wp.student_id
+      : [wp.student_id];
+    const studentNames = wp.student_names ?? [];
+    const eta = wp.estimated_arrival_time
+      ? new Date(wp.estimated_arrival_time)
+      : new Date();
+
+    if (!parentMap.has(parentId)) {
+      parentMap.set(parentId, { students: [], etas: [] });
+    }
+    const entry = parentMap.get(parentId)!;
+    studentIds.filter(Boolean).forEach((id, i) => {
+      entry.students.push({
+        studentId: id,
+        studentName: studentNames[i] ?? "",
+      });
+      entry.etas.push({ studentId: id, eta });
+    });
+  }
+
+  for (const [parentId, { students, etas }] of parentMap.entries()) {
+    BroadcastService.notifyParentRouteRecalculated(
+      parentId,
+      tripId,
+      students,
+      etas,
+      driverId,
+    );
+  }
+};
+
+/**
  * Calculate route with TomTom Matrix API optimization
  * Used for both initial TomTom-optimized calculation and recalculation from new position
  * Consolidates logic from calculateOptimalRouteWithTomTom and recalculateRoute
@@ -427,7 +606,7 @@ const calculateOptimalRoute = async (
   const waypointsToOptimize = uniqueWaypoints;
 
   // Use TomTom Matrix API for optimal sequencing
-  const { sequence } = await tomTomService.calculateOptimalSequenceWithTomTom(
+  const { sequence } = await routingProvider.calculateOptimalSequence(
     startPoint,
     waypointsToOptimize.map((wp) => ({
       latitude: wp.latitude,
@@ -509,11 +688,10 @@ export const recordLiveLocation = async (
     trip.optimized_route_data?.coordinates &&
     trip.optimized_route_data.coordinates.length > 0
   ) {
-    // Check if driver position is within 200m of any route coordinate
     const routeCoordinates = trip.optimized_route_data.coordinates;
-    const bufferKm = 0.2; // 200 meters
 
-    let isWithinCorridor = false;
+    // Find closest distance to any point on the route polyline
+    let minDistanceKm = Infinity;
     for (const routePoint of routeCoordinates) {
       const distance = calculateHaversineDistance(
         latitude,
@@ -521,15 +699,41 @@ export const recordLiveLocation = async (
         routePoint[0],
         routePoint[1],
       );
-      if (distance <= bufferKm) {
-        isWithinCorridor = true;
-        break;
+      if (distance < minDistanceKm) {
+        minDistanceKm = distance;
       }
     }
 
-    if (!isWithinCorridor) {
+    if (minDistanceKm > 0.2) {
       logger.warn(ERROR_MESSAGES.TRACKING.DRIVER_POSITION_OUTSIDE_CORRIDOR);
     }
+
+    const isActive =
+      trip.trip_status === TripStatus.IN_PROGRESS ||
+      trip.trip_status === TripStatus.STARTED;
+    const currentlyDeviating = deviationState.get(tripId) ?? false;
+
+    logger.info(
+      `[Deviation] Trip: ${tripId} | Distance: ${(minDistanceKm * 1000).toFixed(0)}m | isActive: ${isActive} | isDeviating: ${currentlyDeviating}`,
+    );
+
+    if (isActive) {
+      if (!currentlyDeviating && minDistanceKm > DEVIATION_THRESHOLD_KM) {
+        deviationState.set(tripId, true);
+        autoRecalculateForDeviation(
+          driverId,
+          tripId,
+          latitude,
+          longitude,
+        ).catch((err) => logger.error("Auto-recalculation failed", err));
+      } else if (currentlyDeviating && minDistanceKm <= RETURN_THRESHOLD_KM) {
+        deviationState.delete(tripId);
+      }
+    }
+  } else {
+    logger.info(
+      `[Deviation] Trip: ${tripId} | Skipped — no optimized_route_data yet`,
+    );
   }
 
   const trackingData: Omit<LocationTracking, "_id"> = {
@@ -551,15 +755,6 @@ export const recordLiveLocation = async (
       ERROR_MESSAGES.TRACKING.POSITION_UPDATE_ERROR,
     );
   }
-
-  BroadcastService.broadcastPositionUpdate(tripId, {
-    driverId,
-    latitude,
-    longitude,
-    speed: speed || 0,
-    heading: heading || 0,
-    accuracy: accuracy || 0,
-  });
 
   return {
     trip_id: result.trip_id,
@@ -698,7 +893,7 @@ export const getAlternativeRoutesForTrip = async (
   const primaryDuration = primaryRoute.total_duration;
 
   // Get alternative routes from TomTom (up to 2 alternatives)
-  const alternatives = await tomTomService.getAlternativeRoutes(
+  const alternatives = await routingProvider.getAlternativeRoutes(
     { latitude: currentLatitude, longitude: currentLongitude },
     {
       latitude:

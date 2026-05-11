@@ -1,6 +1,13 @@
 import { validate } from "@shared/middlewares";
 
 import {
+  adminBulkCreateParentsHandler,
+  adminBulkParentsWithStudentsHandler,
+  adminCreateParentHandler,
+  adminDeleteParentHandler,
+  adminGetParentAddressHandler,
+  adminUpdateParentHandler,
+  adminUpsertParentAddressHandler,
   getAddressParent,
   getMyActiveTripsParent,
   getMyAllTrips,
@@ -9,6 +16,11 @@ import {
   updateProfileParent,
 } from "./parent.controller";
 import {
+  adminBulkCreateParentsSchema,
+  adminBulkParentsWithStudentsSchema,
+  adminCreateParentSchema,
+  adminUpdateParentSchema,
+  adminUpsertParentAddressSchema,
   updateAddressSchema,
   updateParentProfileSchema,
 } from "./parent.validation";
@@ -26,4 +38,21 @@ export const parentHandlers = {
   updateAddress: updateAddress,
   getActiveTrips: getMyActiveTripsParent,
   getAllTrips: getMyAllTrips,
+
+  admin: {
+    validateCreate: validate(adminCreateParentSchema),
+    create: adminCreateParentHandler,
+    validateUpdate: validate(adminUpdateParentSchema),
+    update: adminUpdateParentHandler,
+    delete: adminDeleteParentHandler,
+    getAddress: adminGetParentAddressHandler,
+    validateAddress: validate(adminUpsertParentAddressSchema),
+    upsertAddress: adminUpsertParentAddressHandler,
+    validateBulkParents: validate(adminBulkCreateParentsSchema),
+    bulkCreateParents: adminBulkCreateParentsHandler,
+    validateBulkParentsWithStudents: validate(
+      adminBulkParentsWithStudentsSchema,
+    ),
+    bulkCreateParentsWithStudents: adminBulkParentsWithStudentsHandler,
+  },
 };

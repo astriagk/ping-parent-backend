@@ -4,11 +4,19 @@ import { assignmentHandlers } from "@modules/trips/driver_student_assignment/dri
 
 const router = Router();
 
-// --- Assignments ---
 router.get("/assignments", assignmentHandlers.admin.getAll);
 router.get(
   "/assignments/parent-requested",
   assignmentHandlers.admin.getParentRequested,
 );
+
+router.post(
+  "/assignments/assign-student",
+  assignmentHandlers.admin.validateAssign,
+  assignmentHandlers.admin.assignStudent,
+);
+router.post("/assignments/:id/approve", assignmentHandlers.admin.approve);
+router.post("/assignments/:id/reject", assignmentHandlers.admin.reject);
+router.post("/assignments/:id/deactivate", assignmentHandlers.admin.deactivate);
 
 export default router;

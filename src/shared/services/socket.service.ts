@@ -2,6 +2,8 @@ import { Server as HTTPServer } from "http";
 import { ObjectId } from "mongodb";
 import { Socket, Server as SocketIOServer } from "socket.io";
 
+import { NotificationDispatcher } from "@modules/notification/notification.dispatcher";
+import { recordLiveLocation } from "@modules/tracking";
 import { trackingRepository } from "@modules/tracking/tracking.repository";
 import { getDB } from "@shared/config";
 import {
@@ -295,32 +297,21 @@ export class SocketService {
             timestamp: new Date(),
           });
 
-          if (process.env.NODE_ENV === "dev") {
-            try {
-              const db = await getDB();
-              const driver = await db
-                .collection(DRIVERS_COLLECTION)
-                .findOne({ user_id: userId });
-
-              if (driver) {
-                await trackingRepository.upsertTracking(tripId, {
-                  trip_id: tripId,
-                  driver_id: String(driver._id),
-                  latitude,
-                  longitude,
-                  speed: speed || 0,
-                  heading: heading || 0,
-                  accuracy: accuracy || 0,
-                  timestamp: new Date(),
-                });
-              }
-            } catch (err) {
-              logger.error(
-                "[Socket][Dev] Failed to persist position:",
-                err as object,
-              );
-            }
-          }
+          // Lazy import breaks the socket → tracking → broadcast → socket circular dependency
+          recordLiveLocation(
+            userId,
+            tripId,
+            latitude,
+            longitude,
+            speed,
+            heading,
+            accuracy,
+          ).catch((err) =>
+            logger.error(
+              "[Socket] Failed to record live location:",
+              err as object,
+            ),
+          );
 
           if (callback) callback(true);
         },
@@ -368,7 +359,7 @@ export class SocketService {
 
       socket.on(
         DriverSocketEvent.APPROACHING_WAYPOINT,
-        (
+        async (
           data: { tripId: string; studentId: string; eta: number },
           callback?: (success: boolean) => void,
         ) => {
@@ -379,13 +370,71 @@ export class SocketService {
 
           const { tripId, studentId, eta } = data;
 
-          this.io.to(`trip:${tripId}`).emit(BroadcastSocketEvent.APPROACHING, {
-            tripId,
-            studentId,
-            eta,
-            driverId: userId,
-            timestamp: new Date(),
-          });
+          try {
+            const db = await getDB();
+
+            // Find the student to get parent_id
+            const student = await db
+              .collection(STUDENTS_COLLECTION)
+              .findOne({ _id: new ObjectId(studentId) });
+
+            if (!student) {
+              if (callback) callback(false);
+              return;
+            }
+
+            const parentId = String(student.parent_id);
+
+            // Find all siblings of this parent that are on this trip
+            const siblings = await db
+              .collection(STUDENTS_COLLECTION)
+              .find({ parent_id: student.parent_id })
+              .toArray();
+
+            const siblingIds = siblings.map((s) => String(s._id));
+
+            const tripStudentsOnTrip = await db
+              .collection(TRIP_STUDENTS_COLLECTION)
+              .find({ trip_id: tripId, student_id: { $in: siblingIds } })
+              .toArray();
+
+            const tripStudentIds = new Set(
+              tripStudentsOnTrip.map((ts) => ts.student_id),
+            );
+
+            const studentsOnTrip = siblings
+              .filter((s) => tripStudentIds.has(String(s._id)))
+              .map((s) => ({
+                studentId: String(s._id),
+                studentName: String(s.student_name),
+              }));
+
+            // Look up parent's user_id for push notification dispatch
+            const parentDoc = await db
+              .collection(PARENTS_COLLECTION)
+              .findOne({ _id: new ObjectId(parentId) });
+
+            const parentUserId = parentDoc?.user_id || parentId;
+
+            NotificationDispatcher.notifyParentStudentsApproaching(
+              parentId,
+              parentUserId,
+              tripId,
+              studentsOnTrip,
+              eta,
+              userId,
+            ).catch((err) =>
+              logger.error(
+                "[Socket] Failed to send approaching notification:",
+                err as object,
+              ),
+            );
+          } catch (err) {
+            logger.error(
+              "[Socket] APPROACHING_WAYPOINT lookup failed:",
+              err as object,
+            );
+          }
 
           if (callback) callback(true);
         },

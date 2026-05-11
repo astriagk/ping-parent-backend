@@ -15,6 +15,7 @@ export enum AssignmentSource {
   PARENT = "parent",
   SCHOOL_ADMIN = "school_admin",
   SYSTEM = "system",
+  ADMIN = "admin",
 }
 
 export enum AssignmentStatus {
@@ -75,18 +76,6 @@ export enum Gender {
   MALE = "male",
   FEMALE = "female",
   OTHER = "other",
-}
-
-export enum GoogleMapsAvoidOption {
-  TOLLS = "tolls",
-  HIGHWAYS = "highways",
-  FERRIES = "ferries",
-}
-
-export enum GoogleMapsTrafficModel {
-  BEST_GUESS = "best_guess",
-  PESSIMISTIC = "pessimistic",
-  OPTIMISTIC = "optimistic",
 }
 
 export enum NotificationType {
@@ -169,8 +158,8 @@ export enum PricingModel {
 }
 
 export enum RouteProvider {
-  GOOGLE_MAPS = "google_maps",
   TOMTOM = "tomtom",
+  HEREMAPS = "heremaps",
 }
 
 export enum SchoolSubscriptionStatus {

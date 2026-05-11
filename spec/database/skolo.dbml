@@ -171,7 +171,7 @@ Table driver_student_assignments {
   student_id ObjectId [not null, ref: > students._id]
   monthly_fee decimal(10,2)
   assignment_status enum [default: 'pending', note: 'active, inactive, pending, parent_requested, rejected']
-  assignment_source enum [default: 'parent', note: 'parent or school - indicates assignment source']
+  assignment_source enum [default: 'parent', note: 'parent, school, admin, school_admin - indicates assignment source']
   assigned_by ObjectId [note: 'References parents._id or admin_portal._id depending on assignment_source']
   assigned_date date [not null]
   start_date date

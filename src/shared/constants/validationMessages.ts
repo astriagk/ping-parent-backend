@@ -127,6 +127,7 @@ export const VALIDATION_MESSAGES = {
     AUTO_RENEW_INVALID: "Auto renew must be a boolean value",
     END_DATE_INVALID: "End date must be a valid date",
     END_DATE_REQUIRED: "End date is required",
+    PARENT_ID_REQUIRED: "Parent ID is required",
     PLAN_ID_REQUIRED: "Plan ID is required",
     START_DATE_INVALID: "Start date must be a valid date",
     START_DATE_REQUIRED: "Start date is required",

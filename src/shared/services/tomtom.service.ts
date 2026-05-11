@@ -2,6 +2,14 @@ import axios from "axios";
 
 import { logger } from "@shared/utils";
 
+import {
+  AlternativeRoute,
+  Coordinate,
+  IRoutingProvider,
+  NavigationInstruction,
+  RouteGeometry,
+} from "./routing-interfaces";
+
 interface TomTomGuidanceInstruction {
   routeOffsetInMeters: number;
   travelTimeInSeconds: number;
@@ -47,12 +55,7 @@ interface TomTomRouteResponse {
   }>;
 }
 
-interface Coordinate {
-  latitude: number;
-  longitude: number;
-}
-
-class TomTomService {
+class TomTomService implements IRoutingProvider {
   private apiKey: string;
   private baseUrl: string = "https://api.tomtom.com";
 
@@ -68,7 +71,7 @@ class TomTomService {
    * TomTom solves the TSP (Travelling Salesman Problem) server-side
    * Returns optimal order of waypoints to minimize total travel time
    */
-  async calculateOptimalSequenceWithTomTom(
+  async calculateOptimalSequence(
     startPoint: Coordinate,
     waypoints: Coordinate[],
   ): Promise<{
@@ -150,14 +153,7 @@ class TomTomService {
     startPoint: Coordinate,
     endPoint: Coordinate,
     maxRoutes: number = 2,
-  ): Promise<
-    Array<{
-      totalDistance: number;
-      totalDuration: number;
-      coordinates: [number, number][];
-      legs: Array<{ distance: number; duration: number }>;
-    }>
-  > {
+  ): Promise<AlternativeRoute[]> {
     try {
       const pointsString = `${startPoint.latitude},${startPoint.longitude}:${endPoint.latitude},${endPoint.longitude}`;
       const url = `${this.baseUrl}/routing/1/calculateRoute/${pointsString}/json`;
@@ -200,30 +196,8 @@ class TomTomService {
     startPoint: Coordinate,
     waypoints: Coordinate[],
   ): Promise<{
-    routeGeometry: {
-      totalDistance: number;
-      totalDuration: number;
-      coordinates: [number, number][];
-      legs: Array<{
-        distance: number;
-        duration: number;
-        coordinates: [number, number][];
-      }>;
-      routeType: "primary" | "alternative";
-      hasAlternatives: boolean;
-      alternativeRoutesCount: number;
-      trafficDelay?: number;
-      confidence: "high" | "medium" | "low";
-    };
-    navigationInstructions: Array<{
-      route_index: number;
-      instruction: string;
-      distance_delta: number; // Distance from previous instruction (in km)
-      duration_delta: number; // Duration from previous instruction (in seconds)
-      distance_from_start: number; // Cumulative distance from route start (in km)
-      duration_from_start: number; // Cumulative time from route start (in seconds)
-      coordinates: [number, number][];
-    }>;
+    routeGeometry: RouteGeometry;
+    navigationInstructions: NavigationInstruction[];
   }> {
     try {
       const allPoints = [startPoint, ...waypoints];
@@ -353,24 +327,8 @@ class TomTomService {
   private buildNavigationInstructions(
     route: TomTomRouteResponse["routes"][0],
     legCumulativeDistances: number[],
-  ): Array<{
-    route_index: number;
-    instruction: string;
-    distance_delta: number;
-    duration_delta: number;
-    distance_from_start: number;
-    duration_from_start: number;
-    coordinates: [number, number][];
-  }> {
-    const instructions: Array<{
-      route_index: number;
-      instruction: string;
-      distance_delta: number;
-      duration_delta: number;
-      distance_from_start: number;
-      duration_from_start: number;
-      coordinates: [number, number][];
-    }> = [];
+  ): NavigationInstruction[] {
+    const instructions: NavigationInstruction[] = [];
 
     if (route.guidance && route.guidance.instructions.length > 0) {
       // Map each TomTom guidance instruction to the correct leg

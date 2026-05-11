@@ -1,6 +1,8 @@
 import { validate } from "@shared/middlewares";
 
 import {
+  adminCancelSubscriptionHandler,
+  adminCreateSubscriptionHandler,
   cancelSubscriptionById,
   createSubscription,
   deleteSubscriptionById,
@@ -14,6 +16,7 @@ import {
   upgradeSubscription,
 } from "./parent_subscription.controller";
 import {
+  adminCreateParentSubscriptionSchema,
   createParentSubscriptionSchema,
   updateParentSubscriptionSchema,
   upgradeParentSubscriptionSchema,
@@ -44,5 +47,8 @@ export const subscriptionHandlers = {
   // Admin-specific
   admin: {
     getAll: getAllParentSubscriptionsController,
+    validateCreate: validate(adminCreateParentSubscriptionSchema),
+    create: adminCreateSubscriptionHandler,
+    cancel: adminCancelSubscriptionHandler,
   },
 };

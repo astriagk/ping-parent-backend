@@ -141,25 +141,6 @@ export const ERROR_MESSAGES = {
     FILE_EMPTY: "File is empty",
     OLD_FILE_URL_REQUIRED: "Old file URL is required in request body",
   },
-  GOOGLEMAPS: {
-    API_ERROR: "Failed to calculate route via Google Maps API",
-    WAYPOINT_LIMIT_EXCEEDED:
-      "Route optimization supports a maximum of 25 waypoints",
-    API_KEY_NOT_CONFIGURED: "Google Maps API key is not configured",
-    TRIP_NOT_FOUND: "Trip not found",
-    PERMISSION_DENIED:
-      "You do not have permission to calculate route for this trip",
-    DRIVER_NOT_FOUND: "Driver profile not found",
-    NO_STUDENTS_ASSIGNED: "No students assigned to this trip",
-    NO_STUDENTS_PICKED_FOR_DROP:
-      "No students have been picked from school yet. Use school-point endpoint to mark students as picked first.",
-    POSITION_UPDATE_ERROR: "Failed to update driver position",
-    DRIVER_OUTSIDE_CORRIDOR:
-      "Driver position is outside optimized route corridor",
-    TRIP_ID_REQUIRED: "Trip ID is required",
-    DAYS_OLD_INVALID: "daysOld must be at least 1",
-    AUTO_RECALCULATE_FAILED: "Failed to auto-recalculate route",
-  },
   NOTIFICATION: {
     NOT_FOUND: "Notification not found",
     FAILED_TO_FETCH: "Failed to fetch notifications",
@@ -441,19 +422,6 @@ export const SUCCESS_MESSAGES = {
     REASSIGNED_SUCCESSFULLY: "Driver reassigned successfully",
     REJECTED_SUCCESSFULLY: "Assignment rejected successfully",
   },
-  GOOGLEMAPS: {
-    CLEANUP_COMPLETED: "Google Maps tracking cleanup completed",
-    CLEANUP_RECORDS_DELETED: "Deleted {count} old tracking records",
-    CURRENT_POSITION_RETRIEVED: "Current position retrieved successfully",
-    NO_POSITION_DATA: "No position data available",
-    POSITION_UPDATED: "Position updated successfully",
-    ROUTE_AUTO_RECALCULATED:
-      "Route automatically recalculated due to deviation",
-    ROUTE_CALCULATED: "Optimal route calculated using Google Maps",
-    ROUTE_DETAILS_FETCHED: "Route details fetched successfully",
-    ROUTE_RECALCULATED: "Route recalculated using Google Maps",
-    TRACKING_FETCHED: "Tracking data fetched successfully",
-  },
   NOTIFICATION: {
     MARKED_AS_READ_SUCCESSFULLY: "Notification marked as read successfully",
     TOKEN_REGISTERED: "Device token registered successfully",
@@ -473,6 +441,8 @@ export const SUCCESS_MESSAGES = {
     LOGIN_OTP_SENT: "Login OTP sent to phone number",
     OTP_SENT: "OTP sent to phone number",
     PHONE_VERIFIED_SUCCESSFULLY: "Phone number verified successfully",
+    REGISTER_OTP_RESENT: "OTP resent to phone number",
+    LOGIN_OTP_RESENT: "Login OTP resent to phone number",
   },
   RATING_REVIEW: {
     SUBMITTED_SUCCESSFULLY: "Rating/review submitted successfully",

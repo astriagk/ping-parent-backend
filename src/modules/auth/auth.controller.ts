@@ -297,6 +297,96 @@ export const sendPhoneOtp = asyncHandler(
   },
 );
 
+// Resend OTP for registration
+export const resendRegisterOtp = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { phone, countryCode } = req.body;
+    const code = countryCode || DEFAULT_COUNTRY_CODE;
+
+    if (!phone) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.PHONE_REQUIRED,
+      );
+    }
+
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.INVALID_PHONE,
+      );
+    }
+
+    const existing = await getUserByPhone(normalizedPhone);
+    if (existing) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
+      );
+    }
+
+    try {
+      await sendOtp(code + normalizedPhone);
+    } catch (_error) {
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.PHONE.OTP_SENDING_FAILED,
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: SUCCESS_MESSAGES.PHONE.REGISTER_OTP_RESENT,
+    });
+  },
+);
+
+// Resend OTP for login
+export const resendLoginOtp = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { phone, countryCode } = req.body;
+    const code = countryCode || DEFAULT_COUNTRY_CODE;
+
+    if (!phone) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.PHONE_REQUIRED,
+      );
+    }
+
+    const normalizedPhone = normalizePhone(phone);
+    if (!normalizedPhone) {
+      throw new ApiError(
+        HTTP_STATUS.BAD_REQUEST,
+        ERROR_MESSAGES.PHONE.INVALID_PHONE,
+      );
+    }
+
+    const user = await getUserByPhone(normalizedPhone);
+    if (!user) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.PHONE.PHONE_NOT_REGISTERED,
+      );
+    }
+
+    try {
+      await sendOtp(code + normalizedPhone);
+    } catch (_error) {
+      throw new ApiError(
+        HTTP_STATUS.INTERNAL_SERVER_ERROR,
+        ERROR_MESSAGES.PHONE.LOGIN_OTP_SENDING_FAILED,
+      );
+    }
+
+    return res.json({
+      success: true,
+      message: SUCCESS_MESSAGES.PHONE.LOGIN_OTP_RESENT,
+    });
+  },
+);
+
 // Step 2: Verify OTP
 export const verifyPhoneOtp = asyncHandler(
   async (req: Request, res: Response) => {

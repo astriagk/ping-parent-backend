@@ -37,3 +37,16 @@ export const updateParentSubscriptionSchema = Joi.object({
     "date.base": VALIDATION_MESSAGES.PARENT_SUBSCRIPTION.END_DATE_INVALID,
   }),
 });
+
+export const adminCreateParentSubscriptionSchema = Joi.object({
+  parent_id: Joi.string().required().messages({
+    "any.required": VALIDATION_MESSAGES.PARENT_SUBSCRIPTION.PARENT_ID_REQUIRED,
+  }),
+  plan_id: Joi.string().required().messages({
+    "any.required": VALIDATION_MESSAGES.PARENT_SUBSCRIPTION.PLAN_ID_REQUIRED,
+  }),
+  start_date: Joi.date().optional(),
+  end_date: Joi.date().optional(),
+  auto_renew: Joi.boolean().optional(),
+  student_ids: Joi.array().items(Joi.string()).optional(),
+});
