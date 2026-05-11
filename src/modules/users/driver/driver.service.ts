@@ -1,19 +1,36 @@
-import { ObjectId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
+import { userRepository } from "@modules/auth/auth.repository";
 import { User } from "@modules/auth/auth.type";
 import { getDB } from "@shared/config";
 import {
   AlphabetType,
   ApprovalStatus,
+  AssignmentStatus,
   DRIVERS_COLLECTION,
   DRIVER_ADDRESSES_COLLECTION,
   DRIVER_DOCUMENTS_COLLECTION,
+  DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
+  ERROR_MESSAGES,
+  HTTP_STATUS,
+  TRIPS_COLLECTION,
+  TripStatus,
   USERS_COLLECTION,
   UniqueCodeTypes,
+  UserRole,
 } from "@shared/constants";
+import { ApiError } from "@shared/middlewares";
 import { generateUniqueCode } from "@shared/utils";
 
 import {
+  driverAddressRepository,
+  driverDocumentRepository,
+  driverRepository,
+} from "./driver.repository";
+import {
+  AdminCreateDriverInput,
+  AdminCreateDriverResult,
+  AdminUpdateDriverInput,
   Driver,
   DriverAddress,
   DriverAddressInput,
@@ -551,6 +568,308 @@ export const getCompleteDriverDetailsById = async (
     console.error("Error getting complete driver details:", error);
     return null;
   }
+};
+
+const generateUniqueDriverCode = async (): Promise<string> => {
+  const db = await getDB();
+  for (let attempt = 0; attempt < 10; attempt++) {
+    const code = generateUniqueCode(UniqueCodeTypes.DRIVER, {
+      length: 6,
+      alphabetType: AlphabetType.Numbers,
+    });
+    const existing = await db
+      .collection(DRIVERS_COLLECTION)
+      .findOne({ driver_unique_id: code });
+    if (!existing) {
+      return code;
+    }
+  }
+  throw new ApiError(
+    HTTP_STATUS.INTERNAL_SERVER_ERROR,
+    ERROR_MESSAGES.COMMON.CREATE_FAILED,
+  );
+};
+
+export const adminCreateDriverWithUser = async (
+  data: AdminCreateDriverInput,
+  adminId: string,
+): Promise<AdminCreateDriverResult> => {
+  const phoneTaken = await userRepository.findByPhoneNumber(data.phone_number);
+  if (phoneTaken) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.PHONE.PHONE_ALREADY_REGISTERED,
+    );
+  }
+
+  const now = new Date();
+  const userDoc = await userRepository.create({
+    phone_number: data.phone_number,
+    user_type: UserRole.DRIVER,
+    is_active: true,
+    created_at: now,
+    updated_at: now,
+  });
+
+  const userId = String(userDoc._id);
+  const driverUniqueId = await generateUniqueDriverCode();
+
+  const driverDoc = await driverRepository.createDriver({
+    user_id: userId,
+    driver_unique_id: driverUniqueId,
+    name: data.name,
+    email: data.email,
+    photo_url: data.photo_url,
+    vehicle_type: data.vehicle_type,
+    vehicle_number: data.vehicle_number,
+    vehicle_capacity: data.vehicle_capacity,
+    current_student_count: 0,
+    approval_status: ApprovalStatus.APPROVED,
+    approved_by: adminId,
+    approved_at: now,
+    is_available: true,
+    rating: 0,
+    total_trips: 0,
+    school_id: data.school_id,
+    created_at: now,
+    updated_at: now,
+  });
+
+  const driverId = String(driverDoc._id);
+
+  let documentsId: string | undefined;
+  if (data.documents) {
+    const created = await driverDocumentRepository.create({
+      driver_id: driverId,
+      driving_license_number: data.documents.driving_license_number,
+      driving_license_photo_url: data.documents.driving_license_photo_url,
+      vehicle_license_number: data.documents.vehicle_license_number,
+      vehicle_license_photo_url: data.documents.vehicle_license_photo_url,
+      insurance_number: data.documents.insurance_number,
+      insurance_photo_url: data.documents.insurance_photo_url,
+      created_at: now,
+      updated_at: now,
+    } as any);
+    documentsId = String(created._id);
+  }
+
+  return {
+    user_id: userId,
+    driver_id: driverId,
+    driver_unique_id: driverUniqueId,
+    documents_id: documentsId,
+  };
+};
+
+export const adminUpdateDriverProfile = async (
+  driverId: string,
+  updates: AdminUpdateDriverInput,
+): Promise<WithId<Driver> | null> => {
+  if (!ObjectId.isValid(driverId)) {
+    return null;
+  }
+  if (Object.keys(updates).length === 0) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER.NO_UPDATES_PROVIDED,
+    );
+  }
+  return await driverRepository.updateById(driverId, {
+    $set: { ...updates, updated_at: new Date() },
+  });
+};
+
+export const adminDeleteDriverCascade = async (
+  driverId: string,
+): Promise<boolean> => {
+  if (!ObjectId.isValid(driverId)) {
+    return false;
+  }
+
+  const driver = await driverRepository.findById(driverId);
+  if (!driver) {
+    return false;
+  }
+
+  const db = await getDB();
+  const now = new Date();
+
+  if (ObjectId.isValid(driver.user_id)) {
+    await db
+      .collection(USERS_COLLECTION)
+      .updateOne(
+        { _id: new ObjectId(driver.user_id) },
+        { $set: { is_active: false, updated_at: now } },
+      );
+  }
+
+  await db.collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION).updateMany(
+    {
+      driver_id: driverId,
+      assignment_status: {
+        $in: [
+          AssignmentStatus.ACTIVE,
+          AssignmentStatus.PENDING,
+          AssignmentStatus.PARENT_REQUESTED,
+        ],
+      },
+    },
+    {
+      $set: {
+        assignment_status: AssignmentStatus.INACTIVE,
+        end_date: now,
+        updated_at: now,
+      },
+    },
+  );
+
+  await db.collection(TRIPS_COLLECTION).updateMany(
+    {
+      driver_id: driverId,
+      trip_status: TripStatus.SCHEDULED,
+    },
+    {
+      $set: { trip_status: TripStatus.CANCELLED, updated_at: now },
+    },
+  );
+
+  return true;
+};
+
+export const adminGetDriverAddress = async (
+  driverId: string,
+): Promise<WithId<DriverAddress> | null> => {
+  if (!ObjectId.isValid(driverId)) {
+    return null;
+  }
+  return await driverAddressRepository.findOne({
+    driver_id: driverId,
+    is_primary: true,
+  });
+};
+
+export const adminUpsertDriverAddress = async (
+  driverId: string,
+  address: DriverAddressInput,
+): Promise<WithId<DriverAddress> | null> => {
+  if (!ObjectId.isValid(driverId)) {
+    return null;
+  }
+  const driver = await driverRepository.findById(driverId);
+  if (!driver) {
+    return null;
+  }
+
+  const existing = await driverAddressRepository.findOne({
+    driver_id: driverId,
+    is_primary: true,
+  });
+  const now = new Date();
+  if (existing) {
+    return await driverAddressRepository.updateOne(
+      { driver_id: driverId, is_primary: true },
+      {
+        $set: {
+          address_line1: address.address_line1,
+          address_line2: address.address_line2,
+          city: address.city,
+          state: address.state,
+          pincode: address.pincode,
+          latitude: address.latitude,
+          longitude: address.longitude,
+          updated_at: now,
+        },
+      },
+    );
+  }
+
+  return await driverAddressRepository.create({
+    driver_id: driverId,
+    address_line1: address.address_line1,
+    address_line2: address.address_line2,
+    city: address.city,
+    state: address.state,
+    pincode: address.pincode,
+    latitude: address.latitude,
+    longitude: address.longitude,
+    is_primary: true,
+    created_at: now,
+    updated_at: now,
+  } as any);
+};
+
+export const adminGetDriverDocuments = async (
+  driverId: string,
+): Promise<WithId<DriverDocument> | null> => {
+  if (!ObjectId.isValid(driverId)) {
+    return null;
+  }
+  return await driverDocumentRepository.findOne({ driver_id: driverId });
+};
+
+export const adminUpsertDriverDocuments = async (
+  driverId: string,
+  documents: DriverDocumentInput,
+): Promise<WithId<DriverDocument> | null> => {
+  if (!ObjectId.isValid(driverId)) {
+    return null;
+  }
+  const driver = await driverRepository.findById(driverId);
+  if (!driver) {
+    return null;
+  }
+
+  const existing = await driverDocumentRepository.findOne({
+    driver_id: driverId,
+  });
+  const now = new Date();
+  if (existing) {
+    return await driverDocumentRepository.updateOne(
+      { driver_id: driverId },
+      {
+        $set: {
+          driving_license_number: documents.driving_license_number,
+          driving_license_photo_url: documents.driving_license_photo_url,
+          vehicle_license_number: documents.vehicle_license_number,
+          vehicle_license_photo_url: documents.vehicle_license_photo_url,
+          insurance_number: documents.insurance_number,
+          insurance_photo_url: documents.insurance_photo_url,
+          updated_at: now,
+        },
+      },
+    );
+  }
+
+  return await driverDocumentRepository.create({
+    driver_id: driverId,
+    driving_license_number: documents.driving_license_number,
+    driving_license_photo_url: documents.driving_license_photo_url,
+    vehicle_license_number: documents.vehicle_license_number,
+    vehicle_license_photo_url: documents.vehicle_license_photo_url,
+    insurance_number: documents.insurance_number,
+    insurance_photo_url: documents.insurance_photo_url,
+    created_at: now,
+    updated_at: now,
+  } as any);
+};
+
+export const adminUpdateDriverDocuments = async (
+  driverId: string,
+  updates: DriverDocumentUpdate,
+): Promise<WithId<DriverDocument> | null> => {
+  if (!ObjectId.isValid(driverId)) {
+    return null;
+  }
+  if (Object.keys(updates).length === 0) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER.NO_UPDATES_PROVIDED,
+    );
+  }
+  return await driverDocumentRepository.updateOne(
+    { driver_id: driverId },
+    { $set: { ...updates, updated_at: new Date() } },
+  );
 };
 
 /**

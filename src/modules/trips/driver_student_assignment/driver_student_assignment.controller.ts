@@ -12,6 +12,10 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
+  adminApproveAssignmentOverride,
+  adminAssignStudent,
+  adminDeactivateAssignmentOverride,
+  adminRejectAssignmentOverride,
   approveAssignment,
   createDriverStudentAssignment as createAssignmentService,
   deactivateAssignment,
@@ -28,6 +32,7 @@ import {
   rejectAssignment,
   updateAssignment,
 } from "./driver_student_assignment.service";
+import { AdminAssignStudentInput } from "./driver_student_assignment.type";
 
 /**
  * Create driver-student assignment
@@ -407,6 +412,88 @@ export const getAllDrivers = asyncHandler(
       success: true,
       message: SUCCESS_MESSAGES_COMMON.RESOURCE_FETCHED,
       data: drivers,
+    });
+  },
+);
+
+const requireAdminId = (req: Request): string => {
+  const adminId = req.admin?.adminId;
+  if (!adminId) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.AUTH.ADMIN_ROLE_REQUIRED,
+    );
+  }
+  return adminId;
+};
+
+export const adminAssignStudentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const adminId = requireAdminId(req);
+    const assignment = await adminAssignStudent(
+      req.body as AdminAssignStudentInput,
+      adminId,
+    );
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: assignment,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminApproveAssignmentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+    const updated = await adminApproveAssignmentOverride(id);
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.NOT_FOUND,
+      );
+    }
+    return res.json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.APPROVED_SUCCESSFULLY,
+    });
+  },
+);
+
+export const adminRejectAssignmentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+    const updated = await adminRejectAssignmentOverride(id);
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.NOT_FOUND,
+      );
+    }
+    return res.json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.REJECTED_SUCCESSFULLY,
+    });
+  },
+);
+
+export const adminDeactivateAssignmentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { id } = req.params as Record<string, string>;
+    const updated = await adminDeactivateAssignmentOverride(id);
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.NOT_FOUND,
+      );
+    }
+    return res.json({
+      success: true,
+      data: updated,
+      message:
+        SUCCESS_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DEACTIVATED_SUCCESSFULLY,
     });
   },
 );

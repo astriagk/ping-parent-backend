@@ -2,6 +2,8 @@ import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
+  ApprovalStatus,
+  AssignmentSource,
   AssignmentStatus,
   DRIVERS_COLLECTION,
   ERROR_MESSAGES,
@@ -13,7 +15,10 @@ import {
 import { ApiError } from "@shared/middlewares";
 
 import { driverStudentAssignmentRepository } from "./driver_student_assignment.repository";
-import { DriverStudentAssignment } from "./driver_student_assignment.type";
+import {
+  AdminAssignStudentInput,
+  DriverStudentAssignment,
+} from "./driver_student_assignment.type";
 
 /**
  * Helper function to convert userId to driver_id
@@ -407,6 +412,161 @@ const getParentIdByUserId = async (userId: string): Promise<string | null> => {
     .findOne({ user_id: userId });
 
   return parent ? String(parent._id) : null;
+};
+
+export const adminAssignStudent = async (
+  data: AdminAssignStudentInput,
+  adminId: string,
+): Promise<WithId<DriverStudentAssignment>> => {
+  if (!ObjectId.isValid(data.driver_id) || !ObjectId.isValid(data.student_id)) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_NOT_FOUND,
+    );
+  }
+
+  const driver = await getDriverById(data.driver_id);
+  if (!driver) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_NOT_FOUND,
+    );
+  }
+  if (driver.approval_status !== ApprovalStatus.APPROVED) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_NOT_FOUND,
+    );
+  }
+
+  const db = await getDB();
+  const student = await db
+    .collection(STUDENTS_COLLECTION)
+    .findOne({ _id: new ObjectId(data.student_id) });
+  if (!student || student.is_active === false) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.STUDENT_NOT_FOUND,
+    );
+  }
+
+  const activeForStudent =
+    await driverStudentAssignmentRepository.findActiveAssignmentsByStudentId(
+      data.student_id,
+    );
+  if (activeForStudent.length > 0) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.ALREADY_EXISTS,
+    );
+  }
+
+  const now = new Date();
+  const startDate = data.start_date ? new Date(data.start_date) : now;
+
+  const assignment: DriverStudentAssignment = {
+    driver_id: data.driver_id,
+    student_id: data.student_id,
+    school_id: String(student.school_id),
+    monthly_fee: data.monthly_fee,
+    assignment_status: AssignmentStatus.ACTIVE,
+    assignment_source: AssignmentSource.ADMIN,
+    assigned_by: adminId,
+    assigned_date: now,
+    start_date: startDate,
+    created_at: now,
+    updated_at: now,
+  };
+
+  return await driverStudentAssignmentRepository.create(assignment);
+};
+
+export const adminApproveAssignmentOverride = async (
+  assignmentId: string,
+): Promise<WithId<DriverStudentAssignment> | null> => {
+  if (!ObjectId.isValid(assignmentId)) {
+    return null;
+  }
+  const assignment =
+    await driverStudentAssignmentRepository.findById(assignmentId);
+  if (!assignment) {
+    return null;
+  }
+  if (
+    assignment.assignment_status !== AssignmentStatus.PENDING &&
+    assignment.assignment_status !== AssignmentStatus.PARENT_REQUESTED
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CANNOT_REJECT,
+    );
+  }
+
+  const now = new Date();
+  return await driverStudentAssignmentRepository.updateById(assignmentId, {
+    $set: {
+      assignment_status: AssignmentStatus.ACTIVE,
+      start_date: assignment.start_date ?? now,
+      updated_at: now,
+    },
+  });
+};
+
+export const adminRejectAssignmentOverride = async (
+  assignmentId: string,
+): Promise<WithId<DriverStudentAssignment> | null> => {
+  if (!ObjectId.isValid(assignmentId)) {
+    return null;
+  }
+  const assignment =
+    await driverStudentAssignmentRepository.findById(assignmentId);
+  if (!assignment) {
+    return null;
+  }
+  if (
+    assignment.assignment_status !== AssignmentStatus.PENDING &&
+    assignment.assignment_status !== AssignmentStatus.PARENT_REQUESTED
+  ) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CANNOT_REJECT,
+    );
+  }
+
+  return await driverStudentAssignmentRepository.updateById(assignmentId, {
+    $set: {
+      assignment_status: AssignmentStatus.REJECTED,
+      updated_at: new Date(),
+    },
+  });
+};
+
+export const adminDeactivateAssignmentOverride = async (
+  assignmentId: string,
+): Promise<WithId<DriverStudentAssignment> | null> => {
+  if (!ObjectId.isValid(assignmentId)) {
+    return null;
+  }
+  const assignment =
+    await driverStudentAssignmentRepository.findById(assignmentId);
+  if (!assignment) {
+    return null;
+  }
+  if (assignment.assignment_status !== AssignmentStatus.ACTIVE) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.CANNOT_REJECT,
+    );
+  }
+
+  const now = new Date();
+  return await driverStudentAssignmentRepository.updateById(assignmentId, {
+    $set: {
+      assignment_status: AssignmentStatus.INACTIVE,
+      end_date: now,
+      updated_at: now,
+    },
+  });
 };
 
 /**

@@ -17,5 +17,11 @@ router.post(
   authHandlers.public.loginRateLimiter,
   authHandlers.public.verifyPhoneOtp,
 );
+router.post(
+  "/register/resend-otp",
+  authHandlers.public.validateSendOtp,
+  authHandlers.public.loginRateLimiter,
+  authHandlers.public.resendRegisterOtp,
+);
 
 export default router;

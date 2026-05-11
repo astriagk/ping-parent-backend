@@ -15,6 +15,7 @@ export enum AssignmentSource {
   PARENT = "parent",
   SCHOOL_ADMIN = "school_admin",
   SYSTEM = "system",
+  ADMIN = "admin",
 }
 
 export enum AssignmentStatus {
@@ -158,6 +159,7 @@ export enum PricingModel {
 
 export enum RouteProvider {
   TOMTOM = "tomtom",
+  HEREMAPS = "heremaps",
 }
 
 export enum SchoolSubscriptionStatus {

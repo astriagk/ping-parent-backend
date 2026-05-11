@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Skolo API
-  version: 1.0.3
+  version: 1.0.4
   description: School transport tracking and management API
   contact:
     name: Skolo Team
@@ -67,6 +67,142 @@ paths:
       summary: Get All Parent Requested
       description: GET /assignments/parent-requested
       operationId: get_admin_assignments_parent-requested
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/assignments/assign-student:
+    post:
+      tags:
+        - Admin
+      summary: Create Assign Student
+      description: "\n\n📋 Request Body Fields:\n• driver_id: string (required)\n• student_id: string (required)\n• monthly_fee: number (optional)\n• start_date: string (optional)"
+      operationId: post_admin_assignments_assign-student
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driver_id:
+                  type: string
+                student_id:
+                  type: string
+                monthly_fee:
+                  type: number
+                  minimum: 0
+                start_date:
+                  type: string
+              required:
+                - driver_id
+                - student_id
+            example:
+              driver_id: 550e8400-e29b-41d4-a716-446655440000
+              student_id: 550e8400-e29b-41d4-a716-446655440000
+              monthly_fee: 0
+              start_date: sample_string
+  /admin/assignments/{id}/approve:
+    post:
+      tags:
+        - Admin
+      summary: Create Approve
+      description: "POST /assignments/:id/approve"
+      operationId: post_admin_assignments__id_approve
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/assignments/{id}/reject:
+    post:
+      tags:
+        - Admin
+      summary: Create Reject
+      description: "POST /assignments/:id/reject"
+      operationId: post_admin_assignments__id_reject
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/assignments/{id}/deactivate:
+    post:
+      tags:
+        - Admin
+      summary: Create Deactivate
+      description: "POST /assignments/:id/deactivate"
+      operationId: post_admin_assignments__id_deactivate
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
       responses:
         200:
           description: Successful operation
@@ -310,13 +446,13 @@ paths:
       security:
         -
           AdminAuth: []
-  /admin/googlemaps/cleanup:
+  /admin/bulk/parents:
     post:
       tags:
         - Admin
-      summary: Create Cleanup
-      description: POST /googlemaps/cleanup
-      operationId: post_admin_googlemaps_cleanup
+      summary: Create Parents
+      description: "\n\n📋 Request Body Fields:\n• parents: array (required)\n• name: string (required)\n• email: string (optional)\n• photo_url: string (optional)\n• address: object (optional)"
+      operationId: post_admin_bulk_parents
       responses:
         200:
           description: Successful operation
@@ -332,6 +468,853 @@ paths:
           description: Not found
         500:
           description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parents:
+                  type: array
+                  pattern: ^\+?[0-9]{10,15}$
+                name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                email:
+                  type: string
+                  format: email
+                photo_url:
+                  type: string
+                  format: uri
+                address:
+                  type: object
+                  minimum: 1
+                  maximum: 100
+              required:
+                - parents
+                - name
+            example:
+              parents: []
+              name: John Doe
+              email: user@example.com
+              photo_url: "https://example.com/image.jpg"
+              address:
+  /admin/bulk/parents-with-students:
+    post:
+      tags:
+        - Admin
+      summary: Create Parents With Students
+      description: POST /bulk/parents-with-students
+      operationId: post_admin_bulk_parents-with-students
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/drivers:
+    post:
+      tags:
+        - Admin
+      summary: Create Drivers
+      description: "\n\n📋 Request Body Fields:\n• phone_number: string (required)\n• name: string (required)\n• email: string (optional)\n• photo_url: string (optional)\n• vehicle_type: string (required)\n• vehicle_number: string (required)\n• vehicle_capacity: number (required)\n• school_id: string (optional)\n• documents: object (optional)"
+      operationId: post_admin_drivers
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_number:
+                  type: string
+                  pattern: ^\+?[0-9]{10,15}$
+                name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                email:
+                  type: string
+                  format: email
+                photo_url:
+                  type: string
+                  format: uri
+                vehicle_type:
+                  type: string
+                  enum:
+                    - values(vehicletype
+                vehicle_number:
+                  type: string
+                  minimum: 1
+                  maximum: 20
+                vehicle_capacity:
+                  type: number
+                  minimum: 1
+                  maximum: 100
+                school_id:
+                  type: string
+                documents:
+                  type: object
+              required:
+                - phone_number
+                - name
+                - vehicle_type
+                - vehicle_number
+                - vehicle_capacity
+            example:
+              phone_number: +919876543210
+              name: John Doe
+              email: user@example.com
+              photo_url: "https://example.com/image.jpg"
+              vehicle_type: values(vehicletype
+              vehicle_number: MH01AB1234
+              vehicle_capacity: 1
+              school_id: 550e8400-e29b-41d4-a716-446655440000
+              documents:
+  /admin/drivers/{driverId}:
+    put:
+      tags:
+        - Admin
+      summary: Update Drivers
+      description: "\n\n📋 Request Body Fields:\n• name: string (optional)\n• email: string (optional)\n• photo_url: string (optional)\n• vehicle_type: string (optional)\n• vehicle_number: string (optional)\n• vehicle_capacity: number (optional)\n• is_available: boolean (optional)\n• school_id: string (optional)"
+      operationId: put_admin_drivers__driverId
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                email:
+                  type: string
+                  format: email
+                photo_url:
+                  type: string
+                  format: uri
+                vehicle_type:
+                  type: string
+                  enum:
+                    - values(vehicletype
+                vehicle_number:
+                  type: string
+                  minimum: 1
+                  maximum: 20
+                vehicle_capacity:
+                  type: number
+                  minimum: 1
+                  maximum: 100
+                is_available:
+                  type: boolean
+                school_id:
+                  type: string
+            example:
+              name: John Doe
+              email: user@example.com
+              photo_url: "https://example.com/image.jpg"
+              vehicle_type: values(vehicletype
+              vehicle_number: MH01AB1234
+              vehicle_capacity: 1
+              is_available: true
+              school_id: 550e8400-e29b-41d4-a716-446655440000
+    delete:
+      tags:
+        - Admin
+      summary: Delete Drivers
+      description: "DELETE /drivers/:driverId"
+      operationId: delete_admin_drivers__driverId
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/drivers/{driverId}/address:
+    get:
+      tags:
+        - Admin
+      summary: Get Address
+      description: "GET /drivers/:driverId/address"
+      operationId: get_admin_drivers__driverId_address
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Admin
+      summary: Update Address
+      description: "PUT /drivers/:driverId/address"
+      operationId: put_admin_drivers__driverId_address
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/drivers/{driverId}/documents:
+    get:
+      tags:
+        - Admin
+      summary: Get Documents
+      description: "GET /drivers/:driverId/documents"
+      operationId: get_admin_drivers__driverId_documents
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    post:
+      tags:
+        - Admin
+      summary: Create Documents
+      description: "POST /drivers/:driverId/documents"
+      operationId: post_admin_drivers__driverId_documents
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Admin
+      summary: Update Documents
+      description: "\n\n📋 Request Body Fields:\n• driving_license_number: string (optional)\n• driving_license_photo_url: string (optional)\n• vehicle_license_number: string (optional)\n• vehicle_license_photo_url: string (optional)\n• insurance_number: string (optional)\n• insurance_photo_url: string (optional)"
+      operationId: put_admin_drivers__driverId_documents
+      parameters:
+        -
+          name: driverId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: DriverId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                driving_license_number:
+                  type: string
+                  minimum: 1
+                  maximum: 50
+                driving_license_photo_url:
+                  type: string
+                  format: uri
+                vehicle_license_number:
+                  type: string
+                  minimum: 1
+                  maximum: 50
+                vehicle_license_photo_url:
+                  type: string
+                  format: uri
+                insurance_number:
+                  type: string
+                  minimum: 1
+                  maximum: 50
+                insurance_photo_url:
+                  type: string
+                  format: uri
+            example:
+              driving_license_number: DL-1234567890123
+              driving_license_photo_url: "https://example.com/image.jpg"
+              vehicle_license_number: DL-1234567890123
+              vehicle_license_photo_url: "https://example.com/image.jpg"
+              insurance_number: sample_string
+              insurance_photo_url: "https://example.com/image.jpg"
+  /admin/parent-subscriptions:
+    post:
+      tags:
+        - Admin
+      summary: Create Parent Subscriptions
+      description: "\n\n📋 Request Body Fields:\n• parent_id: string (required)\n• plan_id: string (required)\n• start_date: string (optional)\n• end_date: string (optional)\n• auto_renew: boolean (optional)\n• student_ids: array (optional)"
+      operationId: post_admin_parent-subscriptions
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                parent_id:
+                  type: string
+                plan_id:
+                  type: string
+                start_date:
+                  type: string
+                end_date:
+                  type: string
+                auto_renew:
+                  type: boolean
+                student_ids:
+                  type: array
+              required:
+                - parent_id
+                - plan_id
+            example:
+              parent_id: 550e8400-e29b-41d4-a716-446655440000
+              plan_id: 550e8400-e29b-41d4-a716-446655440000
+              start_date: sample_string
+              end_date: sample_string
+              auto_renew: false
+              student_ids: []
+  /admin/parent-subscriptions/{id}/cancel:
+    patch:
+      tags:
+        - Admin
+      summary: Update Cancel
+      description: "PATCH /parent-subscriptions/:id/cancel"
+      operationId: patch_admin_parent-subscriptions__id_cancel
+      parameters:
+        -
+          name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Id identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/parents:
+    post:
+      tags:
+        - Admin
+      summary: Create Parents
+      description: "\n\n📋 Request Body Fields:\n• phone_number: string (required)\n• name: string (required)\n• email: string (optional)\n• photo_url: string (optional)\n• address: object (optional)"
+      operationId: post_admin_parents
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone_number:
+                  type: string
+                  pattern: ^\+?[0-9]{10,15}$
+                name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                email:
+                  type: string
+                  format: email
+                photo_url:
+                  type: string
+                  format: uri
+                address:
+                  type: object
+              required:
+                - phone_number
+                - name
+            example:
+              phone_number: +919876543210
+              name: John Doe
+              email: user@example.com
+              photo_url: "https://example.com/image.jpg"
+              address:
+  /admin/parents/{parentId}:
+    put:
+      tags:
+        - Admin
+      summary: Update Parents
+      description: "\n\n📋 Request Body Fields:\n• name: string (optional)\n• email: string (optional)\n• photo_url: string (optional)"
+      operationId: put_admin_parents__parentId
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                email:
+                  type: string
+                  format: email
+                photo_url:
+                  type: string
+                  format: uri
+            example:
+              name: John Doe
+              email: user@example.com
+              photo_url: "https://example.com/image.jpg"
+    delete:
+      tags:
+        - Admin
+      summary: Delete Parents
+      description: "DELETE /parents/:parentId"
+      operationId: delete_admin_parents__parentId
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/parents/{parentId}/address:
+    get:
+      tags:
+        - Admin
+      summary: Get Address
+      description: "GET /parents/:parentId/address"
+      operationId: get_admin_parents__parentId_address
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    put:
+      tags:
+        - Admin
+      summary: Update Address
+      description: "PUT /parents/:parentId/address"
+      operationId: put_admin_parents__parentId_address
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/parents/{parentId}/students:
+    get:
+      tags:
+        - Admin
+      summary: Get Students
+      description: "GET /parents/:parentId/students"
+      operationId: get_admin_parents__parentId_students
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+    post:
+      tags:
+        - Admin
+      summary: Create Students
+      description: "\n\n📋 Request Body Fields:\n• school_id: string (required)\n• student_name: string (required)\n• class: string (required)\n• pickup_address_id: string (required)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)"
+      operationId: post_admin_parents__parentId_students
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                school_id:
+                  type: string
+                student_name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                class:
+                  type: string
+                  maximum: 20
+                pickup_address_id:
+                  type: string
+                section:
+                  type: string
+                  maximum: 10
+                roll_number:
+                  type: string
+                  maximum: 20
+                photo_url:
+                  type: string
+                  format: uri
+                date_of_birth:
+                  type: string
+                gender:
+                  type: string
+                  enum:
+                    - male
+                    - female
+                    - other
+                emergency_contact:
+                  type: string
+                  pattern: ^[+]?[0-9]{10,15}$
+                medical_info:
+                  type: string
+                  maximum: 500
+              required:
+                - school_id
+                - student_name
+                - class
+                - pickup_address_id
+            example:
+              school_id: 550e8400-e29b-41d4-a716-446655440000
+              student_name: Rahul Sharma
+              class: 10th
+              pickup_address_id: 550e8400-e29b-41d4-a716-446655440000
+              section: A
+              roll_number: R001
+              photo_url: "https://example.com/image.jpg"
+              date_of_birth: sample_string
+              gender: male
+              emergency_contact: +919876543210
+              medical_info: Additional notes or description
+  /admin/parents/{parentId}/students/bulk:
+    post:
+      tags:
+        - Admin
+      summary: Create Bulk
+      description: "\n\n📋 Request Body Fields:\n• students: array (required)"
+      operationId: post_admin_parents__parentId_students_bulk
+      parameters:
+        -
+          name: parentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ParentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                students:
+                  type: array
+                  minimum: 1
+                  maximum: 50
+              required:
+                - students
+            example:
+              students: []
   /admin/payments:
     get:
       tags:
@@ -798,6 +1781,27 @@ paths:
         500:
           description: Internal server error
   /admin/school-subscriptions:
+    get:
+      tags:
+        - Admin
+      summary: Get All School Subscriptions
+      description: GET /school-subscriptions
+      operationId: get_admin_school-subscriptions
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
     post:
       tags:
         - Admin
@@ -974,7 +1978,7 @@ paths:
       tags:
         - Admin
       summary: Update School Subscriptions
-      description: "\n\n📋 Request Body Fields:\n• plan_id: string (optional)\n• end_date: string (optional)\n• auto_renew: boolean (optional)\n• max_drivers: number (optional)\n• max_students: number (optional)\n• billing_contact: string (optional)\n• subscription_status: string (optional)"
+      description: "\n\n📋 Request Body Fields:\n• plan_id: string (optional)\n• start_date: string (optional)\n• end_date: string (optional)\n• auto_renew: boolean (optional)\n• max_drivers: number (optional)\n• max_students: number (optional)\n• billing_contact: string (optional)\n• subscription_status: string (optional)"
       operationId: patch_admin_school-subscriptions__subscriptionId
       parameters:
         -
@@ -1008,6 +2012,8 @@ paths:
               properties:
                 plan_id:
                   type: string
+                start_date:
+                  type: string
                 end_date:
                   type: string
                 auto_renew:
@@ -1026,6 +2032,7 @@ paths:
                     - values(schoolsubscriptionstatus
             example:
               plan_id: 550e8400-e29b-41d4-a716-446655440000
+              start_date: sample_string
               end_date: sample_string
               auto_renew: false
               max_drivers: 1
@@ -1218,7 +2225,7 @@ paths:
       tags:
         - Admin
       summary: Create Schools
-      description: "\n\n📋 Request Body Fields:\n• school_name: string (required)\n• address: string (required)\n• city: string (required)\n• state: string (required)\n• latitude: number (required)\n• longitude: number (required)\n• contact_number: string (optional)\n• email: string (optional)"
+      description: "\n\n📋 Request Body Fields:\n• school_name: string (required)\n• address: string (required)\n• city: string (required)\n• state: string (required)\n• latitude: number (required)\n• longitude: number (required)\n• contact_number: string (optional)\n• email: string (optional)\n• principal_name: string (optional)"
       operationId: post_admin_schools
       responses:
         200:
@@ -1269,6 +2276,9 @@ paths:
                 email:
                   type: string
                   format: email
+                principal_name:
+                  type: string
+                  maximum: 100
               required:
                 - school_name
                 - address
@@ -1285,6 +2295,7 @@ paths:
               longitude: 72.8777
               contact_number: +919876543210
               email: user@example.com
+              principal_name: John Doe
   /admin/schools/{school_id}:
     get:
       tags:
@@ -1319,7 +2330,7 @@ paths:
       tags:
         - Admin
       summary: Update Schools
-      description: "\n\n📋 Request Body Fields:\n• school_name: string (optional)\n• address: string (optional)\n• city: string (optional)\n• state: string (optional)\n• latitude: number (optional)\n• longitude: number (optional)\n• contact_number: string (optional)\n• email: string (optional)"
+      description: "\n\n📋 Request Body Fields:\n• school_name: string (optional)\n• address: string (optional)\n• city: string (optional)\n• state: string (optional)\n• latitude: number (optional)\n• longitude: number (optional)\n• contact_number: string (optional)\n• email: string (optional)\n• principal_name: string (optional)"
       operationId: put_admin_schools__school_id
       parameters:
         -
@@ -1378,6 +2389,9 @@ paths:
                 email:
                   type: string
                   format: email
+                principal_name:
+                  type: string
+                  maximum: 100
             example:
               school_name: Delhi Public School
               address: 123 Main Street, Mumbai
@@ -1387,6 +2401,7 @@ paths:
               longitude: 72.8777
               contact_number: +919876543210
               email: user@example.com
+              principal_name: John Doe
     delete:
       tags:
         - Admin
@@ -1431,6 +2446,118 @@ paths:
           schema:
             type: string
           description: SchoolId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+  /admin/students/{studentId}:
+    put:
+      tags:
+        - Admin
+      summary: Update Students
+      description: "\n\n📋 Request Body Fields:\n• school_id: string (optional)\n• student_name: string (optional)\n• class: string (optional)\n• section: string (optional)\n• roll_number: string (optional)\n• photo_url: string (optional)\n• date_of_birth: string (optional)\n• gender: string (optional)\n• pickup_address_id: string (optional)\n• emergency_contact: string (optional)\n• medical_info: string (optional)"
+      operationId: put_admin_students__studentId
+      parameters:
+        -
+          name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: StudentId identifier
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                school_id:
+                  type: string
+                student_name:
+                  type: string
+                  minimum: 2
+                  maximum: 100
+                class:
+                  type: string
+                  maximum: 20
+                section:
+                  type: string
+                  maximum: 10
+                roll_number:
+                  type: string
+                  maximum: 20
+                photo_url:
+                  type: string
+                  format: uri
+                date_of_birth:
+                  type: string
+                gender:
+                  type: string
+                  enum:
+                    - male
+                    - female
+                    - other
+                pickup_address_id:
+                  type: string
+                emergency_contact:
+                  type: string
+                  pattern: ^[+]?[0-9]{10,15}$
+                medical_info:
+                  type: string
+                  maximum: 500
+            example:
+              school_id: 550e8400-e29b-41d4-a716-446655440000
+              student_name: Rahul Sharma
+              class: 10th
+              section: A
+              roll_number: R001
+              photo_url: "https://example.com/image.jpg"
+              date_of_birth: sample_string
+              gender: male
+              pickup_address_id: 550e8400-e29b-41d4-a716-446655440000
+              emergency_contact: +919876543210
+              medical_info: Additional notes or description
+    delete:
+      tags:
+        - Admin
+      summary: Delete Students
+      description: "DELETE /students/:studentId"
+      operationId: delete_admin_students__studentId
+      parameters:
+        -
+          name: studentId
+          in: path
+          required: true
+          schema:
+            type: string
+          description: StudentId identifier
       responses:
         200:
           description: Successful operation
@@ -2351,6 +3478,41 @@ paths:
             example:
               phone: +919876543210
               otp: 123456
+  /auth/login/resend-otp:
+    post:
+      tags:
+        - Auth
+      summary: Create Resend Otp
+      description: "\n\n📋 Request Body Fields:\n• phone: string (required)"
+      operationId: post_auth_login_resend-otp
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+              required:
+                - phone
+            example:
+              phone: +919876543210
   /auth/verify-token:
     get:
       tags:
@@ -2480,6 +3642,47 @@ paths:
             example:
               phone: +919876543210
               otp: 123456
+              role: parent
+  /auth/register/resend-otp:
+    post:
+      tags:
+        - Auth
+      summary: Create Resend Otp
+      description: "\n\n📋 Request Body Fields:\n• phone: string (required)\n• role: string (optional)"
+      operationId: post_auth_register_resend-otp
+      responses:
+        200:
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+        400:
+          description: Bad request
+        401:
+          description: Unauthorized
+        404:
+          description: Not found
+        500:
+          description: Internal server error
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                phone:
+                  type: string
+                role:
+                  type: string
+                  enum:
+                    - parent
+                    - driver
+              required:
+                - phone
+            example:
+              phone: +919876543210
               role: parent
   /driver/address:
     get:
@@ -2933,7 +4136,7 @@ paths:
       tags:
         - Driver
       summary: Update Documents
-      description: "\n\n📋 Request Body Fields:\n• driving_license_number: string (optional)\n• vehicle_license_number: string (optional)\n• insurance_number: string (optional)"
+      description: "\n\n📋 Request Body Fields:\n• driving_license_number: string (optional)\n• driving_license_photo_url: string (optional)\n• vehicle_license_number: string (optional)\n• vehicle_license_photo_url: string (optional)\n• insurance_number: string (optional)\n• insurance_photo_url: string (optional)"
       operationId: put_driver_documents
       responses:
         200:
@@ -2961,199 +4164,30 @@ paths:
                   type: string
                   minimum: 1
                   maximum: 50
+                driving_license_photo_url:
+                  type: string
+                  format: uri
                 vehicle_license_number:
                   type: string
                   minimum: 1
                   maximum: 50
+                vehicle_license_photo_url:
+                  type: string
+                  format: uri
                 insurance_number:
                   type: string
                   minimum: 1
                   maximum: 50
+                insurance_photo_url:
+                  type: string
+                  format: uri
             example:
               driving_license_number: DL-1234567890123
+              driving_license_photo_url: "https://example.com/image.jpg"
               vehicle_license_number: DL-1234567890123
+              vehicle_license_photo_url: "https://example.com/image.jpg"
               insurance_number: sample_string
-  /driver/googlemaps/calculate:
-    post:
-      tags:
-        - Driver
-      summary: Create Calculate
-      description: "\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)"
-      operationId: post_driver_googlemaps_calculate
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                trip_id:
-                  type: string
-                current_latitude:
-                  type: number
-                  minimum: -90
-                  maximum: 90
-                current_longitude:
-                  type: number
-                  minimum: -180
-                  maximum: 180
-                traffic_model:
-                  type: string
-                  enum:
-                    - values(googlemapstrafficmodel
-                avoid:
-                  type: array
-                  enum:
-                    - values(googlemapsavoidoption
-              required:
-                - trip_id
-                - current_latitude
-                - current_longitude
-            example:
-              trip_id: 550e8400-e29b-41d4-a716-446655440000
-              current_latitude: 19.076
-              current_longitude: 72.8777
-              traffic_model: values(googlemapstrafficmodel
-              avoid: values(googlemapsavoidoption
-  /driver/googlemaps/recalculate:
-    post:
-      tags:
-        - Driver
-      summary: Create Recalculate
-      description: "\n\n📋 Request Body Fields:\n• trip_id: string (required)\n• current_latitude: number (required)\n• current_longitude: number (required)\n• traffic_model: string (optional)\n• avoid: array (optional)\n• force_recalculate: boolean (optional)"
-      operationId: post_driver_googlemaps_recalculate
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                trip_id:
-                  type: string
-                current_latitude:
-                  type: number
-                  minimum: -90
-                  maximum: 90
-                current_longitude:
-                  type: number
-                  minimum: -180
-                  maximum: 180
-                traffic_model:
-                  type: string
-                  enum:
-                    - values(googlemapstrafficmodel
-                avoid:
-                  type: array
-                  enum:
-                    - values(googlemapsavoidoption
-                force_recalculate:
-                  type: boolean
-              required:
-                - trip_id
-                - current_latitude
-                - current_longitude
-            example:
-              trip_id: 550e8400-e29b-41d4-a716-446655440000
-              current_latitude: 19.076
-              current_longitude: 72.8777
-              traffic_model: values(googlemapstrafficmodel
-              avoid: values(googlemapsavoidoption
-              force_recalculate: false
-  /driver/googlemaps/{tripId}/position:
-    patch:
-      tags:
-        - Driver
-      summary: Update Position
-      description: "\n\n📋 Request Body Fields:\n• latitude: number (required)\n• longitude: number (required)\n• speed: number (optional)\n• heading: number (optional)\n• accuracy: number (optional)"
-      operationId: patch_driver_googlemaps__tripId_position
-      parameters:
-        -
-          name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TripId identifier
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                latitude:
-                  type: number
-                  minimum: -90
-                  maximum: 90
-                longitude:
-                  type: number
-                  minimum: -180
-                  maximum: 180
-                speed:
-                  type: number
-                  minimum: 0
-                heading:
-                  type: number
-                  minimum: 0
-                  maximum: 360
-                accuracy:
-                  type: number
-                  minimum: 0
-              required:
-                - latitude
-                - longitude
-            example:
-              latitude: 19.076
-              longitude: 72.8777
-              speed: 0
-              heading: 0
-              accuracy: 0
+              insurance_photo_url: "https://example.com/image.jpg"
   /driver/onboarding/screen:
     get:
       tags:
@@ -7062,96 +8096,6 @@ paths:
                 - fcm_token
             example:
               fcm_token: fcm_token_string
-  /shared/googlemaps/{tripId}/tracking:
-    get:
-      tags:
-        - Shared
-      summary: Get Tracking
-      description: "GET /googlemaps/:tripId/tracking"
-      operationId: get_shared_googlemaps__tripId_tracking
-      parameters:
-        -
-          name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TripId identifier
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /shared/googlemaps/{tripId}/current-position:
-    get:
-      tags:
-        - Shared
-      summary: Get Current Position
-      description: "GET /googlemaps/:tripId/current-position"
-      operationId: get_shared_googlemaps__tripId_current-position
-      parameters:
-        -
-          name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TripId identifier
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
-  /shared/googlemaps/{tripId}/details:
-    get:
-      tags:
-        - Shared
-      summary: Get Details
-      description: "GET /googlemaps/:tripId/details"
-      operationId: get_shared_googlemaps__tripId_details
-      parameters:
-        -
-          name: tripId
-          in: path
-          required: true
-          schema:
-            type: string
-          description: TripId identifier
-      responses:
-        200:
-          description: Successful operation
-          content:
-            application/json:
-              schema:
-                type: object
-        400:
-          description: Bad request
-        401:
-          description: Unauthorized
-        404:
-          description: Not found
-        500:
-          description: Internal server error
   /shared/notifications:
     get:
       tags:

@@ -10,8 +10,15 @@ export interface DriverStudentAssignment {
   start_date?: Date;
   end_date?: Date;
   assigned_by?: string; // FK to admin_portal - admin/school_admin who created assignment
-  assignment_source: AssignmentSource; // parent, school_admin, system
+  assignment_source: AssignmentSource; // parent, school_admin, system, admin
   school_id: string; // FK to schools - which school this assignment is for
   created_at: Date;
   updated_at?: Date;
+}
+
+export interface AdminAssignStudentInput {
+  driver_id: string;
+  student_id: string;
+  monthly_fee?: number;
+  start_date?: Date | string;
 }

@@ -74,6 +74,25 @@ export const requestAssignmentByDriverIdSchema = Joi.object({
   }),
 });
 
+export const adminAssignStudentSchema = Joi.object({
+  driver_id: Joi.string().required().messages({
+    "any.required":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.DRIVER_ID_REQUIRED,
+  }),
+  student_id: Joi.string().required().messages({
+    "any.required":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.STUDENT_ID_REQUIRED,
+  }),
+  monthly_fee: Joi.number().min(0).optional().messages({
+    "number.base":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.MONTHLY_FEE_INVALID,
+  }),
+  start_date: Joi.date().optional().messages({
+    "date.base":
+      VALIDATION_MESSAGES.DRIVER_STUDENT_ASSIGNMENT.START_DATE_INVALID,
+  }),
+});
+
 // Schema for reassigning a driver to an existing assignment
 export const reassignDriverSchema = Joi.object({
   driver_id: Joi.string().required().messages({

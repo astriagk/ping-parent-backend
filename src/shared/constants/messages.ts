@@ -441,6 +441,8 @@ export const SUCCESS_MESSAGES = {
     LOGIN_OTP_SENT: "Login OTP sent to phone number",
     OTP_SENT: "OTP sent to phone number",
     PHONE_VERIFIED_SUCCESSFULLY: "Phone number verified successfully",
+    REGISTER_OTP_RESENT: "OTP resent to phone number",
+    LOGIN_OTP_RESENT: "Login OTP resent to phone number",
   },
   RATING_REVIEW: {
     SUBMITTED_SUCCESSFULLY: "Rating/review submitted successfully",

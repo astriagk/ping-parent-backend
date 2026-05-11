@@ -14,6 +14,14 @@ import { assignTrimmedFields } from "@shared/utils";
 
 import { driverOnboardingRepository } from "./driver.repository";
 import {
+  adminCreateDriverWithUser,
+  adminDeleteDriverCascade,
+  adminGetDriverAddress,
+  adminGetDriverDocuments,
+  adminUpdateDriverDocuments,
+  adminUpdateDriverProfile,
+  adminUpsertDriverAddress,
+  adminUpsertDriverDocuments,
   createDriverProfile,
   getDriverAddressByUserId,
   getDriverDocumentsByUserId,
@@ -24,6 +32,12 @@ import {
   upsertDriverAddressByUserId,
   upsertDriverDocumentsByUserId,
 } from "./driver.service";
+import {
+  AdminCreateDriverInput,
+  DriverAddressInput,
+  DriverDocumentInput,
+  DriverDocumentUpdate,
+} from "./driver.type";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;
@@ -643,6 +657,220 @@ export const updateDriverOnboardingScreen = asyncHandler(
 
     return res.status(HTTP_STATUS.OK).json({
       success: true,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+const requireAdminId = (req: Request): string => {
+  const adminId = req.admin?.adminId;
+  if (!adminId) {
+    throw new ApiError(
+      HTTP_STATUS.UNAUTHORIZED,
+      ERROR_MESSAGES.AUTH.ADMIN_ROLE_REQUIRED,
+    );
+  }
+  return adminId;
+};
+
+export const adminCreateDriverHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const adminId = requireAdminId(req);
+    const result = await adminCreateDriverWithUser(
+      req.body as AdminCreateDriverInput,
+      adminId,
+    );
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminUpdateDriverHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+    const updated = await adminUpdateDriverProfile(driverId, req.body);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+export const adminDeleteDriverHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+    const ok = await adminDeleteDriverCascade(driverId);
+
+    if (!ok) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
+    });
+  },
+);
+
+export const adminGetDriverAddressHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+    const address = await adminGetDriverAddress(driverId);
+
+    if (!address) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.ADDRESS_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: address,
+    });
+  },
+);
+
+export const adminUpsertDriverAddressHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+
+    const {
+      address_line1,
+      address_line2,
+      city,
+      state,
+      pincode,
+      latitude,
+      longitude,
+    } = req.body;
+
+    const data: DriverAddressInput = {
+      driver_id: "",
+      address_line1: String(address_line1).trim(),
+      address_line2: address_line2 ? String(address_line2).trim() : undefined,
+      city: String(city).trim(),
+      state: String(state).trim(),
+      pincode: pincode ? String(pincode).trim() : undefined,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      is_primary: true,
+    };
+
+    const updated = await adminUpsertDriverAddress(driverId, data);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+export const adminGetDriverDocumentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+    const docs = await adminGetDriverDocuments(driverId);
+
+    if (!docs) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DOCUMENTS_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: docs,
+    });
+  },
+);
+
+export const adminUpsertDriverDocumentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+
+    const data: DriverDocumentInput = {
+      driver_id: "",
+      driving_license_number: String(req.body.driving_license_number).trim(),
+      driving_license_photo_url: req.body.driving_license_photo_url,
+      vehicle_license_number: String(req.body.vehicle_license_number).trim(),
+      vehicle_license_photo_url: req.body.vehicle_license_photo_url,
+      insurance_number: req.body.insurance_number,
+      insurance_photo_url: req.body.insurance_photo_url,
+    };
+
+    const updated = await adminUpsertDriverDocuments(driverId, data);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DRIVER_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+export const adminUpdateDriverDocumentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { driverId } = req.params as Record<string, string>;
+
+    const updates: DriverDocumentUpdate = {};
+    const allowed: (keyof DriverDocumentUpdate)[] = [
+      "driving_license_number",
+      "driving_license_photo_url",
+      "vehicle_license_number",
+      "vehicle_license_photo_url",
+      "insurance_number",
+      "insurance_photo_url",
+    ];
+    for (const key of allowed) {
+      if (req.body[key] !== undefined) {
+        (updates as any)[key] = req.body[key];
+      }
+    }
+
+    const updated = await adminUpdateDriverDocuments(driverId, updates);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.DRIVER.DOCUMENTS_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
       message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
     });
   },

@@ -181,16 +181,21 @@ export const calculateOptimalRouteWithTomTomHandler = asyncHandler(
       );
     }
 
-    // Check if trip exists and has cached TomTom route data
+    // Check if trip exists and has cached route data for the current provider
+    const currentProvider =
+      (process.env.ROUTING_PROVIDER ?? RouteProvider.TOMTOM).toLowerCase() ===
+      RouteProvider.HEREMAPS
+        ? RouteProvider.HEREMAPS
+        : RouteProvider.TOMTOM;
     const existingTrip = await tripRepository.findById(trip_id);
 
     if (
       existingTrip &&
       existingTrip.optimized_route_data &&
-      existingTrip.route_provider === RouteProvider.TOMTOM &&
+      existingTrip.route_provider === currentProvider &&
       existingTrip.optimized_route_data.total_distance
     ) {
-      // Trip exists and has optimized TomTom route data, return it
+      // Trip exists and has optimized route data for the current provider, return it
       return res.status(HTTP_STATUS.OK).json({
         success: true,
         data: {

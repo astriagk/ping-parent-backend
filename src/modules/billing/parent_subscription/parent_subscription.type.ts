@@ -37,3 +37,12 @@ export interface ProrationDetails {
   new_plan_full_price: number;
   prorated_upgrade_price: number;
 }
+
+export interface AdminCreateParentSubscriptionInput {
+  parent_id: string;
+  plan_id: string;
+  start_date?: Date | string;
+  end_date?: Date | string;
+  auto_renew?: boolean;
+  student_ids?: string[];
+}

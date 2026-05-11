@@ -27,6 +27,8 @@ export const MESSAGE_TEMPLATES = {
       `Driver is approaching - ETA ${etaMinutes} minutes`,
     driverApproachingForStudent: (studentName: string, etaMinutes: number) =>
       `Driver is approaching for ${studentName} - ETA ${etaMinutes} minutes`,
+    driverApproachingForStudents: (studentNames: string, etaMinutes: number) =>
+      `Driver is approaching for ${studentNames} - ETA ${etaMinutes} minutes`,
     updatedEta: (studentNames: string) => `Updated ETA for ${studentNames}`,
     updatedEtas: (studentNames: string) => `Updated ETAs for ${studentNames}`,
     routeRecalculated: (studentNames: string) =>

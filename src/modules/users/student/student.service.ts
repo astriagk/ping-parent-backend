@@ -1,15 +1,22 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
+  AssignmentStatus,
+  DRIVER_STUDENT_ASSIGNMENTS_COLLECTION,
   ERROR_MESSAGES,
   HTTP_STATUS,
   PARENTS_COLLECTION,
+  PARENT_ADDRESSES_COLLECTION,
 } from "@shared/constants";
 import { ApiError } from "@shared/middlewares";
 
 import { studentRepository } from "./student.repository";
-import { Student } from "./student.type";
+import {
+  AdminBulkStudentResult,
+  AdminStudentInput,
+  Student,
+} from "./student.type";
 
 /**
  * Get parent_id from user_id
@@ -218,4 +225,239 @@ export const getActiveStudentsByUserId = async (
   return await studentRepository.findActiveStudentsByParentIdWithPopulate(
     parentId,
   );
+};
+
+const assertPickupAddressOwnership = async (
+  pickupAddressId: string,
+  parentId: string,
+): Promise<void> => {
+  if (!ObjectId.isValid(pickupAddressId)) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.STUDENT.PICKUP_ADDRESS_ID_REQUIRED,
+    );
+  }
+
+  const db = await getDB();
+  const address = await db
+    .collection(PARENT_ADDRESSES_COLLECTION)
+    .findOne({ _id: new ObjectId(pickupAddressId) });
+
+  if (!address || String(address.parent_id) !== parentId) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      "pickup_address_id does not belong to this parent",
+    );
+  }
+};
+
+export const adminGetStudentsByParentId = async (
+  parentId: string,
+): Promise<any[]> => {
+  if (!ObjectId.isValid(parentId)) {
+    return [];
+  }
+  return await studentRepository.findByParentIdWithPopulate(parentId);
+};
+
+export const adminCreateStudentForParent = async (
+  parentId: string,
+  data: AdminStudentInput,
+): Promise<WithId<Student>> => {
+  if (!ObjectId.isValid(parentId)) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  const db = await getDB();
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ _id: new ObjectId(parentId) });
+  if (!parent) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  await assertPickupAddressOwnership(data.pickup_address_id, parentId);
+
+  const duplicate = await studentRepository.findDuplicateStudent(
+    parentId,
+    data.student_name,
+    data.school_id,
+    data.class,
+  );
+  if (duplicate) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.STUDENT.ALREADY_EXISTS,
+    );
+  }
+
+  const studentData: Student = {
+    parent_id: parentId,
+    ...data,
+    is_active: true,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  return await studentRepository.create(studentData);
+};
+
+export const adminBulkCreateStudentsForParent = async (
+  parentId: string,
+  students: AdminStudentInput[],
+): Promise<{
+  results: AdminBulkStudentResult[];
+  created: number;
+  skipped: number;
+}> => {
+  const results: AdminBulkStudentResult[] = [];
+  let created = 0;
+  let skipped = 0;
+
+  if (!ObjectId.isValid(parentId)) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  for (const item of students) {
+    try {
+      const student = await adminCreateStudentForParent(parentId, item);
+      results.push({
+        student_name: item.student_name,
+        status: "created",
+        student_id: String(student._id),
+      });
+      created++;
+    } catch (err: any) {
+      results.push({
+        student_name: item.student_name,
+        status: "skipped",
+        reason: err?.message || "create failed",
+      });
+      skipped++;
+    }
+  }
+
+  return { results, created, skipped };
+};
+
+export const adminUpdateStudent = async (
+  studentId: string,
+  updates: Partial<Student>,
+): Promise<WithId<Student> | null> => {
+  if (!ObjectId.isValid(studentId)) {
+    return null;
+  }
+
+  const current = await studentRepository.findById(studentId);
+  if (!current) {
+    return null;
+  }
+
+  if (
+    updates.pickup_address_id &&
+    updates.pickup_address_id !== current.pickup_address_id
+  ) {
+    await assertPickupAddressOwnership(
+      updates.pickup_address_id,
+      current.parent_id,
+    );
+  }
+
+  if (
+    updates.student_name ||
+    updates.school_id ||
+    updates.class ||
+    updates.parent_id
+  ) {
+    const duplicate = await studentRepository.findDuplicateStudent(
+      updates.parent_id || current.parent_id,
+      updates.student_name || current.student_name,
+      updates.school_id || current.school_id,
+      updates.class || current.class,
+    );
+    if (duplicate && String(duplicate._id) !== studentId) {
+      throw new ApiError(
+        HTTP_STATUS.CONFLICT,
+        ERROR_MESSAGES.STUDENT.ALREADY_EXISTS,
+      );
+    }
+  }
+
+  if (updates.school_id && updates.school_id !== current.school_id) {
+    const db = await getDB();
+    const now = new Date();
+    await db.collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION).updateMany(
+      {
+        student_id: studentId,
+        assignment_status: {
+          $in: [
+            AssignmentStatus.ACTIVE,
+            AssignmentStatus.PENDING,
+            AssignmentStatus.PARENT_REQUESTED,
+          ],
+        },
+      },
+      {
+        $set: {
+          assignment_status: AssignmentStatus.INACTIVE,
+          end_date: now,
+          updated_at: now,
+        },
+      },
+    );
+  }
+
+  return await studentRepository.updateById(studentId, {
+    $set: { ...updates, updated_at: new Date() },
+  });
+};
+
+export const adminSoftDeleteStudent = async (
+  studentId: string,
+): Promise<boolean> => {
+  if (!ObjectId.isValid(studentId)) {
+    return false;
+  }
+
+  const current = await studentRepository.findById(studentId);
+  if (!current) {
+    return false;
+  }
+
+  const now = new Date();
+  await studentRepository.updateById(studentId, {
+    $set: { is_active: false, updated_at: now },
+  });
+
+  const db = await getDB();
+  await db.collection(DRIVER_STUDENT_ASSIGNMENTS_COLLECTION).updateMany(
+    {
+      student_id: studentId,
+      assignment_status: {
+        $in: [
+          AssignmentStatus.ACTIVE,
+          AssignmentStatus.PENDING,
+          AssignmentStatus.PARENT_REQUESTED,
+        ],
+      },
+    },
+    {
+      $set: {
+        assignment_status: AssignmentStatus.INACTIVE,
+        end_date: now,
+        updated_at: now,
+      },
+    },
+  );
+
+  return true;
 };

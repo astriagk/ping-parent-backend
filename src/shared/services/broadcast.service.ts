@@ -166,6 +166,45 @@ export class BroadcastService {
     );
   }
 
+  static notifyParentStudentsApproaching(
+    parentId: string,
+    tripId: string,
+    students: { studentId: string; studentName: string }[],
+    eta: number,
+    driverId?: string,
+  ) {
+    const studentNames = students.map((s) => s.studentName).join(", ");
+    const etaMinutes = Math.ceil(eta / 60);
+    const message =
+      students.length === 1
+        ? MESSAGE_TEMPLATES.NOTIFICATION.driverApproachingForStudent(
+            studentNames,
+            etaMinutes,
+          )
+        : MESSAGE_TEMPLATES.NOTIFICATION.driverApproachingForStudents(
+            studentNames,
+            etaMinutes,
+          );
+
+    logger.info(
+      `[Notify Parent] Students Approaching | Parent: ${parentId} | Trip: ${tripId} | Students: ${students.map((s) => s.studentId).join(", ")} | Driver: ${driverId} | ETA: ${eta}`,
+    );
+
+    socketService.emitToParent(
+      parentId,
+      ParentNotificationEvent.MY_STUDENT_APPROACHING,
+      {
+        tripId,
+        studentIds: students.map((s) => s.studentId),
+        students,
+        eta,
+        driverId,
+        message,
+        timestamp: new Date(),
+      },
+    );
+  }
+
   // ============================================
   // Bulk Parent Notifications
   // ============================================

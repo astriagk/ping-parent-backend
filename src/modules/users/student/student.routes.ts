@@ -1,6 +1,11 @@
 import { validate } from "@shared/middlewares";
 
 import {
+  adminBulkCreateStudentsHandler,
+  adminCreateStudentForParentHandler,
+  adminDeleteStudentHandler,
+  adminGetParentStudentsHandler,
+  adminUpdateStudentHandler,
   createStudent,
   deleteStudent,
   deleteStudentByStudentId,
@@ -12,7 +17,13 @@ import {
   updateStudent,
   updateStudentByStudentId,
 } from "./student.controller";
-import { createStudentSchema, updateStudentSchema } from "./student.validation";
+import {
+  adminBulkCreateStudentsSchema,
+  adminCreateStudentSchema,
+  adminUpdateStudentSchema,
+  createStudentSchema,
+  updateStudentSchema,
+} from "./student.validation";
 
 /**
  * Handler group for student module.
@@ -31,4 +42,15 @@ export const studentHandlers = {
   updateByStudentId: updateStudentByStudentId,
   deleteByStudentId: deleteStudentByStudentId,
   getBySchool: getStudentsBySchool,
+
+  admin: {
+    getByParent: adminGetParentStudentsHandler,
+    validateCreateForParent: validate(adminCreateStudentSchema),
+    createForParent: adminCreateStudentForParentHandler,
+    validateBulk: validate(adminBulkCreateStudentsSchema),
+    bulkCreate: adminBulkCreateStudentsHandler,
+    validateUpdate: validate(adminUpdateStudentSchema),
+    update: adminUpdateStudentHandler,
+    delete: adminDeleteStudentHandler,
+  },
 };

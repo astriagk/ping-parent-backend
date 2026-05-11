@@ -9,6 +9,13 @@ import {
 import { ApiError, asyncHandler } from "@shared/middlewares";
 
 import {
+  adminBulkCreateParents,
+  adminBulkCreateParentsWithStudents,
+  adminCreateParentWithUser,
+  adminDeleteParentCascade,
+  adminGetParentAddress,
+  adminUpdateParent,
+  adminUpsertParentAddress,
   createParentProfile,
   getAddressByUserId,
   getParentActiveTrips,
@@ -17,6 +24,10 @@ import {
   updateParentProfile,
   upsertAddressByUserId,
 } from "./parent.service";
+import {
+  AdminBulkParentWithStudentsRecord,
+  AdminCreateParentInput,
+} from "./parent.type";
 
 const getUserIdFromRequest = (req: Request): string | null => {
   return req.user?.userId || null;
@@ -270,6 +281,157 @@ export const getMyAllTrips = asyncHandler(
       data: trips,
       count: trips.length,
       message: SUCCESS_MESSAGES_COMMON.LIST_FETCHED,
+    });
+  },
+);
+
+export const adminCreateParentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const result = await adminCreateParentWithUser(
+      req.body as AdminCreateParentInput,
+    );
+
+    return res.status(HTTP_STATUS.CREATED).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminUpdateParentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+    const updates: Record<string, string> = {};
+
+    if (req.body.name !== undefined)
+      updates.name = String(req.body.name).trim();
+    if (req.body.email !== undefined)
+      updates.email = String(req.body.email).trim();
+    if (req.body.photo_url !== undefined)
+      updates.photo_url = String(req.body.photo_url).trim();
+
+    const updated = await adminUpdateParent(parentId, updates);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+export const adminDeleteParentHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+
+    const ok = await adminDeleteParentCascade(parentId);
+
+    if (!ok) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_DELETED,
+    });
+  },
+);
+
+export const adminGetParentAddressHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+    const address = await adminGetParentAddress(parentId);
+
+    if (!address) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.ADDRESS.ADDRESS_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: address,
+    });
+  },
+);
+
+export const adminUpsertParentAddressHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const { parentId } = req.params as Record<string, string>;
+
+    const {
+      address_line1,
+      address_line2,
+      city,
+      state,
+      pincode,
+      latitude,
+      longitude,
+    } = req.body;
+
+    const addressData = {
+      address_line1: String(address_line1).trim(),
+      address_line2: address_line2 ? String(address_line2).trim() : undefined,
+      city: String(city).trim(),
+      state: String(state).trim(),
+      pincode: pincode ? String(pincode).trim() : undefined,
+      latitude: parseFloat(latitude),
+      longitude: parseFloat(longitude),
+      is_primary: true,
+    };
+
+    const updated = await adminUpsertParentAddress(parentId, addressData);
+
+    if (!updated) {
+      throw new ApiError(
+        HTTP_STATUS.NOT_FOUND,
+        ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+      );
+    }
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: updated,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_UPDATED,
+    });
+  },
+);
+
+export const adminBulkCreateParentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const parents = (req.body?.parents || []) as AdminCreateParentInput[];
+    const result = await adminBulkCreateParents(parents);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
+    });
+  },
+);
+
+export const adminBulkParentsWithStudentsHandler = asyncHandler(
+  async (req: Request, res: Response) => {
+    const records = (req.body?.records ||
+      []) as AdminBulkParentWithStudentsRecord[];
+    const result = await adminBulkCreateParentsWithStudents(records);
+
+    return res.status(HTTP_STATUS.OK).json({
+      success: true,
+      data: result,
+      message: SUCCESS_MESSAGES_COMMON.RESOURCE_CREATED,
     });
   },
 );

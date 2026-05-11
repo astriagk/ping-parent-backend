@@ -1,4 +1,4 @@
-import { WithId } from "mongodb";
+import { ObjectId, WithId } from "mongodb";
 
 import { getDB } from "@shared/config";
 import {
@@ -21,6 +21,7 @@ import { subscriptionPlanRepository } from "../subscription_plan/subscription_pl
 import { SubscriptionPlan } from "../subscription_plan/subscription_plan.type";
 import { parentSubscriptionRepository } from "./parent_subscription.repository";
 import {
+  AdminCreateParentSubscriptionInput,
   DiscountApplied,
   ParentSubscription,
   ProrationDetails,
@@ -1013,4 +1014,118 @@ export const deleteParentSubscription = async (
 ): Promise<boolean> => {
   const result = await parentSubscriptionRepository.deleteById(id);
   return result !== null;
+};
+
+export const adminCreateParentSubscription = async (
+  data: AdminCreateParentSubscriptionInput,
+): Promise<WithId<ParentSubscription>> => {
+  if (!ObjectId.isValid(data.parent_id)) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  const db = await getDB();
+  const parent = await db
+    .collection(PARENTS_COLLECTION)
+    .findOne({ _id: new ObjectId(data.parent_id) });
+  if (!parent) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT.PARENT_PROFILE_NOT_FOUND,
+    );
+  }
+
+  const plan = await subscriptionPlanRepository.findById(data.plan_id);
+  if (!plan) {
+    throw new ApiError(
+      HTTP_STATUS.NOT_FOUND,
+      ERROR_MESSAGES.PARENT_SUBSCRIPTION.PLAN_NOT_FOUND,
+    );
+  }
+
+  const existingActive =
+    await parentSubscriptionRepository.findDuplicateActiveSubscription(
+      data.parent_id,
+    );
+  if (existingActive) {
+    throw new ApiError(
+      HTTP_STATUS.CONFLICT,
+      ERROR_MESSAGES.PARENT_SUBSCRIPTION.ALREADY_EXISTS,
+    );
+  }
+
+  const students = await studentRepository.findByParentId(data.parent_id);
+  const activeStudents = students.filter((s) => s.is_active);
+
+  let studentIds: string[];
+  if (data.student_ids && data.student_ids.length > 0) {
+    const activeIds = new Set(activeStudents.map((s) => String(s._id)));
+    for (const sid of data.student_ids) {
+      if (!activeIds.has(sid)) {
+        throw new ApiError(
+          HTTP_STATUS.BAD_REQUEST,
+          `Student ${sid} is not an active student of this parent`,
+        );
+      }
+    }
+    studentIds = data.student_ids;
+  } else {
+    studentIds = activeStudents.map((s) => String(s._id));
+  }
+
+  const studentCount = studentIds.length;
+  if (studentCount < plan.kids.min || studentCount > plan.kids.max) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      studentCount < plan.kids.min
+        ? ERROR_MESSAGES.PARENT_SUBSCRIPTION.STUDENT_COUNT_BELOW_MIN
+        : ERROR_MESSAGES.PARENT_SUBSCRIPTION.STUDENT_COUNT_ABOVE_MAX,
+    );
+  }
+
+  const startDate = data.start_date ? new Date(data.start_date) : new Date();
+  const endDate = data.end_date
+    ? new Date(data.end_date)
+    : calculateEndDate(startDate, plan.plan_type);
+
+  if (endDate <= startDate) {
+    throw new ApiError(
+      HTTP_STATUS.BAD_REQUEST,
+      ERROR_MESSAGES.PARENT_SUBSCRIPTION.INVALID_DATE_RANGE,
+    );
+  }
+
+  const sameTripGroups = await detectSameTripGroups(studentIds);
+  const pricing = calculatePrice(plan, studentCount, sameTripGroups);
+
+  const subscriptionData: ParentSubscription = {
+    parent_id: data.parent_id,
+    plan_id: data.plan_id,
+    student_ids: studentIds,
+    number_of_kids: studentCount,
+    original_price: pricing.original_price,
+    calculated_price: pricing.calculated_price,
+    discount_applied: pricing.discount_applied,
+    currency: plan.currency,
+    start_date: startDate,
+    end_date: endDate,
+    subscription_status: SubscriptionStatus.ACTIVE,
+    auto_renew: data.auto_renew ?? false,
+    subscription_source: SubscriptionSource.SELF_PAY,
+    created_at: new Date(),
+    updated_at: new Date(),
+  };
+
+  return await parentSubscriptionRepository.create(subscriptionData);
+};
+
+export const adminCancelParentSubscription = async (
+  id: string,
+): Promise<WithId<ParentSubscription> | null> => {
+  if (!ObjectId.isValid(id)) {
+    return null;
+  }
+  return await cancelParentSubscription(id);
 };

@@ -2,6 +2,14 @@ import { validate } from "@shared/middlewares";
 import { uploadMiddleware } from "@shared/middlewares/multer.middleware";
 
 import {
+  adminCreateDriverHandler,
+  adminDeleteDriverHandler,
+  adminGetDriverAddressHandler,
+  adminGetDriverDocumentsHandler,
+  adminUpdateDriverDocumentsHandler,
+  adminUpdateDriverHandler,
+  adminUpsertDriverAddressHandler,
+  adminUpsertDriverDocumentsHandler,
   createDocuments,
   createProfile,
   getAddress,
@@ -15,6 +23,11 @@ import {
   upsertAddress,
 } from "./driver.controller";
 import {
+  adminCreateDriverSchema,
+  adminUpdateDriverDocumentsSchema,
+  adminUpdateDriverSchema,
+  adminUpsertDriverAddressSchema,
+  adminUpsertDriverDocumentsSchema,
   createDriverDocumentsSchema,
   createDriverProfileSchema,
   updateDriverDocumentsSchema,
@@ -50,4 +63,20 @@ export const driverHandlers = {
   getOnboardingScreen: getDriverOnboardingScreen,
   validateUpdateOnboarding: validate(updateDriverOnboardingScreenSchema),
   updateOnboardingScreen: updateDriverOnboardingScreen,
+
+  admin: {
+    validateCreate: validate(adminCreateDriverSchema),
+    create: adminCreateDriverHandler,
+    validateUpdate: validate(adminUpdateDriverSchema),
+    update: adminUpdateDriverHandler,
+    delete: adminDeleteDriverHandler,
+    getAddress: adminGetDriverAddressHandler,
+    validateAddress: validate(adminUpsertDriverAddressSchema),
+    upsertAddress: adminUpsertDriverAddressHandler,
+    getDocuments: adminGetDriverDocumentsHandler,
+    validateUpsertDocuments: validate(adminUpsertDriverDocumentsSchema),
+    upsertDocuments: adminUpsertDriverDocumentsHandler,
+    validateUpdateDocuments: validate(adminUpdateDriverDocumentsSchema),
+    updateDocuments: adminUpdateDriverDocumentsHandler,
+  },
 };
