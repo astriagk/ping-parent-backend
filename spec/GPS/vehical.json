@@ -1,0 +1,22 @@
+{
+  "data": [
+    {
+      "vnum": "Vehicle1",
+      "datetime": "2026/05/25 18:35:43",
+      "latitude": 12.9716,
+      "longitude": 77.5946,
+      "speed": 40.5,
+      "heading": 180,
+      "accuracy": 0
+    },
+    {
+      "vnum": "Vehicle2",
+      "datetime": "2026/05/25 18:35:43",
+      "latitude": 12.9716,
+      "longitude": 77.5946,
+      "speed": 40.5,
+      "heading": 180,
+      "accuracy": 0
+    }
+  ]
+}
