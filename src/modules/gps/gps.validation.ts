@@ -1,6 +1,8 @@
 import Joi from "joi";
 
 export const gpsDataSchema = Joi.object({
+  vnum: Joi.any().optional(),
+  datetime: Joi.any().optional(),
   latitude: Joi.number().required().min(-90).max(90),
   longitude: Joi.number().required().min(-180).max(180),
   speed: Joi.number().optional().min(0),
